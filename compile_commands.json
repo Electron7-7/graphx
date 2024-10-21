@@ -1,0 +1,28 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Isrc/include",
+      "-o",
+      "graphx.test",
+      "src/temp_main.cpp"
+    ],
+    "directory": "/home/thelegend27/Desktop/Github/graphx",
+    "file": "/home/thelegend27/Desktop/Github/graphx/src/temp_main.cpp",
+    "output": "/home/thelegend27/Desktop/Github/graphx/graphx.test"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Isrc/include",
+      "-o",
+      "graphx.test",
+      "src/glad.c"
+    ],
+    "directory": "/home/thelegend27/Desktop/Github/graphx",
+    "file": "/home/thelegend27/Desktop/Github/graphx/src/glad.c",
+    "output": "/home/thelegend27/Desktop/Github/graphx/graphx.test"
+  }
+]

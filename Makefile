@@ -1,35 +1,27 @@
-# NAME=graphx
+CXX = g++
+CC = gcc
 
-# CXX = clang++ -v
-# LD = clang++ -v
+NAME := graphx
+TEST_NAME := graphx.test
 
-# LIBS = OpenGL glut GLU m
-# LDFLAGS = $(addprefix -l, $(LIBS))
+SRC_DIR := src
 
-# SRC_DIR := ./src
-# SRC_FILES := $(shell find $(SRC_DIR) -name '*.cpp')
+INCLUDES = -Isrc/include
+LINKER_FLAGS := -lglfw
 
-# BUILD_DIR := ./build
-# OBJS = $(BUILD_DIR)/$(SRC_FILES:.cpp=.o)
+# SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -or -name '*.c')
+SRCS := src/temp_main.cpp src/glad.c
 
-# $(NAME): $(OBJS)
-# 	$(CXX) -o $(NAME) $(OBJS) $(LDFLAGS)
-
-# $(OBJS): $(SRC_FILES)
-# 	mkdir -p $(BUILD_DIR)/$(SRC_DIR)
-# 	$(CXX) -o $@ -c $<
-
-# test: $(NAME)
-# 	./$(NAME)
-# 	make clean
-
-# clean:
-# 	rm -rf $(BUILD_DIR)
-# 	rm ./$(NAME)
+# test:
+# 	 g++ -lglfw -Isrc/include ./src/temp_main.cpp ./src/glad.c -o test
+# 	./test
+# 	rm ./test
 
 test:
-	 g++ -lglfw -Isrc/client/include ./src/client/temp_main.cpp ./src/client/glad.c -o test
-	./test
-	rm ./test
+	$(CXX) $(LINKER_FLAGS) $(INCLUDES) $(SRCS) -o $(TEST_NAME)
 
-.PHONY: test
+testrun: test
+	./$(TEST_NAME)
+	rm ./$(TEST_NAME)
+
+.PHONY: build test testrun clean
