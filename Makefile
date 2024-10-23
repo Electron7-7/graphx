@@ -1,5 +1,5 @@
-CXX = g++
-CC = gcc
+CXX = clang++
+CC = clang
 
 NAME := graphx
 TEST_NAME := graphx.test
