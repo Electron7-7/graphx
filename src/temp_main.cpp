@@ -118,7 +118,6 @@ int main(int argc, char** argv)
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
-
 	
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 
@@ -128,6 +127,12 @@ int main(int argc, char** argv)
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glm::mat4 trans = glm::mat4(1.0f);
+		trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		unsigned int transform_location = glGetUniformLocation(simple_shader.ID, "transform");
+		glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(trans));
 
 		simple_shader.use();
 		glBindTexture(GL_TEXTURE_2D, texture);
