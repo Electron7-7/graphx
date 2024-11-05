@@ -1,3 +1,7 @@
 Big fucking thanks to [this absolute __legend__](https://learnopengl.com) for being the only reason I didn't give up on this thing the second I ran my first compile (and got fifty linker errors).
 ---
-The only make command that really works rn is `make testrun` which will compile, link, and run the project; once you hit escape to close the window, it'll then delete the binary. It's basically just a nice way of having a clean test-build for Sublime Text (or any IDE, really) that doesn't clutter up the space with output files and shit. `make test` also works, but it just compiles and links the code into a `graphx.test` file and nothing else; it's used in `make testrun` but is isolated so I can use/repurpose it for later make commands like `make build` and such.
+<dl>
+	<p>There are currently only two make targets:</p>
+  <dd><code>make test</code>: compiles and links the code into a binary file named "graphx.test".</dd>
+  <dd><code>make testrun</code>: invokes <code>test</code>, runs the program, and deletes the file once the window is closed (side-note: I wrote some code so you can close the window by just hitting <kbd>Escape</kbd>).</dd>
+</dl>
