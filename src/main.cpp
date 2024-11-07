@@ -32,19 +32,49 @@ int main(int argc, char** argv)
 
 	Shader simple_shader("src/shaders/vertex_shader.glsl", "src/shaders/fragment_shader.glsl");
 
-	float vertices[]
-	{
-		// positions		// colors			// texture coords
-		0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 1.0f,	1.0f, 1.0f,			// top right
-		0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.3f,	1.0f, 0.0f,			// bottom right
-		-0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.3f,	0.0f, 0.0f,			// bottom  left
-		-0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f			// top left
-	};
+	float vertices[] = {
+		// positions			// texture coords
+		-0.5f, -0.5f, -0.5f, 	0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f, 	1.0f, 0.0f,
+		 0.5f, 0.5f, -0.5f, 	1.0f, 1.0f,
+		 0.5f, 0.5f, -0.5f, 	1.0f, 1.0f,
+		-0.5f, 0.5f, -0.5f, 	0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 	0.0f, 0.0f,
 
-	unsigned int indices[]
-	{
-		0,	1,	3,	// first triangle
-		1,	2,	3	// second triangle
+		-0.5f, -0.5f, 0.5f, 	0.0f, 0.0f,
+		 0.5f, -0.5f, 0.5f, 	1.0f, 0.0f,
+		 0.5f, 0.5f, 0.5f, 		1.0f, 1.0f,
+		 0.5f, 0.5f, 0.5f, 		1.0f, 1.0f,
+		-0.5f, 0.5f, 0.5f, 		0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 	0.0f, 0.0f,
+
+		-0.5f, 0.5f, 0.5f, 		1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 	1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 	0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 	0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 	0.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 		1.0f, 0.0f,
+
+		 0.5f, 0.5f, 0.5f, 		1.0f, 0.0f,
+		 0.5f, 0.5f, -0.5f, 	1.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 	0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 	0.0f, 1.0f,
+		 0.5f, -0.5f, 0.5f, 	0.0f, 0.0f,
+		 0.5f, 0.5f, 0.5f, 		1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f, 	0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 	1.0f, 1.0f,
+		 0.5f, -0.5f, 0.5f, 	1.0f, 0.0f,
+		 0.5f, -0.5f, 0.5f, 	1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 	0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 	0.0f, 1.0f,
+
+		-0.5f, 0.5f, -0.5f, 	0.0f, 1.0f,
+		 0.5f, 0.5f, -0.5f, 	1.0f, 1.0f,
+		 0.5f, 0.5f, 0.5f, 		1.0f, 0.0f,
+		 0.5f, 0.5f, 0.5f, 		1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 		0.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 	0.0f, 1.0f
 	};
 
 	unsigned int EBO;
@@ -58,26 +88,14 @@ int main(int argc, char** argv)
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-/*
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-*/
 
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
 	// texture coordinates attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 
 	/*
@@ -86,14 +104,6 @@ int main(int argc, char** argv)
 	*/
 	// glBindBuffer(GL_ARRAY_BUFFER, VAO);
 	// glBindVertexArray(0);
-
-
-	float texture_coordinates[]
-	{
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		0.5f, 1.0f
-	};
 
 	unsigned int texture;
 	glGenTextures(1, &texture);
@@ -121,12 +131,14 @@ int main(int argc, char** argv)
 	
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 
+	glEnable(GL_DEPTH_TEST);
+
 	while(!glfwWindowShouldClose(window))
 	{
 		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 trans = glm::mat4(1.0f);
 		trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -134,10 +146,31 @@ int main(int argc, char** argv)
 		unsigned int transform_location = glGetUniformLocation(simple_shader.ID, "transform");
 		glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(trans));
 
+
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 0.2f));
+
+		glm::mat4 backwards_view = glm::mat4(1.0f);
+		backwards_view = glm::translate(backwards_view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+		glm::mat4 projection;
+		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
+
+		int model_location = glGetUniformLocation(simple_shader.ID, "model");
+		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
+
+		int view_location = glGetUniformLocation(simple_shader.ID, "backwards_view");
+		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(backwards_view));
+
+		int projection_location = glGetUniformLocation(simple_shader.ID, "projection");
+		glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+
 		simple_shader.use();
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
