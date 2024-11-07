@@ -10,7 +10,7 @@ INCLUDES = -Isrc/include
 LINKER_FLAGS := -lglfw
 
 # SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -or -name '*.c')
-SRCS := src/temp_main.cpp src/glad.c
+SRCS := src/main.cpp src/glad.c
 
 # test:
 # 	 g++ -lglfw -Isrc/include ./src/temp_main.cpp ./src/glad.c -o test
