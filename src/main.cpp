@@ -2,8 +2,19 @@
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double x_position, double y_position);
 
 unsigned int window_width = 800, window_height = 800;
+float delta_time = 0.0f, last_frame = 0.0f;
+float mouse_last_x = (int)(window_width / 2), mouse_last_y = (int)(window_height / 2);
+float camera_yaw = -90.0f;
+float camera_pitch = 0.0f;
+bool mouse_focused_window = true;
+
+glm::vec3 camera_position = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+
 
 int main(int argc, char** argv)
 {
@@ -22,13 +33,17 @@ int main(int argc, char** argv)
 	}
 	
 	glfwMakeContextCurrent(window);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+	glfwSetCursorPosCallback(window, mouse_callback);
 	
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
+
+	glEnable(GL_DEPTH_TEST);
 
 	Shader simple_shader("src/shaders/vertex_shader.glsl", "src/shaders/fragment_shader.glsl");
 
@@ -128,13 +143,19 @@ int main(int argc, char** argv)
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
-	
+
+	glm::vec3 global_up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	glm::vec3 camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 camera_direction;
+
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-
-	glEnable(GL_DEPTH_TEST);
-
 	while(!glfwWindowShouldClose(window))
 	{
+		float current_frame = glfwGetTime();
+		delta_time = current_frame - last_frame;
+		last_frame = current_frame;
+
 		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -146,22 +167,25 @@ int main(int argc, char** argv)
 		unsigned int transform_location = glGetUniformLocation(simple_shader.ID, "transform");
 		glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(trans));
 
-
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 0.2f));
-
-		glm::mat4 backwards_view = glm::mat4(1.0f);
-		backwards_view = glm::translate(backwards_view, glm::vec3(0.0f, 0.0f, -3.0f));
+		// model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 0.2f));
 
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
+		camera_direction.x = cos(glm::radians(camera_yaw)) * cos(glm::radians(camera_pitch));
+		camera_direction.y = sin(glm::radians(camera_pitch));
+		camera_direction.z = sin(glm::radians(camera_yaw)) * cos(glm::radians(camera_pitch));
+		camera_front = glm::normalize(camera_direction);
+
+		glm::mat4 camera_view;
+		camera_view = glm::lookAt(camera_position, camera_position + camera_front, camera_up);
 
 		int model_location = glGetUniformLocation(simple_shader.ID, "model");
 		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
 
-		int view_location = glGetUniformLocation(simple_shader.ID, "backwards_view");
-		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(backwards_view));
+		int view_location = glGetUniformLocation(simple_shader.ID, "camera_view");
+		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(camera_view));
 
 		int projection_location = glGetUniformLocation(simple_shader.ID, "projection");
 		glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
@@ -189,9 +213,45 @@ void processInput(GLFWwindow *window)
 {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	const float camera_speed = 2.5f * delta_time;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera_position += camera_speed * camera_front;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera_position -= camera_speed * camera_front;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera_position += glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera_position -= glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+}
+
+void mouse_callback(GLFWwindow* window, double x_position, double y_position)
+{
+	if(mouse_focused_window)
+	{
+		mouse_last_x = x_position;
+		mouse_last_y = y_position;
+		mouse_focused_window = false;
+	}
+
+	float x_offset = x_position - mouse_last_x;
+	float y_offset = mouse_last_y - y_position;
+	mouse_last_x = x_position;
+	mouse_last_y = y_position;
+
+	const float mouse_sensitivity = 0.1f;
+	x_offset *= mouse_sensitivity;
+	y_offset *= mouse_sensitivity;
+
+	camera_yaw += x_offset;
+	camera_pitch += y_offset;
+	if(camera_pitch > 89.0f)
+		camera_pitch = 89.0f;
+	if(camera_pitch < -89.0f)
+		camera_pitch = -89.0f;
 }

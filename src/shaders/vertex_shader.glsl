@@ -9,13 +9,13 @@ out vec2 textureCoordinates;
 
 uniform mat4 transform;
 uniform mat4 model;
-uniform mat4 backwards_view;
+uniform mat4 camera_view;
 uniform mat4 projection;
 
 void main()
 {
 	// gl_Position = transform * vec4(aPos, 1.0);
-	gl_Position = projection * backwards_view * model * vec4(aPos, 1.0);
+	gl_Position = projection * camera_view * model * vec4(aPos, 1.0);
 	// vertexColor = aColor;
 	textureCoordinates = aTexCoord;
 };

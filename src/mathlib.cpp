@@ -1,4 +1,4 @@
-#include <mathlib.h>
+#include <mathlib.hpp>
 
 float J_rsqrt(float number)
 {
