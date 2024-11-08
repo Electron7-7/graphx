@@ -1,4 +1,5 @@
-Big fucking thanks to [this absolute __legend__](https://learnopengl.com) for being the only reason I didn't give up on this thing the second I ran my first compile (and got fifty linker errors).
+# My LearnOpenGL "Worksheet" Code
+### This branch houses the code I wrote while following the lessons on [LearnOpenGL](https://learnopengl.com)
 ---
 <dl>
 	<p>There are currently only two make targets:</p>
