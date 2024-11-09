@@ -31,6 +31,10 @@ void shaderErrorHandler(unsigned int shader, bool is_program)
 	}
 }
 
+//
+// Shader Class
+//
+
 Shader::Shader(const char* vertex_path, const char* fragment_path)
 {
 	std::string vertex_code;
@@ -103,4 +107,82 @@ void Shader::setInt(const std::string &name, int value) const
 void Shader::setFloat(const std::string &name, float value) const
 {
 	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+}
+
+//
+// Camera Class
+//
+
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY)
+{
+	Position = position;
+	WorldUp = up;
+	Yaw = yaw;
+	Pitch = pitch;
+	updateCameraVectors();
+}
+
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY)
+{
+	Position = glm::vec3(posX, posY, posZ);
+	WorldUp = glm::vec3(upX, upY, upZ);
+	Yaw = yaw;
+	Pitch = pitch;
+	updateCameraVectors();
+}
+
+glm::mat4 Camera::GetViewMatrix()
+{
+	return glm::lookAt(Position, Position + Front, Up);
+}
+
+void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
+{
+	float velocity = MovementSpeed * deltaTime;
+	switch (direction)
+	{
+		case FORWARD:
+			Position += Front * velocity;
+			break;
+		case BACKWARD:
+			Position -= Front * velocity;
+			break;
+		case LEFT:
+			Position -= Right * velocity;
+			break;
+		case RIGHT:
+			Position += Right * velocity;
+			break;
+	}
+}
+
+void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
+{
+	xoffset *= MouseSensitivity;
+	yoffset *= MouseSensitivity;
+
+	Yaw += xoffset;
+	Pitch += yoffset;
+
+	if (constrainPitch)
+	{
+		if (Pitch > 89.0f)
+			Pitch = 89.0f;
+		if (Pitch < -89.0f)
+			Pitch = -89.0f;
+	}
+
+	updateCameraVectors();
+}
+
+void Camera::updateCameraVectors()
+{
+	glm::vec3 front;
+	front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+	front.y = sin(glm::radians(Pitch));
+	front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+	Front = glm::normalize(front);
+
+	Right = glm::normalize(glm::cross(Front, WorldUp));
+	Up = glm::normalize(glm::cross(Right, Front));
 }

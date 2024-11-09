@@ -1,5 +1,7 @@
 #include "common.cpp"
 
+Camera player_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double x_position, double y_position);
@@ -7,13 +9,7 @@ void mouse_callback(GLFWwindow* window, double x_position, double y_position);
 unsigned int window_width = 800, window_height = 800;
 float delta_time = 0.0f, last_frame = 0.0f;
 float mouse_last_x = (int)(window_width / 2), mouse_last_y = (int)(window_height / 2);
-float camera_yaw = -90.0f;
-float camera_pitch = 0.0f;
 bool mouse_focused_window = true;
-
-glm::vec3 camera_position = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
 int main(int argc, char** argv)
@@ -43,9 +39,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	glEnable(GL_DEPTH_TEST);
-
 	Shader simple_shader("src/shaders/vertex_shader.glsl", "src/shaders/fragment_shader.glsl");
+	glEnable(GL_DEPTH_TEST);
 
 	float vertices[] = {
 		// positions			// texture coords
@@ -144,10 +139,6 @@ int main(int argc, char** argv)
 	}
 	stbi_image_free(data);
 
-	glm::vec3 global_up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	glm::vec3 camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 camera_direction;
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(window))
@@ -173,13 +164,7 @@ int main(int argc, char** argv)
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
-		camera_direction.x = cos(glm::radians(camera_yaw)) * cos(glm::radians(camera_pitch));
-		camera_direction.y = sin(glm::radians(camera_pitch));
-		camera_direction.z = sin(glm::radians(camera_yaw)) * cos(glm::radians(camera_pitch));
-		camera_front = glm::normalize(camera_direction);
-
-		glm::mat4 camera_view;
-		camera_view = glm::lookAt(camera_position, camera_position + camera_front, camera_up);
+		glm::mat4 camera_view = player_camera.GetViewMatrix();
 
 		int model_location = glGetUniformLocation(simple_shader.ID, "model");
 		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
@@ -214,15 +199,14 @@ void processInput(GLFWwindow *window)
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	const float camera_speed = 2.5f * delta_time;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera_position += camera_speed * camera_front;
+		player_camera.ProcessKeyboard(FORWARD, delta_time);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera_position -= camera_speed * camera_front;
+		player_camera.ProcessKeyboard(BACKWARD, delta_time);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera_position += glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
+		player_camera.ProcessKeyboard(RIGHT, delta_time);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera_position -= glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
+		player_camera.ProcessKeyboard(LEFT, delta_time);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
@@ -230,8 +214,11 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void mouse_callback(GLFWwindow* window, double x_position, double y_position)
+void mouse_callback(GLFWwindow* window, double x_position_in, double y_position_in)
 {
+	float x_position = static_cast<float>(x_position_in);
+	float y_position = static_cast<float>(y_position_in);
+
 	if(mouse_focused_window)
 	{
 		mouse_last_x = x_position;
@@ -244,14 +231,5 @@ void mouse_callback(GLFWwindow* window, double x_position, double y_position)
 	mouse_last_x = x_position;
 	mouse_last_y = y_position;
 
-	const float mouse_sensitivity = 0.1f;
-	x_offset *= mouse_sensitivity;
-	y_offset *= mouse_sensitivity;
-
-	camera_yaw += x_offset;
-	camera_pitch += y_offset;
-	if(camera_pitch > 89.0f)
-		camera_pitch = 89.0f;
-	if(camera_pitch < -89.0f)
-		camera_pitch = -89.0f;
+	player_camera.ProcessMouseMovement(x_offset, y_offset);
 }
