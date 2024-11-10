@@ -1,13 +1,11 @@
 #include "common.cpp"
+#include <ostream>
 
 Camera playerCamera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouseCallback(GLFWwindow* window, double x_position, double y_position);
-
-const float MS_PER_TICK = 1000.0f / 70;
-float PROCESSED_TIME = glfwGetTime();
 
 unsigned int window_width = 1280, window_height = 720;
 float delta_time = 0.0f, last_frame = 0.0f;
@@ -143,19 +141,37 @@ int main(int argc, char** argv)
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
-
+/*
+	double t = 0.0;
+	double dt = 1 / 70.0;
+	double current_time = glfwGetTime();
+*/
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(window))
 	{
+/*
+		double new_time = glfwGetTime();
+		double frame_time = new_time - current_time;
+		current_time = new_time;
+
+		while(frame_time > 0.0)
+		{
+			float deltaTime = std::min(frame_time, dt);
+			frame_time -= deltaTime;
+			t += deltaTime;
+			std::cout << "\nFrame time: " << new_time << std::endl;
+		}
+
+		std::cout << "\nCurrent Time: " << glfwGetTime() << std::endl;
+*/
+		glfwPollEvents();
+		
 		float current_frame = glfwGetTime();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
 
 		processInput(window);
-
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 trans = glm::mat4(1.0f);
 		trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -164,7 +180,7 @@ int main(int argc, char** argv)
 		glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(trans));
 
 		glm::mat4 model = glm::mat4(1.0f);
-		// model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 0.2f));
+		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 0.2f));
 
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
@@ -180,13 +196,16 @@ int main(int argc, char** argv)
 		int projection_location = glGetUniformLocation(simple_shader.ID, "projection");
 		glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
 
+		//
+		// Draw Frame
+		//
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		simple_shader.use();
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-
 		glfwSwapBuffers(window);
-		glfwPollEvents();
 	}
 
 	glDeleteVertexArrays(1, &VAO);
@@ -247,18 +266,4 @@ void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_i
 	mouse_last_y = y_position;
 
 	playerCamera.ProcessMouseMovement(x_offset, y_offset);
-}
-
-void doTick()
-{
-	while ((PROCESSED_TIME + MS_PER_TICK) < glfwGetTime())
-	{
-
-		PROCESSED_TIME += MS_PER_TICK;
-	}
-}
-
-void drawFrame()
-{
-
 }
