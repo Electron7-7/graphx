@@ -1,15 +1,19 @@
 #include "common.cpp"
 
-Camera player_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera playerCamera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void mouse_callback(GLFWwindow* window, double x_position, double y_position);
+void mouseCallback(GLFWwindow* window, double x_position, double y_position);
 
-unsigned int window_width = 800, window_height = 800;
+const float MS_PER_TICK = 1000.0f / 70;
+float PROCESSED_TIME = glfwGetTime();
+
+unsigned int window_width = 1280, window_height = 720;
 float delta_time = 0.0f, last_frame = 0.0f;
 float mouse_last_x = (int)(window_width / 2), mouse_last_y = (int)(window_height / 2);
 bool mouse_focused_window = true;
+bool process_inputs = true;
 
 
 int main(int argc, char** argv)
@@ -18,21 +22,22 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
+
 	GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Fucking Graphics", NULL, NULL);
-	
+
 	if (window == NULL)
 	{
-		std::cout << "Failed to create GLFW window" << std::endl;
+		std::cout << "Failed to create GLFwindow_widthW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
-	
+
 	glfwMakeContextCurrent(window);
+	glfwSetWindowPos(window, (int)((1920 - 1280) / 2), (int)((1080 - 720) / 2));
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	
+	glfwSetCursorPosCallback(window, mouseCallback);
+
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
@@ -162,9 +167,9 @@ int main(int argc, char** argv)
 		// model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 0.2f));
 
 		glm::mat4 projection;
-		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+		projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
 
-		glm::mat4 camera_view = player_camera.GetViewMatrix();
+		glm::mat4 camera_view = playerCamera.GetViewMatrix();
 
 		int model_location = glGetUniformLocation(simple_shader.ID, "model");
 		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
@@ -179,7 +184,6 @@ int main(int argc, char** argv)
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		// glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -199,23 +203,34 @@ void processInput(GLFWwindow *window)
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		process_inputs = !process_inputs;
+
+	if (!process_inputs)
+		return;
+
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(FORWARD, delta_time);
+		playerCamera.ProcessKeyboard(FORWARD, delta_time);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(BACKWARD, delta_time);
+		playerCamera.ProcessKeyboard(BACKWARD, delta_time);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(RIGHT, delta_time);
+		playerCamera.ProcessKeyboard(RIGHT, delta_time);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(LEFT, delta_time);
+		playerCamera.ProcessKeyboard(LEFT, delta_time);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+	window_width = width;
+	window_height = height;
 }
 
-void mouse_callback(GLFWwindow* window, double x_position_in, double y_position_in)
+void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in)
 {
+	if (!process_inputs)
+		return;
+
 	float x_position = static_cast<float>(x_position_in);
 	float y_position = static_cast<float>(y_position_in);
 
@@ -231,5 +246,19 @@ void mouse_callback(GLFWwindow* window, double x_position_in, double y_position_
 	mouse_last_x = x_position;
 	mouse_last_y = y_position;
 
-	player_camera.ProcessMouseMovement(x_offset, y_offset);
+	playerCamera.ProcessMouseMovement(x_offset, y_offset);
+}
+
+void doTick()
+{
+	while ((PROCESSED_TIME + MS_PER_TICK) < glfwGetTime())
+	{
+
+		PROCESSED_TIME += MS_PER_TICK;
+	}
+}
+
+void drawFrame()
+{
+
 }
