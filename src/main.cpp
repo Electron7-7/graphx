@@ -1,6 +1,8 @@
 #include "common.cpp"
+#include "freetype/freetype.h"
 
 Camera playerCamera(glm::vec3(0.0f, 0.0f, 3.0f));
+std::map<char, FontCharacter> FontCharacters;
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -179,6 +181,8 @@ int main(int argc, char** argv)
 
 		int projection_location = glGetUniformLocation(simple_shader.ID, "projection");
 		glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+
+		
 
 		simple_shader.use();
 		glBindTexture(GL_TEXTURE_2D, texture);

@@ -6,7 +6,7 @@ TEST_NAME := graphx.test
 
 SRC_DIR := src
 
-INCLUDES = -Isrc/include
+INCLUDES = -Isrc/include -I/usr/include/freetype2
 LINKER_FLAGS := -lglfw
 
 # SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -or -name '*.c')

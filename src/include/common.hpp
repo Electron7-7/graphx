@@ -1,15 +1,23 @@
 #ifndef GL_INCLUDES
 #define GL_INCLUDES
 	#include <glad/glad.h>
+	#include <glm/fwd.hpp>
 	#include <GLFW/glfw3.h>
 	#include <glm/glm.hpp>
 	#include <glm/gtc/matrix_transform.hpp>
 	#include <glm/gtc/type_ptr.hpp>
 #endif
 
+#ifndef FREETYPE_INCLUDES
+#define FREETYPE_INCLUDES
+	#include <ft2build.h>
+	#include FT_FREETYPE_H
+#endif
+
 #ifndef COMMON_INCLUDES
 #define COMMON_INCLUDES
 	#include <string>
+	#include <map>
 #endif
 
 #ifndef COMMON_FUNCTIONS
@@ -77,6 +85,18 @@ public:
 
 private:
 	void updateCameraVectors();
+};
+
+#endif
+
+#ifndef FREETYPE_CHARACTER_STRUCT
+#define FREETYPE_CHARACTER_STRUCT
+
+struct FontCharacter {
+	unsigned int TextureID;	// ID handle of the glyph texture
+	glm::ivec2 Size;		// Size of glyph
+	glm::ivec2 Bearing;		// Offset from baseline to left/top of glyph
+	unsigned int Advance;	// Offset to advance to next glyph
 };
 
 #endif
