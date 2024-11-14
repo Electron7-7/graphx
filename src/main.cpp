@@ -108,24 +108,21 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(FORWARD, delta_time);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(BACKWARD, delta_time);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(RIGHT, delta_time);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		player_camera.ProcessKeyboard(LEFT, delta_time);
+	int input_vector[2] =
+	{
+		glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S),
+		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
+	};
+
+	player_camera.DoMovement(input_vector, delta_time);
 }
 
-void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in)
+void mouseCallback(GLFWwindow* window, double x_pos_in, double y_pos_in)
 {
 
-	float x_position = static_cast<float>(x_position_in);
-	float y_position = static_cast<float>(y_position_in);
+	float x_position = static_cast<float>(x_pos_in), y_position = static_cast<float>(y_pos_in);
+	float x_offset = x_position - mouse_last_x, y_offset = mouse_last_y - y_position;
 
-	float x_offset = x_position - mouse_last_x;
-	float y_offset = mouse_last_y - y_position;
 	mouse_last_x = x_position;
 	mouse_last_y = y_position;
 

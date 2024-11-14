@@ -1,6 +1,6 @@
 #include <g_camera.hpp>
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed(SPEED), mouse_sensitivity(SENSITIVITY)
 {
 	Position = position;
 	WorldUp = up;
@@ -9,7 +9,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front
 	updateCameraVectors();
 }
 
-Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY)
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed(SPEED), mouse_sensitivity(SENSITIVITY)
 {
 	Position = glm::vec3(posX, posY, posZ);
 	WorldUp = glm::vec3(upX, upY, upZ);
@@ -23,30 +23,17 @@ glm::mat4 Camera::GetViewMatrix()
 	return glm::lookAt(Position, Position + Front, Up);
 }
 
-void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
+void Camera::DoMovement(int direction[2], float delta_time)
 {
-	float velocity = MovementSpeed * deltaTime;
-	switch (direction)
-	{
-		case FORWARD:
-			Position += Front * velocity;
-			break;
-		case BACKWARD:
-			Position -= Front * velocity;
-			break;
-		case LEFT:
-			Position -= Right * velocity;
-			break;
-		case RIGHT:
-			Position += Right * velocity;
-			break;
-	}
+	Position += Front * (float)direction[0] * movement_speed * delta_time; // Z axis
+	Position += Right * (float)direction[1] * movement_speed * delta_time; // X axis
+
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
 {
-	xoffset *= MouseSensitivity;
-	yoffset *= MouseSensitivity;
+	xoffset *= mouse_sensitivity;
+	yoffset *= mouse_sensitivity;
 
 	Yaw += xoffset;
 	Pitch += yoffset;
