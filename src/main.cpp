@@ -1,8 +1,3 @@
-#include <g_common.hpp>
-#include <g_cube.cpp>
-#include <g_shader.cpp>
-#include <g_camera.cpp>
-
 Camera player_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 unsigned int window_width = 1280, window_height = 720;
