@@ -46,14 +46,3 @@ test:	$(O)/graphx_linux
 	~/bin/mangohudtest $(FPS_LIMIT) ./build/graphx_linux
 	rm ./build/graphx_linux
 	make clean
-
-
-# test:
-# 	$(CXX) $(LINKER_FLAGS) $(INCLUDES) $(SRCS) -o $(TEST_NAME)
-
-# testrun: test
-# # 	./$(TEST_NAME) # Normal run without mangohud
-# 	~/bin/mangohudtest $(FPS_LIMIT) ./$(TEST_NAME) # Run using custom mangohud command to limit FPS for test cases
-# 	rm ./$(TEST_NAME)
-
-# .PHONY: build test testrun clean
