@@ -1,13 +1,23 @@
 CXX = clang++
 CC = clang
 
+CFLAGS = -g -Wall
+CXXFLAGS = -g -Wall
+
+LIBS = -lglfw
+
+O = build
+
+OBJS = \
+		$(O)/glad.o
+
+
 NAME := graphx
 TEST_NAME := graphx.test
 
 SRC_DIR := src
 
 INCLUDES = -Isrc/include -I/usr/include/freetype2
-LINKER_FLAGS := -lglfw
 
 SRCS := src/main.cpp src/glad.c
 
@@ -15,12 +25,35 @@ SRCS := src/main.cpp src/glad.c
 FPS_LIMIT := 60
 
 
-test:
-	$(CXX) $(LINKER_FLAGS) $(INCLUDES) $(SRCS) -o $(TEST_NAME)
+all:	$(O)/graphx_linux
 
-testrun: test
-# 	./$(TEST_NAME) # Normal run without mangohud
-	~/bin/mangohudtest $(FPS_LIMIT) ./$(TEST_NAME) # Run using custom mangohud command to limit FPS for test cases
-	rm ./$(TEST_NAME)
+clean:
+	rm -f *.o *.opp
+	rm -f build/*
+	rmdir build
 
-.PHONY: build test testrun clean
+$(O)/graphx_linux:	$(OBJS) $(O)/main.opp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp \
+	-o $(O)/graphx_linux $(LIBS)
+
+$(O)/%.opp:	src/%.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(O)/%.o:	src/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+test:	$(O)/graphx_linux
+	~/bin/mangohudtest $(FPS_LIMIT) ./build/graphx_linux
+	rm ./build/graphx_linux
+	make clean
+
+
+# test:
+# 	$(CXX) $(LINKER_FLAGS) $(INCLUDES) $(SRCS) -o $(TEST_NAME)
+
+# testrun: test
+# # 	./$(TEST_NAME) # Normal run without mangohud
+# 	~/bin/mangohudtest $(FPS_LIMIT) ./$(TEST_NAME) # Run using custom mangohud command to limit FPS for test cases
+# 	rm ./$(TEST_NAME)
+
+# .PHONY: build test testrun clean
