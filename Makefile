@@ -8,8 +8,11 @@ LIBS = -lglfw
 
 O = build
 
-OBJS = \
-		$(O)/glad.o
+OBJS =							\
+		$(O)/glad.o				\
+		$(O)/gl_main.opp		\
+		$(O)/g_game.opp			\
+		$(O)/r_main.opp			
 
 
 NAME := graphx
@@ -17,9 +20,7 @@ TEST_NAME := graphx.test
 
 SRC_DIR := src
 
-INCLUDES = -Isrc/include -I/usr/include/freetype2
-
-SRCS := src/main.cpp src/glad.c
+INCLUDES = -Isrc/include #-I/usr/include/freetype2
 
 # FPS limit for custom mangohud test run
 FPS_LIMIT := 60
@@ -30,7 +31,7 @@ all:	$(O)/graphx_linux
 clean:
 	rm -f *.o *.opp
 	rm -f build/*
-	rmdir build
+# 	rmdir build
 
 $(O)/graphx_linux:	$(OBJS) $(O)/main.opp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp \

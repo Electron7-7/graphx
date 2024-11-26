@@ -1,54 +1,29 @@
-#ifndef COMMON_INCLUDES
-#define COMMON_INCLUDES
-#include <iostream>
-// #include <fstream>
-// #include <sstream>
-// #include <string>
-// #include <map>
-#endif
+#include "sanity.hpp"
+#include "gl_window.hpp"
+#include "gl_render.hpp"
+#include "r_common.hpp"
 
-#ifndef GL_INCLUDES
-#define GL_INCLUDES
-#include <glad/glad.h>
-#include <glm/fwd.hpp>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#endif
+DebugCamera debugging_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-unsigned int window_width = 1280, window_height = 720;
+float mouse_last[2];
+
+void processInput(GLFWwindow* window);
+void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in);
 
 int main(int argc, char** argv)
 {
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	Window mainWindow = Window();
 
-	GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Fucking Graphics", NULL, NULL);
+	glfwSetInputMode(mainWindow.w_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(mainWindow.w_window, mouseCallback);
 
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-
-	glfwMakeContextCurrent(window);
-	glfwSetWindowPos(window, (int)((1920 - window_width) / 2), (int)((1080 - window_height) /2));
-	// glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
-	}
+	GLShader generic_shader("src/shaders/vertex_shader.glsl", "src/shaders/fragment_shader.glsl");
+	Cube single_cube;
 
 	unsigned int element_buffer, vertex_array, vertex_buffer;
-	glGenBuffers(1, &element_buffer);
 	glGenVertexArrays(1, &vertex_array);
+	glGenBuffers(1, &element_buffer);
 	glGenBuffers(1, &vertex_buffer);
 
 	glBindVertexArray(vertex_array);
@@ -56,25 +31,66 @@ int main(int argc, char** argv)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
 
-	glEnable(GL_DEPTH_TEST);
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	// Wireframe mode
+	single_cube.makeCube();
 
-	//
-	// Runtime Loop
-	//
-	while(!glfwWindowShouldClose(window))
+	glEnable(GL_DEPTH_TEST);
+
+	mouse_last[0] = mainWindow.w_width / 2.0f;
+	mouse_last[1] = mainWindow.w_height / 2.0f;
+
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
+	while(!glfwWindowShouldClose(mainWindow.w_window))
 	{
+		// mainWindow.SwapAndClear();
+		processInput(mainWindow.w_window);
 		glClearColor(0.2f, 0.2f, 0.5f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glm::mat4 cube_location = glm::mat4(1.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mainWindow.w_width / (float)mainWindow.w_height, 0.1f, 100.0f);
+		glm::mat4 camera_view = debugging_camera.getViewMatrix();
+
+		generic_shader.setMatrix("model", cube_location);
+		generic_shader.setMatrix("projection", projection);
+		generic_shader.setMatrix("camera_view", camera_view);
+		generic_shader.use();
+
 		glBindVertexArray(vertex_array);
-		glfwSwapBuffers(window);
+		single_cube.drawCube();
+
+		glfwSwapBuffers(mainWindow.w_window);
 		glfwPollEvents();
 	}
 
 	glDeleteVertexArrays(1, &vertex_array);
 	glDeleteBuffers(1, &vertex_buffer);
 	glDeleteBuffers(1, &element_buffer);
+
 	glfwTerminate();
 	return 0;
+}
+
+void processInput(GLFWwindow* window)
+{
+	if(glfwGetKey(window, GLFW_KEY_ESCAPE) ==  GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	int input_vector[2] =
+	{
+		glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S),
+		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
+	};
+
+	debugging_camera.doMovement(input_vector);
+}
+
+void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in)
+{
+	float x_position = static_cast<float>(x_position_in), y_position = static_cast<float>(y_position_in);
+	float mouse_offset[2] = { x_position - mouse_last[0], mouse_last[1] - y_position };
+
+	mouse_last[0] = x_position;
+	mouse_last[1] = y_position;
+
+	debugging_camera.doMouseMovement(mouse_offset);
 }
