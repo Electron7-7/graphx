@@ -1,6 +1,25 @@
 #include <string>
 #include "sanity.hpp"
 
+#ifndef OPENGL_WINDOW_HEADER
+#define OPENGL_WINDOW_HEADER
+
+class Window
+{
+public:
+	Window(u_int16_t width = 1280, u_int16_t height = 720);
+
+	u_int16_t w_width, w_height;
+	GLFWwindow* w_window;
+
+	void SwapAndClear(float clear_color[4] = default_clear_color);
+
+private:
+	inline static float default_clear_color[4] = { 0.3f, 0.4f, 0.7f, 1.0f };
+};
+
+#endif
+
 #ifndef GRAPHX_SHADER_LIB
 #define GRAPHX_SHADER_LIB
 #define GLSHADER_TYPE_VERTEX 0

@@ -1,6 +1,5 @@
 // gl_main.cpp - OpenGL handler
 #include "sanity.hpp"
-#include "gl_window.hpp"
 #include "gl_render.hpp"
 #include <sys/types.h>
 #include <iostream>
@@ -31,11 +30,11 @@ Window::Window(u_int16_t width, u_int16_t height): w_width(width), w_height(heig
 		std::cerr << "[ERROR] Failed to initialize GLAD!" << std::endl;
 }
 
-void Window::SwapAndClear()
+void Window::SwapAndClear(float clear_color[4])
 {
-	glClearColor(0.2f, 0.2f, 0.5f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glfwSwapBuffers(w_window);
+	glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 //

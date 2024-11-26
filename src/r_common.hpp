@@ -10,15 +10,16 @@
 class Cube
 {
 public:
-	float vertices[24] = {
-		-1.0f, -1.0f, -1.0f,	// Left		Down	Back		0
-		-1.0f, -1.0f, 1.0f,		// Left		Down	Forward		1
-		-1.0f, 1.0f, -1.0f,		// Left		Up		Back		2
-		-1.0f, 1.0f, 1.0f,		// Left		Up		Forward		3
-		 1.0f, -1.0f, -1.0f,	// Right	Down	Back		4
-		 1.0f, -1.0f, 1.0f,		// Right	Down	Forward		5
-		 1.0f, 1.0f, -1.0f,		// Right	Up		Back		6
-		 1.0f, 1.0f, 1.0f,		// Right	Up		Forward		7
+	float vertices[48] = {
+		// positions			// colors
+		-1.0f, -1.0f, -1.0f,	1.0f, 0.0f, 0.0f,		// Left		Down	Back		0
+		-1.0f, -1.0f,  1.0f,	1.0f, 1.0f, 0.0f,		// Left		Down	Forward		1
+		-1.0f,  1.0f, -1.0f,	0.0f, 0.0f, 1.0f,		// Left		Up		Back		2
+		-1.0f,  1.0f,  1.0f,	0.0f, 1.0f, 0.0f,		// Left		Up		Forward		3
+		 1.0f, -1.0f, -1.0f,	1.0f, 0.0f, 0.0f,		// Right	Down	Back		4
+		 1.0f, -1.0f,  1.0f,	1.0f, 1.0f, 0.0f,		// Right	Down	Forward		5
+		 1.0f,  1.0f, -1.0f,	0.0f, 0.0f, 1.0f,		// Right	Up		Back		6
+		 1.0f,  1.0f,  1.0f,	0.0f, 1.0f, 0.0f		// Right	Up		Forward		7
 		};
 
 	unsigned int indices[36] = {

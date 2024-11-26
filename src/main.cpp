@@ -1,5 +1,4 @@
 #include "sanity.hpp"
-#include "gl_window.hpp"
 #include "gl_render.hpp"
 #include "r_common.hpp"
 
@@ -18,7 +17,7 @@ int main(int argc, char** argv)
 	glfwSetInputMode(mainWindow.w_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(mainWindow.w_window, mouseCallback);
 
-	GLShader generic_shader("src/shaders/vertex_shader.glsl", "src/shaders/fragment_shader.glsl");
+	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
 	Cube single_cube;
 
 	unsigned int element_buffer, vertex_array, vertex_buffer;
@@ -41,10 +40,8 @@ int main(int argc, char** argv)
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(mainWindow.w_window))
 	{
-		// mainWindow.SwapAndClear();
+		mainWindow.SwapAndClear();
 		processInput(mainWindow.w_window);
-		glClearColor(0.2f, 0.2f, 0.5f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 cube_location = glm::mat4(1.0f);
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mainWindow.w_width / (float)mainWindow.w_height, 0.1f, 100.0f);
@@ -58,7 +55,6 @@ int main(int argc, char** argv)
 		glBindVertexArray(vertex_array);
 		single_cube.drawCube();
 
-		glfwSwapBuffers(mainWindow.w_window);
 		glfwPollEvents();
 	}
 
