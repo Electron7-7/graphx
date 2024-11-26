@@ -8,9 +8,3 @@
 	#include <glm/gtc/matrix_transform.hpp>
 	#include <glm/gtc/type_ptr.hpp>
 #endif
-
-#ifndef ERROR_HANDLING_FLAGS
-#define ERROR_HANDLING_FLAGS
-	#define ERROR_GLFW_WINDOW 0
-	#define ERROR_GLAD_INIT 1
-#endif
