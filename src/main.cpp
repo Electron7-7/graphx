@@ -1,21 +1,24 @@
 #include "sanity.hpp"
-#include "gl_render.hpp"
 #include "r_common.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 DebugCamera debugging_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 float mouse_last[2];
+u_int16_t main_window_size[2] = { 1280, 720 };
 
-void processInput(GLFWwindow* window);
-void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in);
+void processInput(GLFWwindow *window);
+void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 
-int main(int argc, char** argv)
+int main(int argc, char* *argv)
 {
 	glfwInit();
-	Window mainWindow = Window();
+	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
+	glfwSetWindowPos(main_window, static_cast<int>((1920 - main_window_size[0]) / 2), static_cast<int>((1080 - main_window_size[1]) / 2)); // HARDCODED NATIVE RESOLUTION!!! CHANGE THIS!!!
 
-	glfwSetInputMode(mainWindow.w_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(mainWindow.w_window, mouseCallback);
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(main_window, mouseCallback);
 
 	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
 	Cube single_cube;
@@ -34,17 +37,17 @@ int main(int argc, char** argv)
 
 	glEnable(GL_DEPTH_TEST);
 
-	mouse_last[0] = mainWindow.w_width / 2.0f;
-	mouse_last[1] = mainWindow.w_height / 2.0f;
+	mouse_last[0] = main_window_size[0] / 2.0f;
+	mouse_last[1] = main_window_size[1] / 2.0f;
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-	while(!glfwWindowShouldClose(mainWindow.w_window))
+	while(!glfwWindowShouldClose(main_window))
 	{
-		mainWindow.SwapAndClear();
-		processInput(mainWindow.w_window);
+		W_SwapAndClear(main_window);
+		processInput(main_window);
 
 		glm::mat4 cube_location = glm::mat4(1.0f);
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mainWindow.w_width / (float)mainWindow.w_height, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 		glm::mat4 camera_view = debugging_camera.getViewMatrix();
 
 		generic_shader.setMatrix("model", cube_location);
@@ -66,7 +69,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow *window)
 {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) ==  GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -80,7 +83,7 @@ void processInput(GLFWwindow* window)
 	debugging_camera.doMovement(input_vector);
 }
 
-void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in)
+void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
 	float x_position = static_cast<float>(x_position_in), y_position = static_cast<float>(y_position_in);
 	float mouse_offset[2] = { x_position - mouse_last[0], mouse_last[1] - y_position };

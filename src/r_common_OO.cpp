@@ -1,46 +1,16 @@
-// gl_main.cpp - OpenGL handler
+// rendering.cpp
+// Type: Object-Orientated
+// Description: Various classes for rendering
 #include "sanity.hpp"
-#include "gl_render.hpp"
-#include <sys/types.h>
+#include "r_common.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 //
-// Window
-//
-Window::Window(u_int16_t width, u_int16_t height): w_width(width), w_height(height)
-{
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	w_window = glfwCreateWindow(width, height, "Fucking GraphX", NULL, NULL);
-
-	if(w_window == NULL)
-	{
-		std::cerr << "[ERROR] Failed to create GLFW window!" << std::endl;
-		glfwTerminate();
-	}
-
-	glfwMakeContextCurrent(w_window);
-	glfwSetWindowPos(w_window, static_cast<int>((1920 - width) / 2), static_cast<int>((1080 - height) / 2));
-
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-		std::cerr << "[ERROR] Failed to initialize GLAD!" << std::endl;
-}
-
-void Window::SwapAndClear(float clear_color[4])
-{
-	glfwSwapBuffers(w_window);
-	glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-//
 // Shader
 //
-GLShader::GLShader(const char* vertex_path, const char* fragment_path)
+GLShader::GLShader(const char *vertex_path, const char *fragment_path)
 {
 	std::string vertex_code;
 	std::string fragment_code;
@@ -49,6 +19,7 @@ GLShader::GLShader(const char* vertex_path, const char* fragment_path)
 
 	v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 	f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	
 	try
 	{
 		v_shader_file.open(vertex_path);
@@ -70,8 +41,8 @@ GLShader::GLShader(const char* vertex_path, const char* fragment_path)
 		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
 	}
 
-	const char* v_shader_code = vertex_code.c_str();
-	const char* f_shader_code = fragment_code.c_str();
+	const char *v_shader_code = vertex_code.c_str();
+	const char *f_shader_code = fragment_code.c_str();
 
 	unsigned int vertex, fragment;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -148,4 +119,80 @@ void GLShader::shaderErrorHandler(int thing, int type)
 			}
 			break;
 	}
+}
+
+//
+// Debug Camera (not for in-game use)
+//
+DebugCamera::DebugCamera(glm::vec3 init_position, glm::vec3 init_up, float init_yaw, float init_pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed(SPEED), mouse_sensitivity(SENSITIVITY)
+{
+	position = init_position;
+	world_up = init_up;
+	yaw = init_yaw;
+	pitch = init_pitch;
+
+	updateCameraVectors();
+}
+
+glm::mat4 DebugCamera::getViewMatrix()
+{
+	return glm::lookAt(position, position + front, up);
+}
+
+void DebugCamera::doMovement(int direction[2], float delta_time)
+{
+	position += front * static_cast<float>(direction[0] * movement_speed * delta_time);
+	position += right * static_cast<float>(direction[1] * movement_speed * delta_time);
+}
+
+void DebugCamera::doMouseMovement(float offset[2], GLboolean constrain_pitch)
+{
+	offset[0] *= mouse_sensitivity;
+	offset[1] *= mouse_sensitivity;
+
+	yaw += offset[0];
+	pitch += offset[1];
+
+	if(constrain_pitch)
+	{
+		if(std::abs(pitch) > 89.0f)
+			pitch = 89.0f * ((pitch > 0) - (pitch < 0));
+	}
+	updateCameraVectors();
+}
+
+void DebugCamera::updateCameraVectors()
+{
+	glm::vec3 new_front;
+	new_front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	new_front.y = sin(glm::radians(pitch));
+	new_front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	
+	front = glm::normalize(new_front);
+	right = glm::normalize(glm::cross(front, world_up));
+	up = glm::normalize(glm::cross(right, front));
+}
+
+//
+// Cube
+//
+void Cube::makeCube()
+{
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// Idea: set GL_FALSE to GL_TRUE and use ints instead of floats for more efficient storage?
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	unsigned int c_texture = T_GenerateTexture("src/images/COMP04_5.png");
+	glBindTexture(GL_TEXTURE_2D, c_texture);
+}
+
+void Cube::drawCube()
+{
+	glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 }

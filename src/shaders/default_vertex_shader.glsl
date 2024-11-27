@@ -1,10 +1,8 @@
 #version 460 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-// layout (location = 1) in vec2 aTexCoord;
+layout (location = 0) in vec3 vertex_position;
+layout (location = 1) in vec2 vertex_texture_coords;
 
-// out vec2 textureCoordinates;
-out vec3 vertexColors;
+out vec2 texture_coordinates;
 
 uniform mat4 model;
 uniform mat4 camera_view;
@@ -12,7 +10,6 @@ uniform mat4 projection;
 
 void main()
 {
-	gl_Position = projection * camera_view * model * vec4(aPos, 1.0);
-	vertexColors = aColor;
-	// textureCoordinates = aTexCoord;
+	gl_Position = projection * camera_view * model * vec4(vertex_position, 1.0);
+	texture_coordinates = vertex_texture_coords;
 };

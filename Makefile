@@ -10,9 +10,8 @@ O = build
 
 OBJS =							\
 		$(O)/glad.o				\
-		$(O)/gl_main.opp		\
-		$(O)/g_game.opp			\
-		$(O)/r_main.opp			
+		$(O)/r_common_F.opp		\
+		$(O)/r_common_OO.opp		
 
 
 NAME := graphx
