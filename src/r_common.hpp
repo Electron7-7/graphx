@@ -8,12 +8,14 @@
 	#define GLSHADER_TYPE_PROGRAM 2
 #endif
 
+
 #ifndef GRAPHX_RENDERING_FUNCTIONAL
 #define GRAPHX_RENDERING_FUNCTIONAL
 	GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char* title = "Fucking GraphX", bool make_context_current = true);
 	void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
 	GLuint T_GenerateTexture(const char *filepath);
 #endif
+
 
 #ifndef GRAPHX_RENDERING_OBJECT_ORIENTATED
 #define GRAPHX_RENDERING_OBJECT_ORIENTATED
@@ -84,38 +86,5 @@ public:
 
 	void makeCube();
 	void drawCube();
-};
-
-//
-// Debug Camera (not for in-game use)
-//
-class DebugCamera
-{
-public:
-	constexpr static const float YAW = -90.0f;
-	constexpr static const float PITCH = 0.0f;
-	constexpr static const float SPEED = 2.5f;
-	constexpr static const float SENSITIVITY = 0.1f;
-
-	glm::vec3 position;
-	glm::vec2 horizontal_velocity;
-	glm::vec3 front;
-	glm::vec3 up;
-	glm::vec3 right;
-	glm::vec3 world_up;
-
-	float yaw;
-	float pitch;
-	float movement_speed;
-	float mouse_sensitivity;
-
-	DebugCamera(glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_up = glm::vec3(0.0f, 1.0f, 0.0f), float init_yaw = YAW, float init_pitch = PITCH);
-
-	glm::mat4 getViewMatrix();
-	void doMovement(int direction[2], float delta_time = 0.016f);
-	void doMouseMovement(float offset[2], GLboolean constrain_pitch = true);
-
-private:
-	void updateCameraVectors();
 };
 #endif

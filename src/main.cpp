@@ -1,15 +1,17 @@
 #include "sanity.hpp"
 #include "r_common.hpp"
+#include "g_actors.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-DebugCamera debugging_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
 
-float mouse_last[2];
 u_int16_t main_window_size[2] = { 1280, 720 };
+float mouse_last[2];
 
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
+
 
 int main(int argc, char* *argv)
 {
@@ -48,7 +50,7 @@ int main(int argc, char* *argv)
 
 		glm::mat4 cube_location = glm::mat4(1.0f);
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
-		glm::mat4 camera_view = debugging_camera.getViewMatrix();
+		glm::mat4 camera_view = player.getViewMatrix();
 
 		generic_shader.setMatrix("model", cube_location);
 		generic_shader.setMatrix("projection", projection);
@@ -80,7 +82,7 @@ void processInput(GLFWwindow *window)
 		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
 	};
 
-	debugging_camera.doMovement(input_vector);
+	player.doMovement(input_vector);
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
@@ -91,5 +93,5 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	mouse_last[0] = x_position;
 	mouse_last[1] = y_position;
 
-	debugging_camera.doMouseMovement(mouse_offset);
+	player.doMouseMovement(mouse_offset);
 }

@@ -11,8 +11,9 @@ O = build
 OBJS =							\
 		$(O)/glad.o				\
 		$(O)/r_common_F.opp		\
-		$(O)/r_common_OO.opp		
-
+		$(O)/r_common_OO.opp	\
+		$(O)/g_actors_F.opp		\
+		$(O)/g_actors_OO.opp	
 
 NAME := graphx
 TEST_NAME := graphx.test

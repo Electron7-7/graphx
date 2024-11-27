@@ -122,58 +122,6 @@ void GLShader::shaderErrorHandler(int thing, int type)
 }
 
 //
-// Debug Camera (not for in-game use)
-//
-DebugCamera::DebugCamera(glm::vec3 init_position, glm::vec3 init_up, float init_yaw, float init_pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed(SPEED), mouse_sensitivity(SENSITIVITY)
-{
-	position = init_position;
-	world_up = init_up;
-	yaw = init_yaw;
-	pitch = init_pitch;
-
-	updateCameraVectors();
-}
-
-glm::mat4 DebugCamera::getViewMatrix()
-{
-	return glm::lookAt(position, position + front, up);
-}
-
-void DebugCamera::doMovement(int direction[2], float delta_time)
-{
-	position += front * static_cast<float>(direction[0] * movement_speed * delta_time);
-	position += right * static_cast<float>(direction[1] * movement_speed * delta_time);
-}
-
-void DebugCamera::doMouseMovement(float offset[2], GLboolean constrain_pitch)
-{
-	offset[0] *= mouse_sensitivity;
-	offset[1] *= mouse_sensitivity;
-
-	yaw += offset[0];
-	pitch += offset[1];
-
-	if(constrain_pitch)
-	{
-		if(std::abs(pitch) > 89.0f)
-			pitch = 89.0f * ((pitch > 0) - (pitch < 0));
-	}
-	updateCameraVectors();
-}
-
-void DebugCamera::updateCameraVectors()
-{
-	glm::vec3 new_front;
-	new_front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	new_front.y = sin(glm::radians(pitch));
-	new_front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	
-	front = glm::normalize(new_front);
-	right = glm::normalize(glm::cross(front, world_up));
-	up = glm::normalize(glm::cross(right, front));
-}
-
-//
 // Cube
 //
 void Cube::makeCube()
