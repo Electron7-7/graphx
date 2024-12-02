@@ -8,12 +8,14 @@ LIBS = -lglfw
 
 O = build
 
-OBJS =							\
-		$(O)/glad.o				\
-		$(O)/r_common_F.opp		\
-		$(O)/r_common_OO.opp	\
-		$(O)/g_actors_F.opp		\
-		$(O)/g_actors_OO.opp	
+OBJS = \
+	$(O)/glad.o				\
+	$(O)/g_rendering_F.opp	\
+	$(O)/g_rendering_OO.opp	\
+	$(O)/g_actors_OO.opp	\
+	$(O)/g_logic_F.opp		\
+	$(O)/g_logic_OO.opp
+
 
 NAME := graphx
 TEST_NAME := graphx.test
@@ -31,7 +33,6 @@ all:	$(O)/graphx_linux
 clean:
 	rm -f *.o *.opp
 	rm -f build/*
-# 	rmdir build
 
 $(O)/graphx_linux:	$(OBJS) $(O)/main.opp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp \
@@ -45,5 +46,6 @@ $(O)/%.o:	src/%.c
 
 test:	$(O)/graphx_linux
 	~/bin/mangohudtest $(FPS_LIMIT) ./build/graphx_linux
-	rm ./build/graphx_linux
+
+cleantest: test
 	make clean

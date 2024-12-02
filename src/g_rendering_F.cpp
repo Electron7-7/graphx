@@ -3,7 +3,6 @@
 // Description: Various functions and variables for rendering
 #include "sanity.hpp"
 #include "r_common.hpp"
-#include "stb_image.h"
 #include <iostream>
 
 //
