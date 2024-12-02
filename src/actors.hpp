@@ -1,11 +1,11 @@
 #include "sanity.hpp"
-#include "r_renderer.hpp"
+#include "r_common.hpp"
 #include "default_cube.graphxmodel"
 
-#ifndef GRAPHX_ACTORS_OBJECT_ORIENTATED
-#define GRAPHX_ACTORS_OBJECT_ORIENTATED
+#ifndef GRAPHX_ACTORS
+#define GRAPHX_ACTORS
 //
-// Actor Struct
+// Object-Oriented
 //
 struct Actor
 {
@@ -38,9 +38,6 @@ struct Actor
 	void updateActorVectors();
 };
 
-//
-// PlayerController Struct
-//
 struct GraphXPlayer: Actor
 {
 	constexpr static const float INIT_SENSITIVITY = 0.1f;
@@ -54,9 +51,6 @@ struct GraphXPlayer: Actor
 	void doMouseMovement(float offset[2], GLboolean constrain_pitch = true);
 };
 
-//
-// Tester Struct
-//
 struct Tester: Actor
 {
 	bool renderable = true;
@@ -75,9 +69,4 @@ struct Tester: Actor
 	void makeCube();	// This should be handeled by the renderer
 	void drawCube();	// This too
 };
-#endif
-
-
-#ifndef GRAPHX_ACTORS_FUNCTIONAL
-#define GRAPHX_ACTORS_FUNCTIONAL
 #endif

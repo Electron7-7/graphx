@@ -3,13 +3,12 @@
 // Description: Various classes for rendering
 #include "sanity.hpp"
 #include "r_common.hpp"
-#include "r_renderer.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 //
-// Shader
+// GLShader
 //
 GLShader::GLShader(const char *vertex_path, const char *fragment_path)
 {
@@ -121,26 +120,3 @@ void GLShader::shaderErrorHandler(int thing, int type)
 			break;
 	}
 }
-
-
-//
-// Vertex
-//
-Vertex::Vertex(const glm::vec3& position, const glm::vec2& texture_coordinate) : v_position(position), v_texture_coordinate(texture_coordinate)
-{}
-
-/*void GraphXRenderer::Initialize(RenderInitializeCmd initialize_command)
-{
-	glBufferData(GL_ARRAY_BUFFER, sizeof(initialize_command.vertices), initialize_command.vertices, GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(initialize_command.indices), initialize_command.indices, GL_STATIC_DRAW);
-
-	// Idea: set GL_FALSE to GL_TRUE and use ints instead of floats for more efficient storage?
-	glVertexAttribPointer(initialize_command.attribute_location, initialize_command.attribute_offset, GL_FLOAT, GL_FALSE, initialize_command.attribute_size * sizeof(float), (void*)(initialize_command.attribute_size * sizeof(float)));
-	glEnableVertexAttribArray(initialize_command.attribute_location);
-
-	glVertexAttribPointer(initialize_command.attribute_location, initialize_command.attribute_offset, GL_FLOAT, GL_FALSE, initialize_command.attribute_size * sizeof(float), (void*)(initialize_command.attribute_size * sizeof(float)));
-	glEnableVertexAttribArray(initialize_command.attribute_location);
-
-	unsigned int c_texture = T_GenerateTexture(initialize_command.texture);
-	glBindTexture(GL_TEXTURE_2D, c_texture);
-}*/
