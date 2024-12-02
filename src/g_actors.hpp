@@ -62,7 +62,6 @@ struct Tester: Actor
 	bool renderable = true;
 	int position_flip = 0;
 
-	// RenderInitializeCmd render_init_cmd;
 	glm::vec3 testing_position[2] =
 	{
 		glm::vec3(-3.0f, 0.0f, 0.0f),
