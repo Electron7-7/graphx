@@ -15,9 +15,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
-#include "r_common.hpp"
-#include "g_actors.hpp"
-#include "l_state.hpp"
+#include "rendering.hpp"
+#include "actors.hpp"
+#include "state.hpp"
 #include <iostream>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
@@ -39,7 +39,7 @@ int main(int argc, char* *argv)
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 
 	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
-	Tester tester;
+	// Tester tester;
 
 	unsigned int element_buffer, vertex_array, vertex_buffer;
 	glGenVertexArrays(1, &vertex_array);
@@ -51,7 +51,7 @@ int main(int argc, char* *argv)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
 
-	tester.makeCube();
+	// tester.makeCube();
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -65,7 +65,7 @@ int main(int argc, char* *argv)
 		processInput(main_window);
 
 		glm::mat4 tester_location = glm::mat4(1.0f);
-		tester_location = glm::translate(tester_location, tester.position_global);
+		// tester_location = glm::translate(tester_location, tester.position_global);
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 		glm::mat4 camera_view = player.getViewMatrix();
 
@@ -76,8 +76,8 @@ int main(int argc, char* *argv)
 
 		glBindVertexArray(vertex_array);
 
-		tester.flipPosition();
-		tester.drawCube();
+		// tester.flipPosition();
+		// tester.drawCube();
 
 		glfwPollEvents();
 	}

@@ -2,10 +2,18 @@
 // Type: Object-Orientated
 // Description: Various classes for rendering
 #include "sanity.hpp"
-#include "r_common.hpp"
+#include "rendering.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+//
+// Mesh
+//
+bool Mesh::isEmpty()
+{
+	return true;
+}
 
 //
 // GLShader

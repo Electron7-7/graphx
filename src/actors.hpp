@@ -1,6 +1,6 @@
 #include "sanity.hpp"
-#include "r_common.hpp"
-#include "default_cube.graphxmodel"
+#include "rendering.hpp"
+// #include "default_cube.graphxmodel"
 
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
@@ -13,10 +13,9 @@ struct Actor
 	constexpr static const float INIT_PITCH = 0.0f;
 	constexpr static const float INIT_SPEED = 2.5f;
 
-	bool renderable = true;
 	const char* name;
-	const char* texture;
-	int vertex_attributes;
+	bool visible = true;
+	Mesh* mesh;
 
 	glm::vec3 position_global;
 	// glm::vec4 rotation_quaternion;
@@ -31,11 +30,11 @@ struct Actor
 
 	float movement_speed;
 
-	Actor(const char *new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_up = glm::vec3(0.0f, 1.0f, 0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
+	Actor(const char* new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_up = glm::vec3(0.0f, 1.0f, 0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
+	bool isVisible() { return (!mesh->isEmpty() && visible); }
+	void updateVectors();
 	void doMovement(int direction[2], float delta_time = 0.016f);
-
-	void updateActorVectors();
 };
 
 struct GraphXPlayer: Actor
@@ -45,7 +44,7 @@ struct GraphXPlayer: Actor
 	float mouse_sensitivity;
 
 	using Actor::Actor;
-	GraphXPlayer(const char *new_name, glm::vec3 init_position = glm::vec3(0.0f));
+	GraphXPlayer(const char* new_name, glm::vec3 init_position = glm::vec3(0.0f));
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(float offset[2], GLboolean constrain_pitch = true);
@@ -53,7 +52,6 @@ struct GraphXPlayer: Actor
 
 struct Tester: Actor
 {
-	bool renderable = true;
 	int position_flip = 0;
 
 	glm::vec3 testing_position[2] =

@@ -2,8 +2,24 @@
 // Type: Functional
 // Description: Various functions and variables for rendering
 #include "sanity.hpp"
-#include "r_common.hpp"
+#include "rendering.hpp"
 #include <iostream>
+// #include <list>
+
+//
+//
+//
+void R_RenderObjects(std::vector<Actor>& actors)
+{
+	std::vector<Actor>::iterator actor_iterator = actors.begin();
+	while(actor_iterator != actors.end())
+	{
+		Actor* current_actor = &*actor_iterator++;
+		if(current_actor == NULL || !current_actor->isVisible())
+			continue;
+		current_actor->getRenderable()->render();
+	}
+}
 
 //
 // Window Functions

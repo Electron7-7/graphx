@@ -1,6 +1,6 @@
 #include "sanity.hpp"
-#include "g_actors.hpp"
-#include "r_common.hpp"
+#include "actors.hpp"
+#include "rendering.hpp"
 
 //
 // Actor
@@ -13,10 +13,10 @@ Actor::Actor(const char* new_name, glm::vec3 init_position, glm::vec3 init_up, f
 	rotation_euler.y = init_yaw;
 	rotation_euler.x = init_pitch;
 	rotation_euler.z = 0.0f; // roll
-	updateActorVectors();
+	updateVectors();
 }
 
-void Actor::updateActorVectors()
+void Actor::updateVectors()
 {
 	glm::vec3 new_front;
 	new_front.x = cos(glm::radians(rotation_euler.y)) * cos(glm::radians(rotation_euler.x));
@@ -55,7 +55,7 @@ void GraphXPlayer::doMouseMovement(float offset[2], GLboolean constrain_pitch)
 		if(std::abs(rotation_euler.x) > 89.0f)
 			rotation_euler.x = 89.0f * ((rotation_euler.x > 0) - (rotation_euler.x < 0));
 	}
-	updateActorVectors();
+	updateVectors();
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()
@@ -67,10 +67,7 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 // Tester
 //
 Tester::Tester() : Actor("Tester", glm::vec3(-3.0f, 0.0f, 0.0f))
-{
-	texture = "src/images/COMP04_5.png";
-	render_init_cmd = new RenderInitializeCmd(texture, new float[DEFAULT_CUBE_VERTS_FLOATS], new unsigned int[DEFAULT_CUBE_INDICES_INTS], new int[DEFAULT_CUBE_ATTRIBUTES_X][DEFAULT_CUBE_ATTRIBUTES_Y]);
-}
+{}
 
 void Tester::flipPosition()
 {
@@ -78,7 +75,7 @@ void Tester::flipPosition()
 	position_global = testing_position[position_flip];
 }
 
-void Tester::makeCube()
+/*void Tester::makeCube()
 {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -97,4 +94,4 @@ void Tester::makeCube()
 void Tester::drawCube()
 {
 	glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
-}
+}*/
