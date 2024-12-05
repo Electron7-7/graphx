@@ -7,14 +7,14 @@
 
 struct Vertex
 {
-	float v_position;
-	float v_texture_coordinate;
+	glm::vec3 v_position;
+	glm::vec2 v_texture_coordinate;
 
-	Vertex(float position, float texture_coordinate) : v_position(position), v_texture_coordinate(texture_coordinate)
+	Vertex(glm::vec3 position, glm::vec2 texture_coordinate) : v_position(position), v_texture_coordinate(texture_coordinate)
 	{}
 
-	inline float getPosition() { return v_position; }
-	inline float getTextureCoordinate() { return v_texture_coordinate; }
+	inline glm::vec3 getPosition() { return v_position; }
+	inline glm::vec2 getTextureCoordinate() { return v_texture_coordinate; }
 };
 
 struct Mesh

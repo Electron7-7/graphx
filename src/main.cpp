@@ -14,7 +14,7 @@ void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 
 
-int main(int argc, char* *argv)
+int main(int argc, char** argv)
 {
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
@@ -52,30 +52,22 @@ int main(int argc, char* *argv)
 		7, 3, 5
 	};
 
-	float v_pos[3] = {-1.0f, -1.0f, -1.0f};
-	float v_coord[2] = {0.0f, 0.0f};
-	Vertex vertex_one(*v_pos, *v_coord);
-	float v_pos2[3] = {-1.0f, -1.0f,  1.0f};
-	float v_coord2[2] = {1.0f, 0.0f};
-	Vertex vertex_two(*v_pos2, *v_coord2);
-	float v_pos3[3] = {-1.0f,  1.0f, -1.0f};
-	float v_coord3[2] = {0.0f, 1.0f};
-	Vertex vertex_three(*v_pos3, *v_coord3);
-	float v_pos4[3] = {-1.0f, 1.0f, 1.0f};
-	float v_coord4[2] = {1.0f, 1.0f};
-	Vertex vertex_four(*v_pos4, *v_coord4);
-	float v_pos5[3] = {1.0f, -1.0f, -1.0f};
-	float v_coord5[2] = {1.0f, 0.0f};
-	Vertex vertex_five(*v_pos5, *v_coord5);
-	float v_pos6[3] = {1.0f, -1.0f,  1.0f};
-	float v_coord6[2] = {0.0f, 0.0f};
-	Vertex vertex_six(*v_pos6, *v_coord6);
-	float v_pos7[3] = {1.0f,  1.0f, -1.0f};
-	float v_coord7[2] = {1.0f, 1.0f};
-	Vertex vertex_seven(*v_pos7, *v_coord7);
-	float v_pos8[3] = {1.0f,  1.0f,  1.0f};
-	float v_coord8[2] = {0.0f, 1.0f};
-	Vertex vertex_eight(*v_pos8, *v_coord8);
+	
+	Vertex vertex_one(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec2({0.0f, 0.0f}));
+	
+	Vertex vertex_two(glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec2({1.0f, 0.0f}));
+	
+	Vertex vertex_three(glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec2({0.0f, 1.0f}));
+	
+	Vertex vertex_four(glm::vec3(-1.0f, 1.0f, 1.0f), glm::vec2({1.0f, 1.0f}));
+	
+	Vertex vertex_five(glm::vec3(1.0f, -1.0f, -1.0f), glm::vec2({1.0f, 0.0f}));
+	
+	Vertex vertex_six(glm::vec3(1.0f, -1.0f,  1.0f), glm::vec2({0.0f, 0.0f}));
+	
+	Vertex vertex_seven(glm::vec3(1.0f,  1.0f, -1.0f), glm::vec2({1.0f, 1.0f}));
+	
+	Vertex vertex_eight(glm::vec3(1.0f,  1.0f,  1.0f), glm::vec2({0.0f, 1.0f}));
 
 	std::vector<Vertex> cube_verts =
 	{

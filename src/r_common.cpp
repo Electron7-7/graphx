@@ -41,17 +41,15 @@ GLuint T_GenerateTexture(const char* filepath)
 Mesh::Mesh(std::vector<Vertex> vertices, const unsigned int* indices)
 {
 	int vertex_array_size = vertices.size() * 5;
-	std::vector<float> vertex_array;
+	std::vector<GLfloat> vertex_array;
 	vertex_array.reserve(vertex_array_size);
 	
-	for(unsigned int i = 0 ; i < vertex_array_size ; i++) // Keep an eye out for overflow/underflow; idk but this seems fishy
+	for(unsigned int i = 0 ; i < vertices.size() ; i++) // Keep an eye out for overflow/underflow; idk but this seems fishy
 	{
-		float position = vertices[i].getPosition();
-		float texture_coordinate = vertices[i].getTextureCoordinate();
-		std::vector<float> new_vertex_data = { position, texture_coordinate };
-		vertex_array.insert(vertex_array.end(), new_vertex_data.begin(), new_vertex_data.end());
+		glm::vec3 new_pos = vertices[i].getPosition();
+		glm::vec2 new_coord = vertices[i].getTextureCoordinate();
+		vertex_array.insert(vertex_array.begin(), );
 	}
-
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);

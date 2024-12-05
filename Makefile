@@ -3,7 +3,6 @@ CC = clang
 
 CFLAGS = -g -Wall
 CXXFLAGS = -g -Wall
-
 LIBS = -lglfw
 
 O = build

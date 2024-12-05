@@ -1,6 +1,7 @@
 // r_main.hpp - rendering code specifically for the renderer logic
 #include "sanity.hpp"
 #include "r_common.hpp"
+#include <iostream>
 
 #define GLSHADER_TYPE_VERTEX 0
 #define GLSHADER_TYPE_FRAGMENT 1
