@@ -51,8 +51,8 @@ struct RenderState
 	// glm::vec4 rotation_quaternion;
 	glm::vec3 rotation_euler;
 
-	auto tie() const;
-	bool operator==(const RenderState& right_state) const;
+	auto tie() const { return std::tie(); }
+	bool operator==(const RenderState& right_state) const { return tie() == right_state.tie(); }
 };
 #endif
 

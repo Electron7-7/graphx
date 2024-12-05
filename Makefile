@@ -10,9 +10,9 @@ O = build
 
 OBJS = \
 	$(O)/glad.o				\
-	$(O)/rendering_F.opp	\
-	$(O)/rendering_OO.opp	\
-	$(O)/actors_OO.opp
+	$(O)/r_common.opp		\
+	$(O)/r_renderer.opp		\
+	$(O)/g_actors.opp
 
 
 NAME := graphx

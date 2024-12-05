@@ -1,6 +1,6 @@
 #include "sanity.hpp"
-#include "actors.hpp"
-#include "rendering.hpp"
+#include "g_actors.hpp"
+#include "r_common.hpp"
 
 //
 // Actor

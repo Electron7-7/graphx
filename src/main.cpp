@@ -1,24 +1,9 @@
-// File Naming Conventions:
-// 1. Source code file names should clearly represent the contents of the file (i.e: code in "g_rendering_F.cpp" deals with rendering)
-// 2. All file names are prepended with a single letter which acts as a "grouping tag" (i.e: in "g_rendering_F.cpp", "g" means "game")
-// 3. All source files are split between "Functional" code and "Object-Orientated" code but will share header files, for convenience
-// 		3a. Functional source files are appended with "_F"
-// 		3b. Object-Orientated source files are appended with "_OO"
-// 4. Header code may be one file specific to one pair of source files, or many files relating to one pair of source files
-// 		4a. When naming the latter, the "grouping tags" should represent the name of the source files (i.e: in "r_common.hpp", "r" means "rendering")
-//
-// Ex:
-// 		The source code for rendering is split between g_rendering_F.cpp and g_rendering_OO.cpp
-// 		The header code for rendering is split between many files, including "r_common.hpp" and "r_renderer.hpp"
-//		The source code for game actors is split between g_actors_F.cpp and g_actors_OO.cpp
-//		The header code for game actors is all in g_actors.hpp
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
-#include "rendering.hpp"
-#include "actors.hpp"
+#include "r_main.hpp"
+#include "r_common.hpp"
+#include "g_actors.hpp"
 #include "state.hpp"
-#include <iostream>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -39,19 +24,72 @@ int main(int argc, char* *argv)
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 
 	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
-	// Tester tester;
 
-	unsigned int element_buffer, vertex_array, vertex_buffer;
-	glGenVertexArrays(1, &vertex_array);
-	glGenBuffers(1, &element_buffer);
-	glGenBuffers(1, &vertex_buffer);
+	unsigned int test_indices[36] =
+	{
+		// -X Square
+		0, 1, 2,	// Bottom Triangle
+		3, 1, 2,	// Top Triangle
 
-	glBindVertexArray(vertex_array);
+		// +X Square
+		4, 5, 6,
+		7, 5, 6,
 
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+		// -Y Square
+		0, 1, 4,
+		5, 1, 4,
 
-	// tester.makeCube();
+		// +Y Square
+		2, 3, 6,
+		7, 3, 6,
+
+		// -Z Square
+		0, 2, 4,
+		6, 2, 4,
+
+		// +Z Square
+		1, 3, 5,
+		7, 3, 5
+	};
+
+	float v_pos[3] = {-1.0f, -1.0f, -1.0f};
+	float v_coord[2] = {0.0f, 0.0f};
+	Vertex vertex_one(*v_pos, *v_coord);
+	float v_pos2[3] = {-1.0f, -1.0f,  1.0f};
+	float v_coord2[2] = {1.0f, 0.0f};
+	Vertex vertex_two(*v_pos2, *v_coord2);
+	float v_pos3[3] = {-1.0f,  1.0f, -1.0f};
+	float v_coord3[2] = {0.0f, 1.0f};
+	Vertex vertex_three(*v_pos3, *v_coord3);
+	float v_pos4[3] = {-1.0f, 1.0f, 1.0f};
+	float v_coord4[2] = {1.0f, 1.0f};
+	Vertex vertex_four(*v_pos4, *v_coord4);
+	float v_pos5[3] = {1.0f, -1.0f, -1.0f};
+	float v_coord5[2] = {1.0f, 0.0f};
+	Vertex vertex_five(*v_pos5, *v_coord5);
+	float v_pos6[3] = {1.0f, -1.0f,  1.0f};
+	float v_coord6[2] = {0.0f, 0.0f};
+	Vertex vertex_six(*v_pos6, *v_coord6);
+	float v_pos7[3] = {1.0f,  1.0f, -1.0f};
+	float v_coord7[2] = {1.0f, 1.0f};
+	Vertex vertex_seven(*v_pos7, *v_coord7);
+	float v_pos8[3] = {1.0f,  1.0f,  1.0f};
+	float v_coord8[2] = {0.0f, 1.0f};
+	Vertex vertex_eight(*v_pos8, *v_coord8);
+
+	std::vector<Vertex> cube_verts =
+	{
+		vertex_one,
+		vertex_two,
+		vertex_three,
+		vertex_four,
+		vertex_five,
+		vertex_six,
+		vertex_seven,
+		vertex_eight
+	};
+
+	Mesh test_mesh(cube_verts, test_indices);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -74,17 +112,10 @@ int main(int argc, char* *argv)
 		generic_shader.setMatrix("camera_view", camera_view);
 		generic_shader.use();
 
-		glBindVertexArray(vertex_array);
-
-		// tester.flipPosition();
-		// tester.drawCube();
+		test_mesh.draw();
 
 		glfwPollEvents();
 	}
-
-	glDeleteVertexArrays(1, &vertex_array);
-	glDeleteBuffers(1, &vertex_buffer);
-	glDeleteBuffers(1, &element_buffer);
 
 	glfwTerminate();
 	return 0;

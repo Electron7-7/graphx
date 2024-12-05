@@ -1,19 +1,8 @@
-// rendering.cpp
-// Type: Object-Orientated
-// Description: Various classes for rendering
 #include "sanity.hpp"
-#include "rendering.hpp"
+#include "r_main.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
-//
-// Mesh
-//
-bool Mesh::isEmpty()
-{
-	return true;
-}
 
 //
 // GLShader
@@ -128,3 +117,40 @@ void GLShader::shaderErrorHandler(int thing, int type)
 			break;
 	}
 }
+
+//
+// Window Functions
+//
+GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char *title, bool make_context_current)
+{
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	GLFWwindow *new_window = glfwCreateWindow(width, height, title, NULL, NULL);
+	
+	if(new_window == NULL)
+	{
+		std::cerr << "[ERROR] Failed to create GLFW window!" << std::endl;
+		glfwTerminate();
+	}
+
+	if(make_context_current)
+		glfwMakeContextCurrent(new_window);
+
+	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		std::cerr << "[ERROR] Failed to initialize GLAD!" << std::endl;
+
+	return new_window;
+}
+
+void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color_g, float clear_color_b, float clear_color_a)
+{
+	glfwSwapBuffers(w_window);
+	glClearColor(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+//
+//
+//

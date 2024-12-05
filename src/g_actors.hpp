@@ -1,5 +1,5 @@
 #include "sanity.hpp"
-#include "rendering.hpp"
+#include "r_common.hpp"
 // #include "default_cube.graphxmodel"
 
 #ifndef GRAPHX_ACTORS
@@ -64,7 +64,5 @@ struct Tester: Actor
 	Tester();
 
 	void flipPosition();
-	void makeCube();	// This should be handeled by the renderer
-	void drawCube();	// This too
 };
 #endif
