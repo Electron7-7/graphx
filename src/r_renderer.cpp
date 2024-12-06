@@ -1,8 +1,12 @@
 #include "sanity.hpp"
-#include "r_main.hpp"
+#include "r_common.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+std::vector<GLuint> render_buffer_storage;
+std::vector<GLuint> render_indices_amount_storage;
+std::vector<RenderStorageCmd> render_storage_commands;
 
 //
 // GLShader
@@ -149,4 +153,41 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 	glfwSwapBuffers(w_window);
 	glClearColor(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void R_StoreBuffers()
+{
+	for(int i = 0 ; i < render_storage_commands.size() ; i++)
+	{
+		glGenVertexArrays(1, &render_storage_commands[i].VAO);
+		glGenBuffers(1, &render_storage_commands[i].VBO);
+		glGenBuffers(1, &render_storage_commands[i].EBO);
+
+		glBindVertexArray(render_storage_commands[i].VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, render_storage_commands[i].VBO);
+		glBufferData(GL_ARRAY_BUFFER, render_storage_commands[i].vertices.size() * sizeof(float), &render_storage_commands[i].vertices[0], GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_storage_commands[i].EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, render_storage_commands[i].indices.size() * sizeof(unsigned int), &render_storage_commands[i].indices[0], GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		render_buffer_storage.push_back(render_storage_commands[i].VAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+}
+
+void R_Render()
+{
+	for(int i = 0 ; i < render_buffer_storage.size() ; i++)
+	{
+		glBindVertexArray(render_buffer_storage[i]);
+		glDrawElements(GL_TRIANGLES, render_indices_amount_storage[i], GL_UNSIGNED_INT, 0);
+	}
 }

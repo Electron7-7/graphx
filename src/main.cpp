@@ -1,9 +1,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
-#include "r_main.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "state.hpp"
+#include <vector>
 #include "default_cube.graphxmodel"
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
@@ -31,25 +31,30 @@ int main()
 	mouse_last[0] = main_window_size[0] / 2.0f;
 	mouse_last[1] = main_window_size[1] / 2.0f;
 
-	Mesh test_cube(CUBE_VERTS, CUBE_INDICES);
+
+	Tester tester("tester");
+	tester.mesh = new Mesh(CUBE_VERTS, CUBE_INDICES);
+
+	R_StoreBuffers();
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window);
 		processInput(main_window);
+		generic_shader.use();
 
-		glm::mat4 tester_location = glm::mat4(1.0f);
-		// tester_location = glm::translate(tester_location, tester.position_global);
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 		glm::mat4 camera_view = player.getViewMatrix();
 
-		generic_shader.setMatrix("model", tester_location);
+		glm::mat4 tester_location = glm::mat4(1.0f);
+		tester_location = glm::translate(tester_location, tester.position_global);
 		generic_shader.setMatrix("projection", projection);
 		generic_shader.setMatrix("camera_view", camera_view);
-		generic_shader.use();
+		generic_shader.setMatrix("model", tester_location);
+		tester.flipPosition();
 
-		test_cube.draw();
+		R_Render();
 
 		glfwPollEvents();
 	}

@@ -14,8 +14,8 @@ struct Actor
 	constexpr static const float INIT_SPEED = 2.5f;
 
 	const char* name;
-	bool visible = true;
 	Mesh* mesh;
+	bool visible = true;
 
 	glm::vec3 position_global;
 	// glm::vec4 rotation_quaternion;

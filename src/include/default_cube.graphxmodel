@@ -1,11 +1,7 @@
+#include <vector>
 #ifndef DEFAULT_CUBE
 #define DEFAULT_CUBE
-#define DEFAULT_CUBE_VERTS_FLOATS 40
-#define DEFAULT_CUBE_INDICES_INTS 36
-#define DEFAULT_CUBE_ATTRIBUTES_ROWS 2
-#define DEFAULT_CUBE_ATTRIBUTES_COLUMNS 4
-
-float CUBE_VERTS[40] =
+std::vector<float> CUBE_VERTS =
 {
 	// positions			// texture coords
 	-1.0f, -1.0f, -1.0f,	0.0f, 0.0f,			// Left		Down	Back		0
@@ -18,7 +14,7 @@ float CUBE_VERTS[40] =
 	 1.0f,  1.0f,  1.0f,	0.0f, 1.0f			// Right	Up		Forward		7
 };
 
-unsigned int CUBE_INDICES[36] =
+std::vector<unsigned int> CUBE_INDICES =
 {
 	// -X Square
 	0, 1, 2,	// Bottom Triangle
@@ -44,11 +40,4 @@ unsigned int CUBE_INDICES[36] =
 	1, 3, 5,
 	7, 3, 5
 };
-
-int CUBE_VERT_ATTRIBUTES[2][4] =
-{
-	{0, 3, 5, 0},
-	{1, 3, 5, 2}
-};
-
 #endif
