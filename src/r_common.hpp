@@ -20,10 +20,12 @@ struct Vertex
 struct Mesh
 {
 	const char* texture_image;
+	GLuint VAO, VBO, EBO;
 
-	Mesh(std::vector<Vertex> vertices, GLuint* indices);
+	Mesh(float* vertices, GLuint* indices);
 	
 	bool isEmpty();
+	void draw();
 };
 
 GLuint T_GenerateTexture(const char* filepath);

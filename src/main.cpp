@@ -4,6 +4,7 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "state.hpp"
+#include "default_cube.graphxmodel"
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -14,7 +15,7 @@ void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 
 
-int main(int argc, char** argv)
+int main()
 {
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
@@ -29,6 +30,8 @@ int main(int argc, char** argv)
 
 	mouse_last[0] = main_window_size[0] / 2.0f;
 	mouse_last[1] = main_window_size[1] / 2.0f;
+
+	Mesh test_cube(CUBE_VERTS, CUBE_INDICES);
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(main_window))
@@ -45,6 +48,8 @@ int main(int argc, char** argv)
 		generic_shader.setMatrix("projection", projection);
 		generic_shader.setMatrix("camera_view", camera_view);
 		generic_shader.use();
+
+		test_cube.draw();
 
 		glfwPollEvents();
 	}
