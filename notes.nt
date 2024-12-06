@@ -92,6 +92,7 @@ Unfixed:
 The reason for separating these is for my brain mostly. Mesh data will be stored once per time it's loaded (i.e: loading a map), and commands are generated every frame which can use/be based on the mesh data/buffers. I don't think there'd be a reason or a condition where render commands wouldn't be based on mesh/vertex data (aside from 2D rendering), so I won't account for that unless I run into it later. This means I should design the code to be flexible, which means abstracting the rendering from the API(s).
 
 I'm also foregoing the old file-naming conventions, but I'll paste them here for sake of documentation/logging:
+:::C++
 // File Naming Conventions:
 // 1. Source code file names should clearly represent the contents of the file (i.e: code in "g_rendering_F.cpp" deals with rendering)
 // 2. All file names are prepended with a single letter which acts as a "grouping tag" (i.e: in "g_rendering_F.cpp", "g" means "game")
@@ -106,7 +107,10 @@ I'm also foregoing the old file-naming conventions, but I'll paste them here for
 // 		The header code for rendering is split between many files, including "r_common.hpp" and "r_renderer.hpp"
 //		The source code for game actors is split between g_actors_F.cpp and g_actors_OO.cpp
 //		The header code for game actors is all in g_actors.hpp
-
+:::
 OI!! REMEMBER THIS!! -> you can have up to ~16 vertex attriutes BUT YOU CAN HAVE AS MANY BUFFERS AS YOU LIKE (more or less)
 
 Hmmpf, I think the reason you make a renderer class and abstract so much is because globals are a pain in the ass and while they may be programmatically more efficient, they are not kind to humans. Still, I'd like to try with a few.
+
+[12/05/24]
+I need to re-think and re-word the problems that I am trying to tackle whilst making this game engine; specifically following the lessons from "Algorithms in C (Third Edition)".

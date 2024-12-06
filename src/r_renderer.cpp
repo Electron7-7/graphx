@@ -150,7 +150,3 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 	glClearColor(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-
-//
-//
-//

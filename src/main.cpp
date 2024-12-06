@@ -25,64 +25,6 @@ int main(int argc, char** argv)
 
 	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
 
-	unsigned int test_indices[36] =
-	{
-		// -X Square
-		0, 1, 2,	// Bottom Triangle
-		3, 1, 2,	// Top Triangle
-
-		// +X Square
-		4, 5, 6,
-		7, 5, 6,
-
-		// -Y Square
-		0, 1, 4,
-		5, 1, 4,
-
-		// +Y Square
-		2, 3, 6,
-		7, 3, 6,
-
-		// -Z Square
-		0, 2, 4,
-		6, 2, 4,
-
-		// +Z Square
-		1, 3, 5,
-		7, 3, 5
-	};
-
-	
-	Vertex vertex_one(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec2({0.0f, 0.0f}));
-	
-	Vertex vertex_two(glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec2({1.0f, 0.0f}));
-	
-	Vertex vertex_three(glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec2({0.0f, 1.0f}));
-	
-	Vertex vertex_four(glm::vec3(-1.0f, 1.0f, 1.0f), glm::vec2({1.0f, 1.0f}));
-	
-	Vertex vertex_five(glm::vec3(1.0f, -1.0f, -1.0f), glm::vec2({1.0f, 0.0f}));
-	
-	Vertex vertex_six(glm::vec3(1.0f, -1.0f,  1.0f), glm::vec2({0.0f, 0.0f}));
-	
-	Vertex vertex_seven(glm::vec3(1.0f,  1.0f, -1.0f), glm::vec2({1.0f, 1.0f}));
-	
-	Vertex vertex_eight(glm::vec3(1.0f,  1.0f,  1.0f), glm::vec2({0.0f, 1.0f}));
-
-	std::vector<Vertex> cube_verts =
-	{
-		vertex_one,
-		vertex_two,
-		vertex_three,
-		vertex_four,
-		vertex_five,
-		vertex_six,
-		vertex_seven,
-		vertex_eight
-	};
-
-	Mesh test_mesh(cube_verts, test_indices);
-
 	glEnable(GL_DEPTH_TEST);
 
 	mouse_last[0] = main_window_size[0] / 2.0f;
@@ -103,8 +45,6 @@ int main(int argc, char** argv)
 		generic_shader.setMatrix("projection", projection);
 		generic_shader.setMatrix("camera_view", camera_view);
 		generic_shader.use();
-
-		test_mesh.draw();
 
 		glfwPollEvents();
 	}

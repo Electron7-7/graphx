@@ -12,20 +12,6 @@
 
 extern GLuint render_buffer_storage;
 
-struct RenderStorageCommand
-{
-	unsigned int vertex_array_object, vertex_buffer_object, element_buffer_object;
-	Vertex* vertex_array;
-	unsigned int* index_array;
-
-	RenderStorageCommand();
-};
-
-struct RenderCommand
-{
-
-};
-
 class GLShader
 {
 public:
