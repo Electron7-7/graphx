@@ -1,5 +1,6 @@
 #include "sanity.hpp"
 #include "r_common.hpp"
+#include "g_actors.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -7,6 +8,9 @@
 std::vector<GLuint> render_buffer_storage;
 std::vector<GLuint> render_indices_amount_storage;
 std::vector<RenderStorageCmd> render_storage_commands;
+
+// u_int16_t main_window_size[2] = { 1280, 720 };
+// float mouse_last[2] = { main_window_size[0] / 2.0f, main_window_size[1] / 2.0f };
 
 //
 // GLShader
@@ -183,11 +187,16 @@ void R_StoreBuffers()
 	}
 }
 
-void R_Render()
+void R_Render(GLShader current_shader)
 {
 	for(int i = 0 ; i < render_buffer_storage.size() ; i++)
 	{
 		glBindVertexArray(render_buffer_storage[i]);
+
+		glm::mat4 model_position = glm::mat4(1.0f);
+		model_position = glm::translate(model_position, renderables[i]->position_global);
+		current_shader.setMatrix("model", model_position);
+
 		glDrawElements(GL_TRIANGLES, render_indices_amount_storage[i], GL_UNSIGNED_INT, 0);
 	}
 }

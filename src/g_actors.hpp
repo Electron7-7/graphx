@@ -56,8 +56,8 @@ struct Tester: Actor
 
 	glm::vec3 testing_position[2] =
 	{
-		glm::vec3(-3.0f, 0.0f, 0.0f),
-		glm::vec3(3.0f, 0.0f, 0.0f)
+		glm::vec3(-3.0f, 2.0f, -6.0f),
+		glm::vec3(3.0f, 2.0f, -6.0f)
 	};
 
 	using Actor::Actor;
@@ -65,4 +65,7 @@ struct Tester: Actor
 
 	void flipPosition();
 };
+
+
+extern std::vector<Actor*> renderables;
 #endif

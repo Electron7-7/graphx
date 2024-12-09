@@ -3,17 +3,24 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "state.hpp"
-#include <vector>
 #include "default_cube.graphxmodel"
+#include <vector>
+#include <iostream>
+#include <thread>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
+Tester tester("tester");
+Tester tester2("tester2");
+
+void processInput(GLFWwindow* window);
+void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in);
+void testGameLogic(GLFWwindow* the_main_window);
 
 u_int16_t main_window_size[2] = { 1280, 720 };
-float mouse_last[2];
+float mouse_last[2] = { main_window_size[0] / 2.0f, main_window_size[1] / 2.0f };
 
-void processInput(GLFWwindow *window);
-void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
-
+static double TICKRATE = 70.0;
+static double tickrate_ms = 1.0 / TICKRATE;
 
 int main()
 {
@@ -31,11 +38,15 @@ int main()
 	mouse_last[0] = main_window_size[0] / 2.0f;
 	mouse_last[1] = main_window_size[1] / 2.0f;
 
-
-	Tester tester("tester");
 	tester.mesh = new Mesh(CUBE_VERTS, CUBE_INDICES);
+	tester2.mesh = new Mesh(CUBE_VERTS, CUBE_INDICES);
+
+	renderables.push_back(&tester);
+	renderables.push_back(&tester2);
 
 	R_StoreBuffers();
+
+	std::thread game_logic_thread(testGameLogic, main_window);
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(main_window))
@@ -47,14 +58,12 @@ int main()
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 		glm::mat4 camera_view = player.getViewMatrix();
 
-		glm::mat4 tester_location = glm::mat4(1.0f);
-		tester_location = glm::translate(tester_location, tester.position_global);
 		generic_shader.setMatrix("projection", projection);
 		generic_shader.setMatrix("camera_view", camera_view);
-		generic_shader.setMatrix("model", tester_location);
-		tester.flipPosition();
 
-		R_Render();
+		tester2.position_global = glm::vec3(-3.0f, -2.0f, -6.0f);
+
+		R_Render(generic_shader);
 
 		glfwPollEvents();
 	}
@@ -63,7 +72,34 @@ int main()
 	return 0;
 }
 
-void processInput(GLFWwindow *window)
+void testGameLogic(GLFWwindow* the_main_window)
+{
+	double last_time = glfwGetTime(), timer = last_time;
+	double delta_time = 0, now_time = 0;
+	int updates = 0;
+
+	while(!glfwWindowShouldClose(the_main_window))
+	{
+		now_time = glfwGetTime();
+		delta_time += (now_time - last_time) / tickrate_ms;
+		last_time = now_time;
+
+		while(delta_time >= 1.0f)
+		{
+			tester.flipPosition();
+			updates++;
+			delta_time--;
+		}
+
+		if (glfwGetTime() - timer > 1.0) {
+            timer++;
+            std::cout << " Updates:" << updates << std::endl;
+            updates = 0;
+        }
+	}
+}
+
+void processInput(GLFWwindow* window)
 {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) ==  GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -77,7 +113,7 @@ void processInput(GLFWwindow *window)
 	player.doMovement(input_vector);
 }
 
-void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
+void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in)
 {
 	float x_position = static_cast<float>(x_position_in), y_position = static_cast<float>(y_position_in);
 	float mouse_offset[2] = { x_position - mouse_last[0], mouse_last[1] - y_position };

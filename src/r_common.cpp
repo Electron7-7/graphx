@@ -1,4 +1,5 @@
 #include "sanity.hpp"
+#include "g_actors.hpp"
 #include "r_common.hpp"
 #include <iostream>
 #include <vector>

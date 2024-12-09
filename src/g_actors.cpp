@@ -66,7 +66,7 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 //
 // Tester
 //
-Tester::Tester() : Actor("Tester", glm::vec3(-3.0f, 0.0f, 0.0f))
+Tester::Tester() : Actor("Tester", glm::vec3(0.0f, 0.0f, -3.0f))
 {}
 
 void Tester::flipPosition()
@@ -95,3 +95,6 @@ void Tester::drawCube()
 {
 	glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 }*/
+
+
+std::vector<Actor*> renderables;

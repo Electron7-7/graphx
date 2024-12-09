@@ -41,10 +41,13 @@ extern std::vector<GLuint> render_buffer_storage;
 extern std::vector<GLuint> render_indices_amount_storage;
 extern std::vector<RenderStorageCmd> render_storage_commands;
 
+// extern u_int16_t main_window_size[2];
+// extern float mouse_last[2];
+
 GLFWwindow* W_CreateWindow(u_int16_t width, u_int16_t height, const char* title = "Fucking GraphX", bool make_context_current = true);
 void W_SwapAndClear(GLFWwindow* w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
 void R_StoreBuffers();
-void R_Render();
+void R_Render(GLShader current_shader);
 #endif
 
 #ifndef GRAPHX_RENDERING_COMMON
