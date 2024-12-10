@@ -1,7 +1,0 @@
-[TODO]
-
-Easy:
-	- let T_GenerateTextures take in any number of filepaths and return any number of textures (GLuint pointers)
-
-Hard:
-	- rendering

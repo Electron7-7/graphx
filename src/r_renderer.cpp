@@ -1,21 +1,19 @@
 #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
+#include "g_math.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
-std::vector<GLuint> render_buffer_storage;
-std::vector<GLuint> render_indices_amount_storage;
+std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 std::vector<RenderStorageCmd> render_storage_commands;
-
-// u_int16_t main_window_size[2] = { 1280, 720 };
-// float mouse_last[2] = { main_window_size[0] / 2.0f, main_window_size[1] / 2.0f };
+std::vector<RenderCmd> render_commands;
 
 //
 // GLShader
 //
-GLShader::GLShader(const char *vertex_path, const char *fragment_path)
+GLShader::GLShader(const char* vertex_path, const char* fragment_path)
 {
 	std::string vertex_code;
 	std::string fragment_code;
@@ -46,8 +44,8 @@ GLShader::GLShader(const char *vertex_path, const char *fragment_path)
 		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
 	}
 
-	const char *v_shader_code = vertex_code.c_str();
-	const char *f_shader_code = fragment_code.c_str();
+	const char* v_shader_code = vertex_code.c_str();
+	const char* f_shader_code = fragment_code.c_str();
 
 	unsigned int vertex, fragment;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -75,22 +73,22 @@ void GLShader::use()
 	glUseProgram(ID);
 }
 
-void GLShader::setBool(const std::string &name, bool value) const
+void GLShader::setBool(const std::string& name, bool value) const
 {
 	glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
 
-void GLShader::setInt(const std::string &name, int value) const
+void GLShader::setInt(const std::string& name, int value) const
 {
 	glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void GLShader::setFloat(const std::string &name, float value) const
+void GLShader::setFloat(const std::string& name, float value) const
 {
 	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void GLShader::setMatrix(const std::string &name, glm::mat4 value) const
+void GLShader::setMatrix(const std::string& name, glm::mat4 value) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
@@ -129,7 +127,7 @@ void GLShader::shaderErrorHandler(int thing, int type)
 //
 // Window Functions
 //
-GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char *title, bool make_context_current)
+GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char* title, bool make_context_current)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -152,7 +150,7 @@ GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char *title,
 	return new_window;
 }
 
-void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color_g, float clear_color_b, float clear_color_a)
+void W_SwapAndClear(GLFWwindow* w_window, float clear_color_r, float clear_color_g, float clear_color_b, float clear_color_a)
 {
 	glfwSwapBuffers(w_window);
 	glClearColor(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
@@ -161,13 +159,24 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 
 void R_StoreBuffers()
 {
-	for(int i = 0 ; i < render_storage_commands.size() ; i++)
+	VAO_ID_ModifiedBubbleSort(render_storage_commands);
+
+	int current_vao = -1;
+	glGenVertexArrays(VAOS_AMOUNT, &vertex_array_objects[0]);
+
+	int storage_commands_size = render_storage_commands.size();
+
+	for(int i = 0 ; i < storage_commands_size ; i++)
 	{
-		glGenVertexArrays(1, &render_storage_commands[i].VAO);
+		if(render_storage_commands[i].vao_id != current_vao)
+		{
+			current_vao++;
+			glBindVertexArray(vertex_array_objects[current_vao]);
+		}
+
 		glGenBuffers(1, &render_storage_commands[i].VBO);
 		glGenBuffers(1, &render_storage_commands[i].EBO);
 
-		glBindVertexArray(render_storage_commands[i].VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, render_storage_commands[i].VBO);
 		glBufferData(GL_ARRAY_BUFFER, render_storage_commands[i].vertices.size() * sizeof(float), &render_storage_commands[i].vertices[0], GL_STATIC_DRAW);
 
@@ -180,23 +189,25 @@ void R_StoreBuffers()
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
 
-		render_buffer_storage.push_back(render_storage_commands[i].VAO);
-
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
 	}
+
+	glBindVertexArray(0);
+
+	std::vector<RenderStorageCmd>().swap(render_storage_commands);	// This vector is only used once per level load, so free up any allocated memory
 }
 
 void R_Render(GLShader current_shader)
 {
-	for(int i = 0 ; i < render_buffer_storage.size() ; i++)
+	// FUCKING DONT FORGET TO FUCKING MODIFIED BUBBLE SORT THE RENDER COMMANDS YOU FUCKING FUCKER
+/*	for(int i = 0 ; i < render_commands.size() ; i++)
 	{
-		glBindVertexArray(render_buffer_storage[i]);
+		glBindVertexArray(render_commands[i]);
 
 		glm::mat4 model_position = glm::mat4(1.0f);
 		model_position = glm::translate(model_position, renderables[i]->position_global);
 		current_shader.setMatrix("model", model_position);
 
 		glDrawElements(GL_TRIANGLES, render_indices_amount_storage[i], GL_UNSIGNED_INT, 0);
-	}
+	}*/
 }

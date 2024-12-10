@@ -5,11 +5,11 @@
 //
 // Actor
 //
-Actor::Actor(const char* new_name, glm::vec3 init_position, glm::vec3 init_up, float init_yaw, float init_pitch) : orientation_front(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed(INIT_SPEED)
+Actor::Actor(const char* new_name, glm::vec3 init_position, float init_yaw, float init_pitch) : orientation_front(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed(INIT_SPEED)
 {
 	name = new_name;
 	position_global = init_position;
-	world_orientation_up = init_up;
+	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 	rotation_euler.y = init_yaw;
 	rotation_euler.x = init_pitch;
 	rotation_euler.z = 0.0f; // roll
@@ -66,35 +66,8 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 //
 // Tester
 //
-Tester::Tester() : Actor("Tester", glm::vec3(0.0f, 0.0f, -3.0f))
-{}
-
 void Tester::flipPosition()
 {
 	position_flip = 1 - position_flip;
 	position_global = testing_position[position_flip];
 }
-
-/*void Tester::makeCube()
-{
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// Idea: set GL_FALSE to GL_TRUE and use ints instead of floats for more efficient storage?
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	unsigned int c_texture = T_GenerateTexture(texture);
-	glBindTexture(GL_TEXTURE_2D, c_texture);
-}
-
-void Tester::drawCube()
-{
-	glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
-}*/
-
-
-std::vector<Actor*> renderables;

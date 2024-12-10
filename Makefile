@@ -9,6 +9,7 @@ O = build
 
 OBJS = \
 	$(O)/glad.o				\
+	$(O)/g_math.opp			\
 	$(O)/r_common.opp		\
 	$(O)/r_renderer.opp		\
 	$(O)/g_actors.opp

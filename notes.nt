@@ -119,3 +119,29 @@ I need to re-think and re-word the problems that I am trying to tackle whilst ma
 Brain blast happened; I'm going to keep the gl functions in the main.cpp file and that should give me a more accurate way of testing my abstraction and isolation (instead of putting them in the Mesh class??? like, why was I doing that???).
 
 I've managed to get rendering working, but there's a catch: only when there's one object in the scene. In order to render multiple objects at different locations, I need to send their location to the shader *AND* draw them all one by one (in a for loop). There's probably a better way of doing this, but that better way will still require me to make the same changes to the rendering pipeline that I'd make in implementing the for loop version, so I'll start with that.
+
+[12/09/24]
+I forgot to write this down, so I'll just paste in the git commit note from yesterday:
+
+"FUCK FUCKING YEAH!!!! GAMETICK AND FRAMERATE ARE SEPARATE AND GAMETICK CAN BE WHATEVER I SET IT TO BE!! (that and also I can render two or more separate objects at different locations). Now, this system is far from perfect or complete in any way, shape, or fashion, BUT it works and it's mildly flexible (the gameticks are on a separate thread and loop), so that means that the core idea is working and I can make changes to it without having to re-write the entire thing. One step closer to a full engine. holy shit"
+
+Okay, now for today; I'm going to attempt to separate/abstract more of the rendering code and not touch the gametick code until I've chipped away at making rendering more stable/solid. Mainly the core idea of rendering, as I have a few throwaway functions and global vectors and that's it. I want to get to a place where I can render any and all renderable objects in their proper orientations. Once I've got a small system that works decently well, then I'll let myself work on game logic.
+
+More concrete goal: remove all "gl" functions from main.cpp and isolate them to either r_renderer.cpp or whichever file I decide the renderer will stay if I change it (but keep it in ONE place!).
+
+The original idea for rendering was something like this:
+	1. All renderables are stored in a vector
+	2. All meshes belonging to the renderables generate their buffers and store their IDs in a vector
+		2a. For now, they should also store the number of indices in a separate vector until I streamline that better
+	3. The render function (whatever that may be), will go through the vectors and render the buffers with the global positions from the renderables
+
+A better way would be to combine all this render-related data into one vector, using a struct (that's the idea of the RenderCmd class, dumbass). This'll be
+what I work on first: a RenderCmd struct that'll house all relevant data for rendering, that the relevant Actor can generate and store.
+
+There's at least one problem, though: vertex data is only ever stored once (when it's first loaded) and should never be re-generated/re-stored. However, other data like global position will be allowed to change and thus must either be buffered when it's changed or simply re-loaded every frame. I'd rather it be buffered once it's changed, but that might conflict with the RenderCmd design. However, since the call to load vertex data should only get called once, I might not actually have to worry about this too much. Remember: consolidate the problem into its most basic form; i.e: get the problem down to "what data do we need and where does it need to go?" or as close as possible to that.
+
+Big thing to note: switching VAOs is costly. Try to remember what exactly a VAO is doing/containing.
+
+Okay, I think I'll be making VAOs for specific sets of meshes (i.e: one for environment/geometry, one for characters, etc.), then I'll be making sure they take up a very specific slot in the global vector (i.e: environment VAO is in the first slot). Finally, every actor/actor's mesh will have an associated type that corresponds to that VAO, as well as having offsets for the vertex and index data (at least, I assume). Then we can render using as few VAOs as possible.
+
+FUCK

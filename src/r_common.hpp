@@ -1,10 +1,18 @@
 // r_main.hpp - rendering code specifically for the renderer logic
 #include "sanity.hpp"
 #include <vector>
+#include <array>
 
-#define GLSHADER_TYPE_VERTEX 0
-#define GLSHADER_TYPE_FRAGMENT 1
-#define GLSHADER_TYPE_PROGRAM 2
+#define GLSHADER_TYPE_VERTEX	0
+#define GLSHADER_TYPE_FRAGMENT	1
+#define GLSHADER_TYPE_PROGRAM	2
+
+#define VAOS_AMOUNT		4
+//-----------------------
+#define VAO_ENVIRONMENT	0
+#define VAO_CHARACTERS	1
+#define VAO_PROPS		2
+#define VAO_TESTING		3
 
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
@@ -27,25 +35,37 @@ private:
 	void shaderErrorHandler(int thing, int type);
 };
 
+struct RenderCmd
+{
+	// int ID;							// Potential idea: can I use IDs to make sure each RenderCmd is affecting the correct vertex data/mesh?
+	unsigned int vao_id, vertex_data_offset, index_data_offset;
+	glm::vec3 render_position;
+	glm::vec3 render_rotation_euler;	// x (pitch), y (yaw), z (roll)
+};
+
 struct RenderStorageCmd
 {
-	GLuint VAO, VBO, EBO;
 	std::vector<GLfloat> vertices;
 	std::vector<GLuint> indices;
+	unsigned int vao_id, indices_amount, VBO, EBO;
 
-	RenderStorageCmd(std::vector<GLfloat> new_vertices, std::vector<GLuint> new_indices) : vertices(new_vertices), indices(new_indices)
+	RenderStorageCmd(unsigned int new_vao_id, std::vector<GLfloat> new_vertices, std::vector<GLuint> new_indices) : vertices(new_vertices), indices(new_indices), vao_id(new_vao_id), indices_amount(new_indices.size())
 	{}
 };
 
-extern std::vector<GLuint> render_buffer_storage;
-extern std::vector<GLuint> render_indices_amount_storage;
+/*
+	VERTEX ARRAY OBJECTS
+	Limit the amount used, and have each render command provide an ID to the VAO it uses AND ONLY SWITCH THEM IF NEEDED.
+	(perhaps even sort render commands by VAO IDs??)
+	(OH DEFINITELY SORT RENDER STORAGE COMMANDS BY VAO IDS!!)
+*/
+extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 extern std::vector<RenderStorageCmd> render_storage_commands;
-
-// extern u_int16_t main_window_size[2];
-// extern float mouse_last[2];
+extern std::vector<RenderCmd> render_commands;
 
 GLFWwindow* W_CreateWindow(u_int16_t width, u_int16_t height, const char* title = "Fucking GraphX", bool make_context_current = true);
 void W_SwapAndClear(GLFWwindow* w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
+
 void R_StoreBuffers();
 void R_Render(GLShader current_shader);
 #endif
@@ -53,25 +73,13 @@ void R_Render(GLShader current_shader);
 #ifndef GRAPHX_RENDERING_COMMON
 #define GRAPHX_RENDERING_COMMON
 
-struct Vertex
-{
-	glm::vec3 v_position;
-	glm::vec2 v_texture_coordinate;
-
-	Vertex(glm::vec3 position, glm::vec2 texture_coordinate) : v_position(position), v_texture_coordinate(texture_coordinate)
-	{}
-
-	inline glm::vec3 getPosition() { return v_position; }
-	inline glm::vec2 getTextureCoordinate() { return v_texture_coordinate; }
-};
-
 struct Mesh
 {
 	const char* texture_image;
 
-	Mesh(std::vector<float> new_vertices, std::vector<unsigned int> new_indices);
-
-	bool isEmpty();
+	// Note: there should be multiple constructors; one for raw vertex data, one for .obj files, etc.
+	Mesh(unsigned int vao_id, std::vector<float> new_vertices, std::vector<unsigned int> new_indices)
+	{ render_storage_commands.push_back( RenderStorageCmd(vao_id, new_vertices, new_indices) ); }
 };
 
 GLuint T_GenerateTexture(const char* filepath);

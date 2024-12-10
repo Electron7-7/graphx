@@ -14,7 +14,7 @@ struct Actor
 	constexpr static const float INIT_SPEED = 2.5f;
 
 	const char* name;
-	Mesh* mesh;
+	Mesh* mesh = NULL;
 	bool visible = true;
 
 	glm::vec3 position_global;
@@ -30,9 +30,9 @@ struct Actor
 
 	float movement_speed;
 
-	Actor(const char* new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_up = glm::vec3(0.0f, 1.0f, 0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
+	Actor(const char* new_name, glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
-	bool isVisible() { return (!mesh->isEmpty() && visible); }
+	bool isRenderable() { return ((mesh != NULL) && visible); }
 	void updateVectors();
 	void doMovement(int direction[2], float delta_time = 0.016f);
 };
@@ -61,11 +61,9 @@ struct Tester: Actor
 	};
 
 	using Actor::Actor;
-	Tester();
+	Tester() : Actor("Tester", glm::vec3(0.0f, 0.0f, -3.0f))
+	{}
 
 	void flipPosition();
 };
-
-
-extern std::vector<Actor*> renderables;
 #endif

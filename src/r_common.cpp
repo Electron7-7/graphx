@@ -2,7 +2,6 @@
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include <iostream>
-#include <vector>
 //
 // Texture Function
 //
@@ -34,10 +33,4 @@ GLuint T_GenerateTexture(const char* filepath)
 	stbi_image_free(t_data);
 
 	return t_texture;
-}
-
-Mesh::Mesh(std::vector<float> new_vertices, std::vector<unsigned int> new_indices)
-{
-	render_storage_commands.push_back(RenderStorageCmd(new_vertices, new_indices));
-	render_indices_amount_storage.push_back(new_indices.size());
 }

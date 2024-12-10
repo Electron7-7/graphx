@@ -2,11 +2,12 @@
 #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
-#include "state.hpp"
+#include "g_math.hpp"
 #include "default_cube.graphxmodel"
 #include <vector>
 #include <iostream>
 #include <thread>
+#include <cstdlib>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
 Tester tester("tester");
@@ -38,11 +39,8 @@ int main()
 	mouse_last[0] = main_window_size[0] / 2.0f;
 	mouse_last[1] = main_window_size[1] / 2.0f;
 
-	tester.mesh = new Mesh(CUBE_VERTS, CUBE_INDICES);
-	tester2.mesh = new Mesh(CUBE_VERTS, CUBE_INDICES);
-
-	renderables.push_back(&tester);
-	renderables.push_back(&tester2);
+	tester.mesh = new Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES);
+	tester2.mesh = new Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES);
 
 	R_StoreBuffers();
 
