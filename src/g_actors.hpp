@@ -1,21 +1,31 @@
 #include "sanity.hpp"
 #include "r_common.hpp"
-// #include "default_cube.graphxmodel"
+#include <vector>
 
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
-//
-// Object-Oriented
-//
 struct Actor
 {
 	constexpr static const float INIT_YAW = -90.0f;
 	constexpr static const float INIT_PITCH = 0.0f;
 	constexpr static const float INIT_SPEED = 2.5f;
 
-	const char* name;
-	Mesh* mesh = NULL;
+	int state_index = 0;
+
+	RenderState current_state_original;
+	RenderState current_state_copy = current_state_original;
+
+	RenderState previous_state_original;
+	RenderState previous_state_copy = previous_state_original;
+
+	std::vector<RenderState> current_state	=	{ current_state_original,	current_state_copy	};
+	std::vector<RenderState> previous_state	=	{ previous_state_original,	previous_state_copy	};
+
 	bool visible = true;
+	const char* name;
+	float movement_speed;
+
+	Mesh* mesh = NULL;
 
 	glm::vec3 position_global;
 	// glm::vec4 rotation_quaternion;
@@ -28,13 +38,12 @@ struct Actor
 
 	glm::vec3 world_orientation_up;
 
-	float movement_speed;
-
 	Actor(const char* new_name, glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
 	bool isRenderable() { return ((mesh != NULL) && visible); }
 	void updateVectors();
-	void doMovement(int direction[2], float delta_time = 0.016f);
+
+	virtual void Tick();
 };
 
 struct GraphXPlayer: Actor
@@ -48,6 +57,7 @@ struct GraphXPlayer: Actor
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(float offset[2], GLboolean constrain_pitch = true);
+	void doMovement(int direction[2], float delta_time = 0.016f);
 };
 
 struct Tester: Actor
@@ -66,4 +76,6 @@ struct Tester: Actor
 
 	void flipPosition();
 };
+
+extern std::vector<Actor> actors_in_current_space;
 #endif

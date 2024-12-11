@@ -145,3 +145,46 @@ Big thing to note: switching VAOs is costly. Try to remember what exactly a VAO 
 Okay, I think I'll be making VAOs for specific sets of meshes (i.e: one for environment/geometry, one for characters, etc.), then I'll be making sure they take up a very specific slot in the global vector (i.e: environment VAO is in the first slot). Finally, every actor/actor's mesh will have an associated type that corresponds to that VAO, as well as having offsets for the vertex and index data (at least, I assume). Then we can render using as few VAOs as possible.
 
 FUCK
+
+[12/10/24]
+Okay, I've finished the function for processing all the RenderStorageCmds, but now a problem: RenderCmds. See, at first I thought that since we want to sort the queue by VAO ID (to minimize CPU -> GPU data transfer), then we'd be sorting the queue every frame, which at first glance seems wildly inefficient. However, even using my simplistic modified bubble sort, since we'd be replacing RenderCmds who's relevant data has been changed (i.e: global position) and not refreshing the entire queue every frame, the average time cost would be closer to O(N) and not the worst case O(N^2). This means that my new problem is finding a way to not only populate the queue, but replace RenderCmds specific to objects that need to replace them. One thought is to give each RenderCmd a pointer/reference to the object that created them, and then upon sorting the vector update a value/pointer/reference on that object that corresponds to the RenderCmd's new index in the vector. However, this might not even be neccessary since intuitively it makes sense that using references/pointers, the object could just always know where its RenderCmd is in the vector. Since I don't know, though, I'll need to do some research.
+
+OH! WAIT!
+
+The RenderCmd queue could be a vector of REFERENCES to RenderCmds of each renderable object; they get added to the vector when they enter the scene or transition from being "not renderable" to "renderable". This would not just remove the need to replace RenderCmds, but it would also remove the need to run the modified bubble sort every frame, which would always have a chance of somehow being a worst case of O(N^2). There might be downsides to this (in fact, there most likely are, since I'm not an expert programmer and am new to this entire field of game engine programming), but it seems like a good solution so let's try it.
+
+I just finished a simple test implementation and the idea will work! However, I need to remember that if this RenderCmd queue is not being refreshed every frame, then I need safe ways of adding and removing RenderCmds from it... is what I thought until I literally when writing that just realized I could instead give each RenderCmd a flag that basically says "skip me!" and either implement a fast way of iterating through the vector that reduces the runtime from the inevitable O(N) or just... not care and let it be. The problem I forsee is related to every object that COULD be renderable having a RenderCmd in the queue. However, I could do a tricky little trick to skip these RenderCmds without iterating over them. Something like setting their "vao_id" to "-2" which would (because of the nature of the modified bubble sort and iterator) cause the "R_Render" function to just... not even consider them... I think... actually, I don't think that specific implementation would work, but something similar could. Basically, find a sneaky way of making every RenderCmd that has an "unrenderable" or whatever flag avoid being iterated by the "R_Render" function entirely. At the end of the day, overhead could be very small, however, since checking a flag SHOULD (if I'm correct) take extremely less time than getting values and sending them places (i.e: sending render_position to the shader).
+
+What needs to be done right now:
+	- change the RenderCmd vector to a RenderCmd* vector
+	- give each RenderCmd a "skip me!" flag
+	- implement skipping the relevant RenderCmds (or a sneaky way of avoiding them entirely)
+	- figure out how and when to populate RenderCmd* vector (could just be at scene load, like the RenderStorageCmd vector)
+
+NOPE! I've found the problem with my technique: rendering interpolation. It can't work if we don't have a queue of RenderCmds that gets updated each tick and instead have a static list of RenderCmd pointers to structs that could have their values changed every tick. We need to know the past. We need a queue.
+
+and i thought i was so fucking smart.
+
+Well, okay, I didn't; that's why I realized this is (I assume) the reason for using a queue and not a static list. I knew my idea sounded too simple and too different. It might work with fenangling, but then the benefits of its simplicity would fall apart.
+
+Fuck, here's where the book starts to come in handy.
+
+The problem is that I can't just sort the RenderCmds by their VAO, since the whole reason for the queue is to be able to depend on it being sorted by time. Of course, the real problem is I don't fully know how the queue should work with interpolation, since I don't know how to keep track of the amount of gameticks per frame and use that in the interpolation code. I also don't have any ideas for the interpolation code. This is ESSENTIAL for my independant gametick and framerate based design. I need to do more research...
+
+fuck me
+
+Okay, so for implementing interpolation, lag is out of the equation (should have been obvious) and should be something to avoid/remove. What we're really concerned about is offsets due to having a higher framerate than tickrate or, more specifically, having a framerate that does not divide evenly by the tickrate. This leads to a worst case of any frame being one game tick behind, and a best case of any frame being exactly on time. At a shared tick and frame rate greater than ~59, this is a delay of either ~1/60th of a second or less. This is acceptable.
+
+This is also why we store a "previous state" and a "current state" instead of accounting for every tick processed during the frame (since more than one tick per frame is a result of lag, NOT differing rates).
+
+For my first implementation, I might actually end up using my static list after all, and simply giving RenderCmds a "previous_state" and "current_state". Probably by making the queue out of a different struct that contains two different RenderCmds for each state or something like that.
+
+I'm also going to be choosing the official name for chunks of stuff in GraphX: "spaces". Basically what Godot and Unity call "scenes".
+
+Final notes: as per the comments I left in main.cpp, the current gametick testing function (which is a surrogate for the eventual final gametick function) should call the Tick() function of every Actor in the current Space, then handle the state swapping and buffering logic for each respective Actor... unless I decide to have the Actors handle that themselves (in the Tick function or with another function that's called after Tick in the gametick function). If future me is confused by my thought process, I'm partially following this (https://gamedev.stackexchange.com/questions/12754/how-to-interpolate-between-two-game-states) but I'm also sticking to DOOM's structure a bit as well. The result is (hopefully) every actor having buffered state structs that either contain the variables like "global_position" and such, or get populated with the data from the Actor's relevant variables (I like that idea more). These state structs will be used to render the Actors with the relevant (and potentially interpolated) information. How the RenderCmd queue will work and implement with this is unknown; either I link Actors' states with their relevant RenderCmd, or store it in the RenderCmd, or have the RenderCmd be a struct containing the vao_id and vertex+index offsets AND the buffered states, or some other idea.
+
+Piece by piece, you can do this; just focus, learn, and always be open to failure. Failure is always an option. Failure is progress. Success is just a reward for your consistent failures and the information you learn from them. This is a positive affirmation. Failure is positive.
+
+I love you. You are capable of this
+
+:3

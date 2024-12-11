@@ -1,6 +1,9 @@
 #include "sanity.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
+#include <vector>
+
+std::vector<Actor> actors_in_current_space;
 
 //
 // Actor
@@ -28,19 +31,17 @@ void Actor::updateVectors()
 	orientation_up = glm::normalize(glm::cross(orientation_right, orientation_front));
 }
 
-void Actor::doMovement(int direction[2], float delta_time)
-{
-	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed * delta_time);
-	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed * delta_time);
-
-	// std::cout << "(" << name << ") Position: " << glm::to_string(position_global) << std::endl;
-}
-
 //
 // GraphXPlayer
 //
 GraphXPlayer::GraphXPlayer(const char* new_name, glm::vec3 init_position) : Actor(new_name, init_position), mouse_sensitivity(INIT_SENSITIVITY)
 {}
+
+void GraphXPlayer::doMovement(int direction[2], float delta_time)
+{
+	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed * delta_time);
+	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed * delta_time);
+}
 
 void GraphXPlayer::doMouseMovement(float offset[2], GLboolean constrain_pitch)
 {

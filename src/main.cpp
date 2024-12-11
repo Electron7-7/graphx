@@ -61,6 +61,7 @@ int main()
 
 		tester2.position_global = glm::vec3(-3.0f, -2.0f, -6.0f);
 
+
 		R_Render(generic_shader);
 
 		glfwPollEvents();
@@ -84,7 +85,9 @@ void testGameLogic(GLFWwindow* the_main_window)
 
 		while(delta_time >= 1.0f)
 		{
-			tester.flipPosition();
+			// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_space
+			// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
+
 			updates++;
 			delta_time--;
 		}

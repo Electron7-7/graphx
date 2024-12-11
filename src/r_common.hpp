@@ -35,12 +35,18 @@ private:
 	void shaderErrorHandler(int thing, int type);
 };
 
-struct RenderCmd
+struct RenderState
 {
-	// int ID;							// Potential idea: can I use IDs to make sure each RenderCmd is affecting the correct vertex data/mesh?
-	unsigned int vao_id, vertex_data_offset, index_data_offset;
+	unsigned int vao_id, vertex_data_offset, index_data_offset, indices_amount;
 	glm::vec3 render_position;
 	glm::vec3 render_rotation_euler;	// x (pitch), y (yaw), z (roll)
+};
+
+struct RenderCmd
+{
+	RenderState previous_state[2];
+	RenderState current_state[2];
+	int state_index = 0;
 };
 
 struct RenderStorageCmd

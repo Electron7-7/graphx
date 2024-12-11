@@ -200,14 +200,22 @@ void R_StoreBuffers()
 void R_Render(GLShader current_shader)
 {
 	// FUCKING DONT FORGET TO FUCKING MODIFIED BUBBLE SORT THE RENDER COMMANDS YOU FUCKING FUCKER
-/*	for(int i = 0 ; i < render_commands.size() ; i++)
+	VAO_ID_ModifiedBubbleSort(render_commands); // Fuck, man, okay (in reference to above)
+
+	int current_vao = -1;
+
+	for(int i = 0 ; i < render_commands.size() ; i++)
 	{
-		glBindVertexArray(render_commands[i]);
+		if(render_commands[i].vao_id != current_vao)
+		{
+			current_vao++;
+			glBindVertexArray(vertex_array_objects[current_vao]);
+		}
 
 		glm::mat4 model_position = glm::mat4(1.0f);
-		model_position = glm::translate(model_position, renderables[i]->position_global);
+		model_position = glm::translate(model_position, render_commands[i].render_position);
 		current_shader.setMatrix("model", model_position);
 
-		glDrawElements(GL_TRIANGLES, render_indices_amount_storage[i], GL_UNSIGNED_INT, 0);
-	}*/
+		glDrawElements(GL_TRIANGLES, render_commands[i].indices_amount, GL_UNSIGNED_INT, 0);
+	}
 }
