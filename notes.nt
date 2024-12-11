@@ -65,7 +65,7 @@ That's too difficult for me. I will stick to simple things and change them later
 
 FUUUUUUCK me, dude, i don't know what to fucking do.
 
-okay, I wrote down some shit in my book; basicallly, have the model hold rendercmds that will get plopped into the renderarray every frame (with the init commands being plopped in only once, during the init call). then, render functions will go through that array and execute each "command" and then toss it out and move on to the next one. this'll require a custom resizeable array that can be initialized with an indeterminate size, but if i can do this then i'll finally fucking be rid of the "Renderer" class archetype and can rub it in everyones' faces. fuck yeah. okay, i need to do boyfriend shit so time to un-autism myself. fuck, man, fuck fuck FAHK. aight.
+okay, I wrote down some shit in my book; basicallly, have the model hold rendercmds that will get plopped into the renderarray every frame (with the init commands being plopped in only once, during the init call). then, render functions will go through that array and execute each "command" and then toss it out and move on to the next one. this'll require a custom resizeable array that can be initialized with an indeterminate size, but if i can do this then i'll finally fucking be rid of the "Renderer" class archetype and can rub it in everyones' faces. fuck yeah. okay, i need to un-autism myself and spend some time with my boyfriend who i fucking love. fuck, man, fuck fuck FAHK. aight.
 
 [12/03/24]
 Okay, here's what I'm going to do. I'll first block out the basic design of an engine. Everything to do with the core loop, basic game logic, and basic rendering. Then I'll implement it with code. Hoepfully this will help me break through this wall and I presume that after I have a way to render things dynamically, building the rest of the engine should come naturally. This means I'll be doing a lot of writing and planning before I actually code, but that's good. That should limit the amount of times I redo things and should also just limit confusion and give me a path to follow. Even if I end up tossing it out and redoing everything, it'll be a much better experience overall.
@@ -188,3 +188,6 @@ Piece by piece, you can do this; just focus, learn, and always be open to failur
 I love you. You are capable of this
 
 :3
+
+[12/11/24]
+Thank you, past me. Okay, let's do this! I think I can get back to my thought process pretty quickly, actually. Based.
