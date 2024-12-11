@@ -191,3 +191,21 @@ I love you. You are capable of this
 
 [12/11/24]
 Thank you, past me. Okay, let's do this! I think I can get back to my thought process pretty quickly, actually. Based.
+
+I'm also biting the bullet and changing Actor from struct to class; it needs private functions (and potentially variables).
+
+Sidenote: sanity.hpp might be causing the long compiling times (or just all the included header files in general). Check if gatekeeping header includes behind an #ifndef would break the program or benefit the compile times and also check if aborting use of sanity.hpp would likewise benefit compile times.
+
+Addendum to sidenote: You can (and probably should) use include guards (#ifndef) in source files when including header files (the examples I'm seeing are specifically for custom header files and not libraries so experiment with these). Since, to the compiler and linker, it really doesn't matter which file includes a header as long as one of them do, this should benefit compile times *and* satisfy clangd.
+
+Secondary sidenote: Also, you can use #else to forward declare things that other files need but would cause cyclic #include errors (i.e: class A needs class B but class B needs class A). This is actually a problem I've run into and could use this solution.
+
+I'm also making a change to render storage and instead of using commands, I'll just store pointers to the meshes since they're the exact same thing in this context. As it is right now, the Mesh struct is just passing data to a new RenderStorageCmd struct and then pushing that to the storage commands vector. The engine shouldn't have such inefficiencies; however, a higher-level application that interfaces with the engine (e.g the Godot editor, the Unity workspace, etc) can have such inefficiencies as they serve to benefit human interaction (i.e: a higher level Mesh class that just passes information to various structs withing the engine is fine in that context as it leaves these inefficiencies out of the engine and they exist to serve the human interface).
+
+All that to say: I'm replacing RenderStorageCmd with Mesh as they are functionally the same.
+
+Had to pump the emergency brakes for Dexter; he feels like shit and he's more important to me than this. I'll make inline comment notes on things but I'm only giving myself five minutes for this and I'm down the last 55 seconds. Anyways, it's fine; the idea I have is to replace RenderStorageCmds with Meshes since they serve the same purpose, and the rest will be in the comment(s)
+
+Cya later!
+
+:3

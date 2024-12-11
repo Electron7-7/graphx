@@ -4,9 +4,9 @@
 
 using namespace std;
 
-template<typename T> void VAO_ID_ModifiedBubbleSort(vector<T>& unsorted_vector)
+template<typename T> void VAO_ID_ModifiedBubbleSort(vector<T> &unsorted_vector)
 {
-	if(!unsorted_vector[0].vao_id)
+	if(!unsorted_vector[0]->vao_id)
 	{
 		std::cerr << "ERROR::MATH::VAO_ID_MODIFIEDBUBBLESORT -> vao_id does not exist within the children of the supplied vector!" << std::endl;
 		return;
@@ -18,7 +18,7 @@ template<typename T> void VAO_ID_ModifiedBubbleSort(vector<T>& unsorted_vector)
 		bool sorted = true;
 		for(int y = 0 ; y < (vector_size - 1) ; y++)
 		{
-			if(unsorted_vector[y].vao_id > unsorted_vector[y + 1].vao_id)
+			if(unsorted_vector[y]->vao_id > unsorted_vector[y + 1]->vao_id)
 			{
 				T temp_cmd(unsorted_vector[y + 1]);
 				unsorted_vector[y + 1] = unsorted_vector[y];
@@ -31,5 +31,5 @@ template<typename T> void VAO_ID_ModifiedBubbleSort(vector<T>& unsorted_vector)
 	}
 }
 
-template void VAO_ID_ModifiedBubbleSort<RenderStorageCmd>(vector<RenderStorageCmd>& unsorted_vector);
-template void VAO_ID_ModifiedBubbleSort<RenderCmd>(vector<RenderCmd>& unsorted_vector);
+template void VAO_ID_ModifiedBubbleSort<Mesh *>(vector<Mesh *> &unsorted_vector);
+template void VAO_ID_ModifiedBubbleSort<RenderCmd *>(vector<RenderCmd *> &unsorted_vector);

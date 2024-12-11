@@ -12,7 +12,8 @@ OBJS = \
 	$(O)/g_math.opp			\
 	$(O)/r_common.opp		\
 	$(O)/r_renderer.opp		\
-	$(O)/g_actors.opp
+	$(O)/g_actors.opp		\
+	$(O)/g_spaces.opp
 
 
 NAME := graphx

@@ -1,4 +1,3 @@
-#include "sanity.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include <iostream>
@@ -10,7 +9,7 @@
 // have a default missing texture that is ALWAYS able to be loaded!
 // Todo: INCLUDE THAT!
 // Todo: go from generating one texture per one filepath to n textures per n filepaths (and returning their pointers)
-GLuint T_GenerateTexture(const char* filepath)
+GLuint T_GenerateTexture(const char *filepath)
 {
 	unsigned int t_texture;
 	glGenTextures(1, &t_texture);

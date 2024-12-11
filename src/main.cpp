@@ -1,5 +1,5 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "sanity.hpp"
+// #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "g_math.hpp"
@@ -13,9 +13,9 @@ GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
 Tester tester("tester");
 Tester tester2("tester2");
 
-void processInput(GLFWwindow* window);
-void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in);
-void testGameLogic(GLFWwindow* the_main_window);
+void processInput(GLFWwindow *window);
+void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
+void testGameLogic(GLFWwindow *the_main_window);
 
 u_int16_t main_window_size[2] = { 1280, 720 };
 float mouse_last[2] = { main_window_size[0] / 2.0f, main_window_size[1] / 2.0f };
@@ -45,6 +45,8 @@ int main()
 	R_StoreBuffers();
 
 	std::thread game_logic_thread(testGameLogic, main_window);
+	
+	tester2.position_global = glm::vec3(-3.0f, -2.0f, -6.0f);
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(main_window))
@@ -59,9 +61,6 @@ int main()
 		generic_shader.setMatrix("projection", projection);
 		generic_shader.setMatrix("camera_view", camera_view);
 
-		tester2.position_global = glm::vec3(-3.0f, -2.0f, -6.0f);
-
-
 		R_Render(generic_shader);
 
 		glfwPollEvents();
@@ -71,7 +70,7 @@ int main()
 	return 0;
 }
 
-void testGameLogic(GLFWwindow* the_main_window)
+void testGameLogic(GLFWwindow *the_main_window)
 {
 	double last_time = glfwGetTime(), timer = last_time;
 	double delta_time = 0, now_time = 0;
@@ -100,7 +99,7 @@ void testGameLogic(GLFWwindow* the_main_window)
 	}
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow *window)
 {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) ==  GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -114,7 +113,7 @@ void processInput(GLFWwindow* window)
 	player.doMovement(input_vector);
 }
 
-void mouseCallback(GLFWwindow* window, double x_position_in, double y_position_in)
+void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
 	float x_position = static_cast<float>(x_position_in), y_position = static_cast<float>(y_position_in);
 	float mouse_offset[2] = { x_position - mouse_last[0], mouse_last[1] - y_position };

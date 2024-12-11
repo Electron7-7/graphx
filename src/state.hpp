@@ -1,4 +1,6 @@
 // l_state.hpp - Code relating to Actor/generic objects' states
+#ifndef GRAPHX_STATE
+#define GRAPHX_STATE
 #include "sanity.hpp"
 
 /*
@@ -32,8 +34,6 @@ the abstract "State" struct is where I'll need to write any generic state checki
 Templates could come in handy.
 */
 
-#ifndef GRAPHX_STATE_OBJECT_ORIENTATED
-#define GRAPHX_STATE_OBJECT_ORIENTATED
 //
 // State
 //
@@ -52,11 +52,6 @@ struct RenderState
 	glm::vec3 rotation_euler;
 
 	// auto tie() const { return std::tie(); }
-	// bool operator==(const RenderState& right_state) const { return tie() == right_state.tie(); }
+	// bool operator==(const RenderState &right_state) const { return tie() == right_state.tie(); }
 };
-#endif
-
-
-#ifndef GRAPHX_STATE_FUNCTIONAL
-#define GRAPHX_STATE_FUNCTIONAL
 #endif

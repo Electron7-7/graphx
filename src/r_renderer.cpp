@@ -1,6 +1,4 @@
-#include "sanity.hpp"
 #include "r_common.hpp"
-#include "g_actors.hpp"
 #include "g_math.hpp"
 #include <iostream>
 #include <fstream>
@@ -8,12 +6,12 @@
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 std::vector<RenderStorageCmd> render_storage_commands;
-std::vector<RenderCmd> render_commands;
+std::vector<RenderCmd *> render_commands;
 
 //
 // GLShader
 //
-GLShader::GLShader(const char* vertex_path, const char* fragment_path)
+GLShader::GLShader(const char *vertex_path, const char *fragment_path)
 {
 	std::string vertex_code;
 	std::string fragment_code;
@@ -44,8 +42,8 @@ GLShader::GLShader(const char* vertex_path, const char* fragment_path)
 		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
 	}
 
-	const char* v_shader_code = vertex_code.c_str();
-	const char* f_shader_code = fragment_code.c_str();
+	const char *v_shader_code = vertex_code.c_str();
+	const char *f_shader_code = fragment_code.c_str();
 
 	unsigned int vertex, fragment;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -73,22 +71,22 @@ void GLShader::use()
 	glUseProgram(ID);
 }
 
-void GLShader::setBool(const std::string& name, bool value) const
+void GLShader::setBool(const std::string &name, bool value) const
 {
 	glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
 
-void GLShader::setInt(const std::string& name, int value) const
+void GLShader::setInt(const std::string &name, int value) const
 {
 	glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void GLShader::setFloat(const std::string& name, float value) const
+void GLShader::setFloat(const std::string &name, float value) const
 {
 	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void GLShader::setMatrix(const std::string& name, glm::mat4 value) const
+void GLShader::setMatrix(const std::string &name, glm::mat4 value) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
@@ -127,7 +125,7 @@ void GLShader::shaderErrorHandler(int thing, int type)
 //
 // Window Functions
 //
-GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char* title, bool make_context_current)
+GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char *title, bool make_context_current)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -150,7 +148,7 @@ GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char* title,
 	return new_window;
 }
 
-void W_SwapAndClear(GLFWwindow* w_window, float clear_color_r, float clear_color_g, float clear_color_b, float clear_color_a)
+void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color_g, float clear_color_b, float clear_color_a)
 {
 	glfwSwapBuffers(w_window);
 	glClearColor(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
