@@ -9,6 +9,6 @@ void loadNewSpace(Space *new_space)
 	current_space = new_space;
 	for(auto& actor : new_space->my_actors)
 	{
-		actor->
+		// actor->
 	}
 }
