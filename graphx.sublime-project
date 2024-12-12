@@ -1,0 +1,27 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+			"folder_exclude_patterns": [".cache"],
+		}
+	],
+	"build_systems":
+	[
+		{
+			"name": "GraphX Pristine Test",
+			"working_dir": "${project_path}",
+			"shell_cmd": "make clean && make cleantest",
+		},
+		{
+			"name": "GraphX Clean Test",
+			"working_dir": "${project_path}",
+			"shell_cmd": "make clean && make test",
+		},
+		{
+			"name": "GraphX Dirty Test",
+			"working_dir": "${project_path}",
+			"shell_cmd": "make test",
+		}
+	]
+}
