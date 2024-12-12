@@ -1,9 +1,14 @@
-CXX = clang++
-CC = clang
+IS_WINDOWS := yes # leave empty when on linux
 
-CFLAGS = -g -Wall
-CXXFLAGS = -g -Wall
-LIBS = -lglfw
+CXX = $(if $(IS_WINDOWS), clang-cl, clang++)
+CC = $(if $(IS_WINDOWS), clang-cl, clang)
+
+CFLAGS = -g #-Wall
+CXXFLAGS = -g /EHa #-Wall
+
+LIBS_LINUX := -l glfw
+LIBS_WIN := /link "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.lib" /MD "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.dll" 
+LIBS = $(if $(IS_WINDOWS), $(LIBS_WIN), $(LIBS_LINUX))
 
 O = build
 
@@ -15,23 +20,18 @@ OBJS = \
 	$(O)/g_actors.opp		\
 	$(O)/g_spaces.opp
 
-
-NAME := graphx
-TEST_NAME := graphx.test
-
 SRC_DIR := src
 
-INCLUDES = -Isrc/include #-I/usr/include/freetype2
+INCLUDES_WIN := -I "src\\include" -I "C:\\Users\\Chea Sextillion\\include" -I "C:\\Users\\Chea Sextillion\\include\\glfw\\include"
+INCLUDES_LINUX := -I src/include #-I/usr/include/freetype2
+INCLUDES = $(if $(IS_WINDOWS), $(INCLUDES_WIN), $(INCLUDES_LINUX))
+
 
 # FPS limit for custom mangohud test run
 FPS_LIMIT := 60
 
 
 all:	$(O)/graphx_linux
-
-clean:
-	rm -f *.o *.opp
-	rm -f build/*
 
 $(O)/graphx_linux:	$(OBJS) $(O)/main.opp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp \
@@ -43,8 +43,16 @@ $(O)/%.opp:	src/%.cpp
 $(O)/%.o:	src/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+clean:
+	rm -f *.o *.opp
+	rm -f build/*
+
+windows_clean:
+	move "build\\.gitignore" ".\\"
+	del /Q "build\\*"
+	move ".gitignore" "build\\"
+
 test:	$(O)/graphx_linux
 	~/bin/mangohudtest $(FPS_LIMIT) ./build/graphx_linux
 
-cleantest: test
-	make clean
+# removed cleantest. edit the sublime-project on linux and make the pristine test build just call "make clean && make test && make clean"

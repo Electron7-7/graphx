@@ -5,9 +5,7 @@
 
 struct Space
 {
-	std::vector<Actor *> my_actors;
-
-	Space();
+	std::vector<Actor *> actors;
 };
 
 // extern std::vector<Actor *> actors_in_current_space;

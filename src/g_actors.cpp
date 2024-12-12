@@ -6,7 +6,7 @@
 // Actor
 //
 Actor::Actor(const char *new_name, Mesh init_mesh, glm::vec3 init_position, float init_yaw, float init_pitch)
-: render_command(mesh.vao_id) current_state(RenderState()), movement_speed(INIT_SPEED), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+: render_command(mesh->vao_id), current_state(RenderState()), movement_speed(INIT_SPEED), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 {
 	name = new_name;
 	position_global = init_position;

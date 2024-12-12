@@ -30,7 +30,7 @@ public:
 		then it's fine for them to have a default constructor that's overwritten later by the code or  immediately by the Actor constructor,
 		AS LONG AS the render storage is generated AFTER giving each Actor a Mesh (or leaving it as the default ERROR mesh).
 	*/
-	Mesh mesh;
+	Mesh *mesh = new Mesh;
 
 	glm::vec3 position_global;
 	// glm::vec4 rotation_quaternion;
@@ -45,7 +45,7 @@ public:
 
 	Actor(const char *new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
-	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); }
+	bool gatekeepRenderer() { return ((mesh->vao_id != VAO_ERR) && visible); }
 
 	virtual void Tick();
 
@@ -68,7 +68,7 @@ public:
 
 	using Actor::Actor;
 	GraphXPlayer(const char *new_name, glm::vec3 init_position = glm::vec3(0.0f))
-	: Actor(new_name, init_position), mouse_sensitivity(INIT_SENSITIVITY)
+	: Actor(new_name, Mesh(), init_position), mouse_sensitivity(INIT_SENSITIVITY)
 	{}
 
 	glm::mat4 getViewMatrix();
@@ -88,7 +88,7 @@ public:
 	};
 
 	using Actor::Actor;
-	Tester() : Actor("Tester", glm::vec3(0.0f, 0.0f, -3.0f))
+	Tester() : Actor("Tester", Mesh(), glm::vec3(0.0f, 0.0f, -3.0f))
 	{}
 
 	void Tick() override;

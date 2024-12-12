@@ -5,7 +5,7 @@
 #include <sstream>
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
-std::vector<RenderStorageCmd> render_storage_commands;
+std::vector<Mesh *> meshes;
 std::vector<RenderCmd *> render_commands;
 
 //
@@ -125,7 +125,7 @@ void GLShader::shaderErrorHandler(int thing, int type)
 //
 // Window Functions
 //
-GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char *title, bool make_context_current)
+GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -157,29 +157,29 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 
 void R_StoreBuffers()
 {
-	VAO_ID_ModifiedBubbleSort(render_storage_commands);
+	VAO_ID_ModifiedBubbleSort(meshes);
 
 	int current_vao = -1;
 	glGenVertexArrays(VAOS_AMOUNT, &vertex_array_objects[0]);
 
-	int storage_commands_size = render_storage_commands.size();
+	int storage_commands_size = meshes.size();
 
 	for(int i = 0 ; i < storage_commands_size ; i++)
 	{
-		if(render_storage_commands[i].vao_id != current_vao)
+		if(meshes[i]->vao_id != current_vao)
 		{
 			current_vao++;
 			glBindVertexArray(vertex_array_objects[current_vao]);
 		}
 
-		glGenBuffers(1, &render_storage_commands[i].VBO);
-		glGenBuffers(1, &render_storage_commands[i].EBO);
+		glGenBuffers(1, &meshes[i]->VBO);
+		glGenBuffers(1, &meshes[i]->EBO);
 
-		glBindBuffer(GL_ARRAY_BUFFER, render_storage_commands[i].VBO);
-		glBufferData(GL_ARRAY_BUFFER, render_storage_commands[i].vertices.size() * sizeof(float), &render_storage_commands[i].vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, meshes[i]->VBO);
+		glBufferData(GL_ARRAY_BUFFER, meshes[i]->vertices.size() * sizeof(float), &meshes[i]->vertices[0], GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_storage_commands[i].EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, render_storage_commands[i].indices.size() * sizeof(unsigned int), &render_storage_commands[i].indices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshes[i]->EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, meshes[i]->indices.size() * sizeof(unsigned int), &meshes[i]->indices[0], GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -190,30 +190,30 @@ void R_StoreBuffers()
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	glBindVertexArray(0);
+	// glBindVertexArray(0); // You shouldn't have to unbind the VAO
 
-	std::vector<RenderStorageCmd>().swap(render_storage_commands);	// This vector is only used once per level load, so free up any allocated memory
+	std::vector<Mesh *>().swap(meshes);	// This vector is only used once per level load, so free up any allocated memory
 }
 
 void R_Render(GLShader current_shader)
 {
 	// FUCKING DONT FORGET TO FUCKING MODIFIED BUBBLE SORT THE RENDER COMMANDS YOU FUCKING FUCKER
-	VAO_ID_ModifiedBubbleSort(render_commands); // Fuck, man, okay (in reference to above)
+/*	VAO_ID_ModifiedBubbleSort(render_commands); // Fuck, man, okay (in reference to above)
 
 	int current_vao = -1;
 
 	for(int i = 0 ; i < render_commands.size() ; i++)
 	{
-		if(render_commands[i].vao_id != current_vao)
+		if(render_commands[i]->vao_id != current_vao)
 		{
 			current_vao++;
 			glBindVertexArray(vertex_array_objects[current_vao]);
 		}
 
 		glm::mat4 model_position = glm::mat4(1.0f);
-		model_position = glm::translate(model_position, render_commands[i].render_position);
+		model_position = glm::translate(model_position, render_commands[i]->render_position);
 		current_shader.setMatrix("model", model_position);
 
-		glDrawElements(GL_TRIANGLES, render_commands[i].indices_amount, GL_UNSIGNED_INT, 0);
-	}
+		glDrawElements(GL_TRIANGLES, render_commands[i]->indices_amount, GL_UNSIGNED_INT, 0);
+	}*/
 }

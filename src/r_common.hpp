@@ -51,7 +51,7 @@ struct RenderCmd
 	std::vector<RenderState *> current_state_buffer;
 	std::vector<RenderState *> previous_state_buffer;
 
-	RenderCmd(unsigned int init_vao_id, std::vector<RenderState *> init_render_state_buffers)
+	RenderCmd(unsigned int init_vao_id, std::vector<RenderState *> init_render_state_buffers = {NULL, NULL})
 	: vao_id(init_vao_id), current_state_buffer(init_render_state_buffers), previous_state_buffer(init_render_state_buffers)
 	{}
 };
@@ -76,7 +76,7 @@ struct RenderCmd
 struct Mesh
 {
 	unsigned int vao_id;
-	const char *texture_image;
+	// const char *texture_image;
 	std::vector<GLfloat> vertices = {0.0f};
 	std::vector<GLuint> indices = {0};
 	unsigned int VBO = 0;
@@ -85,11 +85,11 @@ struct Mesh
 
 	// Note: there should be multiple constructors; one for raw vertex data, one for .obj files, etc.
 
-	Mesh() // Default constructor handles ERR meshes (i.e: missing/no mesh). For now, ERR meshes don't exist and are dropped entirely. There should be a default mesh for missing meshes, though
+/*	Mesh() // Default constructor handles ERR meshes (i.e: missing/no mesh). For now, ERR meshes don't exist and are dropped entirely. There should be a default mesh for missing meshes, though
 	: vao_id(VAO_ERR)
 	{}
-
-	Mesh(unsigned int init_vao_id, std::vector<GLfloat> new_vertices, std::vector<GLuint> new_indices)
+*/
+	Mesh(unsigned int init_vao_id = VAO_ERR, std::vector<GLfloat> new_vertices = {0.0f}, std::vector<GLuint> new_indices = {0})
 	: vao_id(init_vao_id), vertices(new_vertices), indices(new_indices), indices_amount(new_indices.size())
 	{}
 };
@@ -100,7 +100,7 @@ extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 extern std::vector<Mesh *> meshes; // RenderStorageCmd now changed to Mesh (functionally the same)
 extern std::vector<RenderCmd *> render_commands;
 
-GLFWwindow *W_CreateWindow(u_int16_t width, u_int16_t height, const char *title = "Fucking GraphX", bool make_context_current = true);
+GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
 
 void R_StoreBuffers();

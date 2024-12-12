@@ -3,6 +3,7 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "g_math.hpp"
+#include "g_spaces.hpp"
 #include "default_cube.graphxmodel"
 #include <vector>
 #include <iostream>
@@ -10,6 +11,7 @@
 #include <cstdlib>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
+Space test_space;
 Tester tester("tester");
 Tester tester2("tester2");
 
@@ -17,7 +19,7 @@ void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void testGameLogic(GLFWwindow *the_main_window);
 
-u_int16_t main_window_size[2] = { 1280, 720 };
+int main_window_size[2] = { 1280, 720 };
 float mouse_last[2] = { main_window_size[0] / 2.0f, main_window_size[1] / 2.0f };
 
 static double TICKRATE = 70.0;
@@ -41,6 +43,11 @@ int main()
 
 	tester.mesh = new Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES);
 	tester2.mesh = new Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES);
+
+	test_space.actors.push_back(&tester);
+	test_space.actors.push_back(&tester2);
+
+	loadNewSpace(&test_space);
 
 	R_StoreBuffers();
 
