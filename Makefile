@@ -1,27 +1,58 @@
-CXX = clang++
-CC = clang
+# IS_WINDOWS := yes # comment out when on linux
 
-NAME := graphx
-TEST_NAME := graphx.test
+CXX = $(if $(IS_WINDOWS), clang-cl, clang++)
+CC = $(if $(IS_WINDOWS), clang-cl, clang)
+
+CFLAGS = -g -Wall
+CXXFLAGS = -g -Wall
+
+LIBS_LINUX := -l glfw
+LIBS_WIN := /link "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.lib" /MD "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.dll" 
+LIBS = $(if $(IS_WINDOWS), $(LIBS_WIN), $(LIBS_LINUX))
+
+O = build
+
+OBJS = \
+	$(O)/glad.o				\
+	$(O)/g_math.opp			\
+	$(O)/r_common.opp		\
+	$(O)/r_renderer.opp		\
+	$(O)/g_actors.opp		\
+	$(O)/g_spaces.opp
 
 SRC_DIR := src
 
-INCLUDES = -Isrc/include
-LINKER_FLAGS := -lglfw
+INCLUDES_WIN := -I "src\\include" -I "C:\\Users\\Chea Sextillion\\include" -I "C:\\Users\\Chea Sextillion\\include\\glfw\\include"
+INCLUDES_LINUX := -I src/include #-I/usr/include/freetype2
+INCLUDES = $(if $(IS_WINDOWS), $(INCLUDES_WIN), $(INCLUDES_LINUX))
 
-# SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -or -name '*.c')
-SRCS := src/main.cpp src/glad.c
 
-# test:
-# 	 g++ -lglfw -Isrc/include ./src/temp_main.cpp ./src/glad.c -o test
-# 	./test
-# 	rm ./test
+# FPS limit for custom mangohud test run
+FPS_LIMIT := 60
 
-test:
-	$(CXX) $(LINKER_FLAGS) $(INCLUDES) $(SRCS) -o $(TEST_NAME)
 
-testrun: test
-	./$(TEST_NAME)
-	rm ./$(TEST_NAME)
+all:	$(O)/graphx_linux
 
-.PHONY: build test testrun clean
+$(O)/graphx_linux:	$(OBJS) $(O)/main.opp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp \
+	-o $(O)/graphx_linux $(LIBS)
+
+$(O)/%.opp:	src/%.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(O)/%.o:	src/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+clean:
+	rm -f *.o *.opp
+	rm -f build/*
+
+windows_clean:
+	move "build\\.gitignore" ".\\"
+	del /Q "build\\*"
+	move ".gitignore" "build\\"
+
+test:	$(O)/graphx_linux
+	~/bin/mangohudtest $(FPS_LIMIT) ./build/graphx_linux
+
+# removed cleantest. edit the sublime-project on linux and make the pristine test build just call "make clean && make test && make clean"
