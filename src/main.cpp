@@ -4,6 +4,7 @@
 #include "g_actors.hpp"
 #include "g_spaces.hpp"
 #include "default_cube.graphxmodel"
+#include "default_pyramid.graphxmodel"
 #include <vector>
 #include <iostream>
 #include <thread>
@@ -16,7 +17,7 @@ GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
 
 Tester tester("tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
 FlipperTester flipper_tester("flipper_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
-MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
+MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, PYRAMID_VERTS, PYRAMID_INDICES));
 
 std::vector<Actor *> dirty_load = {&tester, &flipper_tester, &mover_tester};
 Space test_space(dirty_load);
