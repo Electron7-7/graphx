@@ -1,4 +1,5 @@
 # IS_WINDOWS := yes # comment out when on linux
+# building this doesn't work for windows yet, so if you wanna do that, ur on ur own rn
 
 CXX = $(if $(IS_WINDOWS), clang-cl, clang++)
 CC = $(if $(IS_WINDOWS), clang-cl, clang)
