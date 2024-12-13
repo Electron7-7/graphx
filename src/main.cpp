@@ -1,5 +1,4 @@
 #define STB_IMAGE_IMPLEMENTATION
-// #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "g_spaces.hpp"
