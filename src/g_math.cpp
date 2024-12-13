@@ -1,5 +1,5 @@
 #include "g_math.hpp"
-#include "r_common.hpp"
+#include "g_actors.hpp"
 #include <iostream>
 
 using namespace std;
@@ -32,4 +32,4 @@ template<typename T> void VAO_ID_ModifiedBubbleSort(vector<T> &unsorted_vector)
 }
 
 template void VAO_ID_ModifiedBubbleSort<Mesh *>(vector<Mesh *> &unsorted_vector);
-template void VAO_ID_ModifiedBubbleSort<RenderCmd *>(vector<RenderCmd *> &unsorted_vector);
+template void VAO_ID_ModifiedBubbleSort<Actor *>(vector<Actor *> &unsorted_vector);

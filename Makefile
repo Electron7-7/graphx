@@ -1,10 +1,10 @@
-IS_WINDOWS := yes # leave empty when on linux
+# IS_WINDOWS := yes # comment out when on linux
 
 CXX = $(if $(IS_WINDOWS), clang-cl, clang++)
 CC = $(if $(IS_WINDOWS), clang-cl, clang)
 
-CFLAGS = -g #-Wall
-CXXFLAGS = -g /EHa #-Wall
+CFLAGS = -g -Wall
+CXXFLAGS = -g -Wall
 
 LIBS_LINUX := -l glfw
 LIBS_WIN := /link "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.lib" /MD "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.dll" 

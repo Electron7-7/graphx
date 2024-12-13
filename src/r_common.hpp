@@ -35,47 +35,9 @@ private:
 	void shaderErrorHandler(int thing, int type);
 };
 
-struct RenderState
-{
-	unsigned int vao_id;
-	// unsigned int vertex_data_offset, index_data_offset, indices_amount;
-	glm::vec3 render_position;
-	glm::vec3 render_rotation_euler;	// x (pitch), y (yaw), z (roll)
-};
-
-struct RenderCmd
-{
-	unsigned int vao_id;
-	unsigned int state_index = 0;
-
-	std::vector<RenderState *> current_state_buffer;
-	std::vector<RenderState *> previous_state_buffer;
-
-	RenderCmd(unsigned int init_vao_id, std::vector<RenderState *> init_render_state_buffers = {NULL, NULL})
-	: vao_id(init_vao_id), current_state_buffer(init_render_state_buffers), previous_state_buffer(init_render_state_buffers)
-	{}
-};
-
-/*struct RenderStorageCmd
-{
-	std::vector<GLfloat> vertices = {0.0f};
-	std::vector<GLuint> indices = {0};
-	unsigned int vao_id;
-	unsigned int indices_amount;
-	unsigned int VBO = 0;
-	unsigned int EBO = 0;
-
-	RenderStorageCmd() // The default constructor should load the verts and indices of the ERROR mesh... when it exists
-	: vao_id(VAO_ERR)
-	{}
-	RenderStorageCmd(unsigned int new_vao_id, std::vector<GLfloat> new_vertices, std::vector<GLuint> new_indices)
-	: vertices(new_vertices), indices(new_indices), vao_id(new_vao_id), indices_amount(new_indices.size())
-	{}
-};*/
-
 struct Mesh
 {
-	unsigned int vao_id;
+	unsigned int vao_id = VAO_ERR;
 	// const char *texture_image;
 	std::vector<GLfloat> vertices = {0.0f};
 	std::vector<GLuint> indices = {0};
@@ -85,20 +47,31 @@ struct Mesh
 
 	// Note: there should be multiple constructors; one for raw vertex data, one for .obj files, etc.
 
-/*	Mesh() // Default constructor handles ERR meshes (i.e: missing/no mesh). For now, ERR meshes don't exist and are dropped entirely. There should be a default mesh for missing meshes, though
-	: vao_id(VAO_ERR)
+	Mesh(unsigned int init_vao_id = VAO_ERR) // Default constructor handles ERR meshes (i.e: missing/no mesh). For now, ERR meshes don't exist and are dropped entirely. There should be a default mesh for missing meshes, though
+	: vao_id(init_vao_id)
 	{}
-*/
-	Mesh(unsigned int init_vao_id = VAO_ERR, std::vector<GLfloat> new_vertices = {0.0f}, std::vector<GLuint> new_indices = {0})
+
+	Mesh(unsigned int init_vao_id, std::vector<GLfloat> new_vertices, std::vector<GLuint> new_indices)
 	: vao_id(init_vao_id), vertices(new_vertices), indices(new_indices), indices_amount(new_indices.size())
+	{}
+};
+
+struct RenderState
+{
+	// unsigned int vao_id = VAO_ERR;
+	// unsigned int vertex_data_offset, index_data_offset, indices_amount;
+	glm::vec3 render_position = {0.0f, 0.0f, 0.0f};
+	glm::vec3 render_rotation_euler = {0.0f, 0.0f, 0.0f};	// x (pitch), y (yaw), z (roll)
+
+	RenderState(glm::vec3 init_position = {0.0f, 0.0f, 0.0f}, glm::vec3 init_euler_rotation = {0.0f, 0.0f, 0.0f})
+	: render_position(init_position), render_rotation_euler(init_euler_rotation)
 	{}
 };
 
 GLuint T_GenerateTexture(const char *filepath);
 
 extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
-extern std::vector<Mesh *> meshes; // RenderStorageCmd now changed to Mesh (functionally the same)
-extern std::vector<RenderCmd *> render_commands;
+extern std::vector<Mesh *> meshes;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);

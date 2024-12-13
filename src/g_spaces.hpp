@@ -6,9 +6,13 @@
 struct Space
 {
 	std::vector<Actor *> actors;
+
+	Space();
+	Space(std::vector<Actor *> init_actors);
+
+	void addActor(Actor *new_actor);
 };
 
-// extern std::vector<Actor *> actors_in_current_space;
 extern Space *current_space;
 
 void loadNewSpace(Space *new_space);

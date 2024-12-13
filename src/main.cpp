@@ -2,18 +2,24 @@
 // #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
-#include "g_math.hpp"
 #include "g_spaces.hpp"
 #include "default_cube.graphxmodel"
 #include <vector>
 #include <iostream>
 #include <thread>
 #include <cstdlib>
+#include <mutex>
+
+std::mutex actor_state_mutex;
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
-Space test_space;
-Tester tester("tester");
-Tester tester2("tester2");
+
+Tester tester("tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
+FlipperTester flipper_tester("flipper_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
+MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
+
+std::vector<Actor *> dirty_load = {&tester, &flipper_tester, &mover_tester};
+Space test_space(dirty_load);
 
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
@@ -41,19 +47,14 @@ int main()
 	mouse_last[0] = main_window_size[0] / 2.0f;
 	mouse_last[1] = main_window_size[1] / 2.0f;
 
-	tester.mesh = new Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES);
-	tester2.mesh = new Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES);
-
-	test_space.actors.push_back(&tester);
-	test_space.actors.push_back(&tester2);
-
 	loadNewSpace(&test_space);
 
 	R_StoreBuffers();
 
 	std::thread game_logic_thread(testGameLogic, main_window);
 	
-	tester2.position_global = glm::vec3(-3.0f, -2.0f, -6.0f);
+	tester.position_global = glm::vec3(-3.0f, 0.0f, -6.0f);
+	mover_tester.position_global = glm::vec3(0.0f, -3.0f, -6.0f);
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	while(!glfwWindowShouldClose(main_window))
@@ -74,6 +75,7 @@ int main()
 	}
 
 	glfwTerminate();
+	game_logic_thread.join();
 	return 0;
 }
 
@@ -93,6 +95,11 @@ void testGameLogic(GLFWwindow *the_main_window)
 		{
 			// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_space
 			// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
+			for(Actor *actor : current_space->actors)
+			{
+				actor->Tick();
+				actor->updateStates(&actor_state_mutex);
+			}
 
 			updates++;
 			delta_time--;

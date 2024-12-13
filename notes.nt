@@ -209,3 +209,12 @@ Had to pump the emergency brakes for Dexter; he feels like shit and he's more im
 Cya later!
 
 :3
+
+[12/12/24]
+Alright, time to finish what I started yesterday (hopefully, at least).
+
+Idea: in the Actor constructor, instead of making an empty RenderCmd, what if the constructor was passed a reference to the Actor's mesh and the RenderCmd constructor handled all the data storage?
+
+I'm getting rid of RenderCmd and just iterating through a list of Actor pointers. This is because the RenderCmd structure is just over-engineered for my simple and beginner-level knowledge. It's also more suitable for multiplayer and I'm not touching that with a ten foot pole yet. I also plan on re-writing most, if not all, of the engine when I'm done, so this should be suitable for now.
+
+Okay, after a lot of coding I have this: the render function works, the Space struct works, the multithreading works (and I have yet to run into a race condition bc I used a mutex lock_guard), and the only thing that might be broken is the vertex+index data. Basically, I don't use any offsets when rendering vertices but I don't see anything wrong, however, since all the testers use the same cube verts and indices, it could look fine but they're all using the same exact vertices (when they shouldn't).

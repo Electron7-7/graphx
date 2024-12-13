@@ -1,19 +1,19 @@
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include <vector>
+#include <mutex>
 
 //
 // Actor
 //
 Actor::Actor(const char *new_name, Mesh init_mesh, glm::vec3 init_position, float init_yaw, float init_pitch)
-: render_command(mesh->vao_id), current_state(RenderState()), movement_speed(INIT_SPEED), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+: mesh(init_mesh), vao_id(mesh.vao_id), movement_speed(INIT_SPEED), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 {
 	name = new_name;
 	position_global = init_position;
 	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	rotation_euler.y = init_yaw;
-	rotation_euler.x = init_pitch;
-	rotation_euler.z = 0.0f; // roll
+	rotation_euler = glm::vec3(init_pitch, init_yaw, 0.0f);
+	// current_state = RenderState(init_position, rotation_euler);
 	updateVectors();
 }
 
@@ -29,8 +29,9 @@ void Actor::updateVectors()
 	orientation_up = glm::normalize(glm::cross(orientation_right, orientation_front));
 }
 
-void Actor::updateStates()
+void Actor::updateStates(std::mutex *state_mutex)
 {
+	std::lock_guard<std::mutex> guard(*state_mutex);
 	// Copy current state into previous state
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
 
@@ -44,7 +45,7 @@ void Actor::updateStates()
 
 void Actor::Tick()
 {
-	updateStates();
+
 }
 
 //
@@ -77,13 +78,28 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 	return glm::lookAt(position_global, position_global + orientation_front, orientation_up);
 }
 
-//
-// Tester
-//
-void Tester::Tick()
+
+void FlipperTester::Tick()
 {
 	position_flip = 1 - position_flip;
 	position_global = testing_position[position_flip];
 
-	// Actor::Tick(); // If/when generic Actors have code written to their Tick function, I'll probably want that code to run in any derived class; this is how you call that code
+	Actor::Tick();
+}
+
+
+void MoverTester::Tick()
+{
+	if( (position_global.x >= 3.0f) || (position_global.x <= -3.0f) )
+	{
+		t_direction = 1 - t_direction;
+	}
+	if(t_direction == 0)
+	{
+		position_global.x += t_movement_speed;
+	}
+	if(t_direction == 1)
+	{
+		position_global.x -= t_movement_speed;
+	}
 }

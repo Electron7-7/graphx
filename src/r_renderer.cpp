@@ -1,3 +1,4 @@
+#include "g_spaces.hpp"
 #include "r_common.hpp"
 #include "g_math.hpp"
 #include <iostream>
@@ -6,8 +7,6 @@
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 std::vector<Mesh *> meshes;
-std::vector<RenderCmd *> render_commands;
-
 //
 // GLShader
 //
@@ -197,23 +196,43 @@ void R_StoreBuffers()
 
 void R_Render(GLShader current_shader)
 {
-	// FUCKING DONT FORGET TO FUCKING MODIFIED BUBBLE SORT THE RENDER COMMANDS YOU FUCKING FUCKER
-/*	VAO_ID_ModifiedBubbleSort(render_commands); // Fuck, man, okay (in reference to above)
+	VAO_ID_ModifiedBubbleSort(current_space->actors);
 
-	int current_vao = -1;
-
-	for(int i = 0 ; i < render_commands.size() ; i++)
+	int current_vao_index = -1;
+	for(Actor *actor : current_space->actors)
 	{
-		if(render_commands[i]->vao_id != current_vao)
+		if(actor->vao_id != current_vao_index)
 		{
-			current_vao++;
-			glBindVertexArray(vertex_array_objects[current_vao]);
+			current_vao_index++;
+			glBindVertexArray(vertex_array_objects[current_vao_index]);
 		}
 
+		// Take a lock out on current_state[state_index]
 		glm::mat4 model_position = glm::mat4(1.0f);
-		model_position = glm::translate(model_position, render_commands[i]->render_position);
+		model_position = glm::translate(model_position, actor->current_state_buffer[actor->state_index].render_position);
 		current_shader.setMatrix("model", model_position);
 
-		glDrawElements(GL_TRIANGLES, render_commands[i]->indices_amount, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
+	}
+
+/*	for(int vao_filter = 0 ; vao_filter <= VAOS_AMOUNT ; vao_filter++)
+	{
+		bool something_rendered = false;
+		for(Actor *actor : current_space->actors)
+		{
+			if(actor->vao_id == vao_filter)
+			{
+				// Take a lock out on current_state[state_index]
+				glm::mat4 model_position = glm::mat4(1.0f);
+				model_position = glm::translate(model_position, actor->current_state_buffer[actor->state_index].render_position);
+				current_shader.setMatrix("model", model_position);
+
+				glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
+				something_rendered = true;
+			}
+		}
+
+		if(something_rendered)
+			glBindVertexArray(vertex_array_objects[vao_filter + 1]);
 	}*/
 }
