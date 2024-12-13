@@ -21,14 +21,15 @@ FlipperTester flipper_tester("flipper_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUB
 MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, PYRAMID_VERTS, PYRAMID_INDICES));
 
 std::vector<Actor *> dirty_load = {&tester, &flipper_tester, &mover_tester};
+
 Space test_space(dirty_load);
 
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void testGameLogic(GLFWwindow *the_main_window);
 
-int main_window_size[2] = { 1280, 720 };
-float mouse_last[2] = { main_window_size[0] / 2.0f, main_window_size[1] / 2.0f };
+std::vector<int> main_window_size = { 1280, 720 };
+std::vector<float> mouse_last = { main_window_size[0] / 2.0f, main_window_size[1] / 2.0f };
 
 static double TICKRATE = 70.0;
 static double tickrate_ms = 1.0 / TICKRATE;
@@ -62,7 +63,7 @@ int main()
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window);
-		processInput(main_window);
+
 		generic_shader.use();
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
@@ -72,8 +73,6 @@ int main()
 		generic_shader.setMatrix("camera_view", camera_view);
 
 		R_Render(generic_shader);
-
-		glfwPollEvents();
 	}
 
 	glfwTerminate();
@@ -83,9 +82,8 @@ int main()
 
 void testGameLogic(GLFWwindow *the_main_window)
 {
-	double last_time = glfwGetTime(), timer = last_time;
+	double last_time = glfwGetTime();
 	double delta_time = 0, now_time = 0;
-	int updates = 0;
 
 	while(!glfwWindowShouldClose(the_main_window))
 	{
@@ -95,23 +93,19 @@ void testGameLogic(GLFWwindow *the_main_window)
 
 		while(delta_time >= 1.0f)
 		{
-			// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_space
-			// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
+			processInput(the_main_window);
+			glfwPollEvents();
+
 			for(Actor *actor : current_space->actors)
 			{
+				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_space
+				// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
 				actor->Tick();
 				actor->updateStates(&actor_state_mutex);
 			}
 
-			updates++;
 			delta_time--;
 		}
-
-		if (glfwGetTime() - timer > 1.0) {
-            timer++;
-            std::cout << " Updates:" << updates << std::endl;
-            updates = 0;
-        }
 	}
 }
 
@@ -131,11 +125,19 @@ void processInput(GLFWwindow *window)
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
-	float x_position = static_cast<float>(x_position_in), y_position = static_cast<float>(y_position_in);
-	float mouse_offset[2] = { x_position - mouse_last[0], mouse_last[1] - y_position };
+	std::vector<float> m_position =
+	{
+		static_cast<float>(x_position_in),
+		static_cast<float>(y_position_in)
+	};
 
-	mouse_last[0] = x_position;
-	mouse_last[1] = y_position;
+	std::vector<float> mouse_offset =
+	{
+		m_position[0] - mouse_last[0],
+		mouse_last[1] - m_position[1]
+	};
+
+	mouse_last = m_position;
 
 	player.doMouseMovement(mouse_offset);
 }

@@ -70,8 +70,10 @@ public:
 	{}
 
 	glm::mat4 getViewMatrix();
-	void doMouseMovement(float offset[2], GLboolean constrain_pitch = true);
+	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
 	void doMovement(int direction[2], float delta_time = 0.016f);
+
+	void Tick() override;
 };
 
 class Tester: public Actor

@@ -57,7 +57,7 @@ void GraphXPlayer::doMovement(int direction[2], float delta_time)
 	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed * delta_time);
 }
 
-void GraphXPlayer::doMouseMovement(float offset[2], GLboolean constrain_pitch)
+void GraphXPlayer::doMouseMovement(std::vector<float> offset, bool constrain_pitch)
 {
 	offset[0] *= mouse_sensitivity;
 	offset[1] *= mouse_sensitivity;
@@ -70,6 +70,7 @@ void GraphXPlayer::doMouseMovement(float offset[2], GLboolean constrain_pitch)
 		if(std::abs(rotation_euler.x) > 89.0f)
 			rotation_euler.x = 89.0f * ((rotation_euler.x > 0) - (rotation_euler.x < 0));
 	}
+
 	updateVectors();
 }
 
@@ -78,7 +79,14 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 	return glm::lookAt(position_global, position_global + orientation_front, orientation_up);
 }
 
+void GraphXPlayer::Tick()
+{
 
+}
+
+//
+// Testers
+//
 void FlipperTester::Tick()
 {
 	position_flip = 1 - position_flip;
