@@ -8,12 +8,6 @@
 class Actor
 {
 public:
-	/*
-		EMERGENCY BRAKE
-		Actors should always have meshes (Thinkers will be for non-rendered game objects). If the render storage vector is full of Mesh pointers
-		then it's fine for them to have a default constructor that's overwritten later by the code or  immediately by the Actor constructor,
-		AS LONG AS the render storage is generated AFTER giving each Actor a Mesh (or leaving it as the default ERROR mesh).
-	*/
 	Mesh mesh;
 
 	RenderState current_state;
@@ -82,8 +76,6 @@ public:
 	using Actor::Actor;
 	Tester() : Actor("Tester", Mesh(), glm::vec3(0.0f, 0.0f, -3.0f))
 	{}
-
-	// void Tick() override;
 };
 
 class FlipperTester: public Tester
@@ -109,5 +101,6 @@ class MoverTester: public Tester
 	using Tester::Tester;
 
 	void Tick() override;
+	void updateStates(std::mutex *state_mutex) override;
 };
 #endif

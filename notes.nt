@@ -218,3 +218,35 @@ Idea: in the Actor constructor, instead of making an empty RenderCmd, what if th
 I'm getting rid of RenderCmd and just iterating through a list of Actor pointers. This is because the RenderCmd structure is just over-engineered for my simple and beginner-level knowledge. It's also more suitable for multiplayer and I'm not touching that with a ten foot pole yet. I also plan on re-writing most, if not all, of the engine when I'm done, so this should be suitable for now.
 
 Okay, after a lot of coding I have this: the render function works, the Space struct works, the multithreading works (and I have yet to run into a race condition bc I used a mutex lock_guard), and the only thing that might be broken is the vertex+index data. Basically, I don't use any offsets when rendering vertices but I don't see anything wrong, however, since all the testers use the same cube verts and indices, it could look fine but they're all using the same exact vertices (when they shouldn't).
+
+[12/13/24]
+OK, here's a list of things that need to (or that I'd like to) get done before I can fully start making a game and working on things other than rendering:
+	- Render interpolation (!!!)
+	- Textures
+	- Mesh/model files (.obj, .glb, etc.)
+	- Addition of using a sprite instead of a mesh (with toggleable billboarding?)
+
+Also, I'll move the rendering loop to it's own thread.
+
+Oh, another important note: I currently only use one vertex and one fragment shader each for all rendering right now; I'll definitely start using more than one for different types of objects and whatever else, so I'll need to keep in mind while building the rendering pipeline backbone that it'll need to accomodate multiple different shaders at some point.
+
+Running into issues with the GLShader class and multithreading (mainly abstraction, actually). However, it leads me to a good question: why am I making a GLShader class object in the main file still? Also, do I really still need a GLShader class?
+
+I'm fucking stupid holy shit. I wasted almost an hour on an error that was being caused because I put the fucking generic_shader instantiation at the top of the main file BEFORE GLFW OR GLAD EVEN GET FUCKING INSTANCED.
+
+Pissed off lmfao.
+
+Note for later: put the mouse callback and input handling functions in "r_common.cpp" and any time a context changes to another window, assign/reassign the neccessary callback functions, i.e: assign the new window's mouse callback function to the global mouse callback function in "r_common.cpp". This also allows me to make different callback functions and assign specific ones for specific purposes/windows. Definitely less important than the rendering stuff, but still a good note.
+
+Oh, also, I'll have to write a higher-level key-handler system at some point down the road. (https://gamedev.stackexchange.com/questions/150157/how-to-improve-my-input-handling-in-glfw) is a good reference, as well as (https://stackoverflow.com/questions/46631814/handling-multiple-keys-input-at-once-with-glfw)
+
+By the way, I used this (https://stackoverflow.com/questions/20390028/c-using-glfwgettime-for-a-fixed-time-step) as the structure for the current game logic function and tick update tracking.
+
+Fuck, man, I wish I could make this work but I need to practice restraint with my perfectionism and flow-state/drive.
+
+Only notes for next time I pick this up are:
+	work on interpolation; it's so close, but something is messing up. could possibly be that the buffer is either not working or is working against the interpolation (because I'm doing it wrong). It does go smoothly at first (when the previous state buffers are empty), but then it breaks.
+
+You got this; I love you.
+
+:3

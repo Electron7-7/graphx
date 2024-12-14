@@ -4,9 +4,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cmath>
+#include <typeinfo>
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
+std::vector<GLuint> shaders;
 std::vector<Mesh *> meshes;
+
 //
 // GLShader
 //
@@ -19,7 +23,7 @@ GLShader::GLShader(const char *vertex_path, const char *fragment_path)
 
 	v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 	f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	
+
 	try
 	{
 		v_shader_file.open(vertex_path);
@@ -189,13 +193,15 @@ void R_StoreBuffers()
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	// glBindVertexArray(0); // You shouldn't have to unbind the VAO
-
 	std::vector<Mesh *>().swap(meshes);	// This vector is only used once per level load, so free up any allocated memory
 }
 
-void R_Render(GLShader current_shader)
+void R_Render(GLShader *current_shader, std::mutex *state_mutex, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
 {
+	current_shader->use();
+	current_shader->setMatrix("projection", projection);
+	current_shader->setMatrix("camera_view", camera_view);
+
 	VAO_ID_ModifiedBubbleSort(current_space->actors);
 
 	int current_vao_index = -1;
@@ -206,33 +212,30 @@ void R_Render(GLShader current_shader)
 			current_vao_index++;
 			glBindVertexArray(vertex_array_objects[current_vao_index]);
 		}
+		std::lock_guard<std::mutex> guard(*state_mutex);
 
-		// Take a lock out on current_state[state_index]
-		glm::mat4 model_position = glm::mat4(1.0f);
-		model_position = glm::translate(model_position, actor->current_state_buffer[actor->state_index].render_position);
-		current_shader.setMatrix("model", model_position);
+		/*
+		Pseudo Code
+			Lerp(previous_state[state_index].position, current_state[state_index].position, elapsed/update_tick_length)
+		*/
+		glm::vec3 current_position = actor->current_state_buffer[actor->state_index].render_position;
+		glm::vec3 previous_position = actor->previous_state_buffer[actor->state_index].render_position;
+		glm::vec3 interpolated_position = glm::vec3(0.0f);
 
-		glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
-	}
+		interpolated_position.x = std::lerp(previous_position.x, current_position.x, interpolation_time);
+		interpolated_position.y = std::lerp(previous_position.y, current_position.y, interpolation_time);
+		interpolated_position.z = std::lerp(previous_position.z, current_position.z, interpolation_time);
 
-/*	for(int vao_filter = 0 ; vao_filter <= VAOS_AMOUNT ; vao_filter++)
-	{
-		bool something_rendered = false;
-		for(Actor *actor : current_space->actors)
+		if(strcmp(typeid(*actor).name(), "11MoverTester") == 0)
 		{
-			if(actor->vao_id == vao_filter)
-			{
-				// Take a lock out on current_state[state_index]
-				glm::mat4 model_position = glm::mat4(1.0f);
-				model_position = glm::translate(model_position, actor->current_state_buffer[actor->state_index].render_position);
-				current_shader.setMatrix("model", model_position);
-
-				glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
-				something_rendered = true;
-			}
+			std::cout << std::endl << std::endl << "----> Current Position: " << glm::to_string(current_position) << "\n----> Last Position: " << glm::to_string(previous_position) << std::endl << std::endl;
+			std::cout << "----> Interpolated Position: " << glm::to_string(interpolated_position) << std::endl << std::endl;
 		}
 
-		if(something_rendered)
-			glBindVertexArray(vertex_array_objects[vao_filter + 1]);
-	}*/
+		glm::mat4 model_position = glm::mat4(1.0f);
+		model_position = glm::translate(model_position, interpolated_position);
+
+		current_shader->setMatrix("model", model_position);
+		glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
+	}
 }

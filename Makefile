@@ -1,14 +1,12 @@
 # IS_WINDOWS := yes # comment out when on linux
 
-CXX = $(if $(IS_WINDOWS), clang-cl, clang++)
-CC = $(if $(IS_WINDOWS), clang-cl, clang)
+CXX = clang++
+CC = clang
 
 CFLAGS = -g -Wall
-CXXFLAGS = -g -Wall
+CXXFLAGS = -g -Wall -std=c++20
 
-LIBS_LINUX := -l glfw
-LIBS_WIN := /link "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.lib" /MD "C:\Users\Chea Sextillion\include\glfw\lib-vc2022\glfw3.dll" 
-LIBS = $(if $(IS_WINDOWS), $(LIBS_WIN), $(LIBS_LINUX))
+LIBS = -l glfw
 
 O = build
 
@@ -22,9 +20,7 @@ OBJS = \
 
 SRC_DIR := src
 
-INCLUDES_WIN := -I "src\\include" -I "C:\\Users\\Chea Sextillion\\include" -I "C:\\Users\\Chea Sextillion\\include\\glfw\\include"
-INCLUDES_LINUX := -I src/include #-I/usr/include/freetype2
-INCLUDES = $(if $(IS_WINDOWS), $(INCLUDES_WIN), $(INCLUDES_LINUX))
+INCLUDES = -I src/include #-I/usr/include/freetype2
 
 
 # FPS limit for custom mangohud test run

@@ -7,8 +7,9 @@ struct Space
 {
 	std::vector<Actor *> actors;
 
-	Space();
-	Space(std::vector<Actor *> init_actors);
+	Space(std::vector<Actor *> init_actors)
+	: actors(init_actors)
+	{}
 
 	void addActor(Actor *new_actor);
 };

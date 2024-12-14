@@ -2,6 +2,7 @@
 #include "r_common.hpp"
 #include <vector>
 #include <mutex>
+#include <iostream>
 
 //
 // Actor
@@ -32,6 +33,22 @@ void Actor::updateVectors()
 void Actor::updateStates(std::mutex *state_mutex)
 {
 	std::lock_guard<std::mutex> guard(*state_mutex);
+
+	// Copy current state into previous state
+	previous_state_buffer[state_index] = current_state_buffer[state_index];
+
+	// Update current state
+	current_state_buffer[state_index].render_position = position_global;
+	current_state_buffer[state_index].render_rotation_euler = rotation_euler;
+
+	// Flip state buffer
+	state_index = 1 - state_index;
+}
+
+void MoverTester::updateStates(std::mutex *state_mutex)
+{
+	std::lock_guard<std::mutex> guard(*state_mutex);
+
 	// Copy current state into previous state
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
 
@@ -80,9 +97,7 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 }
 
 void GraphXPlayer::Tick()
-{
-
-}
+{}
 
 //
 // Testers

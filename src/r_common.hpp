@@ -1,7 +1,8 @@
-// r_main.hpp - rendering code specifically for the renderer logic
+// r_common.hpp - rendering declarations
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "sanity.hpp"
+#include <mutex>
 #include <vector>
 #include <array>
 
@@ -58,8 +59,6 @@ struct Mesh
 
 struct RenderState
 {
-	// unsigned int vao_id = VAO_ERR;
-	// unsigned int vertex_data_offset, index_data_offset, indices_amount;
 	glm::vec3 render_position = {0.0f, 0.0f, 0.0f};
 	glm::vec3 render_rotation_euler = {0.0f, 0.0f, 0.0f};	// x (pitch), y (yaw), z (roll)
 
@@ -68,14 +67,13 @@ struct RenderState
 	{}
 };
 
-GLuint T_GenerateTexture(const char *filepath);
-
 extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 extern std::vector<Mesh *> meshes;
+extern std::vector<GLuint> shaders;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
-
-void R_StoreBuffers();
-void R_Render(GLShader current_shader);
+void		W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
+GLuint 		T_GenerateTexture(const char *filepath);
+void 		R_StoreBuffers();
+void 		R_Render(GLShader *current_shader, std::mutex *state_mutex, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view);
 #endif
