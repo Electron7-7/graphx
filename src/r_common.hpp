@@ -75,5 +75,5 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking G
 void		W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
 GLuint 		T_GenerateTexture(const char *filepath);
 void 		R_StoreBuffers();
-void 		R_Render(GLShader *current_shader, std::mutex *state_mutex, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view);
+void 		R_Render(GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view);
 #endif

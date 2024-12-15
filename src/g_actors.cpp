@@ -14,7 +14,7 @@ Actor::Actor(const char *new_name, Mesh init_mesh, glm::vec3 init_position, floa
 	position_global = init_position;
 	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 	rotation_euler = glm::vec3(init_pitch, init_yaw, 0.0f);
-	// current_state = RenderState(init_position, rotation_euler);
+	current_state = RenderState(init_position, rotation_euler);
 	updateVectors();
 }
 
@@ -30,9 +30,14 @@ void Actor::updateVectors()
 	orientation_up = glm::normalize(glm::cross(orientation_right, orientation_front));
 }
 
-void Actor::updateStates(std::mutex *state_mutex)
+void Actor::updateStates()
 {
-	std::lock_guard<std::mutex> guard(*state_mutex);
+	// if(strcmp(typeid(*this).name(), "11MoverTester") == 0)
+	// {
+	// 	std::cout << std::endl << std::endl << "Game Logic is now updating an Actor's state!" << std::endl << "State Index is currently: " << state_index << std::endl;
+	// 	std::cout << "Previous State Buffer render_position: " << glm::to_string(previous_state_buffer[state_index].render_position) << std::endl;
+	// 	std::cout << "Current State Buffer render_position: " << glm::to_string(current_state_buffer[state_index].render_position) << std::endl << std::endl;
+	// }
 
 	// Copy current state into previous state
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
@@ -41,23 +46,22 @@ void Actor::updateStates(std::mutex *state_mutex)
 	current_state_buffer[state_index].render_position = position_global;
 	current_state_buffer[state_index].render_rotation_euler = rotation_euler;
 
-	// Flip state buffer
-	state_index = 1 - state_index;
-}
-
-void MoverTester::updateStates(std::mutex *state_mutex)
-{
-	std::lock_guard<std::mutex> guard(*state_mutex);
-
-	// Copy current state into previous state
-	previous_state_buffer[state_index] = current_state_buffer[state_index];
-
-	// Update current state
-	current_state_buffer[state_index].render_position = position_global;
-	current_state_buffer[state_index].render_rotation_euler = rotation_euler;
+	// if(strcmp(typeid(*this).name(), "11MoverTester") == 0)
+	// {
+	// 	std::cout << "Game Logic is finished updating an Actor's state!" << std::endl << "State Index is currently: " << state_index << std::endl;
+	// 	std::cout << "Previous State Buffer render_position: " << glm::to_string(previous_state_buffer[state_index].render_position) << std::endl;
+	// 	std::cout << "Current State Buffer render_position: " << glm::to_string(current_state_buffer[state_index].render_position) << std::endl << std::endl;
+	// }
 
 	// Flip state buffer
 	state_index = 1 - state_index;
+
+	// if(strcmp(typeid(*this).name(), "11MoverTester") == 0)
+	// {
+	// 	std::cout << "State Index flipped!" << std::endl << "State Index is currently: " << state_index << std::endl;
+	// 	std::cout << "Previous State Buffer render_position: " << glm::to_string(previous_state_buffer[state_index].render_position) << std::endl;
+	// 	std::cout << "Current State Buffer render_position: " << glm::to_string(current_state_buffer[state_index].render_position) << std::endl << std::endl;
+	// }
 }
 
 void Actor::Tick()
@@ -113,6 +117,8 @@ void FlipperTester::Tick()
 
 void MoverTester::Tick()
 {
+	// std::cout << "\n\nMover Tester is moving! (Tick function called)\nGlobal Position: " << glm::to_string(position_global);
+
 	if( (position_global.x >= 3.0f) || (position_global.x <= -3.0f) )
 	{
 		t_direction = 1 - t_direction;
@@ -125,4 +131,6 @@ void MoverTester::Tick()
 	{
 		position_global.x -= t_movement_speed;
 	}
+
+	// std::cout << "\n\nMover Tester finished moving! (Tick function finished)\nGlobal Position: " << glm::to_string(position_global);
 }

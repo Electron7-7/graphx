@@ -24,7 +24,7 @@ INCLUDES = -I src/include #-I/usr/include/freetype2
 
 
 # FPS limit for custom mangohud test run
-FPS_LIMIT := 60
+FPS_LIMIT := 30
 
 
 all:	$(O)/graphx_linux

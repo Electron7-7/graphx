@@ -196,11 +196,16 @@ void R_StoreBuffers()
 	std::vector<Mesh *>().swap(meshes);	// This vector is only used once per level load, so free up any allocated memory
 }
 
-void R_Render(GLShader *current_shader, std::mutex *state_mutex, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
+void R_Render(GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
 {
-	current_shader->use();
-	current_shader->setMatrix("projection", projection);
-	current_shader->setMatrix("camera_view", camera_view);
+	/*
+	Pseudo Code for Lerp
+		Lerp(previous_state[state_index].position, current_state[state_index].position, elapsed/update_tick_length)
+	*/
+
+	current_shader.use();
+	current_shader.setMatrix("projection", projection);
+	current_shader.setMatrix("camera_view", camera_view);
 
 	VAO_ID_ModifiedBubbleSort(current_space->actors);
 
@@ -212,30 +217,29 @@ void R_Render(GLShader *current_shader, std::mutex *state_mutex, double interpol
 			current_vao_index++;
 			glBindVertexArray(vertex_array_objects[current_vao_index]);
 		}
-		std::lock_guard<std::mutex> guard(*state_mutex);
 
-		/*
-		Pseudo Code
-			Lerp(previous_state[state_index].position, current_state[state_index].position, elapsed/update_tick_length)
-		*/
+		// if(strcmp(typeid(*actor).name(), "11MoverTester") == 0)
+		// 	std::cout << "\n\nRender function running!\nState Index: " << actor->state_index << "\n\n";
+
 		glm::vec3 current_position = actor->current_state_buffer[actor->state_index].render_position;
 		glm::vec3 previous_position = actor->previous_state_buffer[actor->state_index].render_position;
+		
 		glm::vec3 interpolated_position = glm::vec3(0.0f);
 
 		interpolated_position.x = std::lerp(previous_position.x, current_position.x, interpolation_time);
 		interpolated_position.y = std::lerp(previous_position.y, current_position.y, interpolation_time);
 		interpolated_position.z = std::lerp(previous_position.z, current_position.z, interpolation_time);
 
-		if(strcmp(typeid(*actor).name(), "11MoverTester") == 0)
-		{
-			std::cout << std::endl << std::endl << "----> Current Position: " << glm::to_string(current_position) << "\n----> Last Position: " << glm::to_string(previous_position) << std::endl << std::endl;
-			std::cout << "----> Interpolated Position: " << glm::to_string(interpolated_position) << std::endl << std::endl;
-		}
+		// if(strcmp(typeid(*actor).name(), "11MoverTester") == 0)
+		// {
+		// 	std::cout << "\nLast Position: " << glm::to_string(previous_position) << "\nCurrent Position: " << glm::to_string(current_position) << std::endl;
+		// 	std::cout << "Interpolated Position: " << glm::to_string(interpolated_position) << std::endl << std::endl;
+		// }
 
 		glm::mat4 model_position = glm::mat4(1.0f);
 		model_position = glm::translate(model_position, interpolated_position);
 
-		current_shader->setMatrix("model", model_position);
+		current_shader.setMatrix("model", model_position);
 		glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
 	}
 }

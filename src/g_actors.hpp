@@ -41,7 +41,7 @@ public:
 	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); }
 
 	virtual void Tick();
-	virtual void updateStates(std::mutex *state_mutex);
+	virtual void updateStates();
 
 protected:
 	constexpr static const float INIT_YAW = -90.0f;
@@ -101,6 +101,5 @@ class MoverTester: public Tester
 	using Tester::Tester;
 
 	void Tick() override;
-	void updateStates(std::mutex *state_mutex) override;
 };
 #endif
