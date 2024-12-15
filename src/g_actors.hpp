@@ -23,7 +23,7 @@ public:
 	unsigned int vao_id;
 	bool visible = true;
 	const char *name;
-	float movement_speed;
+	float movement_speed = 1.0f;
 
 	glm::vec3 position_global;
 	// glm::vec4 rotation_quaternion;
@@ -40,13 +40,12 @@ public:
 
 	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); }
 
-	virtual void Tick();
-	virtual void updateStates();
+	virtual void Tick(int current_tick);
+	virtual void updateStates(std::mutex &state_mutex);
 
 protected:
 	constexpr static const float INIT_YAW = -90.0f;
 	constexpr static const float INIT_PITCH = 0.0f;
-	constexpr static const float INIT_SPEED = 2.5f;
 
 	void updateVectors();
 };
@@ -57,6 +56,7 @@ public:
 	constexpr static const float INIT_SENSITIVITY = 0.1f;
 
 	float mouse_sensitivity;
+	float movement_speed = 0.05f;
 
 	using Actor::Actor;
 	GraphXPlayer(const char *new_name, glm::vec3 init_position = glm::vec3(0.0f))
@@ -65,9 +65,9 @@ public:
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
-	void doMovement(int direction[2], float delta_time = 0.016f);
+	void doMovement(int direction[2]);
 
-	void Tick() override;
+	void Tick(int current_tick) override;
 };
 
 class Tester: public Actor
@@ -78,28 +78,13 @@ public:
 	{}
 };
 
-class FlipperTester: public Tester
-{
-	int position_flip = 0;
-
-	glm::vec3 testing_position[2] =
-	{
-		glm::vec3(-3.0f, 3.0f, -6.0f),
-		glm::vec3(3.0f, 3.0f, -6.0f)
-	};
-
-	using Tester::Tester;
-
-	void Tick() override;
-};
-
 class MoverTester: public Tester
 {
-	float t_movement_speed = 1.0f;
+	float movement_speed = 0.025f;
 	int t_direction = 0;
 
 	using Tester::Tester;
 
-	void Tick() override;
+	void Tick(int current_tick) override;
 };
 #endif

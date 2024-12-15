@@ -8,7 +8,7 @@
 // Actor
 //
 Actor::Actor(const char *new_name, Mesh init_mesh, glm::vec3 init_position, float init_yaw, float init_pitch)
-: mesh(init_mesh), vao_id(mesh.vao_id), movement_speed(INIT_SPEED), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+: mesh(init_mesh), vao_id(mesh.vao_id), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 {
 	name = new_name;
 	position_global = init_position;
@@ -30,14 +30,9 @@ void Actor::updateVectors()
 	orientation_up = glm::normalize(glm::cross(orientation_right, orientation_front));
 }
 
-void Actor::updateStates()
+void Actor::updateStates(std::mutex &state_mutex)
 {
-	// if(strcmp(typeid(*this).name(), "11MoverTester") == 0)
-	// {
-	// 	std::cout << std::endl << std::endl << "Game Logic is now updating an Actor's state!" << std::endl << "State Index is currently: " << state_index << std::endl;
-	// 	std::cout << "Previous State Buffer render_position: " << glm::to_string(previous_state_buffer[state_index].render_position) << std::endl;
-	// 	std::cout << "Current State Buffer render_position: " << glm::to_string(current_state_buffer[state_index].render_position) << std::endl << std::endl;
-	// }
+	// std::lock_guard guard(state_mutex);
 
 	// Copy current state into previous state
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
@@ -46,36 +41,20 @@ void Actor::updateStates()
 	current_state_buffer[state_index].render_position = position_global;
 	current_state_buffer[state_index].render_rotation_euler = rotation_euler;
 
-	// if(strcmp(typeid(*this).name(), "11MoverTester") == 0)
-	// {
-	// 	std::cout << "Game Logic is finished updating an Actor's state!" << std::endl << "State Index is currently: " << state_index << std::endl;
-	// 	std::cout << "Previous State Buffer render_position: " << glm::to_string(previous_state_buffer[state_index].render_position) << std::endl;
-	// 	std::cout << "Current State Buffer render_position: " << glm::to_string(current_state_buffer[state_index].render_position) << std::endl << std::endl;
-	// }
-
 	// Flip state buffer
 	state_index = 1 - state_index;
-
-	// if(strcmp(typeid(*this).name(), "11MoverTester") == 0)
-	// {
-	// 	std::cout << "State Index flipped!" << std::endl << "State Index is currently: " << state_index << std::endl;
-	// 	std::cout << "Previous State Buffer render_position: " << glm::to_string(previous_state_buffer[state_index].render_position) << std::endl;
-	// 	std::cout << "Current State Buffer render_position: " << glm::to_string(current_state_buffer[state_index].render_position) << std::endl << std::endl;
-	// }
 }
 
-void Actor::Tick()
-{
-
-}
+void Actor::Tick(int current_tick)
+{}
 
 //
 // GraphXPlayer
 //
-void GraphXPlayer::doMovement(int direction[2], float delta_time)
+void GraphXPlayer::doMovement(int direction[2])
 {
-	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed * delta_time);
-	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed * delta_time);
+	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
+	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed);
 }
 
 void GraphXPlayer::doMouseMovement(std::vector<float> offset, bool constrain_pitch)
@@ -100,37 +79,20 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 	return glm::lookAt(position_global, position_global + orientation_front, orientation_up);
 }
 
-void GraphXPlayer::Tick()
+void GraphXPlayer::Tick(int current_tick)
 {}
 
 //
 // Testers
 //
-void FlipperTester::Tick()
+void MoverTester::Tick(int current_tick)
 {
-	position_flip = 1 - position_flip;
-	position_global = testing_position[position_flip];
-
-	Actor::Tick();
-}
-
-
-void MoverTester::Tick()
-{
-	// std::cout << "\n\nMover Tester is moving! (Tick function called)\nGlobal Position: " << glm::to_string(position_global);
-
 	if( (position_global.x >= 3.0f) || (position_global.x <= -3.0f) )
-	{
 		t_direction = 1 - t_direction;
-	}
-	if(t_direction == 0)
-	{
-		position_global.x += t_movement_speed;
-	}
-	if(t_direction == 1)
-	{
-		position_global.x -= t_movement_speed;
-	}
 
-	// std::cout << "\n\nMover Tester finished moving! (Tick function finished)\nGlobal Position: " << glm::to_string(position_global);
+	if(t_direction == 0)
+		position_global.x += movement_speed;
+
+	if(t_direction == 1)
+		position_global.x -= movement_speed;
 }

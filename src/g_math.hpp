@@ -1,8 +1,10 @@
 #ifndef GRAPHX_MATH
 #define GRAPHX_MATH
+#include "sanity.hpp"
 #include <vector>
 
-using namespace std;
-
-template <typename T> void VAO_ID_ModifiedBubbleSort(vector<T> &unsorted_vector);
+namespace gmath
+{
+	template <typename T> void VAO_ID_ModifiedBubbleSort(std::vector<T> &unsorted_vector);
+}
 #endif

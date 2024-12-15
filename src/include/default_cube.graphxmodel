@@ -1,6 +1,6 @@
-#include <vector>
 #ifndef DEFAULT_CUBE
 #define DEFAULT_CUBE
+#include <vector>
 std::vector<float> CUBE_VERTS =
 {
 	// positions			// texture coords

@@ -3,20 +3,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "r_common.hpp"
 #include "g_actors.hpp"
-#include "g_spaces.hpp"
+#include "g_theatre.hpp"
 #include "default_cube.graphxmodel"
 #include "default_pyramid.graphxmodel"
 #include <vector>
-#include <iostream>
 #include <thread>
 #include <cstdlib>
 #include <mutex>
-#include <atomic>
+#include <iostream>
+
+std::mutex actor_state_mutex;
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
-Tester tester("tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
-FlipperTester flipper_tester("flipper_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
-MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, PYRAMID_VERTS, PYRAMID_INDICES));
 
 std::vector<int> main_window_size =
 {
@@ -29,14 +27,13 @@ std::vector<float> mouse_last =
 	main_window_size[1] / 2.0f
 };
 
-static double TICKRATE = 5.0;
+static double TICKRATE = 120.0;
 static double tickrate_ms = 1.0 / TICKRATE;	// Maybe turn this into a function to make the tickrate more easily changeable?
 double last_tick_timestamp;
-int updates;
-int frames;
 
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
+void testGameTick(GLFWwindow *window);
 
 int main()
 {
@@ -46,65 +43,81 @@ int main()
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glEnable(GL_DEPTH_TEST);
+	glGenVertexArrays(VAOS_AMOUNT, &vertex_array_objects[0]);
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 
-	std::vector<Actor *> dirty_load = {&tester, &flipper_tester, &mover_tester};
-	Space test_space(dirty_load);
-	loadNewSpace(&test_space);
-
-	tester.position_global = glm::vec3(-3.0f, 0.0f, -6.0f);
-	mover_tester.position_global = glm::vec3(0.0f, -3.0f, -6.0f);
-
-	R_StoreBuffers();
+	std::thread game_logic_main_thread(testGameTick, main_window);
 
 	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
-	double timer = glfwGetTime();
 
+	while(!glfwWindowShouldClose(main_window))
+	{
+		W_SwapAndClear(main_window);
+		glfwPollEvents();
+
+		if(time_to_store_buffers)
+			R_StoreBuffers();
+
+		if(time_to_render)
+		{
+			// De-jank all of this shit below
+			glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
+			double interpolation_time = ((glfwGetTime() - last_tick_timestamp) / tickrate_ms);
+			R_Render(actor_state_mutex, generic_shader, interpolation_time, projection, player.getViewMatrix());
+		}
+	}
+
+	game_logic_main_thread.join();
+	glfwTerminate();
+	return 0;
+}
+
+void testGameTick(GLFWwindow *main_window)
+{
+	Tester tester("tester", Mesh(VAO_TESTING, PYRAMID_VERTS, PYRAMID_INDICES));
+	MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
+
+	std::vector<Actor *> dirty_load = {&tester, &mover_tester};
+	Theatre test_theatre(dirty_load, "test space");
+	loadNewTheatre(&test_theatre);
+
+	tester.position_global = glm::vec3(-3.0f, 2.0f, -6.0f);
+	mover_tester.position_global = glm::vec3(0.0f, 0.0f, -6.0f);
+
+	int tick = 0;
 	double last_time = glfwGetTime();
-	double delta_time = 0;
+	double tick_length = 0;
 	double now_time = 0;
 
 	while(!glfwWindowShouldClose(main_window))
 	{
+		tick++;
 
 		now_time = glfwGetTime();
-		delta_time += (now_time - last_time) / tickrate_ms;
+		tick_length += (now_time - last_time) / tickrate_ms;
 		last_time = now_time;
 
-		while(delta_time >= 1.0f)
+		while(tick_length >= 1.0f)
 		{
 			processInput(main_window);
 
-			for(Actor *actor : current_space->actors)
+			for(Actor *actor : current_theatre->actors)
 			{
-				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_space
+				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
 				// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
-				actor->Tick();
-				actor->updateStates();
+				actor->Tick(tick);
+				actor->updateStates(actor_state_mutex);
 			}
+
 			last_tick_timestamp = glfwGetTime();
-			updates++;
-			delta_time--;
+			tick_length--;
 		}
 
-		W_SwapAndClear(main_window);
-		glfwPollEvents(); // Todo: figure out a way to move this out of here(?)
-		// De-jank all of this below function shit
-		double interpolation_time = ((glfwGetTime() - last_tick_timestamp) / 0.1);
-		R_Render(generic_shader, interpolation_time, glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f), player.getViewMatrix());
-		frames++;
-
-		// Reset after one second
-		if (glfwGetTime() - timer > 1.0) {
-			timer++;
-			std::cout << "FPS: " << frames << "\nTPS: " << updates << std::endl;
-			updates = 0;
-			frames = 0;
-		}
+		if(tick >= TICKRATE)
+			tick = 0;
 	}
 
-	glfwTerminate();
-	return 0;
+	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 }
 
 void processInput(GLFWwindow *window)

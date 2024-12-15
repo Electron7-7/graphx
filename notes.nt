@@ -250,3 +250,40 @@ Only notes for next time I pick this up are:
 You got this; I love you.
 
 :3
+
+[12/15/24]
+I picked up a shift for today (Sunday) from 8AM-4PM. It's currently 10:11AM.
+
+Anyways, I think that my problem was that the interpolation code was written assuming that the largest difference between FPS and TPS would be a single tick behind at worst (which is the case for using interpolation) which is why my tests weren't "working". If I want pure interpolation for any value of tickrate and framerate, I'd have to use some real fancy and over-engineered code (at least for my purposes).
+
+So, I'm leaving the interpolation as-is and hopefully we won't see any problems; however, put a pin in this for the future as I would like to have it working like GZDoom's interpolation, where a super low tickrate results in a "slo-mo" effect.
+
+I've also implemented a ticker that counts up from 0 and resets when it reaches the tickrate number. This is then supplied to the Actors' Tick functions as "current_tick". As a side-effect of this, I assume, tickrates must be integer values.
+
+I'm also going to set the default tickrate for my use case to 120 TPS; this should be high enough that interpolation won't be a problem at very high refresh rates, if my assumptions about it are wrong. It's also a nice, smooth tickrate that modern machines should have no trouble handling, especially since my shitty 2016 laptop can run it fine (for now). However, performance is the most important aspect, so I should write my code keeping in mind that I might have to adjust the tickrate in the future, and thus adjust every value linked to it (i.e: movement speed and such).
+
+Okay, so I've put almost all of my custom functions inside one of the two loops. Rendering, storing buffers, etc are all done in a loop (instead of storing buffers being done once, outside the loop). Now on to one of the things I wrote down to do lmfao. To be fair, I have done (I think) proper interpolation, so that's one done.
+
+The list is now as follows:
+	- Textures
+	- Addition of using a sprite instead of a mesh (with toggleable billboarding?)
+	- Mesh/model files (.obj, .glb, etc.)
+
+Also, fuck you, Dexter, the idea of renaming "Space" to "Theatre" is fucking brilliant (because of the "Actors") and I'm mad I didn't have that idea...
+
+And I'm gonna use that.
+
+But fuck you, regardless.
+
+I love you, Dex <3
+
+The list is now:
+	- Addition of using a sprite instead of a mesh (with toggleable billboarding?)
+	- Mesh/model files (.obj, .glb, etc.)
+	- Better texture loading (basically just more than one texture)
+
+While fiddling with player movement, I've realized that I want to do inputs during the gametick loop and I want to have it be like DOOM/Quake/Source esque where when you hit a key, a command is sent that the player reads and then does (i.e: +jump). My system would be a lot simpler than their implementation (mostly because of the skill gap), but the relative premise is similar.
+
+Oh, I also removed the delta_time I accidentally left in the player movement function. Woops.
+
+:3

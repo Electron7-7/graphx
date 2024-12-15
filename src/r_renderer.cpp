@@ -1,15 +1,17 @@
-#include "g_spaces.hpp"
+#include "g_theatre.hpp"
 #include "r_common.hpp"
 #include "g_math.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cmath>
-#include <typeinfo>
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 std::vector<GLuint> shaders;
 std::vector<Mesh *> meshes;
+std::atomic_bool time_to_render = false;
+std::atomic_bool time_to_store_buffers = false;
+std::atomic_bool do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
 
 //
 // GLShader
@@ -158,22 +160,41 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void R_StoreBuffers()
+void R_AddBufferToStore(Actor *new_actor)
 {
-	VAO_ID_ModifiedBubbleSort(meshes);
+	std::cout << "Adding buffer to store" << std::endl;
+	meshes.push_back(&new_actor->mesh);
+	R_StoreBuffers(false);
+}
+
+void R_StoreBuffers(bool changing_to_new_theatre)
+{
+	if(changing_to_new_theatre)
+	{
+		for(auto &actor : current_theatre->actors)
+		{
+			meshes.push_back(&actor->mesh);
+		}
+
+		time_to_render = true;
+		time_to_store_buffers = false;
+	}
+
+	gmath::VAO_ID_ModifiedBubbleSort(meshes);
 
 	int current_vao = -1;
-	glGenVertexArrays(VAOS_AMOUNT, &vertex_array_objects[0]);
 
-	int storage_commands_size = meshes.size();
+	int meshes_size = meshes.size();
 
-	for(int i = 0 ; i < storage_commands_size ; i++)
+	for(int i = 0 ; i < meshes_size ; i++)
 	{
 		if(meshes[i]->vao_id != current_vao)
 		{
 			current_vao++;
 			glBindVertexArray(vertex_array_objects[current_vao]);
 		}
+
+		meshes[i]->generateTexture(); // Quickly generate the texture in the render thread
 
 		glGenBuffers(1, &meshes[i]->VBO);
 		glGenBuffers(1, &meshes[i]->EBO);
@@ -196,7 +217,7 @@ void R_StoreBuffers()
 	std::vector<Mesh *>().swap(meshes);	// This vector is only used once per level load, so free up any allocated memory
 }
 
-void R_Render(GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
+void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
 {
 	/*
 	Pseudo Code for Lerp
@@ -207,10 +228,10 @@ void R_Render(GLShader &current_shader, double interpolation_time, glm::mat4 pro
 	current_shader.setMatrix("projection", projection);
 	current_shader.setMatrix("camera_view", camera_view);
 
-	VAO_ID_ModifiedBubbleSort(current_space->actors);
+	gmath::VAO_ID_ModifiedBubbleSort(current_theatre->actors);
 
 	int current_vao_index = -1;
-	for(Actor *actor : current_space->actors)
+	for(Actor *actor : current_theatre->actors)
 	{
 		if(actor->vao_id != current_vao_index)
 		{
@@ -218,23 +239,23 @@ void R_Render(GLShader &current_shader, double interpolation_time, glm::mat4 pro
 			glBindVertexArray(vertex_array_objects[current_vao_index]);
 		}
 
-		// if(strcmp(typeid(*actor).name(), "11MoverTester") == 0)
-		// 	std::cout << "\n\nRender function running!\nState Index: " << actor->state_index << "\n\n";
+		std::lock_guard guard(state_mutex);
+		// Meshes only have one texture right now, but when they don't, I'll need to make this iterative; as it stands, this is
+		// extremely hard-coded.
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, actor->mesh.m_texture);
+		current_shader.setInt("texture_one", 0);
 
-		glm::vec3 current_position = actor->current_state_buffer[actor->state_index].render_position;
+		// Quick note for later: angular movement (orientation) should use slerp instead of lerp (quaternions are best)
 		glm::vec3 previous_position = actor->previous_state_buffer[actor->state_index].render_position;
+		glm::vec3 current_position = actor->current_state_buffer[actor->state_index].render_position;
+		glm::vec3 interpolated_position;
 		
-		glm::vec3 interpolated_position = glm::vec3(0.0f);
+		for(int i = 0 ; i < 3 ; i++) // I don't like how hardcoded this is
+			interpolated_position[i] = std::lerp(previous_position[i], current_position[i], interpolation_time);
 
-		interpolated_position.x = std::lerp(previous_position.x, current_position.x, interpolation_time);
-		interpolated_position.y = std::lerp(previous_position.y, current_position.y, interpolation_time);
-		interpolated_position.z = std::lerp(previous_position.z, current_position.z, interpolation_time);
-
-		// if(strcmp(typeid(*actor).name(), "11MoverTester") == 0)
-		// {
-		// 	std::cout << "\nLast Position: " << glm::to_string(previous_position) << "\nCurrent Position: " << glm::to_string(current_position) << std::endl;
-		// 	std::cout << "Interpolated Position: " << glm::to_string(interpolated_position) << std::endl << std::endl;
-		// }
+		if(!do_interpolation)
+			interpolated_position = current_position;
 
 		glm::mat4 model_position = glm::mat4(1.0f);
 		model_position = glm::translate(model_position, interpolated_position);

@@ -16,7 +16,7 @@ OBJS = \
 	$(O)/r_common.opp		\
 	$(O)/r_renderer.opp		\
 	$(O)/g_actors.opp		\
-	$(O)/g_spaces.opp
+	$(O)/g_theatre.opp
 
 SRC_DIR := src
 
@@ -24,7 +24,7 @@ INCLUDES = -I src/include #-I/usr/include/freetype2
 
 
 # FPS limit for custom mangohud test run
-FPS_LIMIT := 30
+FPS_LIMIT := 60
 
 
 all:	$(O)/graphx_linux

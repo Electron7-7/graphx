@@ -1,21 +1,21 @@
-#include <vector>
 #ifndef DEFAULT_PYRAMID
 #define DEFAULT_PYRAMID
+#include <vector>
 std::vector<float> PYRAMID_VERTS =
 {
 	// positions			// texture coords
-	-1.0f, -1.0f, -1.0f,	0.0f, 0.0f,			//	Left	Bottom	Front	0
-	-1.0f, -1.0f, 1.0f,		0.0f, 0.0f,			//	Left	Bottom	Back	1
+	-1.0f, -1.0f, 1.0f,		1.0f, 1.0f,			//	Left	Bottom	Front	0
+	-1.0f, -1.0f, -1.0f,	0.0f, 1.0f,			//	Left	Bottom	Back	1
 	1.0f, -1.0f, -1.0f,		0.0f, 0.0f,			//	Right	Bottom	Back	2
-	1.0f, -1.0f, 1.0f,		0.0f, 0.0f,			//	Right	Bottom	Front	3
-	0.0f, 1.0f, 0.0f,		0.0f, 0.0f			//	Middle	Up		Middle	4	(the tip of the pyramid)
+	1.0f, -1.0f, 1.0f,		1.0f, 1.0f,			//	Right	Bottom	Front	3
+	0.0f, 1.0f, 0.0f,		0.5f, 0.5f			//	Middle	Up		Middle	4	(the tip of the pyramid)
 };
 
 std::vector<unsigned int> PYRAMID_INDICES =
 {
 	// Base
 	0, 1, 2,	// Bottom Triangle
-	3, 1, 2,	// Top Triangle
+	3, 0, 2,	// Top Triangle
 
 	// +Z Side
 	0, 3, 4,

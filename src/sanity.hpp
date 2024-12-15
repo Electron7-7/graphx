@@ -5,6 +5,12 @@ no, I don't think that this should cause compiling to take longer since the #ifn
 once... I think, at least. This could just be a misnomer/not how that works(?) I need to make sure.
 */
 
+#ifndef GRAPHX_DEBUGGING
+#define GRAPHX_DEBUGGING
+	#define PRINT_MARKER (std::cout << "\n[=======================================]\n")
+	#define PRINT(thing) (std::cout << std::endl << thing << std::endl)
+#endif
+
 #ifndef GL_INCLUDES
 #define GL_INCLUDES
 	#include <glad/glad.h>
