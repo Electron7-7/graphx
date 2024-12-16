@@ -29,6 +29,19 @@ FPS_LIMIT := 60
 
 all:	$(O)/graphx_linux
 
+build:	$(O)/graphx_linux
+
+clean:
+	rm -f *.o *.opp
+	rm -f build/*
+
+cleanish_test:
+	rm -f build/main.opp
+	make test
+
+test:	$(O)/graphx_linux
+	~/bin/mangohudtest $(FPS_LIMIT) ./build/graphx_linux
+
 $(O)/graphx_linux:	$(OBJS) $(O)/main.opp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp \
 	-o $(O)/graphx_linux $(LIBS)
@@ -39,16 +52,9 @@ $(O)/%.opp:	src/%.cpp
 $(O)/%.o:	src/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-clean:
-	rm -f *.o *.opp
-	rm -f build/*
+# removed cleantest. edit the sublime-project on linux and make the pristine test build just call "make clean && make test && make clean"
 
 windows_clean:
 	move "build\\.gitignore" ".\\"
 	del /Q "build\\*"
 	move ".gitignore" "build\\"
-
-test:	$(O)/graphx_linux
-	~/bin/mangohudtest $(FPS_LIMIT) ./build/graphx_linux
-
-# removed cleantest. edit the sublime-project on linux and make the pristine test build just call "make clean && make test && make clean"

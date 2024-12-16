@@ -32,7 +32,7 @@ void Actor::updateVectors()
 
 void Actor::updateStates(std::mutex &state_mutex)
 {
-	// std::lock_guard guard(state_mutex);
+	std::lock_guard guard(state_mutex);
 
 	// Copy current state into previous state
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
