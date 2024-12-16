@@ -287,3 +287,8 @@ While fiddling with player movement, I've realized that I want to do inputs duri
 Oh, I also removed the delta_time I accidentally left in the player movement function. Woops.
 
 :3
+
+[12/16/24]
+First thing I wanna do today is give Actors the choice between using a mesh or a sprite; billboarding will be an option, but will be off by default. This is because in true, hardware 3D it looks wonky for most default cases (i.e: enemies) but is very useful for particles and such, so I'll leave the ability in (plus, options are always nice).
+
+An off topic thing I'd like to do is download the Godot repo, compile it, and then make some custom tweaks to it for fun and for learning and maybe even try to find things I could optimize (as practice; I don't think I'm near that level yet, lol).
