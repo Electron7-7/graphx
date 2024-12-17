@@ -1,4 +1,4 @@
-// *grumble, grumble* I still like naming these "Spaces" but Theatre is way more clever *grumble grumble*
+// *grumble, grumble* I'm still proud of naming these "Spaces" but Theatre is way more clever *grumble grumble*
 // :3
 #ifndef GRAPHX_THEATRE
 #define GRAPHX_THEATRE

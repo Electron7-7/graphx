@@ -20,9 +20,8 @@ public:
 	std::vector<RenderState> previous_state_buffer	=	{ previous_state,	previous_state_copy	};
 
 	int state_index = 0;
-	unsigned int vao_id;
 	bool visible = true;
-	const char *name;
+	std::string name;
 	float movement_speed = 1.0f;
 
 	glm::vec3 position_global;
@@ -36,9 +35,11 @@ public:
 
 	glm::vec3 world_orientation_up;
 
-	Actor(const char *new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
+	const unsigned int *vao_id;
 
-	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); }
+	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
+
+	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); } // Todo: account for Sprites
 
 	virtual void Tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
@@ -58,8 +59,7 @@ public:
 	float mouse_sensitivity;
 	float movement_speed = 0.05f;
 
-	using Actor::Actor;
-	GraphXPlayer(const char *new_name, glm::vec3 init_position = glm::vec3(0.0f))
+	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f))
 	: Actor(new_name, Mesh(), init_position), mouse_sensitivity(INIT_SENSITIVITY)
 	{}
 
@@ -70,21 +70,24 @@ public:
 	void Tick(int current_tick) override;
 };
 
-class Tester: public Actor
+class MoverTester: public Actor
 {
 public:
-	using Actor::Actor;
-	Tester() : Actor("Tester", Mesh(), glm::vec3(0.0f, 0.0f, -3.0f))
-	{}
-};
-
-class MoverTester: public Tester
-{
 	float movement_speed = 0.025f;
 	int t_direction = 0;
 
-	using Tester::Tester;
+	MoverTester(std::string init_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f))
+	: Actor(init_name, init_mesh, init_position)
+	{}
 
 	void Tick(int current_tick) override;
+};
+
+class SpriteTester: public Actor
+{
+public:
+	SpriteTester(std::string init_name, Sprite init_sprite = Sprite(VAO_TESTING), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f))
+	: Actor(init_name, init_sprite, init_position)
+	{}
 };
 #endif

@@ -7,8 +7,8 @@
 //
 // Actor
 //
-Actor::Actor(const char *new_name, Mesh init_mesh, glm::vec3 init_position, float init_yaw, float init_pitch)
-: mesh(init_mesh), vao_id(mesh.vao_id), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+Actor::Actor(std::string new_name, Mesh init_mesh, glm::vec3 init_position, float init_yaw, float init_pitch)
+: mesh(init_mesh), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f)), vao_id(&mesh.vao_id)
 {
 	name = new_name;
 	position_global = init_position;

@@ -45,7 +45,6 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glGenVertexArrays(VAOS_AMOUNT, &vertex_array_objects[0]);
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
 	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
@@ -56,7 +55,10 @@ int main()
 		glfwPollEvents();
 
 		if(time_to_store_buffers)
+		{
 			R_StoreBuffers();
+			time_to_store_buffers = false;
+		}
 
 		if(time_to_render)
 		{
@@ -74,15 +76,12 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
-	Tester tester("tester", Mesh(VAO_TESTING, PYRAMID_VERTS, PYRAMID_INDICES));
-	MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES));
+	MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
+	SpriteTester sprite_tester("sprite_tester", Sprite(VAO_TESTING), glm::vec3(0.0f, -1.0f, -6.0f));
 
-	std::vector<Actor *> dirty_load = {&tester, &mover_tester};
+	std::vector<Actor *> dirty_load = {&mover_tester, &sprite_tester};
 	Theatre test_theatre(dirty_load, "test space");
 	loadNewTheatre(&test_theatre);
-
-	tester.position_global = glm::vec3(-3.0f, 2.0f, -6.0f);
-	mover_tester.position_global = glm::vec3(0.0f, 0.0f, -6.0f);
 
 	int tick = 0;
 	double last_time = glfwGetTime();

@@ -292,3 +292,26 @@ Oh, I also removed the delta_time I accidentally left in the player movement fun
 First thing I wanna do today is give Actors the choice between using a mesh or a sprite; billboarding will be an option, but will be off by default. This is because in true, hardware 3D it looks wonky for most default cases (i.e: enemies) but is very useful for particles and such, so I'll leave the ability in (plus, options are always nice).
 
 An off topic thing I'd like to do is download the Godot repo, compile it, and then make some custom tweaks to it for fun and for learning and maybe even try to find things I could optimize (as practice; I don't think I'm near that level yet, lol).
+
+--------> Big note!!!!
+	static variables in a function can be changed, but will only stick around until that function ends and this means they will only be created once. Here's a huge example of how this can be used:
+:::C++
+for(int x=0; x<10; x++)
+{
+  for(int y=0; y<10; y++)
+  {
+    static int number_of_times = 0;	// number_of_times only gets set to 0 the first time and won't get reset
+    number_of_times++;
+  }
+}
+:::
+
+Okay, so I've been dicking around with sprites and while getting them working I made a huge realization: R_StoreBuffers should be completely re-written because the whole Mesh vector idea was a holdover from when I was considering the whole RenderCmd and RenderStorageCmd idea. Now that I'm not doing that, R_StoreBuffers has so much bloat and is also not fit for my current implementation of rendering and buffering.
+
+I'm going to re-write it to instead do what R_Render does at first and bubble sort the current_theatre->actors vector, then go through it and generate+store buffers. I'll also make sure it can handle Actors being added to the Theatre after the first load, and if all of this is done correctly, R_Render won't need to bubble sort the vector every frame! This will potentially remove a ton of overhead (depending on how straining the modified bubble sort actually is, lol).
+
+I'm stuck and I don't know what's wrong. I think that my sorting algorithm is wrong, because I'm trying to sort a vector full of pointers but I don't know how to do that properly and I'm just having errors everywhere. It's okay, I'll take a breath and attack this later, probably tommorow.
+
+Such is the life of a programmer.
+
+:3

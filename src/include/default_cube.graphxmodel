@@ -1,7 +1,7 @@
-#ifndef DEFAULT_CUBE
-#define DEFAULT_CUBE
+#ifndef GRAPHX_CUBE
+#define GRAPHX_CUBE
 #include <vector>
-std::vector<float> CUBE_VERTS =
+const std::vector<float> CUBE_VERTS =
 {
 	// positions			// texture coords
 	-1.0f, -1.0f, -1.0f,	0.0f, 0.0f,			// Left		Down	Back		0
@@ -14,7 +14,7 @@ std::vector<float> CUBE_VERTS =
 	 1.0f,  1.0f,  1.0f,	0.0f, 1.0f			// Right	Up		Forward		7
 };
 
-std::vector<unsigned int> CUBE_INDICES =
+const std::vector<unsigned int> CUBE_INDICES =
 {
 	// -X Square
 	0, 1, 2,	// Bottom Triangle

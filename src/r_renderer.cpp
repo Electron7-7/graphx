@@ -5,14 +5,14 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <algorithm>
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 std::vector<GLuint> shaders;
-std::vector<Mesh *> meshes;
+// std::vector<Mesh *> meshes;
 std::atomic_bool time_to_render = false;
 std::atomic_bool time_to_store_buffers = false;
 std::atomic_bool do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
-
 //
 // GLShader
 //
@@ -163,47 +163,38 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 void R_AddBufferToStore(Actor *new_actor)
 {
 	std::cout << "Adding buffer to store" << std::endl;
-	meshes.push_back(&new_actor->mesh);
-	R_StoreBuffers(false);
+	// meshes.push_back(&new_actor->mesh);
+	// R_StoreBuffers(false);
 }
 
 void R_StoreBuffers(bool changing_to_new_theatre)
 {
-	if(changing_to_new_theatre)
+	// gmath::VAO_ID_ModifiedBubbleSort(current_theatre->actors);
+	std::sort(current_theatre->actors.begin(), current_theatre->actors.end(), gmath::compareVAOID);
+
+	int current_vao_id = -1;
+
+	for(Actor *actor : current_theatre->actors)
 	{
-		for(auto &actor : current_theatre->actors)
+		PRINT("Buffering some data!");
+		if(*actor->vao_id > current_vao_id)
 		{
-			meshes.push_back(&actor->mesh);
+			current_vao_id++;
+			PRINT("Binding new vertex array at VAO_ID: " << current_vao_id);
+			glBindVertexArray(vertex_array_objects[current_vao_id]);
 		}
 
-		time_to_render = true;
-		time_to_store_buffers = false;
-	}
+		PRINT("Generating Texture!");
+		actor->mesh.generateTexture(); // Quickly generate the texture in the render thread
 
-	gmath::VAO_ID_ModifiedBubbleSort(meshes);
+		glGenBuffers(1, &actor->mesh.VBO);
+		glGenBuffers(1, &actor->mesh.EBO);
 
-	int current_vao = -1;
+		glBindBuffer(GL_ARRAY_BUFFER, actor->mesh.VBO);
+		glBufferData(GL_ARRAY_BUFFER, actor->mesh.vertices.size() * sizeof(float), &actor->mesh.vertices[0], GL_STATIC_DRAW);
 
-	int meshes_size = meshes.size();
-
-	for(int i = 0 ; i < meshes_size ; i++)
-	{
-		if(meshes[i]->vao_id != current_vao)
-		{
-			current_vao++;
-			glBindVertexArray(vertex_array_objects[current_vao]);
-		}
-
-		meshes[i]->generateTexture(); // Quickly generate the texture in the render thread
-
-		glGenBuffers(1, &meshes[i]->VBO);
-		glGenBuffers(1, &meshes[i]->EBO);
-
-		glBindBuffer(GL_ARRAY_BUFFER, meshes[i]->VBO);
-		glBufferData(GL_ARRAY_BUFFER, meshes[i]->vertices.size() * sizeof(float), &meshes[i]->vertices[0], GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshes[i]->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, meshes[i]->indices.size() * sizeof(unsigned int), &meshes[i]->indices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, actor->mesh.EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, actor->mesh.indices.size() * sizeof(unsigned int), &actor->mesh.indices[0], GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -213,8 +204,6 @@ void R_StoreBuffers(bool changing_to_new_theatre)
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-
-	std::vector<Mesh *>().swap(meshes);	// This vector is only used once per level load, so free up any allocated memory
 }
 
 void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
@@ -228,18 +217,19 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 	current_shader.setMatrix("projection", projection);
 	current_shader.setMatrix("camera_view", camera_view);
 
-	gmath::VAO_ID_ModifiedBubbleSort(current_theatre->actors);
+	// gmath::VAO_ID_ModifiedBubbleSort(current_theatre->actors);
 
 	int current_vao_index = -1;
 	for(Actor *actor : current_theatre->actors)
 	{
-		if(actor->vao_id != current_vao_index)
+		if(*actor->vao_id > current_vao_index)
 		{
 			current_vao_index++;
 			glBindVertexArray(vertex_array_objects[current_vao_index]);
 		}
 
 		std::lock_guard guard(state_mutex);
+
 		// Meshes only have one texture right now, but when they don't, I'll need to make this iterative; as it stands, this is
 		// extremely hard-coded.
 		glActiveTexture(GL_TEXTURE0);
@@ -259,8 +249,12 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 
 		glm::mat4 model_position = glm::mat4(1.0f);
 		model_position = glm::translate(model_position, interpolated_position);
-
 		current_shader.setMatrix("model", model_position);
+
+		/* Pseudo Code: billboard sprites
+			if(actor->mesh is Sprite)
+				current_shader.setMatrix("sprite_billboard", sprite_billboard_matrix); */
+
 		glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
 	}
 }
