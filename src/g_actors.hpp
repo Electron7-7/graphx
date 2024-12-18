@@ -35,7 +35,7 @@ public:
 
 	glm::vec3 world_orientation_up;
 
-	const unsigned int *vao_id;
+	const int *vao_id;
 
 	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
@@ -90,4 +90,9 @@ public:
 	: Actor(init_name, init_sprite, init_position)
 	{}
 };
+#else
+class Actor;
+class GraphXPlayer;
+class MoverTester;
+class SpriteTester;
 #endif

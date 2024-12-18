@@ -8,17 +8,21 @@
 
 struct Theatre
 {
-	std::vector<Actor *> actors;
 	std::string name;
+	std::vector<Actor *> actors;
+	std::vector<Mesh *> meshes;
+	Mesh stage;
 
-	Theatre(std::vector<Actor *> init_actors, std::string init_name = "UNNAMED")
-	: actors(init_actors), name(init_name)
-	{}
+	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_actors = {}, Mesh init_stage = Mesh());
 
-	void addActor(Actor *new_actor);
+	void addActor(Actor &new_actor);
+	void removeActor(Actor &old_actor);
 };
 
 extern Theatre *current_theatre;
 
 void loadNewTheatre(Theatre *new_theatre);
+#else
+struct Theatre;
+extern Theatre *current_theatre;
 #endif

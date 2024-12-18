@@ -8,7 +8,6 @@
 #include <vector>
 #include <array>
 #include <atomic>
-#include <iostream>
 
 #define GLSHADER_TYPE_VERTEX	0
 #define GLSHADER_TYPE_FRAGMENT	1
@@ -18,12 +17,15 @@
 //-----------------------
 #define VAO_TESTING		0
 #define VAO_ERR			1
-#define VAO_ENVIRONMENT	2
+#define VAO_FLATS		2
 #define VAO_ACTORS		3
 #define VAO_PROPS		4
 
 #define MISSING_TEXTURE_PATH 		"src/images/COMP04_5.png"	// Todo: make/use a default MISSING texture
 #define MISSING_TEXTURE_PATH		"src/images/COMP04_5.png"	// Todo: Make/use a default MISSING texture
+
+class Actor; // Forward-declare Actor; I don't like this and want to get rid of it
+
 
 class GLShader
 {
@@ -43,9 +45,19 @@ private:
 	void shaderErrorHandler(int thing, int type);
 };
 
+struct RenderState
+{
+	glm::vec3 render_position = {0.0f, 0.0f, 0.0f};
+	glm::vec3 render_rotation_euler = {0.0f, 0.0f, 0.0f};	// x (pitch), y (yaw), z (roll)
+
+	RenderState(glm::vec3 init_position = {0.0f, 0.0f, 0.0f}, glm::vec3 init_euler_rotation = {0.0f, 0.0f, 0.0f})
+	: render_position(init_position), render_rotation_euler(init_euler_rotation)
+	{}
+};
+
 struct Mesh
 {
-	const unsigned int vao_id;
+	const int vao_id;
 	const std::vector<GLfloat> vertices;
 	const std::vector<GLuint> indices;
 	const unsigned int indices_amount;
@@ -56,30 +68,24 @@ struct Mesh
 	unsigned int VBO = 0;
 	unsigned int EBO = 0;
 
-	Mesh(const unsigned int init_vao_id = VAO_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
+	Actor *owner;
+
+	Mesh(const int init_vao_id = VAO_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
 	: vao_id(init_vao_id), vertices(init_vertices), indices(init_indices), indices_amount(init_indices.size()), texture_path(init_texture_path)
 	{}
 
 	void generateTexture();
 };
 
-struct Sprite : Mesh
+struct Sprite : Mesh	// Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(const unsigned int init_vao_id = VAO_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
+	Sprite(const int init_vao_id = VAO_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
 	: Mesh(init_vao_id, QUAD_VERTS, QUAD_INDICES, init_texture)
 	{}
 };
 
-struct RenderState
-{
-	glm::vec3 render_position = {0.0f, 0.0f, 0.0f};
-	glm::vec3 render_rotation_euler = {0.0f, 0.0f, 0.0f};	// x (pitch), y (yaw), z (roll)
-
-	RenderState(glm::vec3 init_position = {0.0f, 0.0f, 0.0f}, glm::vec3 init_euler_rotation = {0.0f, 0.0f, 0.0f})
-	: render_position(init_position), render_rotation_euler(init_euler_rotation)
-	{}
-};
+// struct Flat // Theatre geometry
 
 extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 // extern std::vector<Mesh *> meshes;

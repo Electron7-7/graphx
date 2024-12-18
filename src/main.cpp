@@ -4,12 +4,14 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
+#include "g_math.hpp"
 #include "default_cube.graphxmodel"
 #include "default_pyramid.graphxmodel"
 #include <vector>
 #include <thread>
 #include <cstdlib>
 #include <mutex>
+#include <algorithm>
 #include <iostream>
 
 std::mutex actor_state_mutex;
@@ -29,6 +31,7 @@ std::vector<float> mouse_last =
 
 static double TICKRATE = 120.0;
 static double tickrate_ms = 1.0 / TICKRATE;	// Maybe turn this into a function to make the tickrate more easily changeable?
+
 double last_tick_timestamp;
 
 void processInput(GLFWwindow *window);
@@ -55,10 +58,7 @@ int main()
 		glfwPollEvents();
 
 		if(time_to_store_buffers)
-		{
 			R_StoreBuffers();
-			time_to_store_buffers = false;
-		}
 
 		if(time_to_render)
 		{
@@ -79,8 +79,7 @@ void testGameTick(GLFWwindow *main_window)
 	MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
 	SpriteTester sprite_tester("sprite_tester", Sprite(VAO_TESTING), glm::vec3(0.0f, -1.0f, -6.0f));
 
-	std::vector<Actor *> dirty_load = {&mover_tester, &sprite_tester};
-	Theatre test_theatre(dirty_load, "test space");
+	Theatre test_theatre("test theatre", std::vector<Actor *> {&mover_tester, &sprite_tester});
 	loadNewTheatre(&test_theatre);
 
 	int tick = 0;

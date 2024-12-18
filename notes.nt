@@ -315,3 +315,37 @@ I'm stuck and I don't know what's wrong. I think that my sorting algorithm is wr
 Such is the life of a programmer.
 
 :3
+
+[12/17/24]
+Alright, time to pick up where I left off.
+
+Okay, so my main problem was that I was trying to sort a vector of pointers and that may or may not have been working but I really didn't know what it was doing bc pointers are annoying. However, instead of sorting the vector directly, I can sort a vector of indices and then render Actors based on their index (kinda like with VAOs).
+
+Never mind!! I can sort a vector of pointers!! I just had to fucking learn how to use std::sort (goodbye, bubble sort, you will be missed)
+
+Also, I think I might be fucking stupid because if my original problem was that nothing was being rendered... I think it's because I accidentally forgot to flip on the flag to start rendering...
+
+Hmm... I quick-enabled it and nothing's being rendered still.
+
+Yeah I'm stupid... in R_Render and R_StoreBuffers, I compare actor->vao_id with current_vao_id; in order to avoid copying code, I decided to set current_vao_id to -1 so that it would "switch" VAOs to the first VAO at the top of the loop on the first go around... only one small problem...
+
+actor->vao_id is an unsigned integer.
+
+Okay, I'm all done with that fucking shit; I actually have something else I want to do, however, and that's make a separate struct for Theatre geometry/terrain/environment. The reasoning is that it should be separate from Actors since it's always just a static mesh and making it a separate struct means it won't have to be put in a giant Actor class full of code it doesn't need.
+
+Also, quick note about static functions (copied from StackOverflow): "static functions are functions that are only visible to other functions in the same file..." (https://stackoverflow.com/questions/558122/what-is-a-static-function-in-c)
+
+Aight, I wanna name the different parts of Theatre geometry "Flats", but currently in my code there's no need for a "Flat" struct, since that's more of an editor term (i.e: brushes in Hammer) and it'll get turned into one big fat geometry Mesh.
+
+I do need a name for a Theatre's geometry, though.
+
+Mental note: dribs and drabs (DAD)
+
+Also, this link is a good reference for functions that change the variable passed to them as an argument.
+	(https://stackoverflow.com/questions/11736306/when-pass-a-variable-to-a-function-why-the-function-only-gets-a-duplicate-of-th)
+
+So, the way I render things is flawed; currently, I sort and iterate through a list of Actors when all I really need is their Meshes. However, if I made a list of Meshes, it would be an arbitrary list for no reason. I may just have to bite the bullet on that one. The reason I wanna change this up is because A: Actors shouldn't be involved in rendering (or have vao_id pointers), and B: all Theatres will have a bunch of Actors and one Mesh for geometry, which complicates the current rendering process. I could involve typenames but that would be a bandaid fix.
+
+Okay, I have to go, but I've solved the problem: implement ownership between a Mesh and its Actor, then in R_Render, instead of actor->previous_state_buffer... I can use mesh->owner->previous_state_buffer. It also solves the sorting problem! No need to sort Actors!
+
+Time to go take care of Dex :3

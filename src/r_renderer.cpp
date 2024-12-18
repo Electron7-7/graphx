@@ -1,11 +1,9 @@
 #include "g_theatre.hpp"
 #include "r_common.hpp"
-#include "g_math.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cmath>
-#include <algorithm>
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
 std::vector<GLuint> shaders;
@@ -165,36 +163,37 @@ void R_AddBufferToStore(Actor *new_actor)
 	std::cout << "Adding buffer to store" << std::endl;
 	// meshes.push_back(&new_actor->mesh);
 	// R_StoreBuffers(false);
+	// std::sort(current_theatre->actors.begin(), current_theatre->actors.end(), gmath::compareVAOID);
 }
 
 void R_StoreBuffers(bool changing_to_new_theatre)
 {
-	// gmath::VAO_ID_ModifiedBubbleSort(current_theatre->actors);
-	std::sort(current_theatre->actors.begin(), current_theatre->actors.end(), gmath::compareVAOID);
+	if(changing_to_new_theatre)
+	{
+		glBindVertexArray(vertex_array_objects[VAO_FLATS]);
+
+	}
 
 	int current_vao_id = -1;
 
-	for(Actor *actor : current_theatre->actors)
+	for(Mesh *mesh : current_theatre->meshes)
 	{
-		PRINT("Buffering some data!");
-		if(*actor->vao_id > current_vao_id)
+		if(mesh->vao_id > current_vao_id)
 		{
 			current_vao_id++;
-			PRINT("Binding new vertex array at VAO_ID: " << current_vao_id);
 			glBindVertexArray(vertex_array_objects[current_vao_id]);
 		}
 
-		PRINT("Generating Texture!");
-		actor->mesh.generateTexture(); // Quickly generate the texture in the render thread
+		mesh->generateTexture(); // Quickly generate the texture in the render thread
 
-		glGenBuffers(1, &actor->mesh.VBO);
-		glGenBuffers(1, &actor->mesh.EBO);
+		glGenBuffers(1, &mesh->VBO);
+		glGenBuffers(1, &mesh->EBO);
 
-		glBindBuffer(GL_ARRAY_BUFFER, actor->mesh.VBO);
-		glBufferData(GL_ARRAY_BUFFER, actor->mesh.vertices.size() * sizeof(float), &actor->mesh.vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), &mesh->vertices[0], GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, actor->mesh.EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, actor->mesh.indices.size() * sizeof(unsigned int), &actor->mesh.indices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -204,6 +203,8 @@ void R_StoreBuffers(bool changing_to_new_theatre)
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
+
+	time_to_store_buffers = false;
 }
 
 void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
@@ -216,13 +217,18 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 	current_shader.use();
 	current_shader.setMatrix("projection", projection);
 	current_shader.setMatrix("camera_view", camera_view);
-
-	// gmath::VAO_ID_ModifiedBubbleSort(current_theatre->actors);
+	
+	// Draw the Theatre geometry first
+	// This is probably inefficient and should be made better
+	current_shader.setMatrix("model", glm::mat4(0.0f));
+	glBindVertexArray(vertex_array_objects[VAO_FLATS]);
+	glDrawElements(GL_TRIANGLES, current_theatre->stage.indices_amount, GL_UNSIGNED_INT, 0);
 
 	int current_vao_index = -1;
-	for(Actor *actor : current_theatre->actors)
+
+	for(Mesh *mesh : current_theatre->meshes)
 	{
-		if(*actor->vao_id > current_vao_index)
+		if(mesh->vao_id > current_vao_index)
 		{
 			current_vao_index++;
 			glBindVertexArray(vertex_array_objects[current_vao_index]);
@@ -233,7 +239,7 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 		// Meshes only have one texture right now, but when they don't, I'll need to make this iterative; as it stands, this is
 		// extremely hard-coded.
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, actor->mesh.m_texture);
+		glBindTexture(GL_TEXTURE_2D, mesh->m_texture);
 		current_shader.setInt("texture_one", 0);
 
 		// Quick note for later: angular movement (orientation) should use slerp instead of lerp (quaternions are best)
@@ -251,10 +257,12 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 		model_position = glm::translate(model_position, interpolated_position);
 		current_shader.setMatrix("model", model_position);
 
-		/* Pseudo Code: billboard sprites
+		/*
+		Pseudo Code for billboarded sprites
 			if(actor->mesh is Sprite)
-				current_shader.setMatrix("sprite_billboard", sprite_billboard_matrix); */
+				current_shader.setMatrix("sprite_billboard", sprite_billboard_matrix);
+		*/
 
-		glDrawElements(GL_TRIANGLES, actor->mesh.indices_amount, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, mesh->indices_amount, GL_UNSIGNED_INT, 0);
 	}
 }

@@ -1,8 +1,6 @@
 #include "g_actors.hpp"
-#include "r_common.hpp"
 #include <vector>
 #include <mutex>
-#include <iostream>
 
 //
 // Actor
