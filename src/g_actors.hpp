@@ -35,8 +35,6 @@ public:
 
 	glm::vec3 world_orientation_up;
 
-	const int *vao_id;
-
 	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
 	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); } // Todo: account for Sprites
@@ -54,8 +52,6 @@ protected:
 class GraphXPlayer: public Actor
 {
 public:
-	constexpr static const float INIT_SENSITIVITY = 0.1f;
-
 	float mouse_sensitivity;
 	float movement_speed = 0.05f;
 
@@ -67,7 +63,8 @@ public:
 	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
 	void doMovement(int direction[2]);
 
-	void Tick(int current_tick) override;
+protected:
+	constexpr static const float INIT_SENSITIVITY = 0.1f;
 };
 
 class MoverTester: public Actor

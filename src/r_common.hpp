@@ -24,7 +24,7 @@
 #define MISSING_TEXTURE_PATH 		"src/images/COMP04_5.png"	// Todo: make/use a default MISSING texture
 #define MISSING_TEXTURE_PATH		"src/images/COMP04_5.png"	// Todo: Make/use a default MISSING texture
 
-class Actor; // Forward-declare Actor; I don't like this and want to get rid of it
+class Actor;	// Forward-declare Actor
 
 
 class GLShader
@@ -57,6 +57,8 @@ struct RenderState
 
 struct Mesh
 {
+	Actor *owner;
+
 	const int vao_id;
 	const std::vector<GLfloat> vertices;
 	const std::vector<GLuint> indices;
@@ -68,28 +70,22 @@ struct Mesh
 	unsigned int VBO = 0;
 	unsigned int EBO = 0;
 
-	Actor *owner;
-
-	Mesh(const int init_vao_id = VAO_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
+	Mesh(Actor *init_owner = NULL, const int init_vao_id = VAO_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
 	: vao_id(init_vao_id), vertices(init_vertices), indices(init_indices), indices_amount(init_indices.size()), texture_path(init_texture_path)
-	{}
+	{owner = init_owner;}
 
 	void generateTexture();
 };
 
-struct Sprite : Mesh	// Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
+struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(const int init_vao_id = VAO_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
-	: Mesh(init_vao_id, QUAD_VERTS, QUAD_INDICES, init_texture)
+	Sprite(Actor *init_owner = NULL, const int init_vao_id = VAO_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
+	: Mesh(init_owner, init_vao_id, QUAD_VERTS, QUAD_INDICES, init_texture)
 	{}
 };
 
-// struct Flat // Theatre geometry
-
 extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
-// extern std::vector<Mesh *> meshes;
-extern std::vector<GLuint> shaders;
 extern std::atomic_bool time_to_render;
 extern std::atomic_bool time_to_store_buffers;
 

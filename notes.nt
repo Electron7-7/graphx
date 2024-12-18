@@ -349,3 +349,8 @@ So, the way I render things is flawed; currently, I sort and iterate through a l
 Okay, I have to go, but I've solved the problem: implement ownership between a Mesh and its Actor, then in R_Render, instead of actor->previous_state_buffer... I can use mesh->owner->previous_state_buffer. It also solves the sorting problem! No need to sort Actors!
 
 Time to go take care of Dex :3
+
+[12/18/24]
+Okay, so I've finished up most of the ownership code, but there's a problem: when rendering, I expect the current Mesh's owner to be an Actor, but one of them will be the Theatre Stage. I need to account for this by either skipping all that code if VAO_ID == VAO_FLATS or if the Mesh's owner is NULL which honestly is the better choice, since it also accounts for orphan meshes which is a nice way to prevent crashing (I should also throw an exception or at least print out a message stating why you're not seeing that Mesh).
+
+It works!! Now time to go through and remove any unused code and do some spring cleaning before pushing this to prod real quick to get a working build up there.

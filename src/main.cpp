@@ -76,8 +76,8 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
-	MoverTester mover_tester("mover_tester", Mesh(VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
-	SpriteTester sprite_tester("sprite_tester", Sprite(VAO_TESTING), glm::vec3(0.0f, -1.0f, -6.0f));
+	MoverTester mover_tester("mover_tester", Mesh(&mover_tester, VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
+	SpriteTester sprite_tester("sprite_tester", Sprite(&sprite_tester, VAO_TESTING), glm::vec3(0.0f, -1.0f, -6.0f));
 
 	Theatre test_theatre("test theatre", std::vector<Actor *> {&mover_tester, &sprite_tester});
 	loadNewTheatre(&test_theatre);
