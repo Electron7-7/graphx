@@ -6,10 +6,12 @@
 #include <cmath>
 
 std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
+std::vector<Mesh> meshes = { Mesh() };					// Have the first Mesh always be the default ERROR Mesh
+std::vector<Sprite> sprites = { Sprite() };				// Have the first Sprite always be the default ERROR Sprite
 
 std::atomic_bool time_to_render = false;
 std::atomic_bool time_to_store_buffers = false;
-std::atomic_bool do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
+std::atomic_bool do_interpolation = true;				// For testing when I change the interpolation method to be more like GZDoom
 
 //
 // GLShader
@@ -168,12 +170,11 @@ void R_AddBufferToStore(Actor *new_actor)
 
 void R_StoreBuffers(bool changing_to_new_theatre)
 {
-	PRINT("Storing buffers");
 	int current_vao_id = -1;
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		if(mesh->vao_id > current_vao_id)
+		if(mesh->vao_id != current_vao_id)
 		{
 			current_vao_id++;
 			glBindVertexArray(vertex_array_objects[current_vao_id]);

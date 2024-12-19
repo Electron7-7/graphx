@@ -4,7 +4,9 @@
 #define GRAPHX_THEATRE
 #include "sanity.hpp"
 #include "g_actors.hpp"
+#include "r_common.hpp"
 #include <string>
+#include <vector>
 
 struct Theatre
 {
@@ -13,15 +15,17 @@ struct Theatre
 	std::vector<Mesh *> meshes;
 	Mesh stage;
 
-	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_actors = {}, Mesh init_stage = Mesh());
+	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_actors = {}, Mesh init_stage = Mesh(NULL, VAO_FLATS));
 
-	void addActor(Actor &new_actor);
-	void removeActor(Actor &old_actor);
+	void actorEnter(Actor *new_actor);
+	void actorLeave(Actor *old_actor);
+
+/*protected:
+	void sortMeshes(); // Only use if copying sorting code a lot*/
 };
 
 extern Theatre *current_theatre;
 
-void loadNewTheatre(Theatre *new_theatre);
 #else
 struct Theatre;
 extern Theatre *current_theatre;

@@ -37,8 +37,9 @@ public:
 
 	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
-	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); } // Todo: account for Sprites
+	// virtual ~Actor();
 
+	virtual bool gatekeepRenderer();
 	virtual void Tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
 
@@ -58,6 +59,8 @@ public:
 	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f))
 	: Actor(new_name, Mesh(), init_position), mouse_sensitivity(INIT_SENSITIVITY)
 	{}
+
+	bool gatekeepRenderer() override;
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
@@ -83,7 +86,7 @@ public:
 class SpriteTester: public Actor
 {
 public:
-	SpriteTester(std::string init_name, Sprite init_sprite = Sprite(VAO_TESTING), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f))
+	SpriteTester(std::string init_name, Sprite init_sprite = Sprite(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f))
 	: Actor(init_name, init_sprite, init_position)
 	{}
 };

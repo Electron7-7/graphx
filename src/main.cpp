@@ -4,19 +4,17 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
-#include "g_math.hpp"
-#include "default_cube.graphxmodel"
-#include "default_pyramid.graphxmodel"
+#include "cube.graphxmodel"
+#include "pyramid.graphxmodel"
+#include "test_theatre.graphxtheatre"
 #include <vector>
 #include <thread>
 #include <cstdlib>
 #include <mutex>
-#include <algorithm>
-#include <iostream>
 
 std::mutex actor_state_mutex;
 
-GraphXPlayer player("Player", glm::vec3(0.0f, 0.0f, 3.0f));
+GraphXPlayer player("Player", glm::vec3(0.0f, 1.0f, 0.0f));
 
 std::vector<int> main_window_size =
 {
@@ -51,7 +49,6 @@ int main()
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
 	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
-
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window);
@@ -76,11 +73,8 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
-	MoverTester mover_tester("mover_tester", Mesh(&mover_tester, VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
-	SpriteTester sprite_tester("sprite_tester", Sprite(&sprite_tester, VAO_TESTING), glm::vec3(0.0f, -1.0f, -6.0f));
-
-	Theatre test_theatre("test theatre", std::vector<Actor *> {&mover_tester, &sprite_tester});
-	loadNewTheatre(&test_theatre);
+	current_theatre = &test_theatre;
+	time_to_store_buffers = true;
 
 	int tick = 0;
 	double last_time = glfwGetTime();

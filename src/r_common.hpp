@@ -2,7 +2,7 @@
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "sanity.hpp"
-#include "default_quad.graphxmodel"
+#include "quad.graphxmodel"
 #include "ERROR.graphxmodel"
 #include <mutex>
 #include <vector>
@@ -15,8 +15,8 @@
 
 #define VAOS_AMOUNT		5
 //-----------------------
-#define VAO_TESTING		0
-#define VAO_ERR			1
+#define VAO_ERR			0
+#define VAO_TESTING		1
 #define VAO_FLATS		2
 #define VAO_ACTORS		3
 #define VAO_PROPS		4
@@ -25,7 +25,7 @@
 #define MISSING_TEXTURE_PATH		"src/images/COMP04_5.png"	// Todo: Make/use a default MISSING texture
 
 class Actor;	// Forward-declare Actor
-
+struct Theatre;	// Forward-declare Theatre
 
 class GLShader
 {
@@ -86,6 +86,8 @@ struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though th
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
+extern std::vector<Mesh> meshes;
+extern std::vector<Sprite> sprites;
 extern std::atomic_bool time_to_render;
 extern std::atomic_bool time_to_store_buffers;
 
@@ -93,4 +95,5 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking G
 void		W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
 void 		R_StoreBuffers(bool changing_to_new_theatre = true);
 void 		R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view);
+void		T_LoadTheatre(Theatre current_theatre);
 #endif

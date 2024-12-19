@@ -1,6 +1,4 @@
 #include "g_actors.hpp"
-#include <vector>
-#include <mutex>
 
 //
 // Actor
@@ -46,6 +44,11 @@ void Actor::updateStates(std::mutex &state_mutex)
 void Actor::Tick(int current_tick)
 {}
 
+bool Actor::gatekeepRenderer()
+{
+	return ((mesh.vao_id == VAO_ERR) || !visible); // Todo: account for Sprites
+}
+
 //
 // GraphXPlayer
 //
@@ -75,6 +78,11 @@ void GraphXPlayer::doMouseMovement(std::vector<float> offset, bool constrain_pit
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
 	return glm::lookAt(position_global, position_global + orientation_front, orientation_up);
+}
+
+bool GraphXPlayer::gatekeepRenderer() // NOT MULTIPLAYER FRIENDLY (but I'm not touching that with a ten foot pole... yet)
+{
+	return true;
 }
 
 //

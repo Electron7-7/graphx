@@ -5,14 +5,14 @@
 const std::vector<float> ERROR_VERTS =
 {
 	// positions			// texture coords
-	-0.5f, -0.5f, -0.5f,	0.0f, 0.0f,			// Left		Down	Back		0
-	-0.5f, -0.5f,  0.5f,	1.0f, 0.0f,			// Left		Down	Forward		1
-	-0.5f,  0.5f, -0.5f,	0.0f, 1.0f,			// Left		Up		Back		2
-	-0.5f,  0.5f,  0.5f,	1.0f, 1.0f,			// Left		Up		Forward		3
-	 0.5f, -0.5f, -0.5f,	1.0f, 0.0f,			// Right	Down	Back		4
-	 0.5f, -0.5f,  0.5f,	0.0f, 0.0f,			// Right	Down	Forward		5
-	 0.5f,  0.5f, -0.5f,	1.0f, 1.0f,			// Right	Up		Back		6
-	 0.5f,  0.5f,  0.5f,	0.0f, 1.0f			// Right	Up		Forward		7
+	-0.2f, -0.2f, -0.2f,	0.0f, 0.0f,			// Left		Down	Back		0
+	-0.2f, -0.2f,  0.2f,	1.0f, 0.0f,			// Left		Down	Forward		1
+	-0.2f,  0.2f, -0.2f,	0.0f, 1.0f,			// Left		Up		Back		2
+	-0.2f,  0.2f,  0.2f,	1.0f, 1.0f,			// Left		Up		Forward		3
+	 0.2f, -0.2f, -0.2f,	1.0f, 0.0f,			// Right	Down	Back		4
+	 0.2f, -0.2f,  0.2f,	0.0f, 0.0f,			// Right	Down	Forward		5
+	 0.2f,  0.2f, -0.2f,	1.0f, 1.0f,			// Right	Up		Back		6
+	 0.2f,  0.2f,  0.2f,	0.0f, 1.0f			// Right	Up		Forward		7
 };
 
 const std::vector<unsigned int> ERROR_INDICES =

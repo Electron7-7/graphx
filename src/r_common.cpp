@@ -1,4 +1,3 @@
-#include "g_actors.hpp"
 #include "r_common.hpp"
 #include <string>
 #include <iostream>

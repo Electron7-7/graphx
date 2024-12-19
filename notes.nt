@@ -354,3 +354,47 @@ Time to go take care of Dex :3
 Okay, so I've finished up most of the ownership code, but there's a problem: when rendering, I expect the current Mesh's owner to be an Actor, but one of them will be the Theatre Stage. I need to account for this by either skipping all that code if VAO_ID == VAO_FLATS or if the Mesh's owner is NULL which honestly is the better choice, since it also accounts for orphan meshes which is a nice way to prevent crashing (I should also throw an exception or at least print out a message stating why you're not seeing that Mesh).
 
 It works!! Now time to go through and remove any unused code and do some spring cleaning before pushing this to prod real quick to get a working build up there.
+
+Theatres should have a vector of Actors, not a vector of Actor pointers; Actors should be created by the Theatre and stored within that Theatre. This is a bit higher level than what I have right now, since this is pretty much Godot Scenes/Root Nodes or Unity Scenes but I think it's a very important high level concept that should at least be started now.
+
+Hmmm... should I actually have there be a global Mesh vector that holds every single mesh in the current game (e.g: WAD), then every Actor has a reference to the Mesh that they use? Because currently, I'm doing this in a way that I don't think is very efficient because I don't think that if you make a clone of an Actor that it should also make a clone of that Actor's Mesh since it's the same exact data regardless.
+
+Yeah, because the whole idea of "oh but it's easier to just make a Mesh in the Actor constructor instead of arbitrarily making it in a vector and giving the Actor a pointer" is only relevant if that's ALSO how the (to be created) editor would show it, but the editor can show you whatever it wants to and then at the end of the day, do things according to the engine. Meaning, with this implementation, the editor could (and I'm stealing from Godot's editor here) only let you make Meshes inside of an Actor, but behind the scenes it's actually making a Mesh, putting it in a global vector, and giving the Actor a reference to that Mesh. Yeah, I like that a lot.
+
+Now, do I want to separate Sprites and Meshes? Separating them would look nicer and be easier to manage, but combining them would be more efficient...
+
+For now, I'll keep them combined.
+
+Nope, lol, I didn't realize that you can't combine types in vectors, even if they're parent/child due to object slicing and general nastiness (at least without pointers/references which I'm trying to avoid in the first place). Separate vectors it is, then!
+
+While I don't like how this feels like it could be combined, Sprites will probably have a lot of unique stuff in them later on that'll justify this decision.
+
+UGHHHHHHHHH I just realized this totally fucks up the whole inheritance thing if one Mesh can have multiple Actor owners UGHHHHHHHHH.
+
+There may be a solution! It might not be that bad to nest another for loop in R_Render. Basically, the idea goes like this for R_Render:
+	1. Get a Mesh from meshes
+	2. If we're using a new VAO now, switch VAOs via the Mesh's vao_id
+	3. Go through all Actors in the current Theatre
+	4. If an Actor uses this Mesh, get it's state and render it
+	5. Continue for all Meshes
+
+This could definitely be optimized, since a worst case scenario is that the nested loop goes through every single Actor for every Mesh that we use.
+
+Also, I should keep track of which Meshes should be rendered based on the Theatre and Actors... which means it might make more sense to go back to going through a list of Actors. However, I'd like to avoid that.
+
+Wait, I've thought of something wrong: Meshes are just bundles of vertices and indices and I don't think you can "share" them; I think that trying to would just be one Actor moving the vertices somewhere, then the next one moving the same vertices instead of having its own vertices, etc. You might have to just duplicate Meshes (which I guess isn't really duplication). I'll need to test this.
+
+Yup! I'm right! You can't "share" Meshes (vertex+index data), at least not the way I'm thinking and anything other than that is over-engineered (for now).
+
+So back to how it was before! Lmfao.
+
+I've run into a problem: I'm slicing classes if I try to make a vector of Actors in Theatre instead of a vector of Actor pointers. I guess I'll just do that instead; shouldn't be any overhead, tbh, and should work fine.
+
+I thought I had a problem where the player was rendering a mesh and thought I would solve it by implementing a render check to skip renering a mesh if the owner's gatekeepRenderer function returned true. Then, I realized that I'm still doing a form of class slicing with pointers I think because I'm pretty sure that the virtual functions are getting lopped. I don't fully know, though...
+
+Okay, it's not; that means something else is going on.
+
+Oh my god... I think that random thing is... the fucking geometry.
+
+Okay, my thoughts:
+Theatres are tricky, because all the hardcoding I'm doing in the main file (i.e: making actors and meshes and theatres) should be done inside each Theatre, so I'm making a new rendering function (T_LoadTheatre) that's responsible for switching theatres and notifying the render loop to start buffering and such (or could just buffer them in the function itself, tbh), and I'll be simulating pre-made Theatres with "graphxtheatre" files which are just C++ files that create a new Theatre object, some Actors and Meshes, and put those Actors+Meshes into that new Theatre. Then, T_LoadTheatre will be given a reference to that theatre and will be responsible for loading it and such. Honestly, that whole "graphxtheatre" thing aint such a bad idea as a real solution...

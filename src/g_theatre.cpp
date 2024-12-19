@@ -1,10 +1,12 @@
 #include "g_theatre.hpp"
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
-#include "g_math.hpp"
 #include <algorithm>
 
 Theatre *current_theatre;
 
+//
+// Theatre
+//
 Theatre::Theatre(std::string init_name, std::vector<Actor *> init_actors, Mesh init_stage)
 : name(init_name), actors(init_actors), stage(init_stage)
 {
@@ -12,11 +14,31 @@ Theatre::Theatre(std::string init_name, std::vector<Actor *> init_actors, Mesh i
 		meshes.push_back(&actor->mesh);
 	meshes.push_back(&stage);
 
-	std::sort(meshes.begin(), meshes.end(), gmath::compareVAOID);
+	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
+	{
+		return (left->vao_id > right->vao_id);
+	});
 }
 
-void loadNewTheatre(Theatre *new_theatre) // Honestly, remove this whole function once I have a system for loading theatres
+/*void Theatre::sortMeshes() // Only use if copying sorting code a lot
 {
-	current_theatre = new_theatre;
-	time_to_store_buffers = true; // Remove this once I have a system for loading theatres
+	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
+	{
+		return (left->vao_id > right->vao_id);
+	});
+}*/
+
+void Theatre::actorEnter(Actor *new_actor)
+{
+	actors.push_back(new_actor);
+	meshes.push_back(&new_actor->mesh);
+}
+
+void Theatre::actorLeave(Actor *old_actor)
+{
+	for(int i = 0 ; i < actors.size() ; i++)
+	{
+		if(actors[i] == old_actor)
+			actors.erase(actors.begin() + i);
+	}
 }
