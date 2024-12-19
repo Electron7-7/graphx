@@ -21,8 +21,7 @@
 #define VAO_ACTORS		3
 #define VAO_PROPS		4
 
-#define MISSING_TEXTURE_PATH 		"src/images/COMP04_5.png"	// Todo: make/use a default MISSING texture
-#define MISSING_TEXTURE_PATH		"src/images/COMP04_5.png"	// Todo: Make/use a default MISSING texture
+#define MISSING_TEXTURE_PATH 		"src/images/MISSING.png"	// Todo: make/use a default MISSING texture
 
 class Actor;	// Forward-declare Actor
 struct Theatre;	// Forward-declare Theatre

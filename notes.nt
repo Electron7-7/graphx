@@ -398,3 +398,8 @@ Oh my god... I think that random thing is... the fucking geometry.
 
 Okay, my thoughts:
 Theatres are tricky, because all the hardcoding I'm doing in the main file (i.e: making actors and meshes and theatres) should be done inside each Theatre, so I'm making a new rendering function (T_LoadTheatre) that's responsible for switching theatres and notifying the render loop to start buffering and such (or could just buffer them in the function itself, tbh), and I'll be simulating pre-made Theatres with "graphxtheatre" files which are just C++ files that create a new Theatre object, some Actors and Meshes, and put those Actors+Meshes into that new Theatre. Then, T_LoadTheatre will be given a reference to that theatre and will be responsible for loading it and such. Honestly, that whole "graphxtheatre" thing aint such a bad idea as a real solution...
+
+[12/19/24]
+I'm home rn and just trying to use Blender and manual .obj editing; I think it's gonna work but it's almost 3PM so I gotta be quick!
+
+Update: it doesn't work quite right but I have the raw data in there now so that's something, I guess. I might add the .blend file to the repo just for my laptop.
