@@ -1,8 +1,8 @@
 // I want this to spell out "ERROR", but for now I'll make it a small cube or something
-#ifndef GRAPHX_ERR_MESH
-#define GRAPHX_ERR_MESH
+#ifndef GRAPHX_ERROR_MESH
+#define GRAPHX_ERROR_MESH
 #include <vector>
-const std::vector<float> ERR_VERTS =
+const std::vector<float> ERROR_VERTS =
 {
 	// positions			// texture coords
 	-0.2f, -0.2f, -0.2f,	0.0f, 0.0f,			// Left		Down	Back		0
@@ -15,7 +15,7 @@ const std::vector<float> ERR_VERTS =
 	 0.2f,  0.2f,  0.2f,	0.0f, 1.0f			// Right	Up		Forward		7
 };
 
-const std::vector<unsigned int> ERR_INDICES =
+const std::vector<unsigned int> ERROR_INDICES =
 {
 	// -X Square
 	0, 1, 2,	// Bottom Triangle

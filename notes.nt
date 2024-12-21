@@ -403,3 +403,13 @@ Theatres are tricky, because all the hardcoding I'm doing in the main file (i.e:
 I'm home rn and just trying to use Blender and manual .obj editing; I think it's gonna work but it's almost 3PM so I gotta be quick!
 
 Update: it doesn't work quite right but I have the raw data in there now so that's something, I guess. I might add the .blend file to the repo just for my laptop.
+
+Okay, I'm at work now; I'll-holy shit my fucking stupid nokia ringtone alarm just went off for no reason at 4pm. That scared the fuck outta me.
+
+Anyways, I'm gonna try and either fix the vertex data in Blender to be between -1.0 and 1.0, or just say fuck it and make my own from scratch by hand (in blender first so I at least have something visual and not just using my brain).
+
+I just gave up before realizing that the problem I'm having is that I've hardcoded my vertex data to be three floats for position AND TWO FLOATS FOR TEXTURE COORDINATES I AM SO FUCKING DUMB I HAVE TO REDO EVERYTHING UGGGGHHH!!
+
+YUP ITS ALMOST THERE GOD DAMNIT!
+
+Aight, I'm gonna make an OBJ loader and then maybe just use it to get vertex+index data that I'll hardcode (bc even if I do support OBJ files, I don't want them to be the main 3D files used). I'll be following this tutorial: (http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading)
