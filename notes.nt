@@ -413,3 +413,6 @@ I just gave up before realizing that the problem I'm having is that I've hardcod
 YUP ITS ALMOST THERE GOD DAMNIT!
 
 Aight, I'm gonna make an OBJ loader and then maybe just use it to get vertex+index data that I'll hardcode (bc even if I do support OBJ files, I don't want them to be the main 3D files used). I'll be following this tutorial: (http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading)
+
+[12/22/24]
+Hmm, there seems to be mesh problems; when using a theatre, it seems like the last mesh to get loaded overrides all meshes (similar to a worry I had a while back with "shared" vertices). Look into this later.

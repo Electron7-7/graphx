@@ -21,7 +21,7 @@
 #define VAO_ACTORS		3
 #define VAO_PROPS		4
 
-#define MISSING_TEXTURE_PATH 		"src/images/MISSING.png"	// Todo: make/use a default MISSING texture
+#define MISSING_TEXTURE_PATH 		"src/images/MISSING.jpg"	// Todo: make/use a default MISSING texture
 // #define MISSING_TEXTURE_PATH 		"src/images/COMP04_5.png"	// Todo: make/use a default MISSING texture
 
 class Actor;	// Forward-declare Actor
@@ -74,7 +74,7 @@ struct Mesh
 	: vao_id(init_vao_id), vertices(init_vertices), indices(init_indices), indices_amount(init_indices.size()), texture_path(init_texture_path)
 	{owner = init_owner;}
 
-	void generateTexture();
+	void generateTexture(bool flip = true);
 };
 
 struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)

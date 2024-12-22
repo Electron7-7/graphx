@@ -4,8 +4,11 @@
 
 // Texture Function
 // Todo: go from generating one texture per one filepath to n textures per n filepaths (and returning their pointers)
-void Mesh::generateTexture()
+void Mesh::generateTexture(bool flip)
 {
+	if(flip) // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+		stbi_set_flip_vertically_on_load(true);
+
 	glGenTextures(1, &m_texture);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
