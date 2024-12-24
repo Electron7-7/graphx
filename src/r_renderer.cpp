@@ -160,24 +160,16 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void R_AddBufferToStore(Actor *new_actor)
-{
-	std::cout << "Adding buffer to store" << std::endl;
-	// meshes.push_back(&new_actor->mesh);
-	// R_StoreBuffers(false);
-	// std::sort(current_theatre->actors.begin(), current_theatre->actors.end(), gmath::compareVAOID);
-}
-
 void R_StoreBuffers(bool changing_to_new_theatre)
 {
-	int current_vao_id = -1;
+	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Just makes sure we always change to and bind the first VAO by keeping this initial value out of range
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		if(mesh->vao_id != current_vao_id)
+		if(mesh->vao_id != current_vao_index)
 		{
-			current_vao_id++;
-			glBindVertexArray(vertex_array_objects[current_vao_id]);
+			current_vao_index = mesh->vao_id;
+			glBindVertexArray(vertex_array_objects[current_vao_index]);
 		}
 
 		mesh->generateTexture(); // Quickly generate the texture in the render thread
@@ -215,12 +207,13 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 	current_shader.setMatrix("projection", projection);
 	current_shader.setMatrix("camera_view", camera_view);
 
-	int current_vao_index = -1;
+	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Just makes sure we always change to and bind the first VAO by keeping this initial value out of range
+
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		if(mesh->vao_id > current_vao_index)
+		if(mesh->vao_id != current_vao_index)
 		{
-			current_vao_index++;
+			current_vao_index = mesh->vao_id;
 			glBindVertexArray(vertex_array_objects[current_vao_index]);
 		}
 

@@ -6,7 +6,7 @@
 #include "g_theatre.hpp"
 #include "cube.graphxmodel"
 #include "pyramid.graphxmodel"
-#include "test_theatre.graphxtheatre"
+// #include "test_theatre.graphxtheatre"
 #include <vector>
 #include <thread>
 #include <cstdlib>
@@ -73,6 +73,10 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
+	MoverTester mover_tester("mover_tester", Mesh(&mover_tester, VAO_ACTORS, PYRAMID_VERTS, PYRAMID_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
+	Actor static_tester("static_tester", Mesh(&static_tester, VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, -2.0f, -6.0f));
+	Theatre test_theatre("test_theatre", std::vector<Actor *> {&mover_tester, &static_tester});
+
 	current_theatre = &test_theatre;
 	time_to_store_buffers = true;
 

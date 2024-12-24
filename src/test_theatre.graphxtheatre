@@ -5,6 +5,6 @@
 #include "cube.graphxmodel"
 #include "pyramid.graphxmodel"
 MoverTester mover_tester("mover_tester", Mesh(&mover_tester, VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
-Actor static_tester("static_tester", Mesh(&static_tester, VAO_TESTING, PYRAMID_VERTS, PYRAMID_INDICES), glm::vec3(-2.0f, -1.0f, -6.0f));
+Actor static_tester("static_tester", Mesh(&static_tester, VAO_TESTING, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, -1.0f, -6.0f));
 Theatre test_theatre("test_theatre", std::vector<Actor *> {&mover_tester, &static_tester});
 #endif

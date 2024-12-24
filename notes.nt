@@ -416,3 +416,15 @@ Aight, I'm gonna make an OBJ loader and then maybe just use it to get vertex+ind
 
 [12/22/24]
 Hmm, there seems to be mesh problems; when using a theatre, it seems like the last mesh to get loaded overrides all meshes (similar to a worry I had a while back with "shared" vertices). Look into this later.
+
+[12/23/24]
+Aight, I'm mildly hung over and ready to figure out this rendering situation. Based!
+
+Hmm... the mesh problem only appears when both meshes use VAO_TESTING... I set them to both be VAO_ACTORS and they had the proper meshes.
+
+[12/24/24]
+I FIGURED IT OUT!! While talking to myself just now about removing "moving parts" in my code (bits that do things that could be removed or simplified to remove a point of failure), I talked about the vao_id switching done in R_Render and R_StoreBuffers and I realized that THAT is EXACTLY what's wrong with the VAOs! If the next vao_id is > 1 index from the last one, it just goes to the next one and continues trying to render, but because I iterate through the Meshes and not the VAOs, it doesn't eventually get to the right VAO and it uses the wrong one! It's a simple fix! At least, I hope...
+
+Half right, half wrong. I think I better understand VAO vs VBO; you should keep VAOs to a minimum, but they're used for Vertex Attributes (duh), so they're used for different vertex data types (i.e: one VAO for vertex data with only position and texture coordinates, one VAO for vertex data with position, uv, and normal, etc.). Now my question is: should I use a new VBO and EBO for each mesh, or should I use VBOs like I was using VAOs?
+
+And I think that's what I'm gonna do: use VBOs like VAOs (and I think that includes EBOs).

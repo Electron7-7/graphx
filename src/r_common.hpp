@@ -59,7 +59,7 @@ struct Mesh
 {
 	Actor *owner;
 
-	const int vao_id;
+	const unsigned int vao_id;
 	const std::vector<GLfloat> vertices;
 	const std::vector<GLuint> indices;
 	const unsigned int indices_amount;
@@ -70,7 +70,7 @@ struct Mesh
 	unsigned int VBO = 0;
 	unsigned int EBO = 0;
 
-	Mesh(Actor *init_owner = NULL, const int init_vao_id = VAO_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
+	Mesh(Actor *init_owner = NULL, const unsigned int init_vao_id = VAO_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
 	: vao_id(init_vao_id), vertices(init_vertices), indices(init_indices), indices_amount(init_indices.size()), texture_path(init_texture_path)
 	{owner = init_owner;}
 
@@ -80,7 +80,7 @@ struct Mesh
 struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Actor *init_owner = NULL, const int init_vao_id = VAO_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
+	Sprite(Actor *init_owner = NULL, const unsigned int init_vao_id = VAO_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
 	: Mesh(init_owner, init_vao_id, QUAD_VERTS, QUAD_INDICES, init_texture)
 	{}
 };
