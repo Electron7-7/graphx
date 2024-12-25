@@ -428,3 +428,31 @@ I FIGURED IT OUT!! While talking to myself just now about removing "moving parts
 Half right, half wrong. I think I better understand VAO vs VBO; you should keep VAOs to a minimum, but they're used for Vertex Attributes (duh), so they're used for different vertex data types (i.e: one VAO for vertex data with only position and texture coordinates, one VAO for vertex data with position, uv, and normal, etc.). Now my question is: should I use a new VBO and EBO for each mesh, or should I use VBOs like I was using VAOs?
 
 And I think that's what I'm gonna do: use VBOs like VAOs (and I think that includes EBOs).
+
+Okay I have some notes on a simple version of the render process:
+	Render a set of indices.
+	Store how many you rendered for the next render call.
+	Render a set of indices at an offset of the number of indices you rendered last (using that stored number).
+
+Okay, so there are a few things to note right now:
+	1. You can combine VBO and IBO(EBO) data into one buffer and you should!
+	2. VAOs are for vertex attributes (duh)
+	3. Buffers are for raw data
+	4. Use offsets
+
+This is a big source of help: (https://github.com/fendevel/Guide-to-Modern-OpenGL-Functions)
+
+First off, I need to combine VBO and EBO into one "Buffer". Then, follow that link above as a guide to rendering with multiple Buffers all filled with tons of different Mesh vertex data.
+
+Aight, make one buffer and allocate some size of data that seems not too big but not too small. Then, if it's filled up, make a new buffer. This means I won't have a set of specific buffers but that's fine.
+
+OR I could do a set of specific buffer vectors and start off with only one buffer in each; give them a certain amount of storage and make new buffers when they get full. This seems like a good compromise.
+
+Of course, that's kinda expensive so I could just opt to make big ass buffers (i.e: in the megabytes) and call it a day (for now).
+
+Okay this is way too much for me right now; I'm sticking to VBOs and IBOs and using a few large VBOs+IBOs for every mesh.
+
+I'm fucking burnt out lmfao. I think that buffer condensing and modern OpenGL DSA shit is wayyyyyyy over-engineered for my usecase. I'm going to try and go back to basics. Separate VBOs and EBOs, made using older OpenGL syntax (> 3.1 but < 4.5) and very simple and easy to understand... hopefully.
+
+ALSO HEADS UP!!! YOU WILL NEED TO KNOW/REMEMBER THAT/HOW MANY VAOS CAN REFERENCE THE SAME VBOS (SEE LINK BELOW)
+	-----> (https://computergraphics.stackexchange.com/questions/4623/multiple-vao-share-a-vbo)

@@ -5,7 +5,9 @@
 #include <sstream>
 #include <cmath>
 
-std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
+std::array<GLuint, 1> VAOs;
+std::array<GLuint, BUFFERS_AMOUNT> VBOs;
+std::array<GLuint, BUFFERS_AMOUNT> IBOs;
 std::vector<Mesh> meshes = { Mesh() };					// Have the first Mesh always be the default ERROR Mesh
 std::vector<Sprite> sprites = { Sprite() };				// Have the first Sprite always be the default ERROR Sprite
 
@@ -160,36 +162,35 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void R_StoreBuffers(bool changing_to_new_theatre)
+void R_StoreBuffers()
 {
-	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Just makes sure we always change to and bind the first VAO by keeping this initial value out of range
+	glGenVertexArrays(1, &VAOs[0]);
+	glGenBuffers(BUFFERS_AMOUNT, &VBOs[0]);
+	glGenBuffers(BUFFERS_AMOUNT, &IBOs[0]);
+
+	glBindVertexArray(VAOs[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	unsigned int current_buffer_index = BUFFERS_AMOUNT + 1; // Just makes sure we always change to and bind the first BUFFER by keeping this initial value out of range
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		if(mesh->vao_id != current_vao_index)
-		{
-			current_vao_index = mesh->vao_id;
-			glBindVertexArray(vertex_array_objects[current_vao_index]);
-		}
-
 		mesh->generateTexture(); // Quickly generate the texture in the render thread
 
-		glGenBuffers(1, &mesh->VBO);
-		glGenBuffers(1, &mesh->EBO);
-
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), &mesh->vertices[0], GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		if(current_buffer_index != mesh->buffer_index)
+		{
+			current_buffer_index = mesh->buffer_index;
+		}
+		/*
+		TODO:
+			There will be BUFFERS_AMOUNT # of both VBOs and EBOs/IBOs (pick a name, damnit)
+			The VBOs will hold all the vertex data while the EBOs/IBOs will hold all the index data
+			See notes for help
+		*/
 	}
 
 	time_to_store_buffers = false;
@@ -207,16 +208,10 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 	current_shader.setMatrix("projection", projection);
 	current_shader.setMatrix("camera_view", camera_view);
 
-	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Just makes sure we always change to and bind the first VAO by keeping this initial value out of range
+	// unsigned int current_buffer_index = BUFFERS_AMOUNT + 1; // Just makes sure we always change to and bind the first BUFFER by keeping this initial value out of range
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		if(mesh->vao_id != current_vao_index)
-		{
-			current_vao_index = mesh->vao_id;
-			glBindVertexArray(vertex_array_objects[current_vao_index]);
-		}
-
 		// Meshes only have one texture right now, but when they don't, I'll need to make this iterative; as it stands, this is
 		// extremely hard-coded.
 		glActiveTexture(GL_TEXTURE0);
@@ -245,6 +240,6 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 		}
 
 		current_shader.setMatrix("model", model_position);
-		glDrawElements(GL_TRIANGLES, mesh->indices_amount, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0); // Need to add indices offset
 	}
 }

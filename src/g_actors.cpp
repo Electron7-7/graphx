@@ -46,7 +46,7 @@ void Actor::Tick(int current_tick)
 
 bool Actor::gatekeepRenderer()
 {
-	return ((mesh.vao_id == VAO_ERR) || !visible); // Todo: account for Sprites
+	return (!visible); // Todo: account for Sprites
 }
 
 //

@@ -13,13 +13,15 @@
 #define GLSHADER_TYPE_FRAGMENT	1
 #define GLSHADER_TYPE_PROGRAM	2
 
-#define VAOS_AMOUNT		5
-//-----------------------
-#define VAO_ERR			0
-#define VAO_TESTING		1
-#define VAO_FLATS		2
-#define VAO_ACTORS		3
-#define VAO_PROPS		4
+#define BUFFERS_AMOUNT		5
+//---------------------------
+#define BUFFER_ERR			0
+#define BUFFER_TESTING		1
+#define BUFFER_FLATS		2
+#define BUFFER_ACTORS		3
+#define BUFFER_PROPS		4
+//---------------------------
+#define BUFFER_STORAGE_MB	2
 
 #define MISSING_TEXTURE_PATH 		"src/images/MISSING.jpg"	// Todo: make/use a default MISSING texture
 // #define MISSING_TEXTURE_PATH 		"src/images/COMP04_5.png"	// Todo: make/use a default MISSING texture
@@ -59,19 +61,15 @@ struct Mesh
 {
 	Actor *owner;
 
-	const unsigned int vao_id;
+	const unsigned int buffer_index;
 	const std::vector<GLfloat> vertices;
 	const std::vector<GLuint> indices;
-	const unsigned int indices_amount;
 
 	std::string texture_path;
 	unsigned int m_texture = 0;
 
-	unsigned int VBO = 0;
-	unsigned int EBO = 0;
-
-	Mesh(Actor *init_owner = NULL, const unsigned int init_vao_id = VAO_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
-	: vao_id(init_vao_id), vertices(init_vertices), indices(init_indices), indices_amount(init_indices.size()), texture_path(init_texture_path)
+	Mesh(Actor *init_owner = NULL, const unsigned int init_buffer_index = BUFFER_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
+	: buffer_index(init_buffer_index), vertices(init_vertices), indices(init_indices), texture_path(init_texture_path)
 	{owner = init_owner;}
 
 	void generateTexture(bool flip = true);
@@ -80,12 +78,14 @@ struct Mesh
 struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Actor *init_owner = NULL, const unsigned int init_vao_id = VAO_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
-	: Mesh(init_owner, init_vao_id, QUAD_VERTS, QUAD_INDICES, init_texture)
+	Sprite(Actor *init_owner = NULL, const unsigned int init_buffer_index = BUFFER_ERR, std::string init_texture = MISSING_TEXTURE_PATH)
+	: Mesh(init_owner, init_buffer_index, QUAD_VERTS, QUAD_INDICES, init_texture)
 	{}
 };
 
-extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
+extern std::array<GLuint, 1> VAOs; // Only one VAO for now but I expect to need more down the line
+extern std::array<GLuint, BUFFERS_AMOUNT> VBOs;
+extern std::array<GLuint, BUFFERS_AMOUNT> IBOs;
 extern std::vector<Mesh> meshes;
 extern std::vector<Sprite> sprites;
 extern std::atomic_bool time_to_render;
@@ -93,7 +93,7 @@ extern std::atomic_bool time_to_store_buffers;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void		W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
-void 		R_StoreBuffers(bool changing_to_new_theatre = true);
+void 		R_StoreBuffers();
 void 		R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view);
 void		T_LoadTheatre(Theatre current_theatre);
 #endif

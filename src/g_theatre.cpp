@@ -16,7 +16,7 @@ Theatre::Theatre(std::string init_name, std::vector<Actor *> init_actors, Mesh i
 
 	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
 	{
-		return (left->vao_id > right->vao_id);
+		return (left->buffer_index > right->buffer_index);
 	});
 }
 
@@ -24,7 +24,7 @@ Theatre::Theatre(std::string init_name, std::vector<Actor *> init_actors, Mesh i
 {
 	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
 	{
-		return (left->vao_id > right->vao_id);
+		return (left->vbo_id > right->vbo_id);
 	});
 }*/
 
