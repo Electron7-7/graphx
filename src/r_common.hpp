@@ -20,8 +20,6 @@
 #define BUFFER_FLATS		2
 #define BUFFER_ACTORS		3
 #define BUFFER_PROPS		4
-//---------------------------
-#define BUFFER_STORAGE_MB	2
 
 #define MISSING_TEXTURE_PATH 		"src/images/MISSING.jpg"	// Todo: make/use a default MISSING texture
 // #define MISSING_TEXTURE_PATH 		"src/images/COMP04_5.png"	// Todo: make/use a default MISSING texture
@@ -64,6 +62,8 @@ struct Mesh
 	const unsigned int buffer_index;
 	const std::vector<GLfloat> vertices;
 	const std::vector<GLuint> indices;
+	unsigned int VBO;
+	unsigned int IBO;
 
 	std::string texture_path;
 	unsigned int m_texture = 0;
@@ -72,7 +72,7 @@ struct Mesh
 	: buffer_index(init_buffer_index), vertices(init_vertices), indices(init_indices), texture_path(init_texture_path)
 	{owner = init_owner;}
 
-	void generateTexture(bool flip = true);
+	void generateTexture();
 };
 
 struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
@@ -84,8 +84,8 @@ struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though th
 };
 
 extern std::array<GLuint, 1> VAOs; // Only one VAO for now but I expect to need more down the line
-extern std::array<GLuint, BUFFERS_AMOUNT> VBOs;
-extern std::array<GLuint, BUFFERS_AMOUNT> IBOs;
+// extern std::array<GLuint, BUFFERS_AMOUNT> VBOs;
+// extern std::array<GLuint, BUFFERS_AMOUNT> IBOs; // I might only need one IBO
 extern std::vector<Mesh> meshes;
 extern std::vector<Sprite> sprites;
 extern std::atomic_bool time_to_render;
@@ -95,5 +95,5 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking G
 void		W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
 void 		R_StoreBuffers();
 void 		R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view);
-void		T_LoadTheatre(Theatre current_theatre);
+void		T_LoadTheatre(Theatre *new_theatre);
 #endif

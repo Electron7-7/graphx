@@ -6,7 +6,7 @@
 #include "g_theatre.hpp"
 #include "cube.graphxmodel"
 #include "pyramid.graphxmodel"
-// #include "test_theatre.graphxtheatre"
+#include "theatres/bigger_test_theatre.graphxtheatre"
 #include <vector>
 #include <thread>
 #include <cstdlib>
@@ -14,7 +14,7 @@
 
 std::mutex actor_state_mutex;
 
-GraphXPlayer player("Player", glm::vec3(0.0f, 1.0f, 0.0f));
+GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
 
 std::vector<int> main_window_size =
 {
@@ -47,6 +47,7 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(_debug_callback, nullptr);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
@@ -56,6 +57,7 @@ int main()
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window);
+		processInput(main_window);
 		glfwPollEvents();
 
 		if(time_to_store_buffers)
@@ -77,12 +79,7 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
-	MoverTester mover_tester("mover_tester", Mesh(&mover_tester, BUFFER_ACTORS, PYRAMID_VERTS, PYRAMID_INDICES), glm::vec3(0.0f, 1.0f, -6.0f));
-	Actor static_tester("static_tester", Mesh(&static_tester, BUFFER_ACTORS, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, -2.0f, -6.0f));
-	Theatre test_theatre("test_theatre", std::vector<Actor *> {&mover_tester, &static_tester});
-
-	current_theatre = &test_theatre;
-	time_to_store_buffers = true;
+	T_LoadTheatre(&bigger_test_theatre);
 
 	int tick = 0;
 	double last_time = glfwGetTime();
@@ -99,8 +96,6 @@ void testGameTick(GLFWwindow *main_window)
 
 		while(tick_length >= 1.0f)
 		{
-			processInput(main_window);
-
 			for(Actor *actor : current_theatre->actors)
 			{
 				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
@@ -154,38 +149,46 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 
 void _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param)
 {
-	auto const src_str = [source]() {
+	auto const src_str = [source]()
+	{
 		switch (source)
 		{
-		case GL_DEBUG_SOURCE_API: return "API";
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW SYSTEM";
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER COMPILER";
-		case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD PARTY";
-		case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
-		case GL_DEBUG_SOURCE_OTHER: return "OTHER";
+			case GL_DEBUG_SOURCE_API: return "API";
+			case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW SYSTEM";
+			case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER COMPILER";
+			case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD PARTY";
+			case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
+			case GL_DEBUG_SOURCE_OTHER: return "OTHER";
 		}
+		return "N/A";
 	}();
 
-	auto const type_str = [type]() {
+	auto const type_str = [type]()
+	{
 		switch (type)
 		{
-		case GL_DEBUG_TYPE_ERROR: return "ERROR";
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
-		case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
-		case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
-		case GL_DEBUG_TYPE_MARKER: return "MARKER";
-		case GL_DEBUG_TYPE_OTHER: return "OTHER";
+			case GL_DEBUG_TYPE_ERROR: return "ERROR";
+			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
+			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
+			case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
+			case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
+			case GL_DEBUG_TYPE_MARKER: return "MARKER";
+			case GL_DEBUG_TYPE_OTHER: return "OTHER";
 		}
+		return "N/A";
 	}();
 
-	auto const severity_str = [severity]() {
-		switch (severity) {
-		case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
-		case GL_DEBUG_SEVERITY_LOW: return "LOW";
-		case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
-		case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
+	auto const severity_str = [severity]()
+	{
+		switch (severity)
+		{
+			case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
+			case GL_DEBUG_SEVERITY_LOW: return "LOW";
+			case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
+			case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
 		}
+		return "N/A";
 	}();
+
 	std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
 }

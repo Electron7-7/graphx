@@ -456,3 +456,20 @@ I'm fucking burnt out lmfao. I think that buffer condensing and modern OpenGL DS
 
 ALSO HEADS UP!!! YOU WILL NEED TO KNOW/REMEMBER THAT/HOW MANY VAOS CAN REFERENCE THE SAME VBOS (SEE LINK BELOW)
 	-----> (https://computergraphics.stackexchange.com/questions/4623/multiple-vao-share-a-vbo)
+
+[12/26/24]
+At work early again to pick up a shift. Gonna work on finishing the graphics engine re-work.
+
+Ooh ooh, this is important: you do need to bind the correct VBO and IBO during render-time. This is made easier if you use modern OpenGL functions (not the ones in learnopengl.com). This stackoverflow answer has a good example of how to do this: (https://stackoverflow.com/questions/40652905/render-one-vao-containing-two-vbos)
+
+Running into some issues; what I think is going on is that either the wrong indices or the wrong vertices are being used. This could be because I'm either not binding the correct buffers during storage/rendering, the offset is incorrect, or (what I think is most likely happening) I'm not correctly binding buffers when storing them and I'm overwriting the same buffer every time.
+
+I'm also gonna be on call with Dex for a lil bit so I won't be able to focus super hard but I should be able to fix this.
+
+Okay, I might just say fuck it and have every single object just have its own VBO and IBO because even though that's expensive, for my use case (and knowledge level) I think it's fine.
+
+Aight, the rendering pipeline is fully functional again and it's doing things slightly better than before (still kinda ass tho). I'd like to optimize it (and the way it is right now is actually a much better starting point for optimization), but my knowledge level isn't where it needs to be for that, yet.
+
+One of the next things I'd like to crack at is something quick and (hopefully) easy but pretty important: player movement. Specifically, the player-camera movement is in a "flying" mode; if the camera is pointed down and the "backwards" movement key is pressed, the player-camera moves up in the world-space. However, I want it to be in a "walking" mode; if the camera is pointed down and the "backwards" movement key is pressed, the camera should move backwards instead of upwards. This just means that movement code should only take X and Z vectors into consideration when applying orientation to movement. As a side note: I might want to also add in a "move up" and "move down" set of inputs to add back in that Y-Axis movement for testing and such.
+
+I'll also maybe start working on a "Character Controller" Actor that has gravity and collisions! However, I need to learn how to do collisions...

@@ -1,13 +1,14 @@
 #include "r_common.hpp"
 #include "g_theatre.hpp"
+#include <exception>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cmath>
 
 std::array<GLuint, 1> VAOs;
-std::array<GLuint, BUFFERS_AMOUNT> VBOs;
-std::array<GLuint, BUFFERS_AMOUNT> IBOs;
+// std::array<GLuint, BUFFERS_AMOUNT> VBOs;
+// std::array<GLuint, BUFFERS_AMOUNT> IBOs;
 std::vector<Mesh> meshes = { Mesh() };					// Have the first Mesh always be the default ERROR Mesh
 std::vector<Sprite> sprites = { Sprite() };				// Have the first Sprite always be the default ERROR Sprite
 
@@ -165,32 +166,33 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 void R_StoreBuffers()
 {
 	glGenVertexArrays(1, &VAOs[0]);
-	glGenBuffers(BUFFERS_AMOUNT, &VBOs[0]);
-	glGenBuffers(BUFFERS_AMOUNT, &IBOs[0]);
-
 	glBindVertexArray(VAOs[0]);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+
 	glEnableVertexAttribArray(0);
-	
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	unsigned int current_buffer_index = BUFFERS_AMOUNT + 1; // Just makes sure we always change to and bind the first BUFFER by keeping this initial value out of range
+	// unsigned int current_buffer_index = BUFFERS_AMOUNT + 1; // Just makes sure we always change to and bind the first BUFFER by keeping this initial value out of range
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
+		// if(current_buffer_index != mesh->buffer_index)
+		// {
+		// 	current_buffer_index = mesh->buffer_index;
+		// }
+
+		// Note: I could have any potential duplicate VBO data not be written and the mesh->indices_offset set to the
+		// indices offset of the duplicated data. That would also be very hard and over-engineered for my knowledge level rn.
+
 		mesh->generateTexture(); // Quickly generate the texture in the render thread
 
-		if(current_buffer_index != mesh->buffer_index)
-		{
-			current_buffer_index = mesh->buffer_index;
-		}
-		/*
-		TODO:
-			There will be BUFFERS_AMOUNT # of both VBOs and EBOs/IBOs (pick a name, damnit)
-			The VBOs will hold all the vertex data while the EBOs/IBOs will hold all the index data
-			See notes for help
-		*/
+		glGenBuffers(1, &mesh->VBO);
+		glGenBuffers(1, &mesh->IBO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), mesh->vertices.data(), GL_STATIC_DRAW);
+		
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), mesh->indices.data(), GL_STATIC_DRAW);
 	}
 
 	time_to_store_buffers = false;
@@ -208,38 +210,47 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 	current_shader.setMatrix("projection", projection);
 	current_shader.setMatrix("camera_view", camera_view);
 
-	// unsigned int current_buffer_index = BUFFERS_AMOUNT + 1; // Just makes sure we always change to and bind the first BUFFER by keeping this initial value out of range
+	// glBindVertexArray(VAOs[0]);
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
 		// Meshes only have one texture right now, but when they don't, I'll need to make this iterative; as it stands, this is
 		// extremely hard-coded.
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mesh->m_texture);
 		current_shader.setInt("texture_one", 0);
 
-		glm::mat4 model_position = glm::mat4(1.0f);
+		glm::mat4 model_matrix = glm::mat4(1.0f);
 
 		if(mesh->owner != NULL) // If the Mesh has no owner, this stops the engine from crashing
 		{
 			std::lock_guard guard(state_mutex);
+
 			// Quick note for later: angular movement (orientation) should use slerp instead of lerp (quaternions are best)
 			glm::vec3 previous_position = mesh->owner->previous_state_buffer[mesh->owner->state_index].render_position;
 			glm::vec3 current_position = mesh->owner->current_state_buffer[mesh->owner->state_index].render_position;
-			glm::vec3 interpolated_position;
-			for(int i = 0 ; i < 3 ; i++) // I don't like how hardcoded this is
-				interpolated_position[i] = std::lerp(previous_position[i], current_position[i], interpolation_time);
-			if(!do_interpolation) // Eventually, I want to change interpolation to be more like GZDoom, and this will be how I test that
-				interpolated_position = current_position;
-			model_position = glm::translate(model_position, interpolated_position);
-			/*
-			Pseudo Code for billboarded sprites
-				if(actor->mesh is Sprite)
-					current_shader.setMatrix("sprite_billboard", sprite_billboard_matrix);
-			*/
+			glm::vec3 interpolated_position = current_position;
+
+			if(do_interpolation) // Eventually, I want to change interpolation to be more like GZDoom, and this will be how I test that
+				for(int i = 0 ; i < 3 ; i++) // I don't like how hardcoded this is
+					interpolated_position[i] = std::lerp(previous_position[i], current_position[i], interpolation_time);
+
+			model_matrix = glm::translate(model_matrix, interpolated_position);
+			model_matrix = glm::scale(model_matrix, mesh->owner->scale);
 		}
 
-		current_shader.setMatrix("model", model_position);
-		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0); // Need to add indices offset
+		current_shader.setMatrix("model", model_matrix);
+		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
 	}
+}
+
+void T_LoadTheatre(Theatre *new_theatre)
+{
+	current_theatre = new_theatre;
+	time_to_store_buffers = true;
 }

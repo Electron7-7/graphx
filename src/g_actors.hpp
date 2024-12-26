@@ -26,7 +26,8 @@ public:
 
 	glm::vec3 position_global;
 	// glm::vec4 rotation_quaternion;
-	glm::vec3 rotation_euler;		// x (pitch), y (yaw), z (roll)
+	glm::vec3 rotation_euler; // x (pitch), y (yaw), z (roll)
+	glm::vec3 scale = glm::vec3(1.0f);
 	glm::vec2 velocity_horizontal;
 
 	glm::vec3 orientation_front;
@@ -35,7 +36,7 @@ public:
 
 	glm::vec3 world_orientation_up;
 
-	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
+	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
 
 	// virtual ~Actor();
 
@@ -56,8 +57,8 @@ public:
 	float mouse_sensitivity;
 	float movement_speed = 0.05f;
 
-	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f))
-	: Actor(new_name, Mesh(), init_position), mouse_sensitivity(INIT_SENSITIVITY)
+	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(new_name, Mesh(), init_position, init_scale), mouse_sensitivity(INIT_SENSITIVITY)
 	{}
 
 	bool gatekeepRenderer() override;
@@ -76,8 +77,8 @@ public:
 	float movement_speed = 0.025f;
 	int t_direction = 0;
 
-	MoverTester(std::string init_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f))
-	: Actor(init_name, init_mesh, init_position)
+	MoverTester(std::string init_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(init_name, init_mesh, init_position, init_scale)
 	{}
 
 	void Tick(int current_tick) override;
@@ -86,8 +87,8 @@ public:
 class SpriteTester: public Actor
 {
 public:
-	SpriteTester(std::string init_name, Sprite init_sprite = Sprite(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f))
-	: Actor(init_name, init_sprite, init_position)
+	SpriteTester(std::string init_name, Sprite init_sprite = Sprite(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(init_name, init_sprite, init_position, init_scale)
 	{}
 };
 #else

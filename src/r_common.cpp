@@ -4,10 +4,9 @@
 
 // Texture Function
 // Todo: go from generating one texture per one filepath to n textures per n filepaths (and returning their pointers)
-void Mesh::generateTexture(bool flip)
+void Mesh::generateTexture()
 {
-	if(flip) // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
-		stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
 
 	glGenTextures(1, &m_texture);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
@@ -22,7 +21,10 @@ void Mesh::generateTexture(bool flip)
 
 	// Replace if else with try catch?
 	if(!t_data)
+	{
 		std::cerr << "Failed to load texture!" << std::endl;
+		return;
+	}
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 	glGenerateMipmap(GL_TEXTURE_2D);

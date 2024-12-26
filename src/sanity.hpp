@@ -9,7 +9,7 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #define GRAPHX_DEBUGGING
 	#include <iostream>
 	#define PRINT_MARKER (std::cout << "\n[=======================================]\n")
-	#define PRINT(thing) (std::cout << std::endl << thing << std::endl)
+	#define PRINT(thing) (std::cout << std::endl << thing << std::endl << std::endl)
 #endif
 
 #ifndef GL_INCLUDES
