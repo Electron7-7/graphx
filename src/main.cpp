@@ -6,7 +6,7 @@
 #include "g_theatre.hpp"
 #include "cube.graphxmodel"
 #include "pyramid.graphxmodel"
-#include "theatres/bigger_test_theatre.graphxtheatre"
+#include "bigger_test_theatre.graphxtheatre"
 #include <vector>
 #include <thread>
 #include <cstdlib>
@@ -57,7 +57,6 @@ int main()
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window);
-		processInput(main_window);
 		glfwPollEvents();
 
 		if(time_to_store_buffers)
@@ -96,6 +95,8 @@ void testGameTick(GLFWwindow *main_window)
 
 		while(tick_length >= 1.0f)
 		{
+			processInput(main_window);
+
 			for(Actor *actor : current_theatre->actors)
 			{
 				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_theatre

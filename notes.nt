@@ -473,3 +473,7 @@ Aight, the rendering pipeline is fully functional again and it's doing things sl
 One of the next things I'd like to crack at is something quick and (hopefully) easy but pretty important: player movement. Specifically, the player-camera movement is in a "flying" mode; if the camera is pointed down and the "backwards" movement key is pressed, the player-camera moves up in the world-space. However, I want it to be in a "walking" mode; if the camera is pointed down and the "backwards" movement key is pressed, the camera should move backwards instead of upwards. This just means that movement code should only take X and Z vectors into consideration when applying orientation to movement. As a side note: I might want to also add in a "move up" and "move down" set of inputs to add back in that Y-Axis movement for testing and such.
 
 I'll also maybe start working on a "Character Controller" Actor that has gravity and collisions! However, I need to learn how to do collisions...
+
+I didn't do collisions or fix the player movement lmfao but I did clean up lots of loose code, made the interpolation code better, and changed Actors to allow euler angle and quaternion rotation. Now time to decomp.
+
+:3

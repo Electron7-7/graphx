@@ -7,11 +7,6 @@
 #include <cmath>
 
 std::array<GLuint, 1> VAOs;
-// std::array<GLuint, BUFFERS_AMOUNT> VBOs;
-// std::array<GLuint, BUFFERS_AMOUNT> IBOs;
-std::vector<Mesh> meshes = { Mesh() };					// Have the first Mesh always be the default ERROR Mesh
-std::vector<Sprite> sprites = { Sprite() };				// Have the first Sprite always be the default ERROR Sprite
-
 std::atomic_bool time_to_render = false;
 std::atomic_bool time_to_store_buffers = false;
 std::atomic_bool do_interpolation = true;				// For testing when I change the interpolation method to be more like GZDoom
@@ -168,31 +163,20 @@ void R_StoreBuffers()
 	glGenVertexArrays(1, &VAOs[0]);
 	glBindVertexArray(VAOs[0]);
 
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	// unsigned int current_buffer_index = BUFFERS_AMOUNT + 1; // Just makes sure we always change to and bind the first BUFFER by keeping this initial value out of range
-
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		// if(current_buffer_index != mesh->buffer_index)
-		// {
-		// 	current_buffer_index = mesh->buffer_index;
-		// }
-
-		// Note: I could have any potential duplicate VBO data not be written and the mesh->indices_offset set to the
-		// indices offset of the duplicated data. That would also be very hard and over-engineered for my knowledge level rn.
-
 		mesh->generateTexture(); // Quickly generate the texture in the render thread
 
 		glGenBuffers(1, &mesh->VBO);
 		glGenBuffers(1, &mesh->IBO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), mesh->vertices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), &mesh->vertices[0], GL_STATIC_DRAW);
 		
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), mesh->indices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	time_to_store_buffers = false;
@@ -201,26 +185,24 @@ void R_StoreBuffers()
 
 void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
 {
-	/*
-	Pseudo Code for Lerp
-		Lerp(previous_state[state_index].position, current_state[state_index].position, elapsed/update_tick_length)
-	*/
-
 	current_shader.use();
 	current_shader.setMatrix("projection", projection);
 	current_shader.setMatrix("camera_view", camera_view);
 
-	// glBindVertexArray(VAOs[0]);
+	glBindVertexArray(VAOs[0]); // Just in case
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-		// Meshes only have one texture right now, but when they don't, I'll need to make this iterative; as it stands, this is
-		// extremely hard-coded.
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		// Meshes only have one texture for now
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mesh->m_texture);
 		current_shader.setInt("texture_one", 0);
@@ -229,19 +211,26 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 
 		if(mesh->owner != NULL) // If the Mesh has no owner, this stops the engine from crashing
 		{
+			// Note: Quaternions (and angular movement) should use slerp instead of lerp
 			std::lock_guard guard(state_mutex);
 
-			// Quick note for later: angular movement (orientation) should use slerp instead of lerp (quaternions are best)
-			glm::vec3 previous_position = mesh->owner->previous_state_buffer[mesh->owner->state_index].render_position;
-			glm::vec3 current_position = mesh->owner->current_state_buffer[mesh->owner->state_index].render_position;
-			glm::vec3 interpolated_position = current_position;
+			RenderState current_state		=	mesh->owner->current_state_buffer[mesh->owner->state_index];
+			RenderState previous_state		=	mesh->owner->previous_state_buffer[mesh->owner->state_index];
+
+			glm::vec3 interpolated_position	=	current_state.render_position;
+			glm::vec3 interpolated_scale	=	current_state.render_scale;
 
 			if(do_interpolation) // Eventually, I want to change interpolation to be more like GZDoom, and this will be how I test that
-				for(int i = 0 ; i < 3 ; i++) // I don't like how hardcoded this is
-					interpolated_position[i] = std::lerp(previous_position[i], current_position[i], interpolation_time);
+			{
+				for(unsigned int i = 0 ; i < 3 ; i++)
+					interpolated_position[i] = std::lerp(previous_state.render_position[i], current_state.render_position[i], interpolation_time);
+
+				for(unsigned int i = 0 ; i < 3 ; i++)
+					interpolated_scale[i] = std::lerp(previous_state.render_scale[i], current_state.render_scale[i], interpolation_time);
+			}
 
 			model_matrix = glm::translate(model_matrix, interpolated_position);
-			model_matrix = glm::scale(model_matrix, mesh->owner->scale);
+			model_matrix = glm::scale(model_matrix, interpolated_scale);
 		}
 
 		current_shader.setMatrix("model", model_matrix);

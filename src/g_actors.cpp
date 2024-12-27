@@ -3,16 +3,25 @@
 //
 // Actor
 //
-Actor::Actor(std::string new_name, Mesh init_mesh, glm::vec3 init_position, glm::vec3 init_scale, float init_yaw, float init_pitch)
-: mesh(init_mesh), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+Actor::Actor(std::string new_name, Mesh init_mesh, glm::vec3 init_position, glm::vec3 init_rotation_euler, glm::vec3 init_scale)
+: mesh(init_mesh), position_global(init_position), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 {
 	name = new_name;
 	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	position_global = init_position;
-	rotation_euler = glm::vec3(init_pitch, init_yaw, 0.0f);
-	scale = init_scale;
-	current_state = RenderState(init_position, rotation_euler);
+	rotation_euler = init_rotation_euler;
+	rotation_quaternion = glm::quat(init_rotation_euler);
+	current_state = RenderState(init_position, rotation_quaternion);
 	updateVectors();
+}
+
+void Actor::updateRotation(bool override_which)
+{
+	if(override_which == EULER_CHANGE_QUATERNION)
+	{
+		rotation_quaternion = glm::quat(rotation_euler);
+		return;
+	}
+	rotation_euler = glm::eulerAngles(rotation_quaternion);
 }
 
 void Actor::updateVectors()
@@ -36,7 +45,7 @@ void Actor::updateStates(std::mutex &state_mutex)
 
 	// Update current state
 	current_state_buffer[state_index].render_position = position_global;
-	current_state_buffer[state_index].render_rotation_euler = rotation_euler;
+	current_state_buffer[state_index].render_quaternion = rotation_quaternion;
 
 	// Flip state buffer
 	state_index = 1 - state_index;
@@ -73,6 +82,7 @@ void GraphXPlayer::doMouseMovement(std::vector<float> offset, bool constrain_pit
 			rotation_euler.x = 89.0f * ((rotation_euler.x > 0) - (rotation_euler.x < 0));
 	}
 
+	updateRotation(EULER_CHANGE_QUATERNION);
 	updateVectors();
 }
 

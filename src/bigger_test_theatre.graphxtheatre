@@ -6,5 +6,5 @@ MoverTester mover_tester2("mover_tester_2", Mesh(&mover_tester2, BUFFER_ACTORS, 
 MoverTester mover_tester3("mover_tester_3", Mesh(&mover_tester3, BUFFER_ACTORS, CUBE_VERTS, CUBE_INDICES), glm::vec3(12.0f, -3.0f, -8.0f));
 MoverTester mover_tester4("mover_tester_4", Mesh(&mover_tester4, BUFFER_ACTORS, PYRAMID_VERTS, PYRAMID_INDICES), glm::vec3(8.0f, 3.0f, -6.0f), glm::vec3(2.0f));
 MoverTester mover_tester5("mover_tester_5", Mesh(&mover_tester5, BUFFER_ACTORS, CUBE_VERTS, CUBE_INDICES), glm::vec3(-12.0f, -3.0f, -12.0f), glm::vec3(4.0f, 1.0f, 2.0f));
-Theatre bigger_test_theatre("test_theatre", std::vector<Actor *> {&mover_tester1, &mover_tester2, &mover_tester3, &mover_tester4, &mover_tester5}, Mesh(NULL, BUFFER_FLATS, CUBE_VERTS, CUBE_INDICES, "images/COMP04_5.png"));
+Theatre bigger_test_theatre("test_theatre", std::vector<Actor *> {&mover_tester1, &mover_tester2, &mover_tester3, &mover_tester4, &mover_tester5}, Mesh(NULL, BUFFER_FLATS, CUBE_VERTS, CUBE_INDICES, DOOM_TEXTURE_PATH));
 #endif

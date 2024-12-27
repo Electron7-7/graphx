@@ -20,6 +20,7 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 	#include <glm/glm.hpp>
 	#include <glm/gtc/matrix_transform.hpp>
 	#include <glm/gtc/type_ptr.hpp>
+	#include <glm/gtc/quaternion.hpp>
 	#include <glm/ext.hpp>
 	#include <stb_image.h>
 #endif

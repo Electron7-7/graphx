@@ -21,8 +21,8 @@
 #define BUFFER_ACTORS		3
 #define BUFFER_PROPS		4
 
-#define MISSING_TEXTURE_PATH 		"src/images/MISSING.jpg"	// Todo: make/use a default MISSING texture
-// #define MISSING_TEXTURE_PATH 		"src/images/COMP04_5.png"	// Todo: make/use a default MISSING texture
+#define MISSING_TEXTURE_PATH 		"src/images/MISSING.jpg"
+#define DOOM_TEXTURE_PATH			"src/images/COMP04_5.png"
 
 class Actor;	// Forward-declare Actor
 struct Theatre;	// Forward-declare Theatre
@@ -45,16 +45,6 @@ private:
 	void shaderErrorHandler(int thing, int type);
 };
 
-struct RenderState
-{
-	glm::vec3 render_position = {0.0f, 0.0f, 0.0f};
-	glm::vec3 render_rotation_euler = {0.0f, 0.0f, 0.0f};	// x (pitch), y (yaw), z (roll)
-
-	RenderState(glm::vec3 init_position = {0.0f, 0.0f, 0.0f}, glm::vec3 init_euler_rotation = {0.0f, 0.0f, 0.0f})
-	: render_position(init_position), render_rotation_euler(init_euler_rotation)
-	{}
-};
-
 struct Mesh
 {
 	Actor *owner;
@@ -62,11 +52,11 @@ struct Mesh
 	const unsigned int buffer_index;
 	const std::vector<GLfloat> vertices;
 	const std::vector<GLuint> indices;
+
 	unsigned int VBO;
 	unsigned int IBO;
-
-	std::string texture_path;
-	unsigned int m_texture = 0;
+	std::string texture_path = MISSING_TEXTURE_PATH;
+	unsigned int m_texture;
 
 	Mesh(Actor *init_owner = NULL, const unsigned int init_buffer_index = BUFFER_ERR, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, std::string init_texture_path = MISSING_TEXTURE_PATH)
 	: buffer_index(init_buffer_index), vertices(init_vertices), indices(init_indices), texture_path(init_texture_path)
@@ -84,10 +74,6 @@ struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though th
 };
 
 extern std::array<GLuint, 1> VAOs; // Only one VAO for now but I expect to need more down the line
-// extern std::array<GLuint, BUFFERS_AMOUNT> VBOs;
-// extern std::array<GLuint, BUFFERS_AMOUNT> IBOs; // I might only need one IBO
-extern std::vector<Mesh> meshes;
-extern std::vector<Sprite> sprites;
 extern std::atomic_bool time_to_render;
 extern std::atomic_bool time_to_store_buffers;
 
