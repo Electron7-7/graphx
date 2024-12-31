@@ -1,5 +1,6 @@
 #ifndef THEATRE_INCLUDES
 #define THEATRE_INCLUDES
+#include "cube_vertex_colors.graphxmodel"
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include "cube.graphxmodel"

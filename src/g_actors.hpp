@@ -106,9 +106,4 @@ public:
 	: Actor(init_name, init_sprite, init_position, init_scale)
 	{}
 };
-#else
-class Actor;
-class GraphXPlayer;
-class MoverTester;
-class SpriteTester;
 #endif
