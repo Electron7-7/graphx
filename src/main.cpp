@@ -6,7 +6,7 @@
 #include "g_theatre.hpp"
 #include "cube.graphxmodel"
 #include "pyramid.graphxmodel"
-#include "bigger_test_theatre.graphxtheatre"
+#include "lighting_testing.graphxtheatre"
 #include <vector>
 #include <thread>
 #include <cstdlib>
@@ -78,7 +78,7 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
-	T_LoadTheatre(&bigger_test_theatre);
+	T_LoadTheatre(&lighting_testing_theatre);
 
 	int tick = 0;
 	double last_time = glfwGetTime();

@@ -480,3 +480,5 @@ I didn't do collisions or fix the player movement lmfao but I did clean up lots 
 
 [12/31/24]
 I feel reinvigorated about working on more GraphX. I want to continue with LearnOpenGL and move on to more advanced topics. I'll make a new branch for this, so I don't contaminate my code. Hopefully I don't fuck up the notes file lmfao. The only way I could is if I merge the branches, but I don't plan on merging them. I plan on learning things and then deleting the learning branch and using what I learned to write code for the production branch.
+
+I see a problem that I should address: I need a second VAO for handelling vertex data with vertex colors instead of texture coordinates. Yippee! More rendering pipeline stuff...
