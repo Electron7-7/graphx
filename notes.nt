@@ -496,3 +496,5 @@ Okay, all done! Now lets actually do the fucking thing.
 And this is just to be able to differentiate the production branch from the LearnOpenGL branch
 
 :3
+
+Oop, note: I'll have to move the vertexattribpointer functions into the switch statement with the way I'm doing things right now; yes, this will have copy paste code but that's fine for now. I'll also have to check if you can do that before binding the VBO+IBO or not.
