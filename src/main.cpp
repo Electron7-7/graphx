@@ -52,7 +52,10 @@ int main()
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
-	GLShader generic_shader("src/shaders/default_vertex_shader.glsl", "src/shaders/default_fragment_shader.glsl");
+	GLShader generic_texture_shader("src/shaders/barebones_vertex_shader_texture_coordinates.glsl", "src/shaders/barebones_fragment_shader_texture_coordinates.glsl");
+	GLShader generic_color_shader("src/shaders/barebones_vertex_shader_vertex_colors.glsl", "src/shaders/barebones_fragment_shader_vertex_colors.glsl");
+
+	shaders = std::vector<GLShader *> { &generic_color_shader, &generic_texture_shader };
 
 	while(!glfwWindowShouldClose(main_window))
 	{
@@ -67,7 +70,7 @@ int main()
 			// De-jank all of this shit below
 			glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 			double interpolation_time = ((glfwGetTime() - last_tick_timestamp) / tickrate_ms);
-			R_Render(actor_state_mutex, generic_shader, interpolation_time, projection, player.getViewMatrix());
+			R_Render(actor_state_mutex, interpolation_time, projection, player.getViewMatrix());
 		}
 	}
 

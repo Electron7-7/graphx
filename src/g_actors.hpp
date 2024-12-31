@@ -40,7 +40,7 @@ public:
 
 	glm::vec3 position_global;
 	glm::quat rotation_quaternion;
-	glm::vec3 rotation_euler = glm::vec3(INIT_PITCH, INIT_YAW, 0.0f);
+	glm::vec3 rotation_euler;
 	glm::vec3 scale = glm::vec3(1.0f);
 	glm::vec2 velocity_horizontal;
 
@@ -50,7 +50,7 @@ public:
 
 	glm::vec3 world_orientation_up;
 
-	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(INIT_PITCH, INIT_YAW, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
 	// virtual ~Actor();
 
@@ -59,9 +59,6 @@ public:
 	virtual void updateStates(std::mutex &state_mutex);
 
 protected:
-	constexpr static const float INIT_YAW = -90.0f;
-	constexpr static const float INIT_PITCH = 0.0f;
-
 	void updateRotation(bool override_which);
 	void updateVectors();
 };

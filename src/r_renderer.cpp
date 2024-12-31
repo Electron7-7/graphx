@@ -6,7 +6,8 @@
 #include <sstream>
 #include <cmath>
 
-std::array<GLuint, 1> VAOs;
+std::array<GLuint, VAOS_AMOUNT> VAOs;
+std::vector<GLShader *> shaders;
 std::atomic_bool time_to_render = false;
 std::atomic_bool time_to_store_buffers = false;
 std::atomic_bool do_interpolation = true;				// For testing when I change the interpolation method to be more like GZDoom
@@ -160,12 +161,20 @@ void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r, float clear_color
 
 void R_StoreBuffers()
 {
-	glGenVertexArrays(1, &VAOs[0]);
-	glBindVertexArray(VAOs[0]);
+	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
+
+	unsigned int current_vao_index = VAO_DEFAULT + 1;
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		mesh->generateTexture(); // Quickly generate the texture in the render thread
+		if(mesh->vao_index != current_vao_index)
+		{
+			current_vao_index = mesh->vao_index;
+			glBindVertexArray(VAOs[current_vao_index]);
+		}
+
+		if(mesh->vao_index == VAO_TEXTURE) // Temporary while I only have one texture coordinate vertex attribute type
+			mesh->generateTexture(); // Quickly generate the texture in the render thread
 
 		glGenBuffers(1, &mesh->VBO);
 		glGenBuffers(1, &mesh->IBO);
@@ -183,29 +192,17 @@ void R_StoreBuffers()
 	time_to_render = true;
 }
 
-void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
+void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection, glm::mat4 camera_view)
 {
-	current_shader.use();
-	current_shader.setMatrix("projection", projection);
-	current_shader.setMatrix("camera_view", camera_view);
-
-	glBindVertexArray(VAOs[0]); // Just in case
+	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
 
 	for(Mesh *mesh : current_theatre->meshes)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-
-		// Meshes only have one texture for now
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mesh->m_texture);
-		current_shader.setInt("texture_one", 0);
+		if(mesh->vao_index != current_vao_index)
+		{
+			current_vao_index = mesh->vao_index;
+			glBindVertexArray(VAOs[current_vao_index]);
+		}
 
 		glm::mat4 model_matrix = glm::mat4(1.0f);
 
@@ -232,8 +229,39 @@ void R_Render(std::mutex &state_mutex, GLShader &current_shader, double interpol
 			model_matrix = glm::translate(model_matrix, interpolated_position);
 			model_matrix = glm::scale(model_matrix, interpolated_scale);
 		}
+		shaders[current_vao_index]->use();
+		shaders[current_vao_index]->setMatrix("projection", projection);
+		shaders[current_vao_index]->setMatrix("camera_view", camera_view);
 
-		current_shader.setMatrix("model", model_matrix);
+		unsigned int attribute_stride; // Makes this less hardcoded once I have more than two shaders, lmfao
+
+		switch (current_vao_index)
+		{
+			case VAO_COLOR:
+				attribute_stride = 6;
+				break;
+
+			case VAO_TEXTURE:
+				attribute_stride = 5;
+
+				// Meshes only have one texture for now
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, mesh->m_texture);
+				shaders[current_vao_index]->setInt("texture_one", 0);
+				break;
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, attribute_stride * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		// The second value is a shitty (but mildly clever?) hack!
+		glVertexAttribPointer(1, (attribute_stride - 3), GL_FLOAT, GL_FALSE, attribute_stride * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		shaders[current_vao_index]->setMatrix("model", model_matrix);
 		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
 	}
 }

@@ -4,7 +4,7 @@
 // Actor
 //
 Actor::Actor(std::string new_name, Mesh init_mesh, glm::vec3 init_position, glm::vec3 init_rotation_euler, glm::vec3 init_scale)
-: mesh(init_mesh), position_global(init_position), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 {
 	name = new_name;
 	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -27,9 +27,9 @@ void Actor::updateRotation(bool override_which)
 void Actor::updateVectors()
 {
 	glm::vec3 new_front;
-	new_front.x = cos(glm::radians(rotation_euler.y)) * cos(glm::radians(rotation_euler.x));
-	new_front.y = sin(glm::radians(rotation_euler.x));
-	new_front.z = sin(glm::radians(rotation_euler.y)) * cos(glm::radians(rotation_euler.x));
+	new_front[0] = cos(glm::radians(rotation_euler[1])) * cos(glm::radians(rotation_euler[0]));
+	new_front[1] = sin(glm::radians(rotation_euler[0]));
+	new_front[2] = sin(glm::radians(rotation_euler[1])) * cos(glm::radians(rotation_euler[0]));
 	
 	orientation_front = glm::normalize(new_front);
 	orientation_right = glm::normalize(glm::cross(orientation_front, world_orientation_up));

@@ -1,6 +1,6 @@
 #ifndef LIGHTING_TESTING_THEATRE
 #define LIGHTING_TESTING_THEATRE
 #include "theatre_includes.hpp"
-Actor staticActor1("static actor 1", Mesh(&staticActor1, BUFFER_ACTORS, COLOR_CUBE_VERTS, COLOR_CUBE_INDICES), glm::vec3(0.0f, 0.0f, -12.0f));
-Theatre lighting_testing_theatre("test_theatre", std::vector<Actor *> {&staticActor1}, Mesh(NULL, BUFFER_FLATS, COLOR_CUBE_VERTS, COLOR_CUBE_INDICES, DOOM_TEXTURE_PATH));
+Actor staticActor1("static actor 1", Mesh(&staticActor1, VAO_COLOR, COLOR_CUBE_VERTS, COLOR_CUBE_INDICES), glm::vec3(0.0f, 0.0f, 12.0f));
+Theatre lighting_testing_theatre("test_theatre", std::vector<Actor *> {&staticActor1}, Mesh(NULL, VAO_TEXTURE, CUBE_VERTS, CUBE_INDICES, DOOM_TEXTURE_PATH));
 #endif

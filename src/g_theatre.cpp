@@ -10,16 +10,13 @@ Theatre *current_theatre;
 Theatre::Theatre(std::string init_name, std::vector<Actor *> init_actors, Mesh init_stage)
 : name(init_name), actors(init_actors), stage(init_stage)
 {
-	PRINT(init_stage.texture_path);
-	PRINT(stage.texture_path);
-
 	for(Actor *actor : actors)
 		meshes.push_back(&actor->mesh);
 	meshes.push_back(&stage);
 
 	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
 	{
-		return (left->buffer_index > right->buffer_index);
+		return (left->vao_index > right->vao_index);
 	});
 }
 

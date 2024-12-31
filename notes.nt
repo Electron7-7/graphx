@@ -482,3 +482,13 @@ I didn't do collisions or fix the player movement lmfao but I did clean up lots 
 I feel reinvigorated about working on more GraphX. I want to continue with LearnOpenGL and move on to more advanced topics. I'll make a new branch for this, so I don't contaminate my code. Hopefully I don't fuck up the notes file lmfao. The only way I could is if I merge the branches, but I don't plan on merging them. I plan on learning things and then deleting the learning branch and using what I learned to write code for the production branch.
 
 I see a problem that I should address: I need a second VAO for handelling vertex data with vertex colors instead of texture coordinates. Yippee! More rendering pipeline stuff...
+
+This is fucking funny... I do actually need the vao_id, LMFAO!!
+
+Mental note: the way I'm doing this isn't terribly wrong, but there's a lot of hardcoding that could be annoying to detangle if I don't make this note. Basically, while I will have a Shader for every VAO, I won't have a VAO for every Shader. This means that I'll have to keep track of one of them in the Mesh, but make sure that they correspond (i.e: VAO_COLOR would be the index for the VAO that accounts for vertex colors instead of texture coordinates, but it would also be the infex for the Shader that does the same). Maybe change this entirely down the line (why have multiple VAOs when I'm assigning the attributes and enabling them in the render thread? Obviously I'm doing something poorly).
+
+LMFAO IM STUPID. thought i had a bug but no i just put the wrong verts and indices into one of the meshes in the theatre.
+
+STOP GETTING HUNG UP ON THE PLAYER CAMERA ITS FINE!!
+
+Okay, all done! Now lets actually do the fucking thing.
