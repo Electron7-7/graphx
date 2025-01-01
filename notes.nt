@@ -1,5 +1,5 @@
 [11/29/24]
-so, almost there, but when implementing the renderer and rendercmd structs, i used "void*" like a retard. i have to fuck with Templates; this'll suck, but it'll be good for me. it's all just so i can use arrays of unknown lengths in constructors for the vertex attributes and shit :3
+so, almost there, but when implementing the renderer and rendercmd structs, i used "void*" like a dumbass. i have to fuck with Templates; this'll suck, but it'll be good for me. it's all just so i can use arrays of unknown lengths in constructors for the vertex attributes and shit :3
 
 [12/02/24]
 Fuck that; the entire codebase is flawed. okay, not the entire thing, but I'm abstracting files too much. need to rethink and keep it stupid simple. I want all "gl" functions to be handled by one class/struct/whatever, so that I keep it contained. That's why I'll need a "Renderer" class. It should be given simple commands to then perform with the "gl" functions. Basically, it should be told what textures to use, what vertex data to use, etc. Keeping everything in one area should be nice for my brain; once it's all done, I'll tackle if and how the "Renderer" should be split up (i.e: separating mesh code from texture code blah blah blah).
