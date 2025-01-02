@@ -90,14 +90,14 @@ void testGameTick(GLFWwindow *main_window)
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		tick++;
-
 		now_time = glfwGetTime();
 		tick_length += (now_time - last_time) / tickrate_ms;
 		last_time = now_time;
 
 		while(tick_length >= 1.0f)
 		{
+			tick++;
+
 			processInput(main_window);
 
 			for(Actor *actor : current_theatre->actors)

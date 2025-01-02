@@ -502,3 +502,7 @@ Oop, note: I'll have to move the vertexattribpointer functions into the switch s
 I also want to rename and combine the shaders like I did in the LearnOpenGL_Advanced branch
 
 :3
+
+[01/02/25]
+Caught a huge oversight/mistake while working in the LearnOpenGL_Advanced branch! Here's a copy-paste of the notes from there:
+	"Just caught a huge oversight/mistake: I had a ticker counting every tick but it was actually ticking every CPU clock cycle (or frame idk which)! I had it in the wrong part of the loop! Fixed it and saved a lot of future headache! I'm actually gonna fix it in the Production branch rq lmfao."
