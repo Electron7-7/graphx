@@ -1,6 +1,7 @@
 // Hello, production branch!
 // :3
 #define STB_IMAGE_IMPLEMENTATION
+#include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
@@ -52,8 +53,8 @@ int main()
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
-	GLShader generic_texture_shader("src/shaders/barebones_vertex_shader_texture_coordinates.glsl", "src/shaders/barebones_fragment_shader_texture_coordinates.glsl");
-	GLShader generic_color_shader("src/shaders/barebones_vertex_shader_vertex_colors.glsl", "src/shaders/barebones_fragment_shader_vertex_colors.glsl");
+	GLShader generic_texture_shader(SRC_DIR(std::string("src/shaders/barebones_vertex_shader_texture_coordinates.glsl")).c_str(), SRC_DIR(std::string("src/shaders/barebones_fragment_shader_texture_coordinates.glsl")).c_str();
+	GLShader generic_color_shader(SRC_DIR(std::string("src/shaders/barebones_vertex_shader_vertex_colors.glsl")).c_str(), SRC_DIR(std::string("src/shaders/barebones_fragment_shader_vertex_colors.glsl")).c_str());
 
 	shaders = std::vector<GLShader *> { &generic_color_shader, &generic_texture_shader };
 
@@ -76,6 +77,12 @@ int main()
 
 	game_logic_main_thread.join();
 	glfwTerminate();
+	return 0;
+}
+
+int WinMain() // Fuck off, Windows
+{
+	main();
 	return 0;
 }
 

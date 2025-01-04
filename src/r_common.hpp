@@ -27,8 +27,8 @@
 #define VAO_COLOR			0
 #define VAO_TEXTURE			1
 
-#define MISSING_TEXTURE_PATH 		"src/images/MISSING.jpg"
-#define DOOM_TEXTURE_PATH			"src/images/COMP04_5.png"
+#define MISSING_TEXTURE_PATH 		SRC_DIR(std::string("src/images/MISSING.jpg"))
+#define DOOM_TEXTURE_PATH			SRC_DIR(std::string("src/images/COMP04_5.png"))
 
 class Actor;	// Forward-declare Actor
 struct Theatre;	// Forward-declare Theatre
