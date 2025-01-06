@@ -1,0 +1,7 @@
+#ifndef LIGHTING_TESTING_THEATRE
+#define LIGHTING_TESTING_THEATRE
+#include "../theatre_includes.hpp"
+Actor staticActor1("static actor 1", Mesh(&staticActor1, VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, 1.0f, -10.0f), glm::vec3(0.0f), glm::vec3(10.0f, 1.0f, 10.0f));
+LightActorControllable lightActor("controlled light emitting actor", glm::vec3(1.0f), glm::vec3(0.0f, 3.0f, -10.0f));
+Theatre lighting_testing_theatre("test_theatre", std::vector<Actor *> {&staticActor1, &lightActor}, Mesh(NULL, VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES, DOOM_TEXTURE_PATH));
+#endif

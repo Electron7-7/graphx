@@ -506,3 +506,21 @@ I also want to rename and combine the shaders like I did in the LearnOpenGL_Adva
 [01/02/25]
 Caught a huge oversight/mistake while working in the LearnOpenGL_Advanced branch! Here's a copy-paste of the notes from there:
 	"Just caught a huge oversight/mistake: I had a ticker counting every tick but it was actually ticking every CPU clock cycle (or frame idk which)! I had it in the wrong part of the loop! Fixed it and saved a lot of future headache! I'm actually gonna fix it in the Production branch rq lmfao."
+
+[01/05/25]
+Gonna work on updating the Production branch to have Phong lighting (and some other features I added in the LearnOpenGL_Advanced branch).
+
+[01/06/25]
+It snowed a lot! I'm at home rn (it's 1:05) and I'm continuing with updating the Production branch. I'm implementing Environment and Material structs right now, but there's a problem with the renderer. See, I only have one VAO since (for now) I only have one format for vertex attributes. This means, though, that my little hacky solution in the LearnOpenGL_Advanced branch for making sure the current_light pointer was always defined before being used won't work. The hack was that light meshes would use a unique VAO that would get processed first in the renderer, thus the current_light pointer would always get set. This, however, shouldn't fly in the Production branch. This, however, leads to me realizing that I don't really need to sort Meshes anymore... I need to sort Actors.
+
+So we've come full fucking circle. I'm going to go through the Actor pointer vector in the current Theatre instead of the Mesh pointer vector. However, I need to account for the Theatre Stage/Flats Mesh not having an Actor owner. Maybe I still use the Mesh vector but I sort it by mesh->owner->type?
+
+Just finished getting the snow off my car; realized two things. First thing: I'm stupid and didn't have a light Actor in the Theatre and that's why it was crashing. Second thing: I should actually make sure that the engine doesn't crash if there are no lights in the Theatre.
+
+Okay, so, Theatres have a vector of Actor pointers. This means that if I were to check for and sort by Mesh->owner->type, it would always return ACTOR_ACTOR. I need to either mess with casting, give meshes a type, or figure out why this is happening even though LightActorGeneric and Actor both have the same variable "type". Maybe I should define it in the constructor of LightActorGeneric instead...
+
+Okay, I've actually figure out a fix: LightActorGeneric has to set "type" inside the body of its constructor. The light's Mesh has been fucked, though, for some reason. I don't know exactly why, since the other Mesh is fine and they should both be using the cube models, but I'll check rn.
+
+Ah, it's using the default Mesh constructor which uses the ERROR models, which isn't updated to use the new vertex attributes format I chose. I could actually use this to make a new VAO and make R_Renderer not just use the one semi-hardcoded format. However, I have roughly 30-45 minutes to do this before I have to start packing up for work, so I'll be against the clock. As well, the Phong shader requires normal values. I think I'll just update the rest of the models to match the new format.
+
+Aight, I updated them! Haven't tested how they look, but I assume I'll have to redo them to "decompress" them so the normal values (and texture coordinates) don't get distorted. For now, though, they don't/won't crash the engine lmfao.

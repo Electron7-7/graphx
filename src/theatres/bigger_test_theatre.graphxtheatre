@@ -1,0 +1,10 @@
+#ifndef BIGGER_TEST_THEATRE
+#define BIGGER_TEST_THEATRE
+#include "../theatre_includes.hpp"
+MoverTester mover_tester1("mover_tester_1", Mesh(&mover_tester1, VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 1.0f, -6.0f), glm::vec3(4.0f));
+MoverTester mover_tester2("mover_tester_2", Mesh(&mover_tester2, VAO_HANDMADE, PYRAMID_VERTS, PYRAMID_INDICES), glm::vec3(-6.0f, 1.5f, -12.0f));
+MoverTester mover_tester3("mover_tester_3", Mesh(&mover_tester3, VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(12.0f, -3.0f, -8.0f));
+MoverTester mover_tester4("mover_tester_4", Mesh(&mover_tester4, VAO_HANDMADE, PYRAMID_VERTS, PYRAMID_INDICES), glm::vec3(8.0f, 3.0f, -6.0f), glm::vec3(2.0f));
+MoverTester mover_tester5("mover_tester_5", Mesh(&mover_tester5, VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(-12.0f, -3.0f, -12.0f), glm::vec3(4.0f, 1.0f, 2.0f));
+Theatre bigger_test_theatre("test_theatre", std::vector<Actor *> {&mover_tester1, &mover_tester2, &mover_tester3, &mover_tester4, &mover_tester5}, Mesh(NULL, BUFFER_FLATS, CUBE_VERTS, CUBE_INDICES, DOOM_TEXTURE_PATH));
+#endif

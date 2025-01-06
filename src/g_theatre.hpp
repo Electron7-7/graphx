@@ -15,18 +15,11 @@ struct Theatre
 	std::vector<Mesh *> meshes;
 	Mesh stage;
 
-	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_actors = {}, Mesh init_stage = Mesh(NULL, VAO_TEXTURE));
+	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_actors = {}, Mesh init_stage = Mesh(NULL));
 
 	void actorEnter(Actor *new_actor);
 	void actorLeave(Actor *old_actor);
-
-/*protected:
-	void sortMeshes(); // Only use if copying sorting code a lot*/
 };
 
-extern Theatre *current_theatre;
-
-#else
-struct Theatre;
 extern Theatre *current_theatre;
 #endif

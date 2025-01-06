@@ -8,14 +8,14 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #ifndef GRAPHX_FUCKING_FILEPATHS
 #define GRAPHX_FUCKING_FILEPATHS
 	#include <string>
-	#ifdef _WIN32
-	// Change the C:/Users/Chea Sextillion/Desktop/Github/graphx/ filepath to wherever you downloaded the github repo to
-	#define SRC_DIR(relative_filepath) (std::string("C:/Users/Chea Sextillion/Desktop/Github/graphx/") + relative_filepath)
+	#ifdef linux
+	// At least for me, the relative filepath works fine on Linux, but you may have to copy what I did for Windows, down there VV
+	#define SRC_DIR(relative_filepath) (std::string(relative_filepath))
 	#endif
 
-	#ifdef linux
-	// At least for me, the relative filepath works fine on Linux, but you may have to copy what I did for Windows, up there ^
-	#define SRC_DIR(relative_filepath) (relative_filepath)
+	#ifdef _WIN32
+	// Change the C:/Users/Chea Sextillion/Desktop/Github/graphx/ filepath to wherever you downloaded the github repo to
+	#define SRC_DIR(relative_filepath) (std::string("C:/Users/Chea Sextillion/Desktop/Github/graphx/") + std::string(relative_filepath))
 	#endif
 #endif
 

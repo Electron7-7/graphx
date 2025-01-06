@@ -8,6 +8,10 @@
 #define EULER_CHANGE_QUATERNION 0
 #define QUATERNION_CHANGE_EULER 1
 
+#define ACTOR_TOOL  0
+#define ACTOR_LIGHT 0
+#define ACTOR_ACTOR 1
+
 struct RenderState
 {
 	glm::vec3 render_position;
@@ -34,6 +38,8 @@ public:
 	std::vector<RenderState> previous_state_buffer	=	{ previous_state,	previous_state_copy	};
 
 	int state_index = 0;
+
+	unsigned int type = ACTOR_ACTOR;
 	bool visible = true;
 	std::string name;
 	float movement_speed = 1.0f;
@@ -50,11 +56,18 @@ public:
 
 	glm::vec3 world_orientation_up;
 
-	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
-
+	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+	{
+		name = new_name;
+		world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
+		rotation_euler = init_rotation_euler;
+		rotation_quaternion = glm::quat(init_rotation_euler);
+		current_state = RenderState(init_position, rotation_quaternion);
+		updateVectors();
+	}
 	// virtual ~Actor();
 
-	virtual bool gatekeepRenderer();
 	virtual void Tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
 
@@ -70,10 +83,8 @@ public:
 	float movement_speed = 0.05f;
 
 	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(new_name, Mesh(), init_position, init_scale), mouse_sensitivity(INIT_SENSITIVITY)
+	: Actor(new_name, Mesh(this), init_position, init_scale), mouse_sensitivity(INIT_SENSITIVITY)
 	{}
-
-	bool gatekeepRenderer() override;
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
@@ -89,8 +100,8 @@ public:
 	float movement_speed = 0.025f;
 	int t_direction = 0;
 
-	MoverTester(std::string init_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(init_name, init_mesh, init_position, init_scale)
+	MoverTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(init_name, init_mesh, init_position, init_rotation, init_scale)
 	{}
 
 	void Tick(int current_tick) override;
@@ -99,8 +110,45 @@ public:
 class SpriteTester: public Actor
 {
 public:
-	SpriteTester(std::string init_name, Sprite init_sprite = Sprite(), glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(init_name, init_sprite, init_position, init_scale)
+	SpriteTester(std::string init_name, Sprite init_sprite, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(init_name, init_sprite, init_position, init_rotation, init_scale)
 	{}
+};
+
+class LightActorGeneric: public Actor
+{
+public:
+	glm::vec3 emission_color;
+
+	LightActorGeneric(std::string init_name, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(0.5f))
+	: Actor(init_name, Mesh(this), init_position, init_rotation, init_scale), emission_color(init_color)
+	{ type = ACTOR_TOOL; }
+};
+
+class LightActorMoving: public LightActorGeneric
+{
+public:
+	float movement_speed = 0.1f;
+
+	using LightActorGeneric::LightActorGeneric;
+
+	void Tick(int current_tick) override;
+
+private:
+	glm::vec3 starting_position = position_global;
+	int t_direction = 0;
+};
+
+class LightActorControllable: public LightActorGeneric
+{
+public:
+	float movement_speed = 0.05f;
+	float slow_movement_speed = 0.01f;
+	float _movement_speed = movement_speed;
+
+	using LightActorGeneric::LightActorGeneric;
+
+	void doHorizontalMovement(int direction[2]);
+	void doVerticalMovement(int direction);
 };
 #endif

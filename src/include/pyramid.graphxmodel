@@ -3,12 +3,12 @@
 #include <vector>
 const std::vector<float> PYRAMID_VERTS =
 {
-	// positions			// texture coords
-	-1.0f, -1.0f, 1.0f,		1.0f, 1.0f,			//	Left	Bottom	Front	0
-	-1.0f, -1.0f, -1.0f,	0.0f, 1.0f,			//	Left	Bottom	Back	1
-	1.0f, -1.0f, -1.0f,		0.0f, 0.0f,			//	Right	Bottom	Back	2
-	1.0f, -1.0f, 1.0f,		1.0f, 1.0f,			//	Right	Bottom	Front	3
-	0.0f, 1.0f, 0.0f,		0.5f, 0.5f			//	Middle	Up		Middle	4	(the tip of the pyramid)
+	// positions			// vertex colors		// texture coords
+	-1.0f, -1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f,  1.0f,			//	Left	Bottom	Front	0
+	-1.0f, -1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f,  1.0f,			//	Left	Bottom	Back	1
+	 1.0f, -1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	0.0f,  0.0f,			//	Right	Bottom	Back	2
+	 1.0f, -1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	1.0f,  1.0f,			//	Right	Bottom	Front	3
+	 0.0f,  1.0f,  0.0f,	 0.0f,  1.0f,  0.0f,	0.5f,  0.5f				//	Middle	Up		Middle	4	(the tip of the pyramid)
 };
 
 const std::vector<unsigned int> PYRAMID_INDICES =

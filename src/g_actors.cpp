@@ -3,17 +3,6 @@
 //
 // Actor
 //
-Actor::Actor(std::string new_name, Mesh init_mesh, glm::vec3 init_position, glm::vec3 init_rotation_euler, glm::vec3 init_scale)
-: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
-{
-	name = new_name;
-	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	rotation_euler = init_rotation_euler;
-	rotation_quaternion = glm::quat(init_rotation_euler);
-	current_state = RenderState(init_position, rotation_quaternion);
-	updateVectors();
-}
-
 void Actor::updateRotation(bool override_which)
 {
 	if(override_which == EULER_CHANGE_QUATERNION)
@@ -44,8 +33,9 @@ void Actor::updateStates(std::mutex &state_mutex)
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
 
 	// Update current state
-	current_state_buffer[state_index].render_position = position_global;
-	current_state_buffer[state_index].render_quaternion = rotation_quaternion;
+	current_state_buffer[state_index].render_position	=	position_global;
+	current_state_buffer[state_index].render_quaternion	=	rotation_quaternion;
+	current_state_buffer[state_index].render_scale		=	scale;
 
 	// Flip state buffer
 	state_index = 1 - state_index;
@@ -53,11 +43,6 @@ void Actor::updateStates(std::mutex &state_mutex)
 
 void Actor::Tick(int current_tick)
 {}
-
-bool Actor::gatekeepRenderer()
-{
-	return (!visible); // Todo: account for Sprites
-}
 
 //
 // GraphXPlayer
@@ -91,11 +76,6 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 	return glm::lookAt(position_global, position_global + orientation_front, orientation_up);
 }
 
-bool GraphXPlayer::gatekeepRenderer() // NOT MULTIPLAYER FRIENDLY (but I'm not touching that with a ten foot pole... yet)
-{
-	return true;
-}
-
 //
 // Testers
 //
@@ -109,4 +89,30 @@ void MoverTester::Tick(int current_tick)
 
 	if(t_direction == 1)
 		position_global.x -= movement_speed;
+}
+
+//
+// Lights
+//
+void LightActorMoving::Tick(int current_tick)
+{
+	if( (position_global.z >= (starting_position.z + 10.0f)) || (position_global.z <= (starting_position.z - 10.0f)) )
+		t_direction = 1 - t_direction;
+
+	if(t_direction == 0)
+		position_global.z += movement_speed;
+
+	if(t_direction == 1)
+		position_global.z -= movement_speed;
+}
+
+void LightActorControllable::doHorizontalMovement(int direction[2])
+{
+	position_global[0] -= static_cast<float>(direction[1] * _movement_speed);
+	position_global[2] -= static_cast<float>(direction[0] * _movement_speed);
+}
+
+void LightActorControllable::doVerticalMovement(int direction)
+{
+	position_global[1] += static_cast<float>(direction * _movement_speed);
 }

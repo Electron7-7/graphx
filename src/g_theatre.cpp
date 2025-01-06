@@ -10,23 +10,22 @@ Theatre *current_theatre;
 Theatre::Theatre(std::string init_name, std::vector<Actor *> init_actors, Mesh init_stage)
 : name(init_name), actors(init_actors), stage(init_stage)
 {
+	std::sort(actors.begin(), actors.end(), [](Actor *left, Actor *right)
+	{
+		return (left->type < right->type);
+	});
+
 	for(Actor *actor : actors)
 		meshes.push_back(&actor->mesh);
+
+	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
+	{
+		// return (left->vao_index < right->vao_index);
+		return (left->owner->type < right->owner->type);
+	});
+
 	meshes.push_back(&stage);
-
-	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
-	{
-		return (left->vao_index > right->vao_index);
-	});
 }
-
-/*void Theatre::sortMeshes() // Only use if copying sorting code a lot
-{
-	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
-	{
-		return (left->vbo_id > right->vbo_id);
-	});
-}*/
 
 void Theatre::actorEnter(Actor *new_actor)
 {
