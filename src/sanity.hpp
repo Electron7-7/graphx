@@ -8,7 +8,7 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #ifndef GRAPHX_FUCKING_FILEPATHS
 #define GRAPHX_FUCKING_FILEPATHS
 	#include <string>
-	#ifdef linux
+	#ifdef __unix__
 	// At least for me, the relative filepath works fine on Linux, but you may have to copy what I did for Windows, down there VV
 	#define SRC_DIR(relative_filepath) (std::string(relative_filepath))
 	#endif

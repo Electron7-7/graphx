@@ -13,8 +13,6 @@ uniform sampler2D texture_one;
 uniform vec3 albedo;
 uniform vec3 light_color;
 uniform vec3 ambient_light;
-// uniform vec3 ambient_light_color;
-// uniform float ambient_light_strength; // 0.0 -> 1.0
 uniform float specular_strength;
 uniform int specular_sharpness; // shininess
 
@@ -35,7 +33,6 @@ void main()
 	float specular = pow(max(dot(view_direction, reflect_direction), 0.0f), specular_sharpness);
 
 	vec3 out_diffuse = diffuse * light_color;
-	// vec3 out_ambient = ambient_light_color * ambient_light_strength;
 	vec3 out_specular = specular * specular_strength * light_color;
 	vec3 out_color = (albedo) * (out_diffuse + ambient_light + out_specular);
 
