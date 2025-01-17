@@ -8,14 +8,19 @@
 #define EULER_CHANGE_QUATERNION 0
 #define QUATERNION_CHANGE_EULER 1
 
-#define ACTOR_TOOL  0
-#define ACTOR_LIGHT 0
-#define ACTOR_ACTOR 1
+#define ACTOR_ACTOR 			0
+#define ACTOR_TOOL  			1
+#define ACTOR_LIGHT 			1
+
+#define LIGHT_POINT				0
+#define LIGHT_DIRECTIONAL		1
+#define LIGHT_SPOT				2
 
 struct RenderState
 {
 	glm::vec3 render_position;
 	glm::quat render_quaternion;
+	// glm::vec3 render_euler;
 	glm::vec3 render_scale;
 
 	RenderState(glm::vec3 init_position = glm::vec3(0.0f), glm::quat init_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
@@ -39,7 +44,7 @@ public:
 
 	int state_index = 0;
 
-	unsigned int type = ACTOR_ACTOR;
+	unsigned int actor_type;
 	bool visible = true;
 	std::string name;
 	float movement_speed = 1.0f;
@@ -59,6 +64,7 @@ public:
 	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
 	: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 	{
+		actor_type = ACTOR_ACTOR;
 		name = new_name;
 		world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 		rotation_euler = init_rotation_euler;
@@ -66,12 +72,15 @@ public:
 		current_state = RenderState(init_position, rotation_quaternion);
 		updateVectors();
 	}
-	// virtual ~Actor();
 
 	virtual void Tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
+	virtual bool wantsToBeRendered();
+	virtual bool wantsToBeBuffered();
 
 protected:
+	bool debug_visible;
+
 	void updateRotation(bool override_which);
 	void updateVectors();
 };
@@ -115,40 +124,62 @@ public:
 	{}
 };
 
-class LightActorGeneric: public Actor
+class Light: public Actor
 {
 public:
-	glm::vec3 emission_color;
+	unsigned int light_type;
+	glm::vec3 light_color;
+	float range;
+	float intensity;	// negative scale: 0.0 is brightest and it gets dimmer as it increases
+	float falloff;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
 
-	LightActorGeneric(std::string init_name, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(0.5f))
-	: Actor(init_name, Mesh(this), init_position, init_rotation, init_scale), emission_color(init_color)
-	{ type = ACTOR_TOOL; }
+	Light(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f))
+	: Actor(init_name, Mesh(this, Material(TOOL_TEXTURE_LIGHT), VAO_HANDMADE, ERROR_VERTS, ERROR_INDICES), init_position, init_rotation, glm::vec3(0.5f)), light_color(init_color), range(init_range), intensity(init_intensity), falloff(init_falloff)
+	{
+		actor_type = ACTOR_TOOL;
+		light_type = LIGHT_POINT;
+	}
 };
 
-class LightActorMoving: public LightActorGeneric
+class LightDirectional: public Light
 {
 public:
-	float movement_speed = 0.1f;
+	glm::vec3 direction;
 
-	using LightActorGeneric::LightActorGeneric;
+	LightDirectional(std::string init_name, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f))
+	: Light(init_name, 1.0f, 100.0f, 0.0f, init_color, init_position, init_rotation), direction(init_direction)
+	{ light_type = LIGHT_DIRECTIONAL; }
+};
 
-	void Tick(int current_tick) override;
+class LightSpot: public Light
+{
+public:
+	glm::vec3 direction;
+	float inner_cutoff_angle;
+	float outer_cutoff_angle;
+
+	LightSpot(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_direction = glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f))
+	: Light(init_name, init_intensity, init_range, init_falloff, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
+	{ light_type = LIGHT_SPOT; }
+};
+
+class LightFlashlight: public LightSpot
+{
+public:
+	Actor *parent = NULL;
+	glm::vec3 position_offset;
+	glm::vec3 rotation_offset;
+
+	LightFlashlight(std::string init_name, float init_intensity = 0.5f, float init_range = 325.0f, float init_falloff = 0.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_position_offset = glm::vec3(0.0f), glm::vec3 init_rotation_offset = glm::vec3(0.0f))
+	: LightSpot(init_name, init_intensity, init_range, init_falloff, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset), _intensity(init_intensity)
+	{ light_type = LIGHT_SPOT; }
+
+	void setLight(bool is_off);
 
 private:
-	glm::vec3 starting_position = position_global;
-	int t_direction = 0;
+	float _intensity;
+	void Tick(int current_tick) override;
 };
 
-class LightActorControllable: public LightActorGeneric
-{
-public:
-	float movement_speed = 0.05f;
-	float slow_movement_speed = 0.01f;
-	float _movement_speed = movement_speed;
-
-	using LightActorGeneric::LightActorGeneric;
-
-	void doHorizontalMovement(int direction[2]);
-	void doVerticalMovement(int direction);
-};
+extern GraphXPlayer *current_player;
 #endif

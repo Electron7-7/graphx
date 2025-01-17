@@ -1,5 +1,7 @@
 #include "g_actors.hpp"
 
+GraphXPlayer *current_player = NULL;
+
 //
 // Actor
 //
@@ -43,6 +45,16 @@ void Actor::updateStates(std::mutex &state_mutex)
 
 void Actor::Tick(int current_tick)
 {}
+
+bool Actor::wantsToBeRendered()
+{
+	return (actor_type != ACTOR_TOOL && visible) || debug_visible;
+}
+
+bool Actor::wantsToBeBuffered()
+{
+	return( (actor_type != ACTOR_TOOL) || debug_visible );
+}
 
 //
 // GraphXPlayer
@@ -94,25 +106,23 @@ void MoverTester::Tick(int current_tick)
 //
 // Lights
 //
-void LightActorMoving::Tick(int current_tick)
+void LightFlashlight::Tick(int current_tick)
 {
-	if( (position_global.z >= (starting_position.z + 10.0f)) || (position_global.z <= (starting_position.z - 10.0f)) )
-		t_direction = 1 - t_direction;
+	if(parent == NULL)
+	{
+		if(current_player == NULL)
+			return;
+		parent = current_player;
+	}
 
-	if(t_direction == 0)
-		position_global.z += movement_speed;
-
-	if(t_direction == 1)
-		position_global.z -= movement_speed;
+	position_global = parent->position_global + position_offset;
+	rotation_euler = parent->rotation_euler + rotation_offset;
+	updateVectors();
+	updateRotation(EULER_CHANGE_QUATERNION);
+	direction = orientation_front;
 }
 
-void LightActorControllable::doHorizontalMovement(int direction[2])
+void LightFlashlight::setLight(bool is_off)
 {
-	position_global[0] -= static_cast<float>(direction[1] * _movement_speed);
-	position_global[2] -= static_cast<float>(direction[0] * _movement_speed);
-}
-
-void LightActorControllable::doVerticalMovement(int direction)
-{
-	position_global[1] += static_cast<float>(direction * _movement_speed);
+	intensity = _intensity + (100.0f * is_off);
 }

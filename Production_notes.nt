@@ -538,3 +538,24 @@ After writing some notes in the LearnOpenGL_Advanced branch, I realized that the
 	I might be able to do this with a struct or something; e.g: for Actors, I could use a struct called "ActorOptions" or something that has all the data for creating the Actors (i.e: which subclass to use and what to set all the default values to in the constructor). Then, my TheatreLoader function would construct Actors with data from that Struct. I'd just need to figure out how to make the function create the right subclass (maybe use a Template, instead!).
 
 	This also might be something for the Production branch, so I'm gonna copy-paste these notes over there rq.
+
+[01/16/25]
+Welcome back, Production branch! Time to update this bad boy with all the shit I did in LearnOpenGL_Advanced; mainly the lighting stuff, but I also made some changes to various parts of the engine that I'd like to fully implement, as well as made some notes for other features I didn't include but want to in the Production branch.
+
+Okay, first hour over and while I didn't get a lot done in terms of amount of code written, I did get a lot done in terms of refactoring and planning out what I'm gonna write and how. Lets see if I can get the rest done faster.
+
+I'm overhauling the Material struct so it can use textures for its properties but will still be able to use simple data values if no textures are specified.
+
+I'm going to try and refactor the GLShader code.
+
+I don't need the shader error handler function, since I have (i think) full OpenGL error handling in the main file.
+
+GLShader is now a struct and now uses a Template "setUniform" function to handle all uniform changes. This means that I can use an unordered map (bascially a dictionary in C++) to do bulk uniform assignments!
+
+Ooh, but since std::unordered_map can't just take arbitrary values, I might need another template function or a template class or just a new struct with clever functionality.
+
+Or, I could just not use a map and deal with setting them individually for now, lol.
+
+Okay, finishing up; I have all the code written, but something's broken. It runs and renders, but the lighting doesn't work. However, that's an easy problem to fix. I'll do that tommorow.
+
+:3

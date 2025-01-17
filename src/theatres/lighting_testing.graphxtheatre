@@ -1,7 +1,14 @@
 #ifndef LIGHTING_TESTING_THEATRE
 #define LIGHTING_TESTING_THEATRE
 #include "../theatre_includes.hpp"
-Actor staticActor1("static actor 1", Mesh(&staticActor1, VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, 1.0f, -10.0f), glm::vec3(0.0f), glm::vec3(10.0f, 1.0f, 10.0f));
-LightActorControllable lightActor("controlled light emitting actor", glm::vec3(1.0f), glm::vec3(0.0f, 3.0f, -10.0f));
-Theatre lighting_testing_theatre("test_theatre", std::vector<Actor *> {&staticActor1, &lightActor}, Mesh(NULL, VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES, DOOM_TEXTURE_PATH));
+Actor staticActor("static actor", Mesh(&staticActor, Material(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 16, 1.0f), VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(20.0f, 1.0f, 20.0f));
+Actor staticActor2("static actor", Mesh(&staticActor2, Material(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 16, 0.2f), VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, 4.0f, -10.0f), glm::vec3(0.0f), glm::vec3(1.0f));
+Actor staticActor3("static actor", Mesh(&staticActor3, Material(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 32, 0.5f), VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(3.0f, 8.0f, -13.0f), glm::vec3(10.0f, 45.0f, -20.0f), glm::vec3(1.4f));
+Actor staticActor4("static actor", Mesh(&staticActor4, Material(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 32, 1.0f), VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(-8.0f, 6.0f, -11.0f), glm::vec3(10.0f, 45.0f, -20.0f), glm::vec3(1.0f));
+Actor staticActor5("static actor", Mesh(&staticActor5, Material(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 64, 1.0f), VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(-5.0f, 4.0f, -6.0f), glm::vec3(10.0f, 45.0f, -20.0f), glm::vec3(0.6f));
+Actor wallActor("wall actor", Mesh(&wallActor, Material(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 64, 1.0f), VAO_HANDMADE, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 0.0f, -40.0f), glm::vec3(0.0f), glm::vec3(20.0f, 20.0f, 1.0f));
+LightDirectional temp_sun("temp sun", glm::vec3(0.5f), glm::vec3(-0.2f, -1.0f, -0.3f));
+LightFlashlight player_flashlight("flashlight", 0.6f, 325.0f);
+Light point_light("point light", 1.0f, 325.0f, 0.0f, glm::vec3(1.0f), glm::vec3(2.0f, 4.0f, -4.0f));
+Theatre lighting_testing_theatre("test_theatre", std::vector<Actor *> { &staticActor, &player_flashlight, &staticActor2, &staticActor3, &staticActor4, &staticActor5, &wallActor, &temp_sun, &point_light});
 #endif

@@ -11,14 +11,20 @@
 struct Theatre
 {
 	std::string name;
-	std::vector<Actor *> actors;
-	std::vector<Mesh *> meshes;
+	std::vector<Actor *> troupe;
+	// std::vector<Light *> catwalk; // Change to "std::vector<Tool *> tools;" later?
+	int point_lights_count = 0;
+	int spot_lights_count = 0;
 	Mesh stage;
 
-	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_actors = {}, Mesh init_stage = Mesh(NULL));
+	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_troupe = {}, Mesh init_stage = Mesh(NULL));
 
 	void actorEnter(Actor *new_actor);
+	void troupeEnter(std::vector<Actor *> new_troupe);
 	void actorLeave(Actor *old_actor);
+
+private:
+	void sortTroupe();
 };
 
 extern Theatre *current_theatre;

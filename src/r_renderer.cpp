@@ -1,4 +1,5 @@
 #include "r_common.hpp"
+#include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include <cmath>
 
@@ -18,50 +19,70 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 void R_StoreBuffers()
 {
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
-
 	unsigned int current_vao_index = VAOS_AMOUNT + 1;
 
-	for(Mesh *mesh : current_theatre->meshes)
+	for(Actor *actor : current_theatre->troupe)
+	{	
+		if(!actor->wantsToBeBuffered())
+			continue;
+
+		if(actor->mesh.vao_index != current_vao_index)
+		{
+			current_vao_index = actor->mesh.vao_index;
+			glBindVertexArray(VAOs[current_vao_index]);
+		}
+
+		R_GL_BufferMeshData(&actor->mesh);
+	}
+
+	R_GL_BufferMeshData(&current_theatre->stage);
+
+	time_to_store_buffers = false;
+	time_to_render = true;
+}
+
+void R_GL_BufferMeshData(Mesh *mesh)
+{
+	Material *material = &mesh->material;
+	material->texture_diffuse = material->bufferTexture(material->texture_path_diffuse);
+	material->texture_specular = material->bufferTexture(material->texture_path_specular);
+
+	glGenBuffers(1, &mesh->VBO);
+	glGenBuffers(1, &mesh->IBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+	glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), &mesh->vertices[0], GL_STATIC_DRAW);
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, Environment *current_environment)
+{
+	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
+	unsigned int shader_index = SHADER_PHONG;
+	int point_light_index = 0;
+	int spot_light_index = 0;
+
+	glUseProgram(shaders[shader_index]->id);
+	shaders[shader_index]->setUniform("point_lights_count", point_light_index);
+	shaders[shader_index]->setUniform("spot_lights_count", spot_light_index);
+
+	for(Actor *actor : current_theatre->troupe)
 	{
+		Mesh *mesh = &actor->mesh;
+
 		if(mesh->vao_index != current_vao_index)
 		{
 			current_vao_index = mesh->vao_index;
 			glBindVertexArray(VAOs[current_vao_index]);
 		}
 
-		mesh->generateTexture(); // Quickly generate the texture in the render thread
-
-		glGenBuffers(1, &mesh->VBO);
-		glGenBuffers(1, &mesh->IBO);
-
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), &mesh->vertices[0], GL_STATIC_DRAW);
-		
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-	time_to_store_buffers = false;
-	time_to_render = true;
-}
-
-void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, GraphXPlayer *current_player, Environment *current_environment)
-{
-	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
-	unsigned int current_shader_index = 0;
-
-	for(Mesh *mesh : current_theatre->meshes)
-	{
-		if(mesh->vao_index != current_vao_index)
-		{
-			current_vao_index = mesh->vao_index;
-		}
-
 		glm::mat4 model_matrix = glm::mat4(1.0f);
 
-		if(mesh->owner != NULL) // If the Mesh has no owner, this stops the engine from crashing
+		if(actor->wantsToBeRendered()) // If the Mesh has no owner, this stops the engine from crashing
 		{
 			// Note: Quaternions (and angular movement) should use slerp instead of lerp
 			std::lock_guard guard(state_mutex);
@@ -86,45 +107,45 @@ void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 proj
 			}
 
 			model_matrix = glm::translate(model_matrix, interpolated_position);
+			model_matrix *= glm::toMat4(interpolated_quat);
 			model_matrix = glm::scale(model_matrix, interpolated_scale);
-			// add model_matrix rotation here
+
+			glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
+
+			switch(current_vao_index) // I may want to use a method that doesn't require me to manually write down and update every single vertex attribute format
+			{
+				case(VAO_HANDMADE):
+					glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+					glEnableVertexAttribArray(0);
+
+					glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+					glEnableVertexAttribArray(1);
+
+					glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+					glEnableVertexAttribArray(2);
+
+					break;
+			}
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, mesh->material.texture_diffuse);
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, mesh->material.texture_specular);
+
+			shaders[shader_index]->setUniform("texture_diffuse", 0);
+			shaders[shader_index]->setUniform("texture_specular", 1);
+			shaders[shader_index]->setUniform("material.color", mesh->material.color);
+			shaders[shader_index]->setUniform("is_light", false);
 		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
-
-		switch(current_vao_index) // I may want to use a method that doesn't require me to manually write down and update every single vertex attribute format
-		{
-			case(VAO_HANDMADE):
-				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-				glEnableVertexAttribArray(0);
-
-				glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-				glEnableVertexAttribArray(1);
-
-				glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-				glEnableVertexAttribArray(2);
-
-				break;
-		}
-
-		shaders[current_shader_index]->use();
-
-		shaders[current_shader_index]->setMat4("model_matrix", model_matrix);
-		shaders[current_shader_index]->setMat4("view_matrix", current_player->getViewMatrix());
-		shaders[current_shader_index]->setMat4("projection_matrix", projection_matrix);
-
-		shaders[current_shader_index]->setMat3("normal_matrix", glm::mat3(glm::transpose(glm::inverse(current_player->getViewMatrix()))));
-
-		// Meshes only have one texture for now
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mesh->m_texture);
-		shaders[current_shader_index]->setInt("texture_one", 0);
+		shaders[shader_index]->setUniform("model_matrix", model_matrix);
+		shaders[shader_index]->setUniform("view_matrix", current_player->getViewMatrix());
+		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
+		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(current_player->getViewMatrix()))));
+		shaders[shader_index]->setUniform("view_position", current_player->position_global);
 		
-		static LightActorGeneric *current_light;
-		bool current_mesh_is_light = false;
-		shaders[current_shader_index]->setBool("is_light", false);
-
 		/*
 			NOTE: This will change almost immediately. I need to decide if I'm sticking with going through a vector of Meshes, switching to a vector of Actors,
 			or something else entirely (JSON? RenderCmds?). I also need to make sure that R_Render doesn't crash if there are no lights, make a better system for
@@ -133,28 +154,76 @@ void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 proj
 			only hard-coded a little bit and still runs, so I'm okay with pushing it as an update with some temporary solutions that will get changed very soon.
 		*/
 
-		if(mesh->owner != NULL && mesh->owner->type == ACTOR_LIGHT)
+		if(actor->actor_type == ACTOR_LIGHT)
 		{
-			current_mesh_is_light = true;
-			current_light = static_cast<LightActorGeneric *>(mesh->owner);
-			shaders[current_shader_index]->setVec3("albedo", mesh->material.albedo); // Change to be the Material's Albedo
-			shaders[current_shader_index]->setBool("is_light", true);
-			// glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
-			// continue;
+			Light *current_light = static_cast<Light *>(actor);
+			shaders[shader_index]->setUniform("is_light", true);
+			std::string which_light;
+
+			switch(current_light->light_type)
+			{
+				case(LIGHT_POINT):
+					which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
+					break;
+				case(LIGHT_SPOT):
+					which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
+					current_light = static_cast<LightSpot *>(current_light);
+					break;
+				case(LIGHT_DIRECTIONAL):
+					which_light = "directional_light.";
+					current_light = static_cast<LightDirectional *>(current_light);
+					break;
+			}
+
+			shaders[shader_index]->setUniform(which_light + "position", current_light->position_global);
+			shaders[shader_index]->setUniform(which_light + "color", current_light->light_color);
+			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_color);
+			shaders[shader_index]->setUniform(which_light + "range", current_light->range);
+			shaders[shader_index]->setUniform(which_light + "intensity", current_light->intensity);
+			shaders[shader_index]->setUniform(which_light + "falloff", current_light->falloff);
+
+			shaders[shader_index]->setUniform(which_light + "material.color", current_light->light_color);
 		}
 
-		if(!current_mesh_is_light)
-		{
-			shaders[current_shader_index]->setVec3("light_color", current_light->emission_color);
-			shaders[current_shader_index]->setVec3("light_position", glm::vec3(current_player->getViewMatrix() * glm::vec4(current_light->position_global, 1.0f)));
-		}
+		shaders[shader_index]->setUniform("environment.ambient_light", current_environment->getAmbientLight());
+		shaders[shader_index]->setUniform("material.specular_sharpness", mesh->material.specular_sharpness);
+		shaders[shader_index]->setUniform("material.specular_strength", mesh->material.specular_strength);
 
-		shaders[current_shader_index]->setVec3("albedo", mesh->material.albedo);
-		shaders[current_shader_index]->setVec3("ambient_light", current_environment->getAmbientLight());
-		shaders[current_shader_index]->setVec3("view_position", current_player->position_global);
-		shaders[current_shader_index]->setFloat("specular_strength", mesh->material.specular_strength);
-		shaders[current_shader_index]->setInt("specular_sharpness", mesh->material.specular_sharpness);
-
-		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
+		if(actor->wantsToBeRendered())
+			glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
 	}
+
+	R_RenderFlats(projection_matrix, glm::mat4(1.0f), current_environment, shader_index);
+}
+
+void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environment *current_environment, unsigned int shader_index)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, current_theatre->stage.VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, current_theatre->stage.IBO);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, current_theatre->stage.material.texture_diffuse);
+	
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, current_theatre->stage.material.texture_specular);
+
+	shaders[shader_index]->setUniform("material.texture_color", 0);
+	shaders[shader_index]->setUniform("material.texture_specular", 1);
+
+	shaders[shader_index]->setUniform("model_matrix", model_matrix);
+	shaders[shader_index]->setUniform("view_matrix", current_player->getViewMatrix());
+	shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
+	shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
+	shaders[shader_index]->setUniform("view_position", current_player->position_global);
+
+	glDrawElements(GL_TRIANGLES, current_theatre->stage.indices.size(), GL_UNSIGNED_INT, 0);
 }

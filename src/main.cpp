@@ -6,14 +6,15 @@
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include "theatres/lighting_testing.graphxtheatre"
+#include <iostream>
 #include <vector>
 #include <thread>
 #include <mutex>
 
-std::mutex actor_state_mutex;
-
 GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
 Environment default_environment(true);
+
+std::mutex actor_state_mutex;
 
 std::vector<int> main_window_size =
 {
@@ -33,10 +34,12 @@ static double tickrate_ms = 1.0 / TICKRATE;	// Maybe turn this into a function t
 int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
+bool test_flashlight_bool = true;
 
 void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param);
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
 
 int main()
@@ -48,19 +51,21 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
-	glfwSetWindowPos(main_window, static_cast<int>((1920 - main_window_size[0]) / 2), static_cast<int>((1080 - main_window_size[1]) / 2)); // HARDCODED NATIVE RESOLUTION!!! CHANGE THIS!!!
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
+	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(_debug_callback, nullptr);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 
-	std::thread game_logic_main_thread(testGameTick, main_window);
+	GLShader phong_shader(SRC_DIR("src/shaders/phong_vertex.glsl").c_str(), SRC_DIR("src/shaders/phong_fragment.glsl").c_str());
+	shaders.insert(shaders.end(), {&phong_shader});
 
-	GLShader phong_shader(SRC_DIR(std::string("src/shaders/phong_vertex.glsl")).c_str(), SRC_DIR(std::string("src/shaders/phong_fragment.glsl")).c_str());
-	shaders.push_back(&phong_shader);
+	current_player = &player;
+
+	std::thread game_logic_main_thread(testGameTick, main_window);
 
 	while(!glfwWindowShouldClose(main_window))
 	{
@@ -75,7 +80,7 @@ int main()
 			// De-jank all of this shit below
 			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 			double interpolation_time = ((glfwGetTime() - last_tick_timestamp) / tickrate_ms);
-			R_Render(actor_state_mutex, interpolation_time, projection_matrix, &player, &default_environment);
+			R_Render(actor_state_mutex, interpolation_time, projection_matrix, &default_environment);
 		}
 	}
 
@@ -106,13 +111,15 @@ void testGameTick(GLFWwindow *main_window)
 
 			processInput(main_window);
 
-			for(Actor *actor : current_theatre->actors)
+			for(Actor *actor : current_theatre->troupe)
 			{
 				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
 				// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
 				actor->Tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
+
+			player_flashlight.setLight(test_flashlight_bool);
 
 			last_tick_timestamp = glfwGetTime();
 			tick_length--;
@@ -125,35 +132,32 @@ void testGameTick(GLFWwindow *main_window)
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 }
 
-bool keyJustPressed(GLFWwindow *window, int key)
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-	static bool _wait = false;
+	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
 
-	if(glfwGetKey(window, key) == GLFW_PRESS)
-		if(!_wait)
-		{
-			_wait = true;
-			return true;
-		}
+	if(key == GLFW_KEY_G && action == GLFW_PRESS)
+	{
+		default_environment.ambient_lighting_enabled = !default_environment.ambient_lighting_enabled;
+		if(!default_environment.ambient_lighting_enabled)
+			PRINT("Ambient Lighting Disabled");
+		else
+			PRINT("Ambient Lighting Enabled");
+	}
 
-	if(glfwGetKey(window, key) == GLFW_RELEASE)
-		if(_wait)
-			_wait = false;
-
-	return false;
+	if(key == GLFW_KEY_F && action == GLFW_PRESS)
+	{
+		test_flashlight_bool = !test_flashlight_bool;
+		if(test_flashlight_bool)
+			PRINT("shader test bool on");
+		else
+			PRINT("shader test bool off");
+	}
 }
 
 void processInput(GLFWwindow *window)
 {
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) ==  GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-
-	if(keyJustPressed(window, GLFW_KEY_F))
-	{
-		default_environment.do_ambient_lighting = !default_environment.do_ambient_lighting;
-	}
-
-
 	int input_vector[2] =
 	{
 		glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S),

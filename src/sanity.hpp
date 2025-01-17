@@ -7,15 +7,15 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 
 #ifndef GRAPHX_FUCKING_FILEPATHS
 #define GRAPHX_FUCKING_FILEPATHS
-	#include <string>
-	#ifdef __unix__
-	// At least for me, the relative filepath works fine on Linux, but you may have to copy what I did for Windows, down there VV
-	#define SRC_DIR(relative_filepath) (std::string(relative_filepath))
-	#endif
-
+	// #include <string>
 	#ifdef _WIN32
 	// Change the C:/Users/Chea Sextillion/Desktop/Github/graphx/ filepath to wherever you downloaded the github repo to
 	#define SRC_DIR(relative_filepath) (std::string("C:/Users/Chea Sextillion/Desktop/Github/graphx/") + std::string(relative_filepath))
+	#endif
+
+	// At least for me, the relative filepath works fine on Linux, but you may have to copy what I did for Windows, up there ^
+	#ifdef __unix__
+	#define SRC_DIR(relative_filepath) (std::string(relative_filepath))
 	#endif
 #endif
 
@@ -28,6 +28,7 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 
 #ifndef GL_INCLUDES
 #define GL_INCLUDES
+	#define GLM_ENABLE_EXPERIMENTAL
 	#include <glad/glad.h>
 	#include <GLFW/glfw3.h>
 	#include <glm/fwd.hpp>
@@ -35,11 +36,7 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 	#include <glm/gtc/matrix_transform.hpp>
 	#include <glm/gtc/type_ptr.hpp>
 	#include <glm/gtc/quaternion.hpp>
+	#include <glm/gtx/string_cast.hpp>
 	#include <glm/ext.hpp>
 	#include <stb_image.h>
-#endif
-
-#ifndef GLM_ENABLE_EXPERIMENTAL
-#define GLM_ENABLE_EXPERIMENTAL
-	#include <glm/gtx/string_cast.hpp>
 #endif

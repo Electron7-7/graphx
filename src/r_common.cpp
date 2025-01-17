@@ -2,11 +2,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
 //
 // GLShader
 //
-GLShader::GLShader(const char *vertex_path, const char *fragment_path)
+GLShader::GLShader(std::string vertex_shader_path, std::string fragment_shader_path)
 {
 	std::string vertex_code;
 	std::string fragment_code;
@@ -18,8 +17,8 @@ GLShader::GLShader(const char *vertex_path, const char *fragment_path)
 
 	try
 	{
-		v_shader_file.open(vertex_path);
-		f_shader_file.open(fragment_path);
+		v_shader_file.open(vertex_shader_path.c_str());
+		f_shader_file.open(fragment_shader_path.c_str());
 		std::stringstream v_shader_stream, f_shader_stream;
 
 		v_shader_stream << v_shader_file.rdbuf();
@@ -44,87 +43,78 @@ GLShader::GLShader(const char *vertex_path, const char *fragment_path)
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &v_shader_code, NULL);
 	glCompileShader(vertex);
-	shaderErrorHandler(vertex, GLSHADER_TYPE_VERTEX);
 
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment, 1, &f_shader_code, NULL);
 	glCompileShader(fragment);
-	shaderErrorHandler(fragment, GLSHADER_TYPE_FRAGMENT);
 
-	ID = glCreateProgram();
-	glAttachShader(ID, vertex);
-	glAttachShader(ID, fragment);
-	glLinkProgram(ID);
-	shaderErrorHandler(ID, GLSHADER_TYPE_PROGRAM);
+	id = glCreateProgram();
+	glAttachShader(id, vertex);
+	glAttachShader(id, fragment);
+	glLinkProgram(id);
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
 };
 
-void GLShader::use()
+template<> void GLShader::setUniform<bool>(const std::string &name, bool value) const
 {
-	glUseProgram(ID);
+	glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
+	// int new_value;
+	// glGetUniformiv(id, glGetUniformLocation(id, name.c_str()), &new_value);
+	// return (bool)new_value;
 }
 
-void GLShader::setBool(const std::string &name, bool value) const
+template<> void GLShader::setUniform<int>(const std::string &name, int value) const
 {
-	glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
+	glUniform1i(glGetUniformLocation(id, name.c_str()), value);
+	// int new_value;
+	// glGetUniformiv(id, glGetUniformLocation(id, name.c_str()), &new_value);
+	// return new_value;
 }
 
-void GLShader::setInt(const std::string &name, int value) const
+template<> void GLShader::setUniform<float>(const std::string &name, float value) const
 {
-	glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+	glUniform1f(glGetUniformLocation(id, name.c_str()), value);
+	// float new_value;
+	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), &new_value);
+	// return new_value;
 }
 
-void GLShader::setFloat(const std::string &name, float value) const
+template<> void GLShader::setUniform<glm::vec2>(const std::string &name, glm::vec2 value) const
 {
-	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+	glUniform2fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+	// float *new_value = NULL;
+	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), new_value);
+	// return glm::vec2(new_value[0], new_value[1]);
 }
 
-void GLShader::setVec3(const std::string &name, glm::vec3 value) const
+template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const
 {
-	glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
+	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+	// float *new_value = NULL;
+	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), new_value);
+	// return glm::vec3(new_value[0], new_value[1], new_value[2]);
 }
 
-void GLShader::setMat3(const std::string &name, glm::mat3 value) const
+template<> void GLShader::setUniform<glm::vec4>(const std::string &name, glm::vec4 value) const
 {
-	glUniformMatrix3fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	glUniform4fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+	// float *new_value = NULL;
+	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), new_value);
+	// return glm::vec4(new_value[0], new_value[1], new_value[2], new_value[3]);
 }
 
-void GLShader::setMat4(const std::string &name, glm::mat4 value) const
+template<> void GLShader::setUniform<glm::mat3>(const std::string &name, glm::mat3 value) const
 {
-	glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	glUniformMatrix3fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	// return glm::mat3(0.0f); // I don't know how to get and return Matrices properly, but I don't want a non-void function to not return something
 }
 
-void GLShader::shaderErrorHandler(int thing, int type)
+template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::mat4 value) const
 {
-	int success;
-	char info_log[512];
-	std::string name = "VERTEX";
-
-	switch(type)
-	{
-		case GLSHADER_TYPE_FRAGMENT:
-			name = "FRAGMENT";
-		case GLSHADER_TYPE_VERTEX:
-			glGetShaderiv(thing, GL_COMPILE_STATUS, &success);
-			if(!success)
-			{
-				glGetShaderInfoLog(thing, 512, NULL, info_log);
-				std::cerr << "ERROR::SHADER::" << name << "::COMPILATION::FAILED\n" << info_log << std::endl;
-				return;
-			}
-			break;
-		case GLSHADER_TYPE_PROGRAM:
-			glGetProgramiv(thing, GL_LINK_STATUS, &success);
-			if(!success)
-			{
-				glGetProgramInfoLog(thing, 512, NULL, info_log);
-				std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << std::endl;
-				return;		
-			}
-			break;
-	}
+	glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	// return glm::mat4(0.0f); // I don't know how to get and return Matrices properly, but I don't want a non-void function to not return something
 }
 
 //
@@ -158,22 +148,21 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 //
 glm::vec3 Environment::getAmbientLight()
 {
-	if(do_ambient_lighting)
-		return ambient_light_color * ambient_light_strength;
-	return glm::vec3(0.0f);
+	return ambient_light_color * ambient_light_strength * (int)ambient_lighting_enabled;
 }
 
 //
-// Mesh
+// Material
 //
 // Texture Function
 // Todo: go from generating one texture per one filepath to n textures per n filepaths (and returning their pointers)
-void Mesh::generateTexture()
+unsigned int Material::bufferTexture(std::string path)
 {
 	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
 
-	glGenTextures(1, &m_texture);
-	glBindTexture(GL_TEXTURE_2D, m_texture);
+	unsigned int texture_id;
+	glGenTextures(1, &texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
@@ -181,13 +170,14 @@ void Mesh::generateTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load(texture_path.c_str(), &t_width, &t_height, &t_channels, 0);
+	unsigned char *t_data = stbi_load(path.c_str(), &t_width, &t_height, &t_channels, 0);
 
-	// Replace if else with try catch?
 	if(!t_data)
 		std::cerr << "Failed to load texture!" << std::endl;
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(t_data);
+
+	return texture_id;
 }

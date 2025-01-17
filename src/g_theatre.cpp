@@ -7,37 +7,49 @@ Theatre *current_theatre;
 //
 // Theatre
 //
-Theatre::Theatre(std::string init_name, std::vector<Actor *> init_actors, Mesh init_stage)
-: name(init_name), actors(init_actors), stage(init_stage)
+Theatre::Theatre(std::string init_name, std::vector<Actor *> init_troupe, Mesh init_stage)
+: name(init_name), troupe(init_troupe), stage(init_stage)
 {
-	std::sort(actors.begin(), actors.end(), [](Actor *left, Actor *right)
+	sortTroupe();
+
+	for(Actor *actor : troupe)
 	{
-		return (left->type < right->type);
-	});
+		if(actor->actor_type != ACTOR_LIGHT)
+			continue;
 
-	for(Actor *actor : actors)
-		meshes.push_back(&actor->mesh);
+		if(static_cast<Light *>(actor)->light_type == LIGHT_POINT)
+			point_lights_count++;
 
-	std::sort(meshes.begin(), meshes.end(), [](Mesh *left, Mesh *right)
-	{
-		// return (left->vao_index < right->vao_index);
-		return (left->owner->type < right->owner->type);
-	});
-
-	meshes.push_back(&stage);
+		if(static_cast<Light *>(actor)->light_type == LIGHT_SPOT)
+			spot_lights_count++;
+	}
 }
 
 void Theatre::actorEnter(Actor *new_actor)
 {
-	actors.push_back(new_actor);
-	meshes.push_back(&new_actor->mesh);
+	troupe.insert(troupe.end(), new_actor); // This can be expanded to multiple Actors
+	sortTroupe();
+}
+
+void Theatre::troupeEnter(std::vector<Actor *> new_troupe)
+{
+	troupe.insert(troupe.end(), new_troupe.begin(), new_troupe.end());
+	sortTroupe();
 }
 
 void Theatre::actorLeave(Actor *old_actor)
 {
-	for(int i = 0 ; i < actors.size() ; i++)
+	for(int i = 0 ; i < troupe.size() ; i++)
 	{
-		if(actors[i] == old_actor)
-			actors.erase(actors.begin() + i);
+		if(troupe[i] == old_actor)
+			troupe.erase(troupe.begin() + i);
 	}
+}
+
+void Theatre::sortTroupe()
+{
+	std::sort(troupe.begin(), troupe.end(), [](Actor *left, Actor *right)
+	{
+		return (left->actor_type > right->actor_type);
+	});
 }
