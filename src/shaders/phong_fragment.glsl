@@ -8,12 +8,13 @@ in vec3 normal;
 
 struct Material
 {
-	vec3 diffuse;
-	vec3 specular;
+	sampler2D texture_diffuse;
+	sampler2D texture_specular;
+
 	vec3 color;
 	float specular_strength;
 	int specular_sharpness;
-} material;
+};
 
 // #define ENVIRONMENT_BACKGROUND_COLOR	0
 // #define ENVIRONMENT_BACKGROUND_IMAGE	1
@@ -21,10 +22,14 @@ struct Environment
 {
 	// int background_type;
 	vec3 ambient_light;
-} environment;
+	vec3 ambient_color;
+	float ambient_strength;
+};
 
 struct Light
 {
+	float strength;
+
 	vec3 color;
 	vec3 specular;
 	vec3 position;
@@ -36,34 +41,39 @@ struct Light
 
 	float inner_cutoff;
 	float outer_cutoff;
-} directional_light;
+};
 
+uniform Material material;
+uniform Environment environment;
+
+uniform Light directional_light;
 uniform Light point_lights[MAX_NUMBER_OF_LIGHTS];
 uniform Light spot_lights[MAX_NUMBER_OF_LIGHTS];
-
-uniform sampler2D texture_diffuse;
-uniform sampler2D texture_specular;
 
 uniform vec3 view_position;
 uniform bool is_light;
 uniform int point_lights_count;
 uniform int spot_lights_count;
+uniform bool mat_fullbright;
 
-vec3 view_direction = normalize(view_position - fragment_position);
+vec3 material_diffuse;
+vec3 material_specular;
+vec3 view_direction;
 
 vec3 calculateDirectionalLight();
 vec3 calculateLight(Light light, bool is_spot_light);
 
 void main()
 {
-	material.diffuse = texture(texture_diffuse, texture_coordinate).rgb;
-	material.specular = texture(texture_specular, texture_coordinate).rgb;
-
-	if(is_light)
+	if(mat_fullbright || is_light)
 	{
-		FragColor = vec4(material.diffuse * material.color, 1.0f);
+		FragColor = vec4(texture(material.texture_diffuse, texture_coordinate).rgb * material.color, 1.0f);
 		return;
 	}
+
+	material_diffuse = texture(material.texture_diffuse, texture_coordinate).rgb;
+	material_specular = texture(material.texture_specular, texture_coordinate).rgb;
+	view_direction = normalize(view_position - fragment_position);
 
 	vec3 output_color = calculateDirectionalLight();
 
@@ -83,9 +93,9 @@ vec3 calculateDirectionalLight()
 	vec3 reflect_direction = reflect(-light_direction, normal);
 	float specular = pow(max(dot(view_direction, reflect_direction), 0.0f), material.specular_sharpness);
 
-	vec3 this_ambient = directional_light.color * environment.ambient_light * material.diffuse * material.color;
-	vec3 this_diffuse = directional_light.color * diffuse * material.diffuse * material.color;
-	vec3 this_specular = directional_light.specular * material.specular * material.specular_strength;
+	vec3 this_ambient = (directional_light.color * directional_light.strength) * environment.ambient_light * material_diffuse * material.color;
+	vec3 this_diffuse = (directional_light.color * directional_light.strength) * diffuse * material_diffuse * material.color;
+	vec3 this_specular = (directional_light.specular * directional_light.strength) * material_specular * material.specular_strength;
 
 	return (this_ambient + this_diffuse + this_specular);
 }
@@ -106,7 +116,7 @@ vec3 calculateLight(Light light, bool is_spot_light)
 	float linear = (5.58574 * pow(light.range, -1.0704)) + (light.falloff * 0.01f);
 	float quadratic = 131.35334 * pow(light.range, -2.20532);
 	float light_attenuation = 1.0f / (light.intensity + linear * light_distance + quadratic * pow(light_distance, 2));
-	
+
 	float spotlight_radius = 1.0f;
 	if(is_spot_light)
 	{
@@ -115,9 +125,9 @@ vec3 calculateLight(Light light, bool is_spot_light)
 		spotlight_radius = clamp((theta - light.outer_cutoff) / epsilon, 0.0f, 1.0f);
 	}
 
-	vec3 this_ambient = light.color * environment.ambient_light * material.diffuse * material.color;
-	vec3 this_diffuse = light.color * diffuse * material.diffuse * material.color;
-	vec3 this_specular = light.specular * material.specular * material.specular_strength;
+	vec3 this_ambient = (light.color * light.strength) * environment.ambient_light * material_diffuse * material.color;
+	vec3 this_diffuse = (light.color * light.strength) * diffuse * material_diffuse * material.color;
+	vec3 this_specular = (light.specular * light.strength) * material_specular * material.specular_strength;
 
 	this_ambient *= light_attenuation * spotlight_radius;
 	this_diffuse *= light_attenuation * spotlight_radius;

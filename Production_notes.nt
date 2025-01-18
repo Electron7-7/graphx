@@ -559,3 +559,56 @@ Or, I could just not use a map and deal with setting them individually for now, 
 Okay, finishing up; I have all the code written, but something's broken. It runs and renders, but the lighting doesn't work. However, that's an easy problem to fix. I'll do that tommorow.
 
 :3
+
+[01/17/25]
+Time to finish this feckin Production branch update!
+
+Hmm... the shader isn't processing lighting because certain uniforms aren't getting set. This reeks of my problem in the LearnOpenGL_Advanced branch where uniforms weren't being set because of an int not being set to a string but no errors being thrown.
+
+It could also be because I SET THEM TO FUCKING 0 AT THE TOP OF R_RENDERACTORS GOD DAMNIT!!!
+
+Hmm, still a problem: the flashlight spot light isn't getting used but it is being rendered. Is the array not being properly updated? Is "spot_lights_count" wrong? Is there a minor bug in the shader code that's there because I tried to refactor too much at the same time? I'll find out.
+
+Or it could be because I forgot that I didn't set the values specific to spot lights in R_RenderActors... man...
+
+Aight, finally fuckin' fixed everything.
+
+I've made a realisation: Meshes don't need their Actor *owner variable anymore...
+
+I've finished the moving Light! I also want to be rid of the Actor *owner variable in Mesh; I don't need it and if I use a Mesh pointer in Actor instead, I can make a couple Meshes and then distribute them to many Actors. This will cut down on the cost of buffering Mesh data. Here's some pseudo-code:
+:::C++
+//
+// test.graphxtheatre
+//
+//...
+Mesh test_mesh(/*...*/);
+Actor test_actor("test actor", &test_mesh/*...*/);
+Theatre test_theatre("test theatre", std::vector<Actor *>{&test_actor});
+
+//
+// g_actors.hpp
+//
+class Actor
+{
+	//...
+	Mesh *mesh = NULL;
+	//...
+};
+
+//
+// r_rendering.cpp
+//
+R_Render(/*...*/)
+{
+	//...
+	for(Actor *actor : current_theatre->troupe)
+	{
+		//...
+		actor->mesh->doStuff;
+		//...
+	}
+	//...
+}
+:::
+
+Fun stuff!

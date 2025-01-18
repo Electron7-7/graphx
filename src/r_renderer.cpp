@@ -16,13 +16,33 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void R_TroupeChanged()
+{
+	for(Actor *actor : current_theatre->troupe)
+	{
+		if(!actor->wantsToBeBuffered() || actor->mesh.is_buffered)
+			continue;
+
+		unsigned int current_vao_index = VAOS_AMOUNT + 1;
+
+		if(actor->mesh.vao_index != current_vao_index)
+		{
+			current_vao_index = actor->mesh.vao_index;
+			glBindVertexArray(VAOs[current_vao_index]);
+		}
+		
+		R_GL_BufferMeshData(&actor->mesh);
+	}
+
+	current_troupe_changed = false;
+}
+
 void R_StoreBuffers()
 {
-	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 	unsigned int current_vao_index = VAOS_AMOUNT + 1;
 
 	for(Actor *actor : current_theatre->troupe)
-	{	
+	{
 		if(!actor->wantsToBeBuffered())
 			continue;
 
@@ -57,18 +77,23 @@ void R_GL_BufferMeshData(Mesh *mesh)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	mesh->is_buffered = true;
 }
 
 void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, Environment *current_environment)
 {
+	if(current_troupe_changed)
+		R_TroupeChanged();
+
 	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
 	unsigned int shader_index = SHADER_PHONG;
 	int point_light_index = 0;
 	int spot_light_index = 0;
 
 	glUseProgram(shaders[shader_index]->id);
-	shaders[shader_index]->setUniform("point_lights_count", point_light_index);
-	shaders[shader_index]->setUniform("spot_lights_count", spot_light_index);
+	shaders[shader_index]->setUniform("point_lights_count", current_theatre->point_lights_count);
+	shaders[shader_index]->setUniform("spot_lights_count", current_theatre->spot_lights_count);
 
 	for(Actor *actor : current_theatre->troupe)
 	{
@@ -134,8 +159,8 @@ void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 proj
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, mesh->material.texture_specular);
 
-			shaders[shader_index]->setUniform("texture_diffuse", 0);
-			shaders[shader_index]->setUniform("texture_specular", 1);
+			shaders[shader_index]->setUniform("material.texture_diffuse", 0);
+			shaders[shader_index]->setUniform("material.texture_specular", 1);
 			shaders[shader_index]->setUniform("material.color", mesh->material.color);
 			shaders[shader_index]->setUniform("is_light", false);
 		}
@@ -143,7 +168,7 @@ void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 proj
 		shaders[shader_index]->setUniform("model_matrix", model_matrix);
 		shaders[shader_index]->setUniform("view_matrix", current_player->getViewMatrix());
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
-		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(current_player->getViewMatrix()))));
+		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 		shaders[shader_index]->setUniform("view_position", current_player->position_global);
 		
 		/*
@@ -165,29 +190,33 @@ void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 proj
 				case(LIGHT_POINT):
 					which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
 					break;
-				case(LIGHT_SPOT):
-					which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
-					current_light = static_cast<LightSpot *>(current_light);
-					break;
 				case(LIGHT_DIRECTIONAL):
 					which_light = "directional_light.";
-					current_light = static_cast<LightDirectional *>(current_light);
+					shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightDirectional *>(current_light)->direction);
+					break;
+				case(LIGHT_SPOT):
+					which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
+					shaders[shader_index]->setUniform(which_light + "inner_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[0]);
+					shaders[shader_index]->setUniform(which_light + "outer_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[1]);
+					shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightSpot *>(current_light)->direction);
 					break;
 			}
 
 			shaders[shader_index]->setUniform(which_light + "position", current_light->position_global);
+			shaders[shader_index]->setUniform(which_light + "strength", current_light->light_strength);
 			shaders[shader_index]->setUniform(which_light + "color", current_light->light_color);
 			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_color);
 			shaders[shader_index]->setUniform(which_light + "range", current_light->range);
 			shaders[shader_index]->setUniform(which_light + "intensity", current_light->intensity);
 			shaders[shader_index]->setUniform(which_light + "falloff", current_light->falloff);
 
-			shaders[shader_index]->setUniform(which_light + "material.color", current_light->light_color);
+			shaders[shader_index]->setUniform("material.color", (current_light->light_color * current_light->light_strength));
 		}
 
 		shaders[shader_index]->setUniform("environment.ambient_light", current_environment->getAmbientLight());
 		shaders[shader_index]->setUniform("material.specular_sharpness", mesh->material.specular_sharpness);
 		shaders[shader_index]->setUniform("material.specular_strength", mesh->material.specular_strength);
+		shaders[shader_index]->setUniform("mat_fullbright", mesh->material.mat_fullbright);
 
 		if(actor->wantsToBeRendered())
 			glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);

@@ -59,7 +59,9 @@ int main()
 	glDebugMessageCallback(_debug_callback, nullptr);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-
+	
+	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
+	
 	GLShader phong_shader(SRC_DIR("src/shaders/phong_vertex.glsl").c_str(), SRC_DIR("src/shaders/phong_fragment.glsl").c_str());
 	shaders.insert(shaders.end(), {&phong_shader});
 

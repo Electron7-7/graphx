@@ -3,10 +3,11 @@
 #ifndef GRAPHX_THEATRE
 #define GRAPHX_THEATRE
 #include "sanity.hpp"
-#include "g_actors.hpp"
 #include "r_common.hpp"
 #include <string>
 #include <vector>
+
+class Actor;	// forward-declare Actor
 
 struct Theatre
 {
@@ -25,7 +26,9 @@ struct Theatre
 
 private:
 	void sortTroupe();
+	void countLights();
 };
 
 extern Theatre *current_theatre;
+extern bool current_troupe_changed;
 #endif

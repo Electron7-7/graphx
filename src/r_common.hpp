@@ -36,6 +36,7 @@
 #define MISSING_TEXTURE_DIFF 		SRC_DIR(std::string("src/images/MISSING.jpg"))
 #define MISSING_TEXTURE_SPEC		SRC_DIR(std::string("src/images/MISSING_SPECULAR.jpg"))
 #define TOOL_TEXTURE_LIGHT			SRC_DIR(std::string("src/images/LIGHT.jpg"))
+#define NO_TEXTURE					SRC_DIR(std::string("src/images/NO_TEXTURE.jpg"))
 
 // Le secret dev texture
 #define DOOM_TEXTURE_DIFF			SRC_DIR(std::string("src/images/COMP04_5.png"))
@@ -63,7 +64,7 @@ struct Environment // Will be extended
 	glm::vec3 ambient_light_color;
 	float ambient_light_strength;
 
-	Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.1f)
+	Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f)
 	: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
 	{}
 
@@ -83,13 +84,18 @@ struct Material
 	glm::vec3 color;
 	int specular_sharpness;
 	float specular_strength;
+	bool mat_fullbright;
 
-	Material(std::string init_diffuse_texture = MISSING_TEXTURE_DIFF, std::string init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 32, float init_specular_stregth = 1.0f)
-	: texture_path_diffuse(init_diffuse_texture), texture_path_specular(init_specular_texture), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_stregth)
+	Material(bool is_fullbright, glm::vec3 init_color)
+	: texture_path_diffuse(NO_TEXTURE), color(init_color), mat_fullbright(is_fullbright)
+	{}
+
+	Material(std::string init_diffuse_texture = MISSING_TEXTURE_DIFF, std::string init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)
+	: texture_path_diffuse(init_diffuse_texture), texture_path_specular(init_specular_texture), color(glm::vec3(1.0f)), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
 	{}
 
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32)
-	: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+	: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
 	{}
 
 	unsigned int bufferTexture(std::string path);
@@ -105,8 +111,9 @@ struct Mesh
 	const std::vector<GLuint> indices;
 	unsigned int VBO;
 	unsigned int IBO;
+	bool is_buffered = false;
 	
-	Mesh(Actor *init_owner = NULL, Material init_material = Material(), const unsigned int init_vao_index = VAO_HANDMADE, const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES)
+	Mesh(Actor *init_owner = NULL, Material init_material = Material(), const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, const unsigned int init_vao_index = VAO_HANDMADE)
 	: owner(init_owner), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
 	{}
 };
@@ -115,7 +122,7 @@ struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though th
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
 	Sprite(Actor *init_owner = NULL, Material init_material = Material(), const unsigned int init_vao_index = VAO_HANDMADE)
-	: Mesh(init_owner, init_material, init_vao_index, QUAD_VERTS, QUAD_INDICES)
+	: Mesh(init_owner, init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
 	{}
 };
 
@@ -131,4 +138,5 @@ void		R_GL_BufferMeshData(Mesh *mesh);
 void 		R_StoreBuffers();
 void 		R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, Environment *current_environment);
 void		R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environment *current_environment, unsigned int shader_index);
+void		R_TroupeChanged();
 #endif

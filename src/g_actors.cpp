@@ -46,6 +46,9 @@ void Actor::updateStates(std::mutex &state_mutex)
 void Actor::Tick(int current_tick)
 {}
 
+void Actor::init(Theatre *parent_theatre)
+{}
+
 bool Actor::wantsToBeRendered()
 {
 	return (actor_type != ACTOR_TOOL && visible) || debug_visible;
@@ -106,6 +109,15 @@ void MoverTester::Tick(int current_tick)
 //
 // Lights
 //
+glm::vec2 LightSpot::getCutoffAngles()
+{
+	return glm::vec2
+	{
+		glm::cos(glm::radians(inner_cutoff_angle)),
+		glm::cos(glm::radians(outer_cutoff_angle)),
+	};
+}
+
 void LightFlashlight::Tick(int current_tick)
 {
 	if(parent == NULL)
@@ -118,11 +130,29 @@ void LightFlashlight::Tick(int current_tick)
 	position_global = parent->position_global + position_offset;
 	rotation_euler = parent->rotation_euler + rotation_offset;
 	updateVectors();
-	updateRotation(EULER_CHANGE_QUATERNION);
+	// updateRotation(EULER_CHANGE_QUATERNION);
 	direction = orientation_front;
 }
 
 void LightFlashlight::setLight(bool is_off)
 {
 	intensity = _intensity + (100.0f * is_off);
+}
+
+void LightTesterMover::Tick(int current_tick)
+{
+	pivot_point.position_global = pivot_position;
+
+	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
+	position_global[1] = pivot_position[1];
+	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+
+	pivot_theta += pivot_speed;
+	if(pivot_theta >= 360.0f)
+		pivot_theta = 0.0f;
+}
+
+void LightTesterMover::init(Theatre *parent_theatre)
+{
+	parent_theatre->actorEnter(&pivot_point);
 }
