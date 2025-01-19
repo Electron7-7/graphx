@@ -1,0 +1,64 @@
+#ifndef GRAPHX_CUBE
+#define GRAPHX_CUBE
+#include <vector>
+const std::vector<float> CUBE_VERTS =
+{
+	// positions			// normals				// texture coords
+	-1.0f, -1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 0.0f,			// Left		Down	Back		0
+	-1.0f, -1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 0.0f,			// Left		Down	Forward		1
+	-1.0f,  1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 1.0f,			// Left		Up		Back		2
+	-1.0f,  1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 1.0f,			// Left		Up		Forward		3
+
+	 1.0f, -1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	1.0f, 0.0f,			// Right	Down	Back		4
+	 1.0f, -1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	0.0f, 0.0f,			// Right	Down	Forward		5
+	 1.0f,  1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	1.0f, 1.0f,			// Right	Up		Back		6
+	 1.0f,  1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	0.0f, 1.0f,			// Right	Up		Forward		7
+
+	-1.0f, -1.0f, -1.0f,	 0.0f, -1.0f,  0.0f,	0.0f, 1.0f,			// Left		Down	Back		8
+	-1.0f, -1.0f,  1.0f,	 0.0f, -1.0f,  0.0f,	0.0f, 0.0f,			// Left		Down	Forward		9
+	 1.0f, -1.0f, -1.0f,	 0.0f, -1.0f,  0.0f,	1.0f, 1.0f,			// Right	Down	Back		10
+	 1.0f, -1.0f,  1.0f,	 0.0f, -1.0f,  0.0f,	1.0f, 0.0f,			// Right	Down	Forward		11
+
+	-1.0f,  1.0f, -1.0f,	 0.0f,  1.0f,  0.0f,	0.0f, 1.0f,			// Left		Up		Back		12
+	-1.0f,  1.0f,  1.0f,	 0.0f,  1.0f,  0.0f,	0.0f, 0.0f,			// Left		Up		Forward		13
+	 1.0f,  1.0f, -1.0f,	 0.0f,  1.0f,  0.0f,	1.0f, 1.0f,			// Right	Up		Back		14
+	 1.0f,  1.0f,  1.0f,	 0.0f,  1.0f,  0.0f,	1.0f, 0.0f,			// Right	Up		Forward		15
+
+	-1.0f, -1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	1.0f, 0.0f,			// Left		Down	Back		16
+	-1.0f,  1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	1.0f, 1.0f,			// Left		Up		Back		17
+	 1.0f, -1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	0.0f, 0.0f,			// Right	Down	Back		18
+	 1.0f,  1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	0.0f, 1.0f,			// Right	Up		Back		19
+
+	-1.0f, -1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	0.0f, 0.0f,			// Left		Down	Forward		20
+	-1.0f,  1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	0.0f, 1.0f,			// Left		Up		Forward		21
+	 1.0f, -1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	1.0f, 0.0f,			// Right	Down	Forward		22
+	 1.0f,  1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	1.0f, 1.0f			// Right	Up		Forward		23
+};
+
+const std::vector<unsigned int> CUBE_INDICES =
+{
+	// -X Square
+	0, 1, 2,	// Bottom Triangle
+	3, 1, 2,	// Top Triangle
+
+	// +X Square
+	4, 5, 6,
+	7, 5, 6,
+
+	// -Y Square
+	8,  9, 10,
+	11, 9, 10,
+
+	// +Y Square
+	12, 13, 14,
+	15, 13, 14,
+
+	// -Z Square
+	16, 17, 18,
+	19, 17, 18,
+
+	// +Z Square
+	20, 21, 22,
+	23, 21, 22
+};
+#endif

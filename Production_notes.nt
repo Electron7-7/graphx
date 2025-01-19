@@ -1,0 +1,617 @@
+[11/29/24]
+so, almost there, but when implementing the renderer and rendercmd structs, i used "void*" like a dumbass. i have to fuck with Templates; this'll suck, but it'll be good for me. it's all just so i can use arrays of unknown lengths in constructors for the vertex attributes and shit :3
+
+[12/02/24]
+Fuck that; the entire codebase is flawed. okay, not the entire thing, but I'm abstracting files too much. need to rethink and keep it stupid simple. I want all "gl" functions to be handled by one class/struct/whatever, so that I keep it contained. That's why I'll need a "Renderer" class. It should be given simple commands to then perform with the "gl" functions. Basically, it should be told what textures to use, what vertex data to use, etc. Keeping everything in one area should be nice for my brain; once it's all done, I'll tackle if and how the "Renderer" should be split up (i.e: separating mesh code from texture code blah blah blah).
+
+Okay, so i think i know what i should do. sadmansk's engine is flawed (or, rather, just very hard-coded) but that's just because it's super bare bones. However, that's actually fine for me since the code still works and I can still use it as good reference but in a different context. That context is my "Renderer" instead of sadmansk's "CoreEngine" and "Engine" and separate "Mesh", "Vertex", and other classes. In place of those classes, I'll use functions or small structs. I'll take notes on what all the classes in sadmansk's engine do and how I can translate them.
+
+sadmansk Vertex class:
+basically a small container for vertex position, texture coordinate, and normal data. there only exists a single header for this class, since all it does is store data that you can retrieve later. obviously, this shouldn't be a class.
+
+my Vertex enum:
+I'm choosing an enum (for now), since vertex data shouldn't change once it's loaded... I think. If I'm wrong, switching from an enum to a struct shouldn't be too difficult, and I think that keeping things simple in the beginning is best.
+
+my Vertex struct:
+I'm wrong! lmfao, I forgot how enums worked. I am basically desribing a struct. So I'll use a struct.
+
+-- Why is the renderer a class?
+Why is the renderer a class when there will only ever be one renderer? That's dumb. The idea is to keep rendering code contained in one spot, but a class is just overkill. I'll make rendering functions in a separate rendering file (or files), and then I will consciously limit the use of those functions to one part of the program (i.e: the highest level of the game-loop). This does the same thing as using a class, but without the arbitrary limitations and overhead and blah blah blah of using a class. Just keep the code in one spot and don't put up "baby gates" like limiting rendering to a class so you don't "accidentally" write code for rendering in other places. That's just... kinda stupid.
+
+Okay, let's try this again. Here's a heirarchy:
+
+The Renderer (rendering code)
+	- init meshes
+		- buffer verts
+		- buffer indices
+	- draw meshes
+		- call shader(s)
+
+The Meshes (structs)
+	- contain formatted data
+	- return that data in any required format
+	- will NOT buffer anything
+	- will NOT make calls to "gl" functions
+
+The Shader(s) (classes? functions?)
+	- interact with shaders (i.e: uniforms and such)
+	- bind relevant textures
+
+-- Actors and Thinkers
+I was talking to myself about my Actor.isRenderable() check which uses a Mesh.isEmpty() check, and was thinking about how I used a function instead of a variable (which was a good idea). However, while thinking about this, I eventually realized that I should make Thinkers as well as Actors. This is because an Actor will have all this code for 3D positioning and rotation and all sorts of stuff for rendered objects, but if you want to make something that doesn't need all that, making an Actor with no mesh (or setting the Actor.visible flag to "false") leaves you with all of this bloat-code for 3D handling that you're not going to use. Instead, Thinkers should be a distinct type from Actors and shouldn't have meshes or any other code relating to 3D rendering. This... unfortunately... does end up nullifying the need to check if an Actor's mesh is loaded when decided if it's renderable or not. Even if I am still mildly proud of my Mesh.isEmpty() idea. Also, as a side-note: the game should not crash if an Actor has no mesh, so either a check still needs to be made, or the rendering code should be able to skip rendering a mesh if it's empty. My little idea may still be of use; however, it may be better to simply write the rendering code in such a way that failing to render a mesh results in a simple error/warning message and nothing else. Basically, I could give up on rendering a mesh if it says it's empty (my Mesh.isEmpty() check), or I could try to render all meshes but not let empty/unrenderable meshes crash the game (or cause massive issues). The only problem with a missing mesh is that something that you should be able to see is "invisible", but everything else about the game can still function. Since rendering and game logic are separate, one way or another I'd like to make sure that these potentially inconsequential rendering problems do not result in a game crash. I mean, it'd suck if the game crashed just because a random-ass prop somewhere had a missing mesh. This does bring up the potential problem of invisible actors causing problems with gameplay (i.e: invisible physics objects blocking the player), so perhaps all Actors could have an "important" flag (that's true by default), and any Actors that aren't "important" and have missing/unusable meshes can just get removed all-together. This might be too granular of an approach, however, and a simple replacement/default mesh (and maybe a toggle for people who actually want to use an Actor with no mesh for some reason) may be the best approach. This is a very high-level problem/thought that doesn't concern me yet, but is good to keep in mind.
+
+Okay, first things first: I need to choose a heirarchy. I'm stuck between these two:
+
+Actor
+	- Mesh
+		- Verts
+	- Material(s)
+		- Texture(s)
+
+Actor
+	- Model
+		- Mesh
+			- Verts
+		- Material(s)
+			- Texture(s)
+
+I think I like the second one better, but it means more arbitrary classes/abstraction potentially. I'll test a Model struct idea and see how I like it.
+
+Also: can I make some of these functions instead of structs/classes?
+
+I'm going to look back at that gamedev.stackexchange answer and follow it. Using a Renderable interface and such.
+
+That's too difficult for me. I will stick to simple things and change them later. I know this isn't great practice, but I'm still learning and this isn't a very big or important project.
+
+FUUUUUUCK me, dude, i don't know what to fucking do.
+
+okay, I wrote down some shit in my book; basicallly, have the model hold rendercmds that will get plopped into the renderarray every frame (with the init commands being plopped in only once, during the init call). then, render functions will go through that array and execute each "command" and then toss it out and move on to the next one. this'll require a custom resizeable array that can be initialized with an indeterminate size, but if i can do this then i'll finally fucking be rid of the "Renderer" class archetype and can rub it in everyones' faces. fuck yeah. okay, i need to un-autism myself and spend some time with my boyfriend who i fucking love. fuck, man, fuck fuck FAHK. aight.
+
+[12/03/24]
+Okay, here's what I'm going to do. I'll first block out the basic design of an engine. Everything to do with the core loop, basic game logic, and basic rendering. Then I'll implement it with code. Hoepfully this will help me break through this wall and I presume that after I have a way to render things dynamically, building the rest of the engine should come naturally. This means I'll be doing a lot of writing and planning before I actually code, but that's good. That should limit the amount of times I redo things and should also just limit confusion and give me a path to follow. Even if I end up tossing it out and redoing everything, it'll be a much better experience overall.
+
+I'm also going to download the Godot source code and use it as another source of inspiration; specifically, I'll start looking at how they structure rendering tasks, what their pipeline for rendering is, and how they delegate rendering tasks (or if they do any of this at all!).
+
+Here's a thought:
+Replace the main loop with a recursive function. The function will check if it should still be going and if it should, it will call itself at the very bottom, thus emulating a loop without using a while() loop.
+
+I've made peace with object oriented programming. In reality, programming requires a balance of all three forms: Imperative, Object Oriented, & Functional. Now, I have a bias against object oriented as it is still technically a flawed form of programming (in my opinion), but it aids the human aspect of programming. I just wish it didn't also directly interfere with the end result (like how naming variables won't impact how fast the code runs since the computer never sees them).
+
+Okay, I've got an idea now; here's a rough estimate of fixed and unfixed parts of the render pipeline:
+
+Fixed:
+ - storage
+ 	- meshes
+ 		- vertex data
+ 	- GPU buffers
+
+Unfixed:
+ - rendercmds
+ - rendering functions (obviously)
+
+The reason for separating these is for my brain mostly. Mesh data will be stored once per time it's loaded (i.e: loading a map), and commands are generated every frame which can use/be based on the mesh data/buffers. I don't think there'd be a reason or a condition where render commands wouldn't be based on mesh/vertex data (aside from 2D rendering), so I won't account for that unless I run into it later. This means I should design the code to be flexible, which means abstracting the rendering from the API(s).
+
+I'm also foregoing the old file-naming conventions, but I'll paste them here for sake of documentation/logging:
+:::C++
+// File Naming Conventions:
+// 1. Source code file names should clearly represent the contents of the file (i.e: code in "g_rendering_F.cpp" deals with rendering)
+// 2. All file names are prepended with a single letter which acts as a "grouping tag" (i.e: in "g_rendering_F.cpp", "g" means "game")
+// 3. All source files are split between "Functional" code and "Object-Orientated" code but will share header files, for convenience
+// 		3a. Functional source files are appended with "_F"
+// 		3b. Object-Orientated source files are appended with "_OO"
+// 4. Header code may be one file specific to one pair of source files, or many files relating to one pair of source files
+// 		4a. When naming the latter, the "grouping tags" should represent the name of the source files (i.e: in "r_common.hpp", "r" means "rendering")
+//
+// Ex:
+// 		The source code for rendering is split between g_rendering_F.cpp and g_rendering_OO.cpp
+// 		The header code for rendering is split between many files, including "r_common.hpp" and "r_renderer.hpp"
+//		The source code for game actors is split between g_actors_F.cpp and g_actors_OO.cpp
+//		The header code for game actors is all in g_actors.hpp
+:::
+OI!! REMEMBER THIS!! -> you can have up to ~16 vertex attriutes BUT YOU CAN HAVE AS MANY BUFFERS AS YOU LIKE (more or less)
+
+Hmmpf, I think the reason you make a renderer class and abstract so much is because globals are a pain in the ass and while they may be programmatically more efficient, they are not kind to humans. Still, I'd like to try with a few.
+
+[12/05/24]
+I need to re-think and re-word the problems that I am trying to tackle whilst making this game engine; specifically following the lessons from "Algorithms in C (Third Edition)".
+
+[12/06/24]
+Brain blast happened; I'm going to keep the gl functions in the main.cpp file and that should give me a more accurate way of testing my abstraction and isolation (instead of putting them in the Mesh class??? like, why was I doing that???).
+
+I've managed to get rendering working, but there's a catch: only when there's one object in the scene. In order to render multiple objects at different locations, I need to send their location to the shader *AND* draw them all one by one (in a for loop). There's probably a better way of doing this, but that better way will still require me to make the same changes to the rendering pipeline that I'd make in implementing the for loop version, so I'll start with that.
+
+[12/09/24]
+I forgot to write this down, so I'll just paste in the git commit note from yesterday:
+
+"FUCK FUCKING YEAH!!!! GAMETICK AND FRAMERATE ARE SEPARATE AND GAMETICK CAN BE WHATEVER I SET IT TO BE!! (that and also I can render two or more separate objects at different locations). Now, this system is far from perfect or complete in any way, shape, or fashion, BUT it works and it's mildly flexible (the gameticks are on a separate thread and loop), so that means that the core idea is working and I can make changes to it without having to re-write the entire thing. One step closer to a full engine. holy shit"
+
+Okay, now for today; I'm going to attempt to separate/abstract more of the rendering code and not touch the gametick code until I've chipped away at making rendering more stable/solid. Mainly the core idea of rendering, as I have a few throwaway functions and global vectors and that's it. I want to get to a place where I can render any and all renderable objects in their proper orientations. Once I've got a small system that works decently well, then I'll let myself work on game logic.
+
+More concrete goal: remove all "gl" functions from main.cpp and isolate them to either r_renderer.cpp or whichever file I decide the renderer will stay if I change it (but keep it in ONE place!).
+
+The original idea for rendering was something like this:
+	1. All renderables are stored in a vector
+	2. All meshes belonging to the renderables generate their buffers and store their IDs in a vector
+		2a. For now, they should also store the number of indices in a separate vector until I streamline that better
+	3. The render function (whatever that may be), will go through the vectors and render the buffers with the global positions from the renderables
+
+A better way would be to combine all this render-related data into one vector, using a struct (that's the idea of the RenderCmd class, dumbass). This'll be
+what I work on first: a RenderCmd struct that'll house all relevant data for rendering, that the relevant Actor can generate and store.
+
+There's at least one problem, though: vertex data is only ever stored once (when it's first loaded) and should never be re-generated/re-stored. However, other data like global position will be allowed to change and thus must either be buffered when it's changed or simply re-loaded every frame. I'd rather it be buffered once it's changed, but that might conflict with the RenderCmd design. However, since the call to load vertex data should only get called once, I might not actually have to worry about this too much. Remember: consolidate the problem into its most basic form; i.e: get the problem down to "what data do we need and where does it need to go?" or as close as possible to that.
+
+Big thing to note: switching VAOs is costly. Try to remember what exactly a VAO is doing/containing.
+
+Okay, I think I'll be making VAOs for specific sets of meshes (i.e: one for environment/geometry, one for characters, etc.), then I'll be making sure they take up a very specific slot in the global vector (i.e: environment VAO is in the first slot). Finally, every actor/actor's mesh will have an associated type that corresponds to that VAO, as well as having offsets for the vertex and index data (at least, I assume). Then we can render using as few VAOs as possible.
+
+FUCK
+
+[12/10/24]
+Okay, I've finished the function for processing all the RenderStorageCmds, but now a problem: RenderCmds. See, at first I thought that since we want to sort the queue by VAO ID (to minimize CPU -> GPU data transfer), then we'd be sorting the queue every frame, which at first glance seems wildly inefficient. However, even using my simplistic modified bubble sort, since we'd be replacing RenderCmds who's relevant data has been changed (i.e: global position) and not refreshing the entire queue every frame, the average time cost would be closer to O(N) and not the worst case O(N^2). This means that my new problem is finding a way to not only populate the queue, but replace RenderCmds specific to objects that need to replace them. One thought is to give each RenderCmd a pointer/reference to the object that created them, and then upon sorting the vector update a value/pointer/reference on that object that corresponds to the RenderCmd's new index in the vector. However, this might not even be neccessary since intuitively it makes sense that using references/pointers, the object could just always know where its RenderCmd is in the vector. Since I don't know, though, I'll need to do some research.
+
+OH! WAIT!
+
+The RenderCmd queue could be a vector of REFERENCES to RenderCmds of each renderable object; they get added to the vector when they enter the scene or transition from being "not renderable" to "renderable". This would not just remove the need to replace RenderCmds, but it would also remove the need to run the modified bubble sort every frame, which would always have a chance of somehow being a worst case of O(N^2). There might be downsides to this (in fact, there most likely are, since I'm not an expert programmer and am new to this entire field of game engine programming), but it seems like a good solution so let's try it.
+
+I just finished a simple test implementation and the idea will work! However, I need to remember that if this RenderCmd queue is not being refreshed every frame, then I need safe ways of adding and removing RenderCmds from it... is what I thought until I literally when writing that just realized I could instead give each RenderCmd a flag that basically says "skip me!" and either implement a fast way of iterating through the vector that reduces the runtime from the inevitable O(N) or just... not care and let it be. The problem I forsee is related to every object that COULD be renderable having a RenderCmd in the queue. However, I could do a tricky little trick to skip these RenderCmds without iterating over them. Something like setting their "vao_id" to "-2" which would (because of the nature of the modified bubble sort and iterator) cause the "R_Render" function to just... not even consider them... I think... actually, I don't think that specific implementation would work, but something similar could. Basically, find a sneaky way of making every RenderCmd that has an "unrenderable" or whatever flag avoid being iterated by the "R_Render" function entirely. At the end of the day, overhead could be very small, however, since checking a flag SHOULD (if I'm correct) take extremely less time than getting values and sending them places (i.e: sending render_position to the shader).
+
+What needs to be done right now:
+	- change the RenderCmd vector to a RenderCmd* vector
+	- give each RenderCmd a "skip me!" flag
+	- implement skipping the relevant RenderCmds (or a sneaky way of avoiding them entirely)
+	- figure out how and when to populate RenderCmd* vector (could just be at scene load, like the RenderStorageCmd vector)
+
+NOPE! I've found the problem with my technique: rendering interpolation. It can't work if we don't have a queue of RenderCmds that gets updated each tick and instead have a static list of RenderCmd pointers to structs that could have their values changed every tick. We need to know the past. We need a queue.
+
+and i thought i was so fucking smart.
+
+Well, okay, I didn't; that's why I realized this is (I assume) the reason for using a queue and not a static list. I knew my idea sounded too simple and too different. It might work with fenangling, but then the benefits of its simplicity would fall apart.
+
+Fuck, here's where the book starts to come in handy.
+
+The problem is that I can't just sort the RenderCmds by their VAO, since the whole reason for the queue is to be able to depend on it being sorted by time. Of course, the real problem is I don't fully know how the queue should work with interpolation, since I don't know how to keep track of the amount of gameticks per frame and use that in the interpolation code. I also don't have any ideas for the interpolation code. This is ESSENTIAL for my independant gametick and framerate based design. I need to do more research...
+
+fuck me
+
+Okay, so for implementing interpolation, lag is out of the equation (should have been obvious) and should be something to avoid/remove. What we're really concerned about is offsets due to having a higher framerate than tickrate or, more specifically, having a framerate that does not divide evenly by the tickrate. This leads to a worst case of any frame being one game tick behind, and a best case of any frame being exactly on time. At a shared tick and frame rate greater than ~59, this is a delay of either ~1/60th of a second or less. This is acceptable.
+
+This is also why we store a "previous state" and a "current state" instead of accounting for every tick processed during the frame (since more than one tick per frame is a result of lag, NOT differing rates).
+
+For my first implementation, I might actually end up using my static list after all, and simply giving RenderCmds a "previous_state" and "current_state". Probably by making the queue out of a different struct that contains two different RenderCmds for each state or something like that.
+
+I'm also going to be choosing the official name for chunks of stuff in GraphX: "spaces". Basically what Godot and Unity call "scenes".
+
+Final notes: as per the comments I left in main.cpp, the current gametick testing function (which is a surrogate for the eventual final gametick function) should call the Tick() function of every Actor in the current Space, then handle the state swapping and buffering logic for each respective Actor... unless I decide to have the Actors handle that themselves (in the Tick function or with another function that's called after Tick in the gametick function). If future me is confused by my thought process, I'm partially following this (https://gamedev.stackexchange.com/questions/12754/how-to-interpolate-between-two-game-states) but I'm also sticking to DOOM's structure a bit as well. The result is (hopefully) every actor having buffered state structs that either contain the variables like "global_position" and such, or get populated with the data from the Actor's relevant variables (I like that idea more). These state structs will be used to render the Actors with the relevant (and potentially interpolated) information. How the RenderCmd queue will work and implement with this is unknown; either I link Actors' states with their relevant RenderCmd, or store it in the RenderCmd, or have the RenderCmd be a struct containing the vao_id and vertex+index offsets AND the buffered states, or some other idea.
+
+Piece by piece, you can do this; just focus, learn, and always be open to failure. Failure is always an option. Failure is progress. Success is just a reward for your consistent failures and the information you learn from them. This is a positive affirmation. Failure is positive.
+
+I love you. You are capable of this
+
+:3
+
+[12/11/24]
+Thank you, past me. Okay, let's do this! I think I can get back to my thought process pretty quickly, actually. Based.
+
+I'm also biting the bullet and changing Actor from struct to class; it needs private functions (and potentially variables).
+
+Sidenote: sanity.hpp might be causing the long compiling times (or just all the included header files in general). Check if gatekeeping header includes behind an #ifndef would break the program or benefit the compile times and also check if aborting use of sanity.hpp would likewise benefit compile times.
+
+Addendum to sidenote: You can (and probably should) use include guards (#ifndef) in source files when including header files (the examples I'm seeing are specifically for custom header files and not libraries so experiment with these). Since, to the compiler and linker, it really doesn't matter which file includes a header as long as one of them do, this should benefit compile times *and* satisfy clangd.
+
+Secondary sidenote: Also, you can use #else to forward declare things that other files need but would cause cyclic #include errors (i.e: class A needs class B but class B needs class A). This is actually a problem I've run into and could use this solution.
+
+I'm also making a change to render storage and instead of using commands, I'll just store pointers to the meshes since they're the exact same thing in this context. As it is right now, the Mesh struct is just passing data to a new RenderStorageCmd struct and then pushing that to the storage commands vector. The engine shouldn't have such inefficiencies; however, a higher-level application that interfaces with the engine (e.g the Godot editor, the Unity workspace, etc) can have such inefficiencies as they serve to benefit human interaction (i.e: a higher level Mesh class that just passes information to various structs withing the engine is fine in that context as it leaves these inefficiencies out of the engine and they exist to serve the human interface).
+
+All that to say: I'm replacing RenderStorageCmd with Mesh as they are functionally the same.
+
+Had to pump the emergency brakes for Dexter; he feels like shit and he's more important to me than this. I'll make inline comment notes on things but I'm only giving myself five minutes for this and I'm down the last 55 seconds. Anyways, it's fine; the idea I have is to replace RenderStorageCmds with Meshes since they serve the same purpose, and the rest will be in the comment(s)
+
+Cya later!
+
+:3
+
+[12/12/24]
+Alright, time to finish what I started yesterday (hopefully, at least).
+
+Idea: in the Actor constructor, instead of making an empty RenderCmd, what if the constructor was passed a reference to the Actor's mesh and the RenderCmd constructor handled all the data storage?
+
+I'm getting rid of RenderCmd and just iterating through a list of Actor pointers. This is because the RenderCmd structure is just over-engineered for my simple and beginner-level knowledge. It's also more suitable for multiplayer and I'm not touching that with a ten foot pole yet. I also plan on re-writing most, if not all, of the engine when I'm done, so this should be suitable for now.
+
+Okay, after a lot of coding I have this: the render function works, the Space struct works, the multithreading works (and I have yet to run into a race condition bc I used a mutex lock_guard), and the only thing that might be broken is the vertex+index data. Basically, I don't use any offsets when rendering vertices but I don't see anything wrong, however, since all the testers use the same cube verts and indices, it could look fine but they're all using the same exact vertices (when they shouldn't).
+
+[12/13/24]
+OK, here's a list of things that need to (or that I'd like to) get done before I can fully start making a game and working on things other than rendering:
+	- Render interpolation (!!!)
+	- Textures
+	- Mesh/model files (.obj, .glb, etc.)
+	- Addition of using a sprite instead of a mesh (with toggleable billboarding?)
+
+Also, I'll move the rendering loop to it's own thread.
+
+Oh, another important note: I currently only use one vertex and one fragment shader each for all rendering right now; I'll definitely start using more than one for different types of objects and whatever else, so I'll need to keep in mind while building the rendering pipeline backbone that it'll need to accomodate multiple different shaders at some point.
+
+Running into issues with the GLShader class and multithreading (mainly abstraction, actually). However, it leads me to a good question: why am I making a GLShader class object in the main file still? Also, do I really still need a GLShader class?
+
+I'm fucking stupid holy shit. I wasted almost an hour on an error that was being caused because I put the fucking generic_shader instantiation at the top of the main file BEFORE GLFW OR GLAD EVEN GET FUCKING INSTANCED.
+
+Pissed off lmfao.
+
+Note for later: put the mouse callback and input handling functions in "r_common.cpp" and any time a context changes to another window, assign/reassign the neccessary callback functions, i.e: assign the new window's mouse callback function to the global mouse callback function in "r_common.cpp". This also allows me to make different callback functions and assign specific ones for specific purposes/windows. Definitely less important than the rendering stuff, but still a good note.
+
+Oh, also, I'll have to write a higher-level key-handler system at some point down the road. (https://gamedev.stackexchange.com/questions/150157/how-to-improve-my-input-handling-in-glfw) is a good reference, as well as (https://stackoverflow.com/questions/46631814/handling-multiple-keys-input-at-once-with-glfw)
+
+By the way, I used this (https://stackoverflow.com/questions/20390028/c-using-glfwgettime-for-a-fixed-time-step) as the structure for the current game logic function and tick update tracking.
+
+Fuck, man, I wish I could make this work but I need to practice restraint with my perfectionism and flow-state/drive.
+
+Only notes for next time I pick this up are:
+	work on interpolation; it's so close, but something is messing up. could possibly be that the buffer is either not working or is working against the interpolation (because I'm doing it wrong). It does go smoothly at first (when the previous state buffers are empty), but then it breaks.
+
+You got this; I love you.
+
+:3
+
+[12/15/24]
+I picked up a shift for today (Sunday) from 8AM-4PM. It's currently 10:11AM.
+
+Anyways, I think that my problem was that the interpolation code was written assuming that the largest difference between FPS and TPS would be a single tick behind at worst (which is the case for using interpolation) which is why my tests weren't "working". If I want pure interpolation for any value of tickrate and framerate, I'd have to use some real fancy and over-engineered code (at least for my purposes).
+
+So, I'm leaving the interpolation as-is and hopefully we won't see any problems; however, put a pin in this for the future as I would like to have it working like GZDoom's interpolation, where a super low tickrate results in a "slo-mo" effect.
+
+I've also implemented a ticker that counts up from 0 and resets when it reaches the tickrate number. This is then supplied to the Actors' Tick functions as "current_tick". As a side-effect of this, I assume, tickrates must be integer values.
+
+I'm also going to set the default tickrate for my use case to 120 TPS; this should be high enough that interpolation won't be a problem at very high refresh rates, if my assumptions about it are wrong. It's also a nice, smooth tickrate that modern machines should have no trouble handling, especially since my shitty 2016 laptop can run it fine (for now). However, performance is the most important aspect, so I should write my code keeping in mind that I might have to adjust the tickrate in the future, and thus adjust every value linked to it (i.e: movement speed and such).
+
+Okay, so I've put almost all of my custom functions inside one of the two loops. Rendering, storing buffers, etc are all done in a loop (instead of storing buffers being done once, outside the loop). Now on to one of the things I wrote down to do lmfao. To be fair, I have done (I think) proper interpolation, so that's one done.
+
+The list is now as follows:
+	- Textures
+	- Addition of using a sprite instead of a mesh (with toggleable billboarding?)
+	- Mesh/model files (.obj, .glb, etc.)
+
+Also, fuck you, Dexter, the idea of renaming "Space" to "Theatre" is fucking brilliant (because of the "Actors") and I'm mad I didn't have that idea...
+
+And I'm gonna use that.
+
+But fuck you, regardless.
+
+I love you, Dex <3
+
+The list is now:
+	- Addition of using a sprite instead of a mesh (with toggleable billboarding?)
+	- Mesh/model files (.obj, .glb, etc.)
+	- Better texture loading (basically just more than one texture)
+
+While fiddling with player movement, I've realized that I want to do inputs during the gametick loop and I want to have it be like DOOM/Quake/Source esque where when you hit a key, a command is sent that the player reads and then does (i.e: +jump). My system would be a lot simpler than their implementation (mostly because of the skill gap), but the relative premise is similar.
+
+Oh, I also removed the delta_time I accidentally left in the player movement function. Woops.
+
+:3
+
+[12/16/24]
+First thing I wanna do today is give Actors the choice between using a mesh or a sprite; billboarding will be an option, but will be off by default. This is because in true, hardware 3D it looks wonky for most default cases (i.e: enemies) but is very useful for particles and such, so I'll leave the ability in (plus, options are always nice).
+
+An off topic thing I'd like to do is download the Godot repo, compile it, and then make some custom tweaks to it for fun and for learning and maybe even try to find things I could optimize (as practice; I don't think I'm near that level yet, lol).
+
+--------> Big note!!!!
+	static variables in a function can be changed, but will only stick around until that function ends and this means they will only be created once. Here's a huge example of how this can be used:
+:::C++
+for(int x=0; x<10; x++)
+{
+  for(int y=0; y<10; y++)
+  {
+    static int number_of_times = 0;	// number_of_times only gets set to 0 the first time and won't get reset
+    number_of_times++;
+  }
+}
+:::
+
+Okay, so I've been dicking around with sprites and while getting them working I made a huge realization: R_StoreBuffers should be completely re-written because the whole Mesh vector idea was a holdover from when I was considering the whole RenderCmd and RenderStorageCmd idea. Now that I'm not doing that, R_StoreBuffers has so much bloat and is also not fit for my current implementation of rendering and buffering.
+
+I'm going to re-write it to instead do what R_Render does at first and bubble sort the current_theatre->actors vector, then go through it and generate+store buffers. I'll also make sure it can handle Actors being added to the Theatre after the first load, and if all of this is done correctly, R_Render won't need to bubble sort the vector every frame! This will potentially remove a ton of overhead (depending on how straining the modified bubble sort actually is, lol).
+
+I'm stuck and I don't know what's wrong. I think that my sorting algorithm is wrong, because I'm trying to sort a vector full of pointers but I don't know how to do that properly and I'm just having errors everywhere. It's okay, I'll take a breath and attack this later, probably tommorow.
+
+Such is the life of a programmer.
+
+:3
+
+[12/17/24]
+Alright, time to pick up where I left off.
+
+Okay, so my main problem was that I was trying to sort a vector of pointers and that may or may not have been working but I really didn't know what it was doing bc pointers are annoying. However, instead of sorting the vector directly, I can sort a vector of indices and then render Actors based on their index (kinda like with VAOs).
+
+Never mind!! I can sort a vector of pointers!! I just had to fucking learn how to use std::sort (goodbye, bubble sort, you will be missed)
+
+Also, I think I might be fucking stupid because if my original problem was that nothing was being rendered... I think it's because I accidentally forgot to flip on the flag to start rendering...
+
+Hmm... I quick-enabled it and nothing's being rendered still.
+
+Yeah I'm stupid... in R_Render and R_StoreBuffers, I compare actor->vao_id with current_vao_id; in order to avoid copying code, I decided to set current_vao_id to -1 so that it would "switch" VAOs to the first VAO at the top of the loop on the first go around... only one small problem...
+
+actor->vao_id is an unsigned integer.
+
+Okay, I'm all done with that fucking shit; I actually have something else I want to do, however, and that's make a separate struct for Theatre geometry/terrain/environment. The reasoning is that it should be separate from Actors since it's always just a static mesh and making it a separate struct means it won't have to be put in a giant Actor class full of code it doesn't need.
+
+Also, quick note about static functions (copied from StackOverflow): "static functions are functions that are only visible to other functions in the same file..." (https://stackoverflow.com/questions/558122/what-is-a-static-function-in-c)
+
+Aight, I wanna name the different parts of Theatre geometry "Flats", but currently in my code there's no need for a "Flat" struct, since that's more of an editor term (i.e: brushes in Hammer) and it'll get turned into one big fat geometry Mesh.
+
+I do need a name for a Theatre's geometry, though.
+
+Mental note: dribs and drabs (DAD)
+
+Also, this link is a good reference for functions that change the variable passed to them as an argument.
+	(https://stackoverflow.com/questions/11736306/when-pass-a-variable-to-a-function-why-the-function-only-gets-a-duplicate-of-th)
+
+So, the way I render things is flawed; currently, I sort and iterate through a list of Actors when all I really need is their Meshes. However, if I made a list of Meshes, it would be an arbitrary list for no reason. I may just have to bite the bullet on that one. The reason I wanna change this up is because A: Actors shouldn't be involved in rendering (or have vao_id pointers), and B: all Theatres will have a bunch of Actors and one Mesh for geometry, which complicates the current rendering process. I could involve typenames but that would be a bandaid fix.
+
+Okay, I have to go, but I've solved the problem: implement ownership between a Mesh and its Actor, then in R_Render, instead of actor->previous_state_buffer... I can use mesh->owner->previous_state_buffer. It also solves the sorting problem! No need to sort Actors!
+
+Time to go take care of Dex :3
+
+[12/18/24]
+Okay, so I've finished up most of the ownership code, but there's a problem: when rendering, I expect the current Mesh's owner to be an Actor, but one of them will be the Theatre Stage. I need to account for this by either skipping all that code if VAO_ID == VAO_FLATS or if the Mesh's owner is NULL which honestly is the better choice, since it also accounts for orphan meshes which is a nice way to prevent crashing (I should also throw an exception or at least print out a message stating why you're not seeing that Mesh).
+
+It works!! Now time to go through and remove any unused code and do some spring cleaning before pushing this to prod real quick to get a working build up there.
+
+Theatres should have a vector of Actors, not a vector of Actor pointers; Actors should be created by the Theatre and stored within that Theatre. This is a bit higher level than what I have right now, since this is pretty much Godot Scenes/Root Nodes or Unity Scenes but I think it's a very important high level concept that should at least be started now.
+
+Hmmm... should I actually have there be a global Mesh vector that holds every single mesh in the current game (e.g: WAD), then every Actor has a reference to the Mesh that they use? Because currently, I'm doing this in a way that I don't think is very efficient because I don't think that if you make a clone of an Actor that it should also make a clone of that Actor's Mesh since it's the same exact data regardless.
+
+Yeah, because the whole idea of "oh but it's easier to just make a Mesh in the Actor constructor instead of arbitrarily making it in a vector and giving the Actor a pointer" is only relevant if that's ALSO how the (to be created) editor would show it, but the editor can show you whatever it wants to and then at the end of the day, do things according to the engine. Meaning, with this implementation, the editor could (and I'm stealing from Godot's editor here) only let you make Meshes inside of an Actor, but behind the scenes it's actually making a Mesh, putting it in a global vector, and giving the Actor a reference to that Mesh. Yeah, I like that a lot.
+
+Now, do I want to separate Sprites and Meshes? Separating them would look nicer and be easier to manage, but combining them would be more efficient...
+
+For now, I'll keep them combined.
+
+Nope, lol, I didn't realize that you can't combine types in vectors, even if they're parent/child due to object slicing and general nastiness (at least without pointers/references which I'm trying to avoid in the first place). Separate vectors it is, then!
+
+While I don't like how this feels like it could be combined, Sprites will probably have a lot of unique stuff in them later on that'll justify this decision.
+
+UGHHHHHHHHH I just realized this totally fucks up the whole inheritance thing if one Mesh can have multiple Actor owners UGHHHHHHHHH.
+
+There may be a solution! It might not be that bad to nest another for loop in R_Render. Basically, the idea goes like this for R_Render:
+	1. Get a Mesh from meshes
+	2. If we're using a new VAO now, switch VAOs via the Mesh's vao_id
+	3. Go through all Actors in the current Theatre
+	4. If an Actor uses this Mesh, get it's state and render it
+	5. Continue for all Meshes
+
+This could definitely be optimized, since a worst case scenario is that the nested loop goes through every single Actor for every Mesh that we use.
+
+Also, I should keep track of which Meshes should be rendered based on the Theatre and Actors... which means it might make more sense to go back to going through a list of Actors. However, I'd like to avoid that.
+
+Wait, I've thought of something wrong: Meshes are just bundles of vertices and indices and I don't think you can "share" them; I think that trying to would just be one Actor moving the vertices somewhere, then the next one moving the same vertices instead of having its own vertices, etc. You might have to just duplicate Meshes (which I guess isn't really duplication). I'll need to test this.
+
+Yup! I'm right! You can't "share" Meshes (vertex+index data), at least not the way I'm thinking and anything other than that is over-engineered (for now).
+
+So back to how it was before! Lmfao.
+
+I've run into a problem: I'm slicing classes if I try to make a vector of Actors in Theatre instead of a vector of Actor pointers. I guess I'll just do that instead; shouldn't be any overhead, tbh, and should work fine.
+
+I thought I had a problem where the player was rendering a mesh and thought I would solve it by implementing a render check to skip renering a mesh if the owner's gatekeepRenderer function returned true. Then, I realized that I'm still doing a form of class slicing with pointers I think because I'm pretty sure that the virtual functions are getting lopped. I don't fully know, though...
+
+Okay, it's not; that means something else is going on.
+
+Oh my god... I think that random thing is... the fucking geometry.
+
+Okay, my thoughts:
+Theatres are tricky, because all the hardcoding I'm doing in the main file (i.e: making actors and meshes and theatres) should be done inside each Theatre, so I'm making a new rendering function (T_LoadTheatre) that's responsible for switching theatres and notifying the render loop to start buffering and such (or could just buffer them in the function itself, tbh), and I'll be simulating pre-made Theatres with "graphxtheatre" files which are just C++ files that create a new Theatre object, some Actors and Meshes, and put those Actors+Meshes into that new Theatre. Then, T_LoadTheatre will be given a reference to that theatre and will be responsible for loading it and such. Honestly, that whole "graphxtheatre" thing aint such a bad idea as a real solution...
+
+[12/19/24]
+I'm home rn and just trying to use Blender and manual .obj editing; I think it's gonna work but it's almost 3PM so I gotta be quick!
+
+Update: it doesn't work quite right but I have the raw data in there now so that's something, I guess. I might add the .blend file to the repo just for my laptop.
+
+Okay, I'm at work now; I'll-holy shit my fucking stupid nokia ringtone alarm just went off for no reason at 4pm. That scared the fuck outta me.
+
+Anyways, I'm gonna try and either fix the vertex data in Blender to be between -1.0 and 1.0, or just say fuck it and make my own from scratch by hand (in blender first so I at least have something visual and not just using my brain).
+
+I just gave up before realizing that the problem I'm having is that I've hardcoded my vertex data to be three floats for position AND TWO FLOATS FOR TEXTURE COORDINATES I AM SO FUCKING DUMB I HAVE TO REDO EVERYTHING UGGGGHHH!!
+
+YUP ITS ALMOST THERE GOD DAMNIT!
+
+Aight, I'm gonna make an OBJ loader and then maybe just use it to get vertex+index data that I'll hardcode (bc even if I do support OBJ files, I don't want them to be the main 3D files used). I'll be following this tutorial: (http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading)
+
+[12/22/24]
+Hmm, there seems to be mesh problems; when using a theatre, it seems like the last mesh to get loaded overrides all meshes (similar to a worry I had a while back with "shared" vertices). Look into this later.
+
+[12/23/24]
+Aight, I'm mildly hung over and ready to figure out this rendering situation. Based!
+
+Hmm... the mesh problem only appears when both meshes use VAO_TESTING... I set them to both be VAO_ACTORS and they had the proper meshes.
+
+[12/24/24]
+I FIGURED IT OUT!! While talking to myself just now about removing "moving parts" in my code (bits that do things that could be removed or simplified to remove a point of failure), I talked about the vao_id switching done in R_Render and R_StoreBuffers and I realized that THAT is EXACTLY what's wrong with the VAOs! If the next vao_id is > 1 index from the last one, it just goes to the next one and continues trying to render, but because I iterate through the Meshes and not the VAOs, it doesn't eventually get to the right VAO and it uses the wrong one! It's a simple fix! At least, I hope...
+
+Half right, half wrong. I think I better understand VAO vs VBO; you should keep VAOs to a minimum, but they're used for Vertex Attributes (duh), so they're used for different vertex data types (i.e: one VAO for vertex data with only position and texture coordinates, one VAO for vertex data with position, uv, and normal, etc.). Now my question is: should I use a new VBO and EBO for each mesh, or should I use VBOs like I was using VAOs?
+
+And I think that's what I'm gonna do: use VBOs like VAOs (and I think that includes EBOs).
+
+Okay I have some notes on a simple version of the render process:
+	Render a set of indices.
+	Store how many you rendered for the next render call.
+	Render a set of indices at an offset of the number of indices you rendered last (using that stored number).
+
+Okay, so there are a few things to note right now:
+	1. You can combine VBO and IBO(EBO) data into one buffer and you should!
+	2. VAOs are for vertex attributes (duh)
+	3. Buffers are for raw data
+	4. Use offsets
+
+This is a big source of help: (https://github.com/fendevel/Guide-to-Modern-OpenGL-Functions)
+
+First off, I need to combine VBO and EBO into one "Buffer". Then, follow that link above as a guide to rendering with multiple Buffers all filled with tons of different Mesh vertex data.
+
+Aight, make one buffer and allocate some size of data that seems not too big but not too small. Then, if it's filled up, make a new buffer. This means I won't have a set of specific buffers but that's fine.
+
+OR I could do a set of specific buffer vectors and start off with only one buffer in each; give them a certain amount of storage and make new buffers when they get full. This seems like a good compromise.
+
+Of course, that's kinda expensive so I could just opt to make big ass buffers (i.e: in the megabytes) and call it a day (for now).
+
+Okay this is way too much for me right now; I'm sticking to VBOs and IBOs and using a few large VBOs+IBOs for every mesh.
+
+I'm fucking burnt out lmfao. I think that buffer condensing and modern OpenGL DSA shit is wayyyyyyy over-engineered for my usecase. I'm going to try and go back to basics. Separate VBOs and EBOs, made using older OpenGL syntax (> 3.1 but < 4.5) and very simple and easy to understand... hopefully.
+
+ALSO HEADS UP!!! YOU WILL NEED TO KNOW/REMEMBER THAT/HOW MANY VAOS CAN REFERENCE THE SAME VBOS (SEE LINK BELOW)
+	-----> (https://computergraphics.stackexchange.com/questions/4623/multiple-vao-share-a-vbo)
+
+[12/26/24]
+At work early again to pick up a shift. Gonna work on finishing the graphics engine re-work.
+
+Ooh ooh, this is important: you do need to bind the correct VBO and IBO during render-time. This is made easier if you use modern OpenGL functions (not the ones in learnopengl.com). This stackoverflow answer has a good example of how to do this: (https://stackoverflow.com/questions/40652905/render-one-vao-containing-two-vbos)
+
+Running into some issues; what I think is going on is that either the wrong indices or the wrong vertices are being used. This could be because I'm either not binding the correct buffers during storage/rendering, the offset is incorrect, or (what I think is most likely happening) I'm not correctly binding buffers when storing them and I'm overwriting the same buffer every time.
+
+I'm also gonna be on call with Dex for a lil bit so I won't be able to focus super hard but I should be able to fix this.
+
+Okay, I might just say fuck it and have every single object just have its own VBO and IBO because even though that's expensive, for my use case (and knowledge level) I think it's fine.
+
+Aight, the rendering pipeline is fully functional again and it's doing things slightly better than before (still kinda ass tho). I'd like to optimize it (and the way it is right now is actually a much better starting point for optimization), but my knowledge level isn't where it needs to be for that, yet.
+
+One of the next things I'd like to crack at is something quick and (hopefully) easy but pretty important: player movement. Specifically, the player-camera movement is in a "flying" mode; if the camera is pointed down and the "backwards" movement key is pressed, the player-camera moves up in the world-space. However, I want it to be in a "walking" mode; if the camera is pointed down and the "backwards" movement key is pressed, the camera should move backwards instead of upwards. This just means that movement code should only take X and Z vectors into consideration when applying orientation to movement. As a side note: I might want to also add in a "move up" and "move down" set of inputs to add back in that Y-Axis movement for testing and such.
+
+I'll also maybe start working on a "Character Controller" Actor that has gravity and collisions! However, I need to learn how to do collisions...
+
+I didn't do collisions or fix the player movement lmfao but I did clean up lots of loose code, made the interpolation code better, and changed Actors to allow euler angle and quaternion rotation. Now time to decomp.
+
+:3
+
+[12/31/24]
+I feel reinvigorated about working on more GraphX. I want to continue with LearnOpenGL and move on to more advanced topics. I'll make a new branch for this, so I don't contaminate my code. Hopefully I don't fuck up the notes file lmfao. The only way I could is if I merge the branches, but I don't plan on merging them. I plan on learning things and then deleting the learning branch and using what I learned to write code for the production branch.
+
+I see a problem that I should address: I need a second VAO for handelling vertex data with vertex colors instead of texture coordinates. Yippee! More rendering pipeline stuff...
+
+This is fucking funny... I do actually need the vao_id, LMFAO!!
+
+Mental note: the way I'm doing this isn't terribly wrong, but there's a lot of hardcoding that could be annoying to detangle if I don't make this note. Basically, while I will have a Shader for every VAO, I won't have a VAO for every Shader. This means that I'll have to keep track of one of them in the Mesh, but make sure that they correspond (i.e: VAO_COLOR would be the index for the VAO that accounts for vertex colors instead of texture coordinates, but it would also be the infex for the Shader that does the same). Maybe change this entirely down the line (why have multiple VAOs when I'm assigning the attributes and enabling them in the render thread? Obviously I'm doing something poorly).
+
+LMFAO IM STUPID. thought i had a bug but no i just put the wrong verts and indices into one of the meshes in the theatre.
+
+STOP GETTING HUNG UP ON THE PLAYER CAMERA ITS FINE!!
+
+Okay, all done! Now lets actually do the fucking thing.
+
+And this is just to be able to differentiate the production branch from the LearnOpenGL branch
+
+:3
+
+Oop, note: I'll have to move the vertexattribpointer functions into the switch statement with the way I'm doing things right now; yes, this will have copy paste code but that's fine for now. I'll also have to check if you can do that before binding the VBO+IBO or not.
+
+I also want to rename and combine the shaders like I did in the LearnOpenGL_Advanced branch
+
+:3
+
+[01/02/25]
+Caught a huge oversight/mistake while working in the LearnOpenGL_Advanced branch! Here's a copy-paste of the notes from there:
+	"Just caught a huge oversight/mistake: I had a ticker counting every tick but it was actually ticking every CPU clock cycle (or frame idk which)! I had it in the wrong part of the loop! Fixed it and saved a lot of future headache! I'm actually gonna fix it in the Production branch rq lmfao."
+
+[01/05/25]
+Gonna work on updating the Production branch to have Phong lighting (and some other features I added in the LearnOpenGL_Advanced branch).
+
+[01/06/25]
+It snowed a lot! I'm at home rn (it's 1:05) and I'm continuing with updating the Production branch. I'm implementing Environment and Material structs right now, but there's a problem with the renderer. See, I only have one VAO since (for now) I only have one format for vertex attributes. This means, though, that my little hacky solution in the LearnOpenGL_Advanced branch for making sure the current_light pointer was always defined before being used won't work. The hack was that light meshes would use a unique VAO that would get processed first in the renderer, thus the current_light pointer would always get set. This, however, shouldn't fly in the Production branch. This, however, leads to me realizing that I don't really need to sort Meshes anymore... I need to sort Actors.
+
+So we've come full fucking circle. I'm going to go through the Actor pointer vector in the current Theatre instead of the Mesh pointer vector. However, I need to account for the Theatre Stage/Flats Mesh not having an Actor owner. Maybe I still use the Mesh vector but I sort it by mesh->owner->type?
+
+Just finished getting the snow off my car; realized two things. First thing: I'm stupid and didn't have a light Actor in the Theatre and that's why it was crashing. Second thing: I should actually make sure that the engine doesn't crash if there are no lights in the Theatre.
+
+Okay, so, Theatres have a vector of Actor pointers. This means that if I were to check for and sort by Mesh->owner->type, it would always return ACTOR_ACTOR. I need to either mess with casting, give meshes a type, or figure out why this is happening even though LightActorGeneric and Actor both have the same variable "type". Maybe I should define it in the constructor of LightActorGeneric instead...
+
+Okay, I've actually figure out a fix: LightActorGeneric has to set "type" inside the body of its constructor. The light's Mesh has been fucked, though, for some reason. I don't know exactly why, since the other Mesh is fine and they should both be using the cube models, but I'll check rn.
+
+Ah, it's using the default Mesh constructor which uses the ERROR models, which isn't updated to use the new vertex attributes format I chose. I could actually use this to make a new VAO and make R_Renderer not just use the one semi-hardcoded format. However, I have roughly 30-45 minutes to do this before I have to start packing up for work, so I'll be against the clock. As well, the Phong shader requires normal values. I think I'll just update the rest of the models to match the new format.
+
+Aight, I updated them! Haven't tested how they look, but I assume I'll have to redo them to "decompress" them so the normal values (and texture coordinates) don't get distorted. For now, though, they don't/won't crash the engine lmfao.
+
+[01/06/25]
+After writing some notes in the LearnOpenGL_Advanced branch, I realized that they should probably be added to the Production branch's notes, since the changes they suggest are more suited to this branch. Here are the notes:
+	It snowed today! I'm at work and I'm about to continue with LearnOpenGL's lighting shit because after Materials and Lighting Maps, it'll get to Light Casters and Multiple Lights, which I really wanna get to hopefully today or tommorow :3
+
+	I'm gonna eat rq but I was thinking about Textures and how I'll have to make them a struct because I'll be learning about adding things like normal textures and roughness textures and such to Materials, and while thinking about that I remembered how generating Textures would always fail if done in the game logic thread instead of the render (main) thread. That made me think and semi-realize that what may be happening is that it failed because in order to access GLFW/GLAD/whatever I needed to access, I can only access it in the thread that it was instantiated/called/whatever. I'll have to read up on GLFW/GLAD again and look up how multithreading works with them, but I have a hunch that I could actually keep the Texture generation in the game logic thread if I "told" GLFW/GLAD which thread to use or something like that. I want to do this because if I'm gonna make a Texture struct, I'd like to keep Texture generation in a constructor instead of a separate function that I need to call somewhere else, and since Textures would be generated once they get loaded and that's usually in the game logic thread, I need to figure this out.
+
+	Oh my god, wait, I think I might know the reason for the Texture thing: Meshes get created and added to their Actor and Theatre when that Theatre file is included, which is at the top of main.cpp and definitely far before any GLFW/GLAD initialization. I'll either need a way to automatically have Textures know when it's safe to generate their texture data or have a function and call it in one place (R_GenerateBuffers or R_Render).
+
+	Another idea is to ditch storing Actors and Meshes in their Theatre as a vector of pointers and instead store them in a JSON file or perhaps a header file that gets loaded when the Theatre is ready to be loaded; that or make texture data generation happen in the constructor's body, so it's not called on compile-time (I think) and then only instantiate the Theatre when it's ready to be loaded. I'd need a way to load that Theatre without it being compiled, which makes me consider using a form of "map files" that get loaded and processed. Basically, instead of Theatre files being simply a glorified header file that defines a Theatre and all its Actors, it would have data that is read by some sort of Theatre loading function, and that function would construct the necessary Actors and Theatres and all that jazz. That way I can keep stuff like texture data generation in the constructor, since I'd be calling that constructor only when I know it'll work (i.e: after GLFW/GLAD instantiation).
+
+	I might be able to do this with a struct or something; e.g: for Actors, I could use a struct called "ActorOptions" or something that has all the data for creating the Actors (i.e: which subclass to use and what to set all the default values to in the constructor). Then, my TheatreLoader function would construct Actors with data from that Struct. I'd just need to figure out how to make the function create the right subclass (maybe use a Template, instead!).
+
+	This also might be something for the Production branch, so I'm gonna copy-paste these notes over there rq.
+
+[01/16/25]
+Welcome back, Production branch! Time to update this bad boy with all the shit I did in LearnOpenGL_Advanced; mainly the lighting stuff, but I also made some changes to various parts of the engine that I'd like to fully implement, as well as made some notes for other features I didn't include but want to in the Production branch.
+
+Okay, first hour over and while I didn't get a lot done in terms of amount of code written, I did get a lot done in terms of refactoring and planning out what I'm gonna write and how. Lets see if I can get the rest done faster.
+
+I'm overhauling the Material struct so it can use textures for its properties but will still be able to use simple data values if no textures are specified.
+
+I'm going to try and refactor the GLShader code.
+
+I don't need the shader error handler function, since I have (i think) full OpenGL error handling in the main file.
+
+GLShader is now a struct and now uses a Template "setUniform" function to handle all uniform changes. This means that I can use an unordered map (bascially a dictionary in C++) to do bulk uniform assignments!
+
+Ooh, but since std::unordered_map can't just take arbitrary values, I might need another template function or a template class or just a new struct with clever functionality.
+
+Or, I could just not use a map and deal with setting them individually for now, lol.
+
+Okay, finishing up; I have all the code written, but something's broken. It runs and renders, but the lighting doesn't work. However, that's an easy problem to fix. I'll do that tommorow.
+
+:3
+
+[01/17/25]
+Time to finish this feckin Production branch update!
+
+Hmm... the shader isn't processing lighting because certain uniforms aren't getting set. This reeks of my problem in the LearnOpenGL_Advanced branch where uniforms weren't being set because of an int not being set to a string but no errors being thrown.
+
+It could also be because I SET THEM TO FUCKING 0 AT THE TOP OF R_RENDERACTORS GOD DAMNIT!!!
+
+Hmm, still a problem: the flashlight spot light isn't getting used but it is being rendered. Is the array not being properly updated? Is "spot_lights_count" wrong? Is there a minor bug in the shader code that's there because I tried to refactor too much at the same time? I'll find out.
+
+Or it could be because I forgot that I didn't set the values specific to spot lights in R_RenderActors... man...
+
+Aight, finally fuckin' fixed everything.
+
+I've made a realisation: Meshes don't need their Actor *owner variable anymore...
+
+I've finished the moving Light! I also want to be rid of the Actor *owner variable in Mesh; I don't need it and if I use a Mesh pointer in Actor instead, I can make a couple Meshes and then distribute them to many Actors. This will cut down on the cost of buffering Mesh data. Here's some pseudo-code:
+:::C++
+//
+// test.graphxtheatre
+//
+//...
+Mesh test_mesh(/*...*/);
+Actor test_actor("test actor", &test_mesh/*...*/);
+Theatre test_theatre("test theatre", std::vector<Actor *>{&test_actor});
+
+//
+// g_actors.hpp
+//
+class Actor
+{
+	//...
+	Mesh *mesh = NULL;
+	//...
+};
+
+//
+// r_rendering.cpp
+//
+R_Render(/*...*/)
+{
+	//...
+	for(Actor *actor : current_theatre->troupe)
+	{
+		//...
+		actor->mesh->doStuff;
+		//...
+	}
+	//...
+}
+:::
+
+Fun stuff!
+
+[01/19/25]
+Ok, I'm gonna work on switching to Mesh pointers in Actors. I'm also thinking of making the Production branch the main branch, since that's kinda how that works, now that I think about it.

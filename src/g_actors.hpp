@@ -2,18 +2,36 @@
 #define GRAPHX_ACTORS
 #include "sanity.hpp"
 #include "r_common.hpp"
+#include "g_theatre.hpp"
 #include <vector>
 #include <mutex>
+
+#define EULER_CHANGE_QUATERNION 0
+#define QUATERNION_CHANGE_EULER 1
+
+#define ACTOR_ACTOR 			0
+#define ACTOR_TOOL  			1
+#define ACTOR_LIGHT 			1
+
+#define LIGHT_POINT				0
+#define LIGHT_DIRECTIONAL		1
+#define LIGHT_SPOT				2
+
+struct RenderState
+{
+	glm::vec3 render_position;
+	glm::quat render_quaternion;
+	// glm::vec3 render_euler;
+	glm::vec3 render_scale;
+
+	RenderState(glm::vec3 init_position = glm::vec3(0.0f), glm::quat init_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: render_position(init_position), render_quaternion(init_quaternion), render_scale(init_scale)
+	{}
+};
 
 class Actor
 {
 public:
-	/*
-		EMERGENCY BRAKE
-		Actors should always have meshes (Thinkers will be for non-rendered game objects). If the render storage vector is full of Mesh pointers
-		then it's fine for them to have a default constructor that's overwritten later by the code or  immediately by the Actor constructor,
-		AS LONG AS the render storage is generated AFTER giving each Actor a Mesh (or leaving it as the default ERROR mesh).
-	*/
 	Mesh mesh;
 
 	RenderState current_state;
@@ -26,14 +44,16 @@ public:
 	std::vector<RenderState> previous_state_buffer	=	{ previous_state,	previous_state_copy	};
 
 	int state_index = 0;
-	unsigned int vao_id;
+
+	unsigned int actor_type;
 	bool visible = true;
-	const char *name;
-	float movement_speed;
+	std::string name;
+	float movement_speed = 1.0f;
 
 	glm::vec3 position_global;
-	// glm::vec4 rotation_quaternion;
-	glm::vec3 rotation_euler;		// x (pitch), y (yaw), z (roll)
+	glm::quat rotation_quaternion;
+	glm::vec3 rotation_euler;
+	glm::vec3 scale = glm::vec3(1.0f);
 	glm::vec2 velocity_horizontal;
 
 	glm::vec3 orientation_front;
@@ -42,70 +62,152 @@ public:
 
 	glm::vec3 world_orientation_up;
 
-	Actor(const char *new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), float init_yaw = INIT_YAW, float init_pitch = INIT_PITCH);
+	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+	{
+		actor_type = ACTOR_ACTOR;
+		name = new_name;
+		world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
+		rotation_euler = init_rotation_euler;
+		rotation_quaternion = glm::quat(init_rotation_euler);
+		current_state = RenderState(init_position, rotation_quaternion);
+		updateVectors();
+	}
 
-	bool gatekeepRenderer() { return ((mesh.vao_id != VAO_ERR) && visible); }
-
-	virtual void Tick();
-	virtual void updateStates(std::mutex *state_mutex);
+	virtual void Tick(int current_tick);
+	virtual void init(Theatre *parent_theatre);
+	virtual void updateStates(std::mutex &state_mutex);
+	virtual bool wantsToBeRendered();
+	virtual bool wantsToBeBuffered();
 
 protected:
-	constexpr static const float INIT_YAW = -90.0f;
-	constexpr static const float INIT_PITCH = 0.0f;
-	constexpr static const float INIT_SPEED = 2.5f;
+	bool debug_visible;
 
+	void updateRotation(bool override_which);
 	void updateVectors();
 };
 
 class GraphXPlayer: public Actor
 {
 public:
-	constexpr static const float INIT_SENSITIVITY = 0.1f;
-
 	float mouse_sensitivity;
+	float movement_speed = 0.05f;
 
-	using Actor::Actor;
-	GraphXPlayer(const char *new_name, glm::vec3 init_position = glm::vec3(0.0f))
-	: Actor(new_name, Mesh(), init_position), mouse_sensitivity(INIT_SENSITIVITY)
+	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
+	: Actor(new_name, Mesh(this), init_position, init_rotation_euler), mouse_sensitivity(INIT_SENSITIVITY)
 	{}
 
 	glm::mat4 getViewMatrix();
-	void doMouseMovement(float offset[2], GLboolean constrain_pitch = true);
-	void doMovement(int direction[2], float delta_time = 0.016f);
+	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
+	void doMovement(int direction[2]);
+
+protected:
+	constexpr static const float INIT_SENSITIVITY = 0.1f;
 };
 
-class Tester: public Actor
+class MoverTester: public Actor
 {
 public:
-	using Actor::Actor;
-	Tester() : Actor("Tester", Mesh(), glm::vec3(0.0f, 0.0f, -3.0f))
-	{}
-
-	// void Tick() override;
-};
-
-class FlipperTester: public Tester
-{
-	int position_flip = 0;
-
-	glm::vec3 testing_position[2] =
-	{
-		glm::vec3(-3.0f, 3.0f, -6.0f),
-		glm::vec3(3.0f, 3.0f, -6.0f)
-	};
-
-	using Tester::Tester;
-
-	void Tick() override;
-};
-
-class MoverTester: public Tester
-{
-	float t_movement_speed = 1.0f;
+	float movement_speed = 0.025f;
 	int t_direction = 0;
 
-	using Tester::Tester;
+	MoverTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(init_name, init_mesh, init_position, init_rotation, init_scale)
+	{}
 
-	void Tick() override;
+	void Tick(int current_tick) override;
 };
+
+class SpriteTester: public Actor
+{
+public:
+	SpriteTester(std::string init_name, Sprite init_sprite, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(init_name, init_sprite, init_position, init_rotation, init_scale)
+	{}
+};
+
+class Light: public Actor
+{
+public:
+	unsigned int light_type;
+	glm::vec3 light_color;
+	float light_strength; // A more direct "brightness" value than just changing Attenuation values
+
+	// Attenuation values
+	float range;
+	float intensity;	// negative scale: 0.0 is brightest and it gets dimmer as it increases
+	float falloff;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
+
+	Light(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f))
+	: Actor(init_name, Mesh(this, Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f)), init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
+	{
+		actor_type = ACTOR_TOOL;
+		light_type = LIGHT_POINT;
+		debug_visible = true;
+	}
+};
+
+class LightDirectional: public Light
+{
+public:
+	glm::vec3 direction;
+
+	LightDirectional(std::string init_name, glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f))
+	: Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color, init_position, init_rotation, glm::vec3(0.0f)), direction(init_direction)
+	{ light_type = LIGHT_DIRECTIONAL; }
+};
+
+class LightSpot: public Light
+{
+public:
+	glm::vec3 direction;
+	float inner_cutoff_angle;
+	float outer_cutoff_angle;
+
+	LightSpot(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_direction = glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f))
+	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
+	{ light_type = LIGHT_SPOT; }
+
+	glm::vec2 getCutoffAngles();
+};
+
+class LightFlashlight: public LightSpot
+{
+public:
+	Actor *parent = NULL;
+	glm::vec3 position_offset;
+	glm::vec3 rotation_offset;
+
+	LightFlashlight(std::string init_name, float init_intensity = 0.5f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_position_offset = glm::vec3(0.0f), glm::vec3 init_rotation_offset = glm::vec3(0.0f))
+	: LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset), _intensity(init_intensity)
+	{
+		light_type = LIGHT_SPOT;
+		debug_visible = false;
+	}
+
+	void setLight(bool is_off);
+	void Tick(int current_tick) override;
+
+private:
+	float _intensity;
+};
+
+class LightTesterMover : public Light
+{
+public:
+	glm::vec3 pivot_position;
+	float pivot_radius;
+	float pivot_speed;
+	float pivot_theta = 0.0f;
+	Actor pivot_point;
+
+	LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f))
+	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed), pivot_point(Actor(std::string("pivot point for ") + init_name, Mesh(&pivot_point, Material(true, glm::vec3(1.0f, 0.0f, 0.0f))), init_pivot_position, glm::vec3(0.0f), glm::vec3(0.2f)))
+	{}
+
+	void Tick(int current_tick) override;
+	void init(Theatre *parent_theatre) override;
+};
+
+extern GraphXPlayer *current_player;
 #endif

@@ -1,81 +1,142 @@
-// r_main.hpp - rendering code specifically for the renderer logic
+// r_common.hpp - rendering declarations
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "sanity.hpp"
+#include "quad.graphxmodel"
+#include "ERROR.graphxmodel"
 #include <vector>
 #include <array>
+#include <string>
+#include <mutex>
 
 #define GLSHADER_TYPE_VERTEX	0
 #define GLSHADER_TYPE_FRAGMENT	1
 #define GLSHADER_TYPE_PROGRAM	2
 
-#define VAOS_AMOUNT		5
-//-----------------------
-#define VAO_ENVIRONMENT	0
-#define VAO_CHARACTERS	1
-#define VAO_PROPS		2
-#define VAO_TESTING		3
-#define VAO_ERR			4
 
-class GLShader
+#define SHADERS_AMOUNT		1
+//---------------------------
+#define SHADER_PHONG		0
+
+
+#define BUFFERS_AMOUNT		5
+//---------------------------
+#define BUFFER_ERR			0
+#define BUFFER_TESTING		1
+#define BUFFER_FLATS		2
+#define BUFFER_ACTORS		3
+#define BUFFER_PROPS		4
+
+
+#define VAOS_AMOUNT			1
+//---------------------------
+#define VAO_HANDMADE		0
+
+
+#define MISSING_TEXTURE_DIFF 		SRC_DIR(std::string("src/images/MISSING.jpg"))
+#define MISSING_TEXTURE_SPEC		SRC_DIR(std::string("src/images/MISSING_SPECULAR.jpg"))
+#define TOOL_TEXTURE_LIGHT			SRC_DIR(std::string("src/images/LIGHT.jpg"))
+#define NO_TEXTURE					SRC_DIR(std::string("src/images/NO_TEXTURE.jpg"))
+
+// Le secret dev texture
+#define DOOM_TEXTURE_DIFF			SRC_DIR(std::string("src/images/COMP04_5.png"))
+#define DOOM_TEXTURE_SPEC			SRC_DIR(std::string("src/images/COMP04_5_SPECULAR.jpg"))
+
+class Actor;		// Forward-declare Actor
+class GraphXPlayer;	// Forward-declare GraphXPlayer
+struct Theatre;		// Forward-declare Theatre
+
+struct GLShader
 {
-public:
-	unsigned int ID;
+	unsigned int id;
 
-	GLShader(const char *vertex_path, const char *fragment_path);
+	GLShader(std::string vertex_shader_path, std::string fragment_shader_path);
+	// GLShader(std::string shader_path);
+	// GLShader(const char *vertex_shader_code, const char *fragment_shader_code);
+	// GLShader(const char *shader_code);
 
-	void use();
+	template<typename T> void setUniform(const std::string &name, T value) const;
+};
 
-	void setBool(const std::string &name, bool value) const;
-	void setInt(const std::string &name, int value) const;
-	void setFloat(const std::string &name, float value) const;
-	void setMatrix(const std::string &name, glm::mat4 value) const;
+struct Environment // Will be extended
+{
+	bool ambient_lighting_enabled;
+	glm::vec3 ambient_light_color;
+	float ambient_light_strength;
 
-private:
-	void shaderErrorHandler(int thing, int type);
+	Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f)
+	: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
+	{}
+
+	glm::vec3 getAmbientLight();
+};
+
+struct Material
+{
+	// std::vector<unsigned int> textures;
+	// std::vector<std::string> texture_paths;
+	unsigned int texture_diffuse;
+	unsigned int texture_specular;
+
+	std::string texture_path_diffuse = MISSING_TEXTURE_DIFF;
+	std::string texture_path_specular = MISSING_TEXTURE_SPEC;
+
+	glm::vec3 color;
+	int specular_sharpness;
+	float specular_strength;
+	bool mat_fullbright;
+
+	Material(bool is_fullbright, glm::vec3 init_color)
+	: texture_path_diffuse(NO_TEXTURE), color(init_color), mat_fullbright(is_fullbright)
+	{}
+
+	Material(std::string init_diffuse_texture = MISSING_TEXTURE_DIFF, std::string init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)
+	: texture_path_diffuse(init_diffuse_texture), texture_path_specular(init_specular_texture), color(glm::vec3(1.0f)), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+	{}
+
+	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32)
+	: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+	{}
+
+	unsigned int bufferTexture(std::string path);
 };
 
 struct Mesh
 {
-	unsigned int vao_id = VAO_ERR;
-	// const char *texture_image;
-	std::vector<GLfloat> vertices = {0.0f};
-	std::vector<GLuint> indices = {0};
-	unsigned int VBO = 0;
-	unsigned int EBO = 0;
-	unsigned int indices_amount = 0;
+	Actor *owner;
+	Material material; // Change to vector of materials later(?)
 
-	// Note: there should be multiple constructors; one for raw vertex data, one for .obj files, etc.
-
-	Mesh(unsigned int init_vao_id = VAO_ERR) // Default constructor handles ERR meshes (i.e: missing/no mesh). For now, ERR meshes don't exist and are dropped entirely. There should be a default mesh for missing meshes, though
-	: vao_id(init_vao_id)
-	{}
-
-	Mesh(unsigned int init_vao_id, std::vector<GLfloat> new_vertices, std::vector<GLuint> new_indices)
-	: vao_id(init_vao_id), vertices(new_vertices), indices(new_indices), indices_amount(new_indices.size())
+	const unsigned int vao_index;
+	const std::vector<GLfloat> vertices;
+	const std::vector<GLuint> indices;
+	unsigned int VBO;
+	unsigned int IBO;
+	bool is_buffered = false;
+	
+	Mesh(Actor *init_owner = NULL, Material init_material = Material(), const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, const unsigned int init_vao_index = VAO_HANDMADE)
+	: owner(init_owner), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
 	{}
 };
 
-struct RenderState
+struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
-	// unsigned int vao_id = VAO_ERR;
-	// unsigned int vertex_data_offset, index_data_offset, indices_amount;
-	glm::vec3 render_position = {0.0f, 0.0f, 0.0f};
-	glm::vec3 render_rotation_euler = {0.0f, 0.0f, 0.0f};	// x (pitch), y (yaw), z (roll)
-
-	RenderState(glm::vec3 init_position = {0.0f, 0.0f, 0.0f}, glm::vec3 init_euler_rotation = {0.0f, 0.0f, 0.0f})
-	: render_position(init_position), render_rotation_euler(init_euler_rotation)
+	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
+	Sprite(Actor *init_owner = NULL, Material init_material = Material(), const unsigned int init_vao_index = VAO_HANDMADE)
+	: Mesh(init_owner, init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
 	{}
 };
 
-GLuint T_GenerateTexture(const char *filepath);
-
-extern std::array<GLuint, VAOS_AMOUNT> vertex_array_objects;
-extern std::vector<Mesh *> meshes;
+extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
+extern std::vector<GLShader *> shaders; // Same for shaders
+extern bool time_to_render;
+extern bool time_to_store_buffers;
+extern bool do_interpolation;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void W_SwapAndClear(GLFWwindow *w_window, float clear_color_r = 0.3f, float clear_color_g = 0.4f, float clear_color_b = 0.7f, float clear_color_a = 1.0f);
-
-void R_StoreBuffers();
-void R_Render(GLShader current_shader);
+void		W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void		R_GL_BufferMeshData(Mesh *mesh);
+void 		R_StoreBuffers();
+void 		R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, Environment *current_environment);
+void		R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environment *current_environment, unsigned int shader_index);
+void		R_TroupeChanged();
 #endif
