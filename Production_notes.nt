@@ -612,3 +612,6 @@ R_Render(/*...*/)
 :::
 
 Fun stuff!
+
+[01/19/25]
+Ok, I'm gonna work on switching to Mesh pointers in Actors. I'm also thinking of making the Production branch the main branch, since that's kinda how that works, now that I think about it.
