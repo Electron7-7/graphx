@@ -8,6 +8,7 @@
 #include <array>
 #include <string>
 #include <mutex>
+#include <filesystem>
 
 #define GLSHADER_TYPE_VERTEX	0
 #define GLSHADER_TYPE_FRAGMENT	1
@@ -33,14 +34,14 @@
 #define VAO_HANDMADE		0
 
 
-#define MISSING_TEXTURE_DIFF 		SRC_DIR(std::string("src/images/MISSING.jpg"))
-#define MISSING_TEXTURE_SPEC		SRC_DIR(std::string("src/images/MISSING_SPECULAR.jpg"))
-#define TOOL_TEXTURE_LIGHT			SRC_DIR(std::string("src/images/LIGHT.jpg"))
-#define NO_TEXTURE					SRC_DIR(std::string("src/images/NO_TEXTURE.jpg"))
+#define MISSING_TEXTURE_DIFF 		std::filesystem::path("src/images/MISSING.jpg")
+#define MISSING_TEXTURE_SPEC		std::filesystem::path("src/images/MISSING_SPECULAR.jpg")
+#define TOOL_TEXTURE_LIGHT			std::filesystem::path("src/images/LIGHT.jpg")
+#define NO_TEXTURE					std::filesystem::path("src/images/NO_TEXTURE.jpg")
 
 // Le secret dev texture
-#define DOOM_TEXTURE_DIFF			SRC_DIR(std::string("src/images/COMP04_5.png"))
-#define DOOM_TEXTURE_SPEC			SRC_DIR(std::string("src/images/COMP04_5_SPECULAR.jpg"))
+#define DOOM_TEXTURE_DIFF			std::filesystem::path("src/images/COMP04_5.png")
+#define DOOM_TEXTURE_SPEC			std::filesystem::path("src/images/COMP04_5_SPECULAR.jpg")
 
 class Actor;		// Forward-declare Actor
 class GraphXPlayer;	// Forward-declare GraphXPlayer
@@ -50,8 +51,8 @@ struct GLShader
 {
 	unsigned int id;
 
-	GLShader(std::string vertex_shader_path, std::string fragment_shader_path);
-	// GLShader(std::string shader_path);
+	GLShader(std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path);
+	// GLShader(std::filesystem::path shader_path);
 	// GLShader(const char *vertex_shader_code, const char *fragment_shader_code);
 	// GLShader(const char *shader_code);
 
@@ -78,8 +79,8 @@ struct Material
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
 
-	std::string texture_path_diffuse = MISSING_TEXTURE_DIFF;
-	std::string texture_path_specular = MISSING_TEXTURE_SPEC;
+	std::filesystem::path texture_path_diffuse = MISSING_TEXTURE_DIFF;
+	std::filesystem::path texture_path_specular = MISSING_TEXTURE_SPEC;
 
 	glm::vec3 color;
 	int specular_sharpness;
@@ -90,7 +91,7 @@ struct Material
 	: texture_path_diffuse(NO_TEXTURE), color(init_color), mat_fullbright(is_fullbright)
 	{}
 
-	Material(std::string init_diffuse_texture = MISSING_TEXTURE_DIFF, std::string init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)
+	Material(std::filesystem::path init_diffuse_texture = MISSING_TEXTURE_DIFF, std::filesystem::path init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)
 	: texture_path_diffuse(init_diffuse_texture), texture_path_specular(init_specular_texture), color(glm::vec3(1.0f)), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
 	{}
 
@@ -98,7 +99,7 @@ struct Material
 	: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
 	{}
 
-	unsigned int bufferTexture(std::string path);
+	unsigned int bufferTexture(std::filesystem::path path);
 };
 
 struct Mesh

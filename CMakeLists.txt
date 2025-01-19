@@ -37,7 +37,7 @@ include_directories(${SRC}/include ${DEPENDENCIES})
 add_library(glfw3 STATIC IMPORTED)
 set_target_properties(glfw3 PROPERTIES IMPORTED_LOCATION ${GLFW_LIB})
 
-add_executable(graphx_windows ${SOURCES})
+add_executable(graphx_windows_x86_64 ${SOURCES})
 
 target_link_libraries(graphx_windows glfw3)
 set_property(TARGET graphx_windows PROPERTY CXX_STANDARD 20)

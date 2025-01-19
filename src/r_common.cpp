@@ -5,7 +5,7 @@
 //
 // GLShader
 //
-GLShader::GLShader(std::string vertex_shader_path, std::string fragment_shader_path)
+GLShader::GLShader(std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path)
 {
 	std::string vertex_code;
 	std::string fragment_code;
@@ -17,8 +17,8 @@ GLShader::GLShader(std::string vertex_shader_path, std::string fragment_shader_p
 
 	try
 	{
-		v_shader_file.open(vertex_shader_path.c_str());
-		f_shader_file.open(fragment_shader_path.c_str());
+		v_shader_file.open(vertex_shader_path);
+		f_shader_file.open(fragment_shader_path);
 		std::stringstream v_shader_stream, f_shader_stream;
 
 		v_shader_stream << v_shader_file.rdbuf();
@@ -156,7 +156,7 @@ glm::vec3 Environment::getAmbientLight()
 //
 // Texture Function
 // Todo: go from generating one texture per one filepath to n textures per n filepaths (and returning their pointers)
-unsigned int Material::bufferTexture(std::string path)
+unsigned int Material::bufferTexture(std::filesystem::path path)
 {
 	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
 
@@ -170,7 +170,7 @@ unsigned int Material::bufferTexture(std::string path)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load(path.c_str(), &t_width, &t_height, &t_channels, 0);
+	unsigned char *t_data = stbi_load(path.generic_string().c_str(), &t_width, &t_height, &t_channels, 0);
 
 	if(!t_data)
 		std::cerr << "Failed to load texture!" << std::endl;

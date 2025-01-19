@@ -10,6 +10,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <filesystem>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
 Environment default_environment(true);
@@ -61,8 +62,8 @@ int main()
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
-	
-	GLShader phong_shader(SRC_DIR("src/shaders/phong_vertex.glsl").c_str(), SRC_DIR("src/shaders/phong_fragment.glsl").c_str());
+
+	GLShader phong_shader(std::filesystem::path("src/shaders/phong_vertex.glsl"), std::filesystem::path("src/shaders/phong_fragment.glsl"));
 	shaders.insert(shaders.end(), {&phong_shader});
 
 	current_player = &player;
