@@ -34,7 +34,7 @@ static double tickrate_ms = 1.0 / TICKRATE;	// Maybe turn this into a function t
 int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
-bool test_flashlight_bool = true;
+bool test_flashlight_bool = false;
 
 void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param);
 void processInput(GLFWwindow *window);
@@ -152,9 +152,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		test_flashlight_bool = !test_flashlight_bool;
 		if(test_flashlight_bool)
-			PRINT("shader test bool on");
+			PRINT("Flashlight Off");
 		else
-			PRINT("shader test bool off");
+			PRINT("Flashlight On");
 	}
 }
 

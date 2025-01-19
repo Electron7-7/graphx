@@ -21,7 +21,7 @@ INCLUDES = -I src/include
 
 
 # FPS limit for custom mangohud test run (value <= 0 -> uncapped framerate)
-FPS_LIMIT := -1
+FPS_LIMIT := 60
 
 
 all:	$(O)/graphx_linux
