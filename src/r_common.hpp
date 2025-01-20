@@ -53,10 +53,11 @@ struct GLShader
 
 	GLShader(std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path);
 	// GLShader(std::filesystem::path shader_path);
-	// GLShader(const char *vertex_shader_code, const char *fragment_shader_code);
+	GLShader(std::string vertex_shader_code, std::string fragment_shader_code);
 	// GLShader(const char *shader_code);
 
 	template<typename T> void setUniform(const std::string &name, T value) const;
+	void buildShader(std::string vertex_shader_code, std::string fragment_shader_code);
 };
 
 struct Environment // Will be extended

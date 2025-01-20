@@ -36,8 +36,18 @@ GLShader::GLShader(std::filesystem::path vertex_shader_path, std::filesystem::pa
 		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
 	}
 
-	const char *v_shader_code = vertex_code.c_str();
-	const char *f_shader_code = fragment_code.c_str();
+	buildShader(vertex_code, fragment_code);
+};
+
+GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
+{
+	buildShader(vertex_shader_code, fragment_shader_code);
+}
+
+void GLShader::buildShader(std::string vertex_shader_string, std::string fragment_shader_string)
+{
+	const char *v_shader_code = vertex_shader_string.c_str();
+	const char *f_shader_code = fragment_shader_string.c_str();
 
 	unsigned int vertex, fragment;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -55,7 +65,7 @@ GLShader::GLShader(std::filesystem::path vertex_shader_path, std::filesystem::pa
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
-};
+}
 
 template<> void GLShader::setUniform<bool>(const std::string &name, bool value) const
 {
