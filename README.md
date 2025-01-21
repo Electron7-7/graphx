@@ -32,6 +32,8 @@ To compile GraphX for Windows while on Linux, you'll need:
 
 I've included all the libraries and header files needed to compile an executable on Linux using MinGW, and the Makefile is already configured to handle everything correctly, so all you need to do is run `make windows` from the root directory, and if it all finishes successfully, you'll find `graphx_windows_x86_64.exe` in the pre-existing `build/` directory.
 #### Building for Windows (on Windows)
+(temporary note: currently, I have just finished implementing embedded resources, using the Linux tool `xxd`. I've included a Windows version of the tool in `src/windows_dependencies/xxd.exe` but have yet to update the CMakeLists.txt to correctly embed resources. Once I do, this note will be removed)
+
 To compile GraphX for Windows on Windows you'll need:
 - `the grace of God`
 - `an exorcist or Catholic priest`
