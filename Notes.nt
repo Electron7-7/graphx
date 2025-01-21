@@ -615,3 +615,12 @@ Fun stuff!
 
 [01/19/25]
 Ok, I'm gonna work on switching to Mesh pointers in Actors. I'm also thinking of making the Production branch the main branch, since that's kinda how that works, now that I think about it.
+
+[01/20/25]
+I'm gonna try to work on embedding resources into the binary so I the binary can run by itself with all the resources inside (i.e: texture images, shaders, etc). I'm gonna take a look at "XD" (eXtended Dump and load utility). However, the #embed directive is in C23 and while I've had a bugger time with C++23 and #embed, I think embedding the files in a .c source file is better than wrangling a fucked C++ implementation.
+
+Aight, so in order to use #embed, I need clang19... and that requires me to compile all of clang19... all 11060 files... if it's not close to done when I'm finished eating these burritos, I'm finding a different method of embedding resources into my binary. Ah hell nah, yo ass tweakin', Jigsaw!!
+
+Yeah, fuck compiling allat. I'm finding a new way of doing this; shame, but once clang19 becomes the new defacto version (i.e: I CAN DOWNLOAD PRE-COMPILED BINARIES!!), I might change the code to work with #embed.
+
+okay i almost have it bt the problem is that the fucking embedded .h file has fucking problems with being included too many times or not enough times so fuck it im done today.

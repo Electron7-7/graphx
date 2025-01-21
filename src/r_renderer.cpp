@@ -64,8 +64,10 @@ void R_StoreBuffers()
 void R_GL_BufferMeshData(Mesh *mesh)
 {
 	Material *material = &mesh->material;
-	material->texture_diffuse = material->bufferTexture(material->texture_path_diffuse);
-	material->texture_specular = material->bufferTexture(material->texture_path_specular);
+	if(material->embedded_texture_diffuse != NULL)
+		material->texture_diffuse = material->bufferTextureFromMemory(material->embedded_texture_diffuse);
+	if(material->embedded_texture_specular != NULL)
+		material->texture_specular = material->bufferTextureFromMemory(material->embedded_texture_specular);
 
 	glGenBuffers(1, &mesh->VBO);
 	glGenBuffers(1, &mesh->IBO);

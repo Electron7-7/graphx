@@ -6,7 +6,6 @@
 // This is used when compiling the binary that I put in the GitHub release, as I don't have a great solution for loading things
 // like image and shader files without having them be physically right next to the binary program.
 #define GRAPHX_EMBED_SHADERS
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
 #include "r_common.hpp"

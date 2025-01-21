@@ -203,7 +203,9 @@ public:
 
 	LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f))
 	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed), pivot_point(Actor(std::string("pivot point for ") + init_name, Mesh(&pivot_point, Material(true, glm::vec3(1.0f, 0.0f, 0.0f))), init_pivot_position, glm::vec3(0.0f), glm::vec3(0.2f)))
-	{}
+	{
+		pivot_point.mesh.name = "PIVOT";
+	}
 
 	void Tick(int current_tick) override;
 	void init(Theatre *parent_theatre) override;

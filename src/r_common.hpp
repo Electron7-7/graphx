@@ -29,19 +29,18 @@
 #define BUFFER_PROPS		4
 
 
+#define MISSING_TEXTURE_DIFF 			MISSING_jpg
+#define MISSING_TEXTURE_SPEC			MISSING_SPECULAR_jpg
+#define TOOL_TEXTURE_LIGHT				LIGHT_jpg
+#define NO_TEXTURE						NO_TEXTURE_jpg
+// Le secret dev texture
+#define DOOM_TEXTURE_DIFF				COMP04_5_png
+#define DOOM_TEXTURE_SPEC				COMP04_5_SPECULAR_jpg
+
+
 #define VAOS_AMOUNT			1
 //---------------------------
 #define VAO_HANDMADE		0
-
-
-#define MISSING_TEXTURE_DIFF 		std::filesystem::path("src/images/MISSING.jpg")
-#define MISSING_TEXTURE_SPEC		std::filesystem::path("src/images/MISSING_SPECULAR.jpg")
-#define TOOL_TEXTURE_LIGHT			std::filesystem::path("src/images/LIGHT.jpg")
-#define NO_TEXTURE					std::filesystem::path("src/images/NO_TEXTURE.jpg")
-
-// Le secret dev texture
-#define DOOM_TEXTURE_DIFF			std::filesystem::path("src/images/COMP04_5.png")
-#define DOOM_TEXTURE_SPEC			std::filesystem::path("src/images/COMP04_5_SPECULAR.jpg")
 
 class Actor;		// Forward-declare Actor
 class GraphXPlayer;	// Forward-declare GraphXPlayer
@@ -80,8 +79,10 @@ struct Material
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
 
-	std::filesystem::path texture_path_diffuse = MISSING_TEXTURE_DIFF;
-	std::filesystem::path texture_path_specular = MISSING_TEXTURE_SPEC;
+	// std::filesystem::path texture_path_diffuse = MISSING_TEXTURE_DIFF;
+	// std::filesystem::path texture_path_specular = MISSING_TEXTURE_SPEC;
+	unsigned char* embedded_texture_diffuse = NULL;
+	unsigned char* embedded_texture_specular = NULL;
 
 	glm::vec3 color;
 	int specular_sharpness;
@@ -89,24 +90,27 @@ struct Material
 	bool mat_fullbright;
 
 	Material(bool is_fullbright, glm::vec3 init_color)
-	: texture_path_diffuse(NO_TEXTURE), color(init_color), mat_fullbright(is_fullbright)
+	: embedded_texture_diffuse(NO_TEXTURE), color(init_color), mat_fullbright(is_fullbright)
 	{}
 
-	Material(std::filesystem::path init_diffuse_texture = MISSING_TEXTURE_DIFF, std::filesystem::path init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)
-	: texture_path_diffuse(init_diffuse_texture), texture_path_specular(init_specular_texture), color(glm::vec3(1.0f)), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)
+	: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(glm::vec3(1.0f)), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
 	{}
 
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32)
 	: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
 	{}
 
-	unsigned int bufferTexture(std::filesystem::path path);
+	// unsigned int bufferTexture(std::filesystem::path path);
+	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
 };
 
 struct Mesh
 {
 	Actor *owner;
 	Material material; // Change to vector of materials later(?)
+
+	std::string name = "MESH";
 
 	const unsigned int vao_index;
 	const std::vector<GLfloat> vertices;

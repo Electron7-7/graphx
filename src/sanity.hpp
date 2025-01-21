@@ -5,6 +5,11 @@ no, I don't think that this should cause compiling to take longer since the #ifn
 once... I think, at least. This could just be a misnomer/not how that works(?) I need to make sure.
 */
 
+#ifndef GRAPHX_EMBEDS
+#define GRAPHX_EMBEDS
+#include "images.h"
+#endif
+
 #ifndef GRAPHX_FUCKING_FILEPATHS
 #define GRAPHX_FUCKING_FILEPATHS
 	// #include <string>

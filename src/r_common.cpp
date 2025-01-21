@@ -166,7 +166,7 @@ glm::vec3 Environment::getAmbientLight()
 //
 // Texture Function
 // Todo: go from generating one texture per one filepath to n textures per n filepaths (and returning their pointers)
-unsigned int Material::bufferTexture(std::filesystem::path path)
+/*unsigned int Material::bufferTexture(std::filesystem::path path)
 {
 	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
 
@@ -184,6 +184,35 @@ unsigned int Material::bufferTexture(std::filesystem::path path)
 
 	if(!t_data)
 		std::cerr << "Failed to load texture!" << std::endl;
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(t_data);
+
+	return texture_id;
+}*/
+
+unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
+{
+	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+
+	unsigned int texture_id;
+	glGenTextures(1, &texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	int t_width, t_height, t_channels;
+	unsigned char *t_data = stbi_load_from_memory(texture_buffer, 64*64, &t_width, &t_height, &t_channels, STBI_rgb);
+
+	if(!t_data)
+	{
+		std::cerr << "Failed to load texture!" << std::endl;
+		return 20;
+	}
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 	glGenerateMipmap(GL_TEXTURE_2D);

@@ -12,6 +12,7 @@ bool current_troupe_changed = false;
 Theatre::Theatre(std::string init_name, std::vector<Actor *> init_troupe, Mesh init_stage)
 : name(init_name), troupe(init_troupe), stage(init_stage)
 {
+	stage.name = "THEATRE STAGE";
 	sortTroupe();
 	countLights();
 	for(Actor *actor : troupe)
