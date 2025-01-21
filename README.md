@@ -6,8 +6,8 @@
   </ul>
 </div>
 
-<img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="500"/>
-<img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="500"/>
+<img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="400"/>
+<img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
 
 ## An Okay Game Engine
 
