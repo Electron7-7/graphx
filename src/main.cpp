@@ -12,12 +12,11 @@
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include "theatres/lighting_testing.graphxtheatre"
-#include "phong_shader_for_binary_export.hpp"
 #include <iostream>
 #include <vector>
 #include <thread>
 #include <mutex>
-#include <filesystem>
+// #include <filesystem>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
 Environment default_environment(true);
@@ -70,12 +69,8 @@ int main()
 	
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 
-	#ifdef GRAPHX_EMBED_SHADERS
-		GLShader phong_shader(phong_vertex_shader_code, phong_fragment_shader_code);
-	#else
-		GLShader phong_shader(std::filesystem::path("src/shaders/phong_vertex.glsl"), std::filesystem::path("src/shaders/phong_fragment.glsl"));
-	#endif
-
+	// GLShader phong_shader(std::filesystem::path("src/shaders/phong_vertex.glsl"), std::filesystem::path("src/shaders/phong_fragment.glsl"));
+	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	shaders.insert(shaders.end(), {&phong_shader});
 
 	current_player = &player;

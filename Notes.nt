@@ -624,3 +624,12 @@ Aight, so in order to use #embed, I need clang19... and that requires me to comp
 Yeah, fuck compiling allat. I'm finding a new way of doing this; shame, but once clang19 becomes the new defacto version (i.e: I CAN DOWNLOAD PRE-COMPILED BINARIES!!), I might change the code to work with #embed.
 
 okay i almost have it bt the problem is that the fucking embedded .h file has fucking problems with being included too many times or not enough times so fuck it im done today.
+
+[01/21/25]
+I've got embedded textures working! However, a few more steps to take before the second alpha is fully done:
+ - Account for Materials with less than both textures (e.g: no specular texture, color data only, etc)
+ - Windows implementation, eughh
+
+For the first one, Materials can always have a specular texture since in the constructor that doesn't take a specular texture, specular strength is 0.0f, and in the constructor where it takes a specular strength but no specular texture, the default texture will be "NO_TEXTURE" which is just a white jpg, which is essentially a glm::vec3(1.0f). Before starting on Windows embedded resources, I also want to automate the embedding of the shader code. That should actually be pretty simple (in concept) since shader code is parsed as a giant string.
+
+Compiling an executable on Linux using xxd works! This means that I can use xxd.exe to do it on Windows (theoretically)! I just need to test that theory on my dual-booted Win10 install.

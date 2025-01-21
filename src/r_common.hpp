@@ -74,15 +74,13 @@ struct Environment // Will be extended
 
 struct Material
 {
-	// std::vector<unsigned int> textures;
-	// std::vector<std::string> texture_paths;
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
 
 	// std::filesystem::path texture_path_diffuse = MISSING_TEXTURE_DIFF;
 	// std::filesystem::path texture_path_specular = MISSING_TEXTURE_SPEC;
-	unsigned char* embedded_texture_diffuse = NULL;
-	unsigned char* embedded_texture_specular = NULL;
+	unsigned char* embedded_texture_diffuse = NO_TEXTURE;
+	unsigned char* embedded_texture_specular = NO_TEXTURE;
 
 	glm::vec3 color;
 	int specular_sharpness;
@@ -90,7 +88,7 @@ struct Material
 	bool mat_fullbright;
 
 	Material(bool is_fullbright, glm::vec3 init_color)
-	: embedded_texture_diffuse(NO_TEXTURE), color(init_color), mat_fullbright(is_fullbright)
+	: embedded_texture_diffuse(NO_TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 	{}
 
 	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)

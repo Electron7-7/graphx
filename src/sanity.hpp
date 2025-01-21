@@ -7,7 +7,9 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 
 #ifndef GRAPHX_EMBEDS
 #define GRAPHX_EMBEDS
+// Todo: use #ifdef GRAPHX_COMPILING to make sure we don't rely on these files when not compiling (mainly for clangd's sake)
 #include "images.h"
+#include "shaders.hpp"
 #endif
 
 #ifndef GRAPHX_FUCKING_FILEPATHS
