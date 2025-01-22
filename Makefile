@@ -58,7 +58,7 @@ all: build
 clean: clean_resources
 	rm -f build/*
 
-build: $(O)/$(LINUX)
+build: $(O)/$(LINUX) $(O)/$(WINDOWS)
 
 clean_resources:
 	rm -f $(I_C) $(I_H) $(S_C) $(S_H)
