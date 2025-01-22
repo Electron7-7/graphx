@@ -6,7 +6,7 @@ Material doom_mat_dull(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 16, 0.3f, glm::vec3
 Material light_mat(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f);
 
 Actor staticActor("floor", Mesh(&staticActor, doom_mat_dull, CUBE_VERTS, CUBE_INDICES), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(20.0f, 1.0f, 20.0f));
-Actor staticActor2("static actor", Mesh(&staticActor2, doom_mat_shiny, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, 4.0f, -10.0f), glm::vec3(0.0f), glm::vec3(1.0f));
+Actor staticActor2("static actor", Mesh(&staticActor2, doom_mat_dull, CUBE_VERTS, CUBE_INDICES), glm::vec3(-2.0f, 4.0f, -10.0f), glm::vec3(0.0f), glm::vec3(1.0f));
 Actor staticActor3("static actor", Mesh(&staticActor3, doom_mat_shiny, CUBE_VERTS, CUBE_INDICES), glm::vec3(3.0f, 8.0f, -13.0f), glm::vec3(10.0f, 45.0f, -20.0f), glm::vec3(1.4f));
 Actor staticActor4("static actor", Mesh(&staticActor4, doom_mat_shiny, CUBE_VERTS, CUBE_INDICES), glm::vec3(-8.0f, 6.0f, -11.0f), glm::vec3(10.0f, 45.0f, -20.0f), glm::vec3(1.0f));
 Actor staticActor5("static actor", Mesh(&staticActor5, doom_mat_shiny, CUBE_VERTS, CUBE_INDICES), glm::vec3(-5.0f, 4.0f, -6.0f), glm::vec3(10.0f, 45.0f, -20.0f), glm::vec3(0.6f));
@@ -14,7 +14,7 @@ Actor staticActor6("wall", Mesh(&staticActor6, doom_mat_dull, CUBE_VERTS, CUBE_I
 
 LightDirectional temp_sun("temp sun", glm::vec3(-0.2f, -1.0f, -0.3f), 0.05f);
 LightFlashlight player_flashlight("flashlight", 0.5f, 100.0f, 0.0f, 1.0f, glm::vec3(1.0f), 12.5f, 17.5f);
-LightTesterMover point_light("point light", glm::vec3(2.0f, 4.0f, -4.0f), 3.0f, 1.0f, 0.8f, 100.0f, 5.0f, 1.0f, glm::vec3(0.8f, 0.8f, 1.0f));
+LightTesterMover point_light("point light", glm::vec3(2.0f, 4.0f, -4.0f), 3.0f, 1.0f, 0.8f, 100.0f, 1.0f, 1.0f, glm::vec3(0.9f, 0.95f, 1.0f));
 
 Theatre lighting_testing_theatre("test_theatre", std::vector<Actor *> { &staticActor, &player_flashlight, &staticActor2, &staticActor3, &staticActor4, &staticActor5, &staticActor6, &temp_sun, &point_light});
 #endif
