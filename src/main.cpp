@@ -42,6 +42,7 @@ int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool test_flashlight_bool = false;
+bool red_flashlight_color_bool = false;
 
 void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param);
 void processInput(GLFWwindow *window);
@@ -130,6 +131,11 @@ void testGameTick(GLFWwindow *main_window)
 			}
 
 			player_flashlight.setLight(test_flashlight_bool);
+			
+			if(red_flashlight_color_bool)
+				player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
+			else
+				player_flashlight.light_color = glm::vec3(1.0f);
 
 			last_tick_timestamp = glfwGetTime();
 			tick_length--;
@@ -163,6 +169,15 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			PRINT("Flashlight Off");
 		else
 			PRINT("Flashlight On");
+	}
+
+	if(key == GLFW_KEY_R && action == GLFW_PRESS)
+	{
+		red_flashlight_color_bool = !red_flashlight_color_bool;
+		if(red_flashlight_color_bool)
+			PRINT("Flashlight Red");
+		else
+			PRINT("Flashlight Not Red");
 	}
 }
 

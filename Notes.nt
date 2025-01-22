@@ -635,3 +635,5 @@ For the first one, Materials can always have a specular texture since in the con
 Compiling an executable on Linux using xxd works! This means that I can use xxd.exe to do it on Windows (theoretically)! I just need to test that theory on my dual-booted Win10 install.
 
 I think I've figured out a style/direction to take GraphX into: a modern game engine designed to simulate nostalgic games from the fruitiger metro/aero era. all the charm and nostalgia of older games but with modern sensibilities, capabilities, and improvements.
+
+I've just learned something about reality. If you bathe your room in pure red color, red things appear to be white but that's actually not the case. They aren't "turning white", they're just bouncing more of the light so they appear brighter than everything else in the room but only because the whole room is bathed in that light, so everything is reflecting or absorbing that light. It's relative. That's cool.

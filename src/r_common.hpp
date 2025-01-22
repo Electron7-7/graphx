@@ -91,8 +91,8 @@ struct Material
 	: embedded_texture_diffuse(NO_TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 	{}
 
-	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f)
-	: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(glm::vec3(1.0f)), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f))
+	: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
 	{}
 
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32)
