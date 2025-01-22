@@ -1,3 +1,4 @@
+<a href="https://github.com/Electron7-7/graphx"><img src="https://github.com/user-attachments/assets/33d7c8db-ad36-4fbb-ae90-fd94b7afa180" width="150"/></a>
 <a href="https://github.com/Electron7-7/graphx"><img src="https://github.com/user-attachments/assets/4ca82421-9f0d-41d9-a705-7aeb2986dd18" width="150"/></a>
 <a href="https://github.com/Electron7-7/graphx"><img src="https://github.com/user-attachments/assets/6adf09d2-67e6-4467-8ae9-2afbcd57ac6e" width="150"/></a>
   <p>Logo design: <a href="https://www.instagram.com/m0in126">Moin</a></p>
