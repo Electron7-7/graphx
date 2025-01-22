@@ -53,7 +53,7 @@ SHDRS = \
 
 FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
 
-all: build
+all: build linux_test windows_test
 
 clean: clean_resources
 	rm -f build/*
