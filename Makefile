@@ -79,7 +79,7 @@ $(S_C):
 	$(foreach file,$(SHDRS),$(shell printf "extern std::string $(subst .,_,$(file:$(S)/%=%));\n" >> $(S_H)))
 	$(shell printf "#endif" >> $(S_H))
 
-linux_test:	build
+linux_test:	$(O)/$(LINUX)
 	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(LINUX)
 
 $(O)/$(LINUX): $(O)/images.o $(O)/shaders.opp $(OBJS) $(O)/main.opp
