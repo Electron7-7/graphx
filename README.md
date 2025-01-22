@@ -23,6 +23,9 @@ Oh yeah, my final word of advice:
 Holy **fuck** is Windows just the worst for beginners; Visual Studio, the Windows libraries, and shit like VisualC++ are all fucking _awful_ for beginners. When you have to learn how to fucking open up and configure Visual Studio before even writing "Hello World!", you know there's a problem. Fuck Visual Studio, fuck solution files, fuck what it does to your beautiful project folder, fuck Microsoft and their stupid unique required libraries for executable compilation, and fuck the NT filesystem for existing.
 Rant over, you can all return to your desks.
 ## Building GraphX
+#### A Note About The Makefile
+I designed the Makefile to specifically avoid changing certain variables like `CXX` or `CFLAGS` when building for Windows or Linux; instead, I opted to use unique variables and build rules, isolating both architectures and duplicating some code in the process. When building for Linux, the Makefile will use the variables `CXX`, `CC`, `CXXFLAGS`, `CFLAGS`, `INCLUDES`, etc. When building for Windows, the Makefile uses the variables `WCXX`, `WCC`, `WCXXFLAGS`, `WCFLAGS`, `WINCLUDES`, etc.
+My reasoning is that I wanted it to be easy for people to swap out compilers, linker flags, include locations, etc for either architecture while keeping them both separated. It feels neater and a little more modular like this (although it's probably less efficient). The way I handle embedding resources is less elegant and requires you to manually add each image/shader to an image/shader list, but I intend on changing that as soon as I've got resource embedding working on Windows, using `xxd.exe`.
 #### Building for Linux
 To compile GraphX for Linux, you'll need:
 - `GLFW`
