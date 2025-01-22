@@ -1,11 +1,6 @@
 // Hello, production branch!
 // :3
 
-// If GRAPHX_EMBED_SHADERS is defined, GraphX will use std::string variables in an included header file for the shader code
-// instead of the files in src/shaders.
-// This is used when compiling the binary that I put in the GitHub release, as I don't have a great solution for loading things
-// like image and shader files without having them be physically right next to the binary program.
-#define GRAPHX_EMBED_SHADERS
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
 #include "r_common.hpp"
@@ -16,7 +11,6 @@
 #include <vector>
 #include <thread>
 #include <mutex>
-// #include <filesystem>
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
 Environment default_environment(true);
@@ -70,7 +64,6 @@ int main()
 	
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 
-	// GLShader phong_shader(std::filesystem::path("src/shaders/phong_vertex.glsl"), std::filesystem::path("src/shaders/phong_fragment.glsl"));
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	shaders.insert(shaders.end(), {&phong_shader});
 
