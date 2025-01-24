@@ -20,18 +20,8 @@ class Actor; // Forward-declare Actor
 		- V2 = initial velocity of the second object in m/s
 */
 
-// Might merge this into to_be_collided (std::vector<std::vector<Actor *>> to_be_collided)
-struct CollisionBuffer
-{
-	std::vector<Actor *> stooges;
-
-	CollisionBuffer(std::vector<Actor *> init_stooges)
-	: stooges(init_stooges)
-	{}
-};
-
 void P_CheckCollisions(std::vector<Actor *> troupe);
 glm::vec3 P_CalculateInelasticCollision(Actor *stooge_left, Actor *stooge_right); // Naming colliding Actors "stooges"
 
-extern std::vector<CollisionBuffer> to_be_collided;
+extern std::vector<std::vector<Actor *>> to_be_collided;
 #endif

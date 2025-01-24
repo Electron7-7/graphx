@@ -5,15 +5,14 @@ class Actor; // Forward-declare Actor
 
 struct Collider
 {
-	glm::vec3 position;
-	glm::vec3 size;
+	glm::vec3 top_left_back;
+	glm::vec3 bottom_right_front;
 	bool sleeping = true;
 
-	Collider(glm::vec3 init_size, glm::vec3 init_position)
-	: position(init_position), size(init_size * 2)
+	Collider(glm::vec3 init_top_left_back, glm::vec3 init_bottom_right_front)
+	: top_left_back(init_top_left_back), bottom_right_front(init_bottom_right_front)
 	{}
 
-	void bufferCollision(std::vector<Actor *> who_got_bonked);
-	// void Tick(int current_tick);
+	bool checkCollision(Collider *other_collider);
 };
 #endif

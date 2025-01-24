@@ -106,6 +106,19 @@ void MoverTester::Tick(int current_tick)
 		position_global.x -= movement_speed;
 }
 
+void ControlledTester::Tick(int current_tick)
+{
+	position_global[2] -= static_cast<float>(movement_direction[0] * movement_speed);
+	position_global[0] += static_cast<float>(movement_direction[1] * movement_speed);
+	position_global[1] += static_cast<float>(movement_direction[2] * movement_speed);
+
+	if(collider != NULL)
+	{
+		collider->top_left_back = position_global - scale;
+		collider->bottom_right_front = position_global + scale;
+	}
+}
+
 //
 // Lights
 //

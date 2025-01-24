@@ -7,7 +7,7 @@ WCC = x86_64-w64-mingw32-gcc
 CXXFLAGS = -g -Wall -std=c++20 -D GRAPHX_COMPILING
 CFLAGS = -g -Wall
 
-WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows
+WCXXFLAGS = -g -Wall -std=c++20 -D GRAPHX_COMPILING -static -mwindows
 WCFLAGS = -g -Wall -static -mwindows
 
 INCLUDES = -I src/include
@@ -24,14 +24,16 @@ OBJS = \
 	$(O)/glad.o				\
 	$(O)/r_common.opp		\
 	$(O)/r_renderer.opp		\
+	$(O)/g_collision.opp	\
+	$(O)/g_devices.opp		\
 	$(O)/g_actors.opp		\
  	$(O)/g_theatre.opp
 
 CWOBJS = $(OBJS:.o=.wo)
 WOBJS = $(CWOBJS:.opp=.wopp)
 
-LINUX = graphx_linux
-WINDOWS = graphx_windows_x86_64.exe
+LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
+WINDOWS = GraphX_Windows_x86_64.exe
 
 I = $(SRC)/images
 I_C = $(SRC)/images.c
@@ -53,12 +55,14 @@ SHDRS = \
 
 FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
 
-all: build linux_test windows_test
+all: build build_windows
 
 clean: clean_resources
 	rm -f build/*
 
-build: $(O)/$(LINUX) $(O)/$(WINDOWS)
+build: $(O)/$(LINUX)
+
+build_windows: $(O)/$(WINDOWS)
 
 clean_resources:
 	rm -f $(I_C) $(I_H) $(S_C) $(S_H)

@@ -6,7 +6,9 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
-#include "theatres/lighting_testing.graphxtheatre"
+#include "g_common.hpp"
+// #include "theatres/lighting_testing.graphxtheatre"
+#include "theatres/collision_testing.graphxtheatre"
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -29,14 +31,16 @@ std::vector<float> mouse_last =
 	main_window_size[1] / 2.0f
 };
 
-static double TICKRATE = 120.0;
-static double tickrate_ms = 1.0 / TICKRATE;	// Maybe turn this into a function to make the tickrate more easily changeable?
+static int TICKRATE = 120;
+static double tickrate_ms = 1.0f / TICKRATE;	// Maybe turn this into a function to make the tickrate more easily changeable?
 
 int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool test_flashlight_bool = false;
 bool red_flashlight_color_bool = false;
+
+#define PER_SECOND(interval) (current_tick_since_second % (TICKRATE/interval) == 0)
 
 void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param);
 void processInput(GLFWwindow *window);
@@ -95,7 +99,8 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
-	current_theatre = &lighting_testing_theatre;
+	// current_theatre = &lighting_testing_theatre;
+	current_theatre = &collision_testing_theatre;
 	time_to_store_buffers = true;
 
 	double last_time = glfwGetTime();
@@ -122,6 +127,9 @@ void testGameTick(GLFWwindow *main_window)
 				actor->Tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
+
+			if(PER_SECOND(3)) // 3 times per second
+				P_CheckCollisions(current_theatre->troupe);
 
 			player_flashlight.setLight(test_flashlight_bool);
 			
@@ -174,6 +182,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 }
 
+// This will be put in Actor once I abstract "glfwGetKey" and related functions
 void processInput(GLFWwindow *window)
 {
 	int input_vector[2] =
@@ -183,6 +192,14 @@ void processInput(GLFWwindow *window)
 	};
 
 	player.doMovement(input_vector);
+
+#ifdef COLLISION_TESTING_THEATRE
+	controlledActor1.movement_direction[0] = glfwGetKey(window, GLFW_KEY_UP) - glfwGetKey(window, GLFW_KEY_DOWN);
+	controlledActor1.movement_direction[1] = glfwGetKey(window, GLFW_KEY_RIGHT) - glfwGetKey(window, GLFW_KEY_LEFT);
+
+	controlledActor2.movement_direction[2] = glfwGetKey(window, GLFW_KEY_KP_8) - glfwGetKey(window, GLFW_KEY_KP_2);
+	controlledActor2.movement_direction[1] = glfwGetKey(window, GLFW_KEY_KP_6) - glfwGetKey(window, GLFW_KEY_KP_4);
+#endif
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)

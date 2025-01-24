@@ -3,6 +3,7 @@
 #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_theatre.hpp"
+#include "g_common.hpp"
 #include <vector>
 #include <mutex>
 
@@ -33,6 +34,9 @@ class Actor
 {
 public:
 	Mesh mesh;
+	// std::vector<Device *> devices;
+	Collider *collider = NULL; // Replace with devices vector after testing
+	Collider test_collider;
 
 	RenderState current_state;
 	RenderState current_state_copy = current_state;
@@ -49,12 +53,14 @@ public:
 	bool visible = true;
 	std::string name;
 	float movement_speed = 1.0f;
+	float mass = 1.0f; // in kg
 
 	glm::vec3 position_global;
 	glm::quat rotation_quaternion;
 	glm::vec3 rotation_euler;
 	glm::vec3 scale = glm::vec3(1.0f);
 	glm::vec2 velocity_horizontal;
+	glm::vec3 velocity;
 
 	glm::vec3 orientation_front;
 	glm::vec3 orientation_up;
@@ -63,7 +69,7 @@ public:
 	glm::vec3 world_orientation_up;
 
 	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+	: mesh(init_mesh), test_collider(Collider(init_scale, init_position)), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 	{
 		actor_type = ACTOR_ACTOR;
 		name = new_name;
@@ -72,6 +78,7 @@ public:
 		rotation_quaternion = glm::quat(init_rotation_euler);
 		current_state = RenderState(init_position, rotation_quaternion);
 		updateVectors();
+		collider = &test_collider;
 	}
 
 	virtual void Tick(int current_tick);
@@ -118,12 +125,17 @@ public:
 	void Tick(int current_tick) override;
 };
 
-class SpriteTester: public Actor
+class ControlledTester: public Actor
 {
 public:
-	SpriteTester(std::string init_name, Sprite init_sprite, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(init_name, init_sprite, init_position, init_rotation, init_scale)
+	float movement_speed = 0.025f;
+	int movement_direction[3];
+
+	ControlledTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 3.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(init_name, init_mesh, init_position, glm::vec3(0.0f, 0.0f, 0.0f), init_scale)
 	{}
+
+	void Tick(int current_tick) override;
 };
 
 class Light: public Actor
@@ -144,6 +156,7 @@ public:
 		actor_type = ACTOR_TOOL;
 		light_type = LIGHT_POINT;
 		debug_visible = true;
+		collider = NULL;
 	}
 };
 
