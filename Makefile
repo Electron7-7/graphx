@@ -57,7 +57,7 @@ FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped 
 
 all: build build_windows
 
-clean: clean_resources
+clean: embed_resources
 	rm -f build/*
 
 build: $(O)/$(LINUX)
@@ -68,7 +68,6 @@ clean_resources:
 	rm -f $(I_C) $(I_H) $(S_C) $(S_H)
 
 embed_resources: clean_resources $(I_C) $(S_C)
-	@echo "Done!"
 
 $(I_C):
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(I_C)))
