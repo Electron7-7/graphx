@@ -57,20 +57,23 @@ FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped 
 
 all: build build_windows
 
-clean: embed_resources
+clean: clean_resources embed_resources
 	rm -f build/*
-
-build: $(O)/$(LINUX)
-
-build_windows: $(O)/$(WINDOWS)
 
 clean_resources:
 	rm -f $(I_C) $(I_H) $(S_C) $(S_H)
 
-embed_resources: clean_resources $(I_C) $(S_C)
+embed_resources: $(I_C) $(I_H) $(S_C) $(S_H)
+
+build: $(O)/$(LINUX)
+
+linux_test:	build
+	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(LINUX)
 
 $(I_C):
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(I_C)))
+
+$(I_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_IMAGES\n#define GRAPHX_EMBEDDED_IMAGES\n" >> $(I_H))
 	$(foreach filename,$(IMGS), $(shell printf "\nextern unsigned char $(subst .,_,$(filename:$(I)/%=%))[];\nextern unsigned int $(subst .,_,$(filename:$(I)/%=%))_len;\n" >> $(I_H)))
 	$(shell printf "#endif" >> $(I_H))
@@ -78,12 +81,11 @@ $(I_C):
 $(S_C):
 	$(shell printf "#include <string>\n" >> $(S_C))
 	$(foreach file,$(SHDRS),$(shell printf "std::string $(subst .,_,$(file:$(S)/%=%)) = R\"(\n" >> $(S_C) && cat $(file) >> $(S_C) && printf "\n)\";\n" >> $(S_C)))
+
+$(S_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_SHADERS\n#define GRAPHX_EMBEDDED_SHADERS\n#include <string>\n" >> $(S_H))
 	$(foreach file,$(SHDRS),$(shell printf "extern std::string $(subst .,_,$(file:$(S)/%=%));\n" >> $(S_H)))
 	$(shell printf "#endif" >> $(S_H))
-
-linux_test:	$(O)/$(LINUX)
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(LINUX)
 
 $(O)/$(LINUX): $(O)/images.o $(O)/shaders.opp $(OBJS) $(O)/main.opp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O)/images.o $(O)/shaders.opp $(OBJS) $(O)/main.opp \
@@ -101,9 +103,10 @@ $(O)/%.opp:	$(SRC)/%.cpp
 $(O)/%.o:	$(SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-windows: $(O)/$(WINDOWS)
 
-windows_test: $(O)/$(WINDOWS)
+build_windows: $(O)/$(WINDOWS)
+
+windows_test: build_windows
 	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(WINDOWS)
 
 $(O)/$(WINDOWS): $(O)/images.wo $(O)/shaders.wopp $(WOBJS) $(O)/main.wopp

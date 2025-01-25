@@ -1,4 +1,18 @@
+#include "g_common.hpp"
 #include "g_actors.hpp"
+#include "g_devices.hpp"
+#include "g_theatre.hpp"
+#include <unordered_map>
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+#include <Jolt/Physics/PhysicsSettings.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
 GraphXPlayer *current_player = NULL;
 
@@ -43,6 +57,33 @@ void Actor::updateStates(std::mutex &state_mutex)
 	state_index = 1 - state_index;
 }
 
+int Actor::giveDevice(Device *new_device)
+{
+	switch (new_device->type)
+	{
+		case DEVICE_DEVICE:
+			return -1;
+			break;
+
+		case DEVICE_COLLIDER:
+			PRINT("NEW COLLIDER!");
+			static_cast<Collider *>(new_device)->scale = scale;
+			static_cast<Collider *>(new_device)->position = position_global;
+			break;
+	}
+
+	devices.insert(std::make_pair(new_device->type, new_device));
+	return 0;
+}
+
+Device *Actor::getDevice(unsigned int device_type)
+{
+	if(auto pair = devices.find(device_type) ; pair != devices.end())
+		return pair->second;
+
+	return NULL;
+}
+
 void Actor::Tick(int current_tick)
 {}
 
@@ -60,8 +101,33 @@ bool Actor::wantsToBeBuffered()
 }
 
 //
+// PhysicsActor
+//
+void PhysicsActor::doGravity(glm::vec3 gravity_direction, float gravity_amount)
+{
+	if(!falling)
+		return;
+
+	position_global += gravity_direction * gravity_amount;
+}
+
+void PhysicsActor::updateCollider()
+{
+	if(auto find_collider = devices.find(DEVICE_COLLIDER) ; find_collider != devices.end())
+	{
+		static_cast<Collider *>(find_collider->second)->position = position_global;
+		static_cast<Collider *>(find_collider->second)->scale = scale;
+	}
+}
+
+//
 // GraphXPlayer
 //
+bool GraphXPlayer::wantsToBeRendered()
+{
+	return false;
+}
+
 void GraphXPlayer::doMovement(int direction[2])
 {
 	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
@@ -108,15 +174,12 @@ void MoverTester::Tick(int current_tick)
 
 void ControlledTester::Tick(int current_tick)
 {
+	PhysicsActor::doGravity(glm::vec3(0.0f, -1.0f, 0.0f), 0.05f);
+	PhysicsActor::updateCollider();
+
 	position_global[2] -= static_cast<float>(movement_direction[0] * movement_speed);
 	position_global[0] += static_cast<float>(movement_direction[1] * movement_speed);
 	position_global[1] += static_cast<float>(movement_direction[2] * movement_speed);
-
-	if(collider != NULL)
-	{
-		collider->top_left_back = position_global - scale;
-		collider->bottom_right_front = position_global + scale;
-	}
 }
 
 //

@@ -646,3 +646,18 @@ Ooh, real quick I wanna add a new default "Stage" Mesh to Theatre that's a 3D ax
 So I wasted all this time trying to bugfix the collision code... when the Colliders weren't even having their positions changed to match the Actors... man.
 
 Refactored code to remove all temporary Actor stuff (e.g: removed Actor->sleeping)
+
+[01/24/25]
+Back to collisions. I want to try and implement a simple gravity system. I might take inspiration from Godot and make Device much more like a Godot Node, letting Devices give Actors certain abilities/behaviours. Either way, I want to fully implement the Collider into Actor and try to keep it as a generic std::vector<Device *> or std::vector<Device>. Then I'll make a very simple gravity implementor (either Collider or a variant of Collider). Then learn how to use Jolt.
+
+Aight, to avoid a shit ton of for loops, I'm gonna use an unordered_map instead of a vector to hold Actor Device pointers; that way I can give them a unique identifier and search for certain Devices like a Collider much more quickly.
+
+Currently, the code will only support having one Collider at a time, but I could expand it by having all Colliders combine(?).
+
+Or I could use a multimap! I'll keep it simple for now, but a multimap sounds like it's best for expansion.
+
+Note: yes, change unordered_map to multi_map and make collision checks go through every Collider in each Actor when checking collisions.
+
+Collision is implemented and a rough draft of gravity is also implemented. I tried to get it to work on the player but it doesn't yet. Part of the problem is that the movement will override the gravity changes because of how it works with orientation_front; I've reverted movement back to normal which includes this problem, so be mindful of that when next working on this. However, it does work on a cube. It currently is in a very rough draft stage but it does work. Jolt implementation was started (i.e: copying the Jolt Hello World) but not finished. I'm very fucking excited!
+
+:3

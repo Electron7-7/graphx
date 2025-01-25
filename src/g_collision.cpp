@@ -1,5 +1,5 @@
-#include "sanity.hpp"
 #include "g_common.hpp"
+#include "g_devices.hpp"
 #include "g_actors.hpp"
 std::vector<std::vector<Actor *>> to_be_collided;
 
@@ -8,10 +8,14 @@ std::vector<std::vector<Actor *>> to_be_collided;
 void P_CheckCollisions(std::vector<Actor *> troupe)
 {
 	to_be_collided.clear();
+	Collider *collider_1 = NULL;
+	Collider *collider_2 = NULL;
 
 	for(Actor *iterator_actor : troupe)
 	{
-		if(iterator_actor->collider == NULL)
+		if(iterator_actor->getDevice(DEVICE_COLLIDER) != NULL)
+			collider_1 = static_cast<Collider *>(iterator_actor->getDevice(DEVICE_COLLIDER));
+		else
 			continue;
 
 		// For now, pretend that every Actor in the Theatre is
@@ -19,16 +23,20 @@ void P_CheckCollisions(std::vector<Actor *> troupe)
 		std::vector<Actor *> stooges;
 		for(Actor *checking_actor : troupe)
 		{
-			if(checking_actor->collider == NULL || !checking_actor->collider->sleeping || iterator_actor->name == checking_actor->name)
+			if(iterator_actor->name == checking_actor->name)
 				continue;
 
-			if(iterator_actor->collider->checkCollision(checking_actor->collider))
-				stooges.insert(stooges.end(), checking_actor);
+			if(checking_actor->getDevice(DEVICE_COLLIDER) != NULL)
+			{
+				collider_2 = static_cast<Collider *>(checking_actor->getDevice(DEVICE_COLLIDER));
+				if(!collider_2->sleeping)
+					continue;
+			}
+			else
+				continue;
 
-			// PRINT(iterator_actor->name << " AABB:\n\ttop_left_back: " << glm::to_string(AABB_1->top_left_back) << "\n\tbottom_right_front: " << glm::to_string(AABB_1->bottom_right_front));
-			// PRINT(checking_actor->name << " AABB:\n\ttop_left_back: " << glm::to_string(AABB_2->top_left_back) << "\n\tbottom_right_front: " << glm::to_string(AABB_2->bottom_right_front));
-			// PRINT("Collision check for [" << iterator_actor->name << "] and [" << checking_actor->name << "]");
-			// PRINT("X-Axis: " << collision_check[0] << "\nY-Axis: " << collision_check[1] << "\nZ-Axis: " << collision_check[2]);
+			if(collider_1->checkCollision(collider_2))
+				stooges.insert(stooges.end(), checking_actor);
 		}
 
 		if(stooges.size() <= 0)
@@ -39,12 +47,16 @@ void P_CheckCollisions(std::vector<Actor *> troupe)
 	}
 
 	for(std::vector<Actor *> collision_buffer : to_be_collided)
-	{
-		for(unsigned int i = 0 ; i < collision_buffer.size(); i++)
-		{
-			collision_buffer[i]->collider->sleeping = true;
-		}
-	}
+		for(Actor *actor : collision_buffer)
+			if(actor->getDevice(DEVICE_COLLIDER) != NULL)
+			{
+				static_cast<Collider *>(actor->getDevice(DEVICE_COLLIDER))->sleeping = true;
+				static_cast<PhysicsActor *>(actor)->falling = false; // Testing; make this not a thing, lol
+				// Print stuff for debugging
+				// std::string collider_position = glm::to_string(static_cast<Collider *>(actor->getDevice(DEVICE_COLLIDER))->position);
+				// std::string collider_scale = glm::to_string(static_cast<Collider *>(actor->getDevice(DEVICE_COLLIDER))->scale);
+				// PRINT(actor->name << "'s Collider:\n\t- Position: " << collider_position << "\n\t- Scale: " << collider_scale);
+			}
 }
 
 /*

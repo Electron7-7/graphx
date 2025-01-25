@@ -7,14 +7,24 @@
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include "g_common.hpp"
-// #include "theatres/lighting_testing.graphxtheatre"
 #include "theatres/collision_testing.graphxtheatre"
 #include <iostream>
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+#include <Jolt/Physics/PhysicsSettings.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
-GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
+Collider player_collider(glm::vec3(1.0f, 3.0f, 1.0f), glm::vec3(0.0f, 6.0f, 0.0f));
+GraphXPlayer player("Player", &player_collider, glm::vec3(0.0f, 6.0f, 0.0f));
 Environment default_environment(true);
 
 std::mutex actor_state_mutex;
@@ -97,10 +107,186 @@ int main()
 	return 0;
 }
 
+static void TraceImpl(const char *inFMT, ...)
+{
+	va_list list;
+	va_start(list, inFMT);
+	char buffer[1024];
+	vsnprintf(buffer, sizeof(buffer), inFMT, list);
+	va_end(list);
+
+	std::cout << buffer << std::endl;
+}
+
+#ifdef JPH_ENABLE_ASSERTS
+static bool AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, uint inLine)
+{
+	std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage !=nullptr? inMessage: "") << std::endl;
+
+	return true;
+}
+#endif
+
+namespace Layers
+{
+	static constexpr JPH::ObjectLayer NON_MOVING = 0;
+	static constexpr JPH::ObjectLayer MOVING = 1;
+	static constexpr JPH::ObjectLayer NUM_LAYERS = 2;
+};
+
+class ObjectLayerPairFilterImpl : public JPH::ObjectLayerPairFilter
+{
+public:
+	virtual bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override
+	{
+		switch(inObject1)
+		{
+			case Layers::NON_MOVING:
+				return inObject2 == Layers::MOVING;
+			case Layers::MOVING:
+				return true;
+			default:
+				JPH_ASSERT(false);
+				return false;
+		}
+	}
+};
+
+namespace BroadPhaseLayers
+{
+	static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
+	static constexpr JPH::BroadPhaseLayer MOVING(1);
+	static constexpr uint NUM_LAYERS(2);
+};
+
+class BPLayerInterfaceImpl final : public JPH::BroadPhaseLayerInterface
+{
+public:
+	BPLayerInterfaceImpl()
+	{
+		mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
+		mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
+	}
+
+	virtual uint GetNumBroadPhaseLayers() const override
+	{
+		return BroadPhaseLayers::NUM_LAYERS;
+	}
+
+	virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override
+	{
+		JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
+		return mObjectToBroadPhase[inLayer];
+	}
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+	virtual const char *GetBroadPhaseLayerName(JPH::BroadBroadPhaseLayer inLayer)
+	{
+		switch ((JPH::BroadPhaseLayer::Type)inLayer)
+		{
+			case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:
+				return "NON_MOVING";
+			case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::MOVING:
+				return "MOVING";
+			default:
+				JPH_ASSERT(false);
+				return "INVALID";
+		}
+	}
+#endif
+
+private:
+	JPH::BroadPhaseLayer mObjectToBroadPhase[Layers::NUM_LAYERS];
+};
+
+class ObjectVsBroadPhaseLayerFilterImpl : public JPH::ObjectVsBroadPhaseLayerFilter
+{
+public:
+	virtual bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override
+	{
+		switch(inLayer1)
+		{
+			case Layers::NON_MOVING:
+				return inLayer2 == BroadPhaseLayers::MOVING;
+			case Layers::MOVING:
+				return true;
+			default:
+				JPH_ASSERT(false);
+				return false;
+		}
+	}
+};
+
+class MyContantListener : public JPH::ContactListener
+{
+	virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override
+	{
+		std::cout << "Contanct validate callback" << std::endl;
+		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
+	}
+
+	virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
+	{
+		std::cout << "A contact was added" << std::endl;
+	}
+
+	virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
+	{
+		std::cout << "A contact was persisted" << std::endl;
+	}
+
+	virtual void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
+	{
+		std::cout << "A contact was removed" << std::endl;
+	}
+};
+
+class MyBodyActivationListener : public JPH::BodyActivationListener
+{
+public:
+	virtual void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
+	{
+		std::cout << "A body got activated" << std::endl;
+	}
+
+	virtual void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
+	{
+		std::cout << "A body went to sleep" << std::endl;
+	}
+};
+
 void testGameTick(GLFWwindow *main_window)
 {
-	// current_theatre = &lighting_testing_theatre;
+	/*JPH::RegisterDefaultAllocator();
+	JPH::Factory::sInstance = new JPH::Factory();
+	JPH::RegisterTypes();
+	JPH::TempAllocatorImpl temp_allocator(10 * 1024 * 1024);
+	JPH::JobSystemThreadPool job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() -1);
+
+	const JPH::uint cMaxBodies = 1024;
+	const JPH::uint cNumBodyMutexes = 0;
+	const JPH::uint cMaxBodyPairs = 1024;
+	const JPH::uint cMaxContactConstraints = 1024;
+
+	BPLayerInterfaceImpl broad_phase_layer_interface;
+	ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
+	ObjectLayerPairFilterImpl object_vs_object_layer_filter;
+
+	JPH::PhysicsSystem physics_system;
+	physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
+
+	MyBodyActivationListener body_activation_listener;
+	physics_system.SetBodyActivationListener(&body_activation_listener);*/
+
+
 	current_theatre = &collision_testing_theatre;
+	current_theatre->actorEnter(&player);
+	// This is a good example of what a Theatre::init() function should do
+	// Collider test_collider_1 = Collider();
+	// Collider test_collider_2 = Collider();
+	controlledActor1.giveDevice(&test_collider);
+	theatre_floor.giveDevice(&floor_collider);
+	// controlledActor2.giveDevice(&test_collider_2);
+
 	time_to_store_buffers = true;
 
 	double last_time = glfwGetTime();
@@ -128,7 +314,7 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
-			if(PER_SECOND(3)) // 3 times per second
+			if(PER_SECOND(120)) // 3 times per second
 				P_CheckCollisions(current_theatre->troupe);
 
 			player_flashlight.setLight(test_flashlight_bool);
@@ -197,8 +383,8 @@ void processInput(GLFWwindow *window)
 	controlledActor1.movement_direction[0] = glfwGetKey(window, GLFW_KEY_UP) - glfwGetKey(window, GLFW_KEY_DOWN);
 	controlledActor1.movement_direction[1] = glfwGetKey(window, GLFW_KEY_RIGHT) - glfwGetKey(window, GLFW_KEY_LEFT);
 
-	controlledActor2.movement_direction[2] = glfwGetKey(window, GLFW_KEY_KP_8) - glfwGetKey(window, GLFW_KEY_KP_2);
-	controlledActor2.movement_direction[1] = glfwGetKey(window, GLFW_KEY_KP_6) - glfwGetKey(window, GLFW_KEY_KP_4);
+	// controlledActor2.movement_direction[2] = glfwGetKey(window, GLFW_KEY_KP_8) - glfwGetKey(window, GLFW_KEY_KP_2);
+	// controlledActor2.movement_direction[1] = glfwGetKey(window, GLFW_KEY_KP_6) - glfwGetKey(window, GLFW_KEY_KP_4);
 #endif
 }
 

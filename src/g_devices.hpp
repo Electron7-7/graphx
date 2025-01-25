@@ -1,17 +1,31 @@
 #ifndef GRAPHX_DEVICES
 #define GRAPHX_DEVICES
-#include "sanity.hpp"
-class Actor; // Forward-declare Actor
+#include "g_common.hpp"
 
-struct Collider
+struct Collider : public Device
 {
-	glm::vec3 top_left_back;
-	glm::vec3 bottom_right_front;
+	glm::vec3 scale;
+	glm::vec3 position;
+
 	bool sleeping = true;
 
-	Collider(glm::vec3 init_top_left_back, glm::vec3 init_bottom_right_front)
-	: top_left_back(init_top_left_back), bottom_right_front(init_bottom_right_front)
-	{}
+	Collider(glm::vec3 init_scale = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(0.0f))
+	: scale(init_scale), position(init_position)
+	{ type = DEVICE_COLLIDER; }
+
+	Collider(Device &sample)
+	{
+		type = DEVICE_COLLIDER;
+		scale = glm::vec3(1.0f);
+		position = glm::vec3(0.0f);
+	}
+
+	Collider(Collider &sample)
+	{
+		type = DEVICE_COLLIDER;
+		scale = sample.scale;
+		position = sample.position;
+	}
 
 	bool checkCollision(Collider *other_collider);
 };
