@@ -9,14 +9,14 @@ CCFLAGS = -g -Wall
 
 JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
 
-WCXXFLAGS = -g -Wall -std=c++20 -D GRAPHX_COMPILING -static -mwindows
+WCXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) -D GRAPHX_COMPILING -D GRAPHX_DEBUG -static -mwindows
 WCCFLAGS = -g -Wall -static -mwindows
 
 INCLUDES = -I src/include
 WINCLUDES = -I src/include -I src/windows_dependencies/include
 
 LIBS = -l glfw -L src/lib -l:libJolt.a
-WLIBS = -L src/windows_dependencies/lib src/windows_dependencies/lib/lib-mingw-w64/libglfw3.a -l gdi32
+WLIBS = -L src/windows_dependencies/lib src/windows_dependencies/lib/libJolt.a src/windows_dependencies/lib/lib-mingw-w64/libglfw3.a -l gdi32
 
 SRC := src
 
@@ -108,7 +108,8 @@ $(O)/%.o:	$(SRC)/%.c
 build_windows: $(O)/$(WINDOWS)
 
 windows_test: build_windows
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(WINDOWS)
+# 	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(WINDOWS)
+	wine64 $(O)/$(WINDOWS)
 
 $(O)/$(WINDOWS): $(O)/images.wo $(O)/shaders.wopp $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(O)/images.wo $(O)/shaders.wopp $(WOBJS) $(O)/main.wopp \
