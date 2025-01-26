@@ -29,16 +29,22 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #include <glm/ext.hpp>
 
 #include <Jolt/Jolt.h>
-// #include <Jolt/RegisterTypes.h>
-// #include <Jolt/Core/Factory.h>
-// #include <Jolt/Core/TempAllocator.h>
-// #include <Jolt/Core/JobSystemThreadPool.h>
-// #include <Jolt/Physics/PhysicsSettings.h>
-// #include <Jolt/Physics/PhysicsSystem.h>
-// #include <Jolt/Physics/Collision/Shape/BoxShape.h>
-// #include <Jolt/Physics/Collision/Shape/SphereShape.h>
-// #include <Jolt/Physics/Body/BodyCreationSettings.h>
-// #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
-// JPH_SUPPRESS_WARNINGS
+namespace Layers
+{
+	static constexpr JPH::ObjectLayer NON_MOVING = 0;
+	static constexpr JPH::ObjectLayer MOVING = 1;
+	static constexpr JPH::ObjectLayer NUM_LAYERS = 2;
+};
+
+namespace BroadPhaseLayers
+{
+	static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
+	static constexpr JPH::BroadPhaseLayer MOVING(1);
+	static constexpr uint NUM_LAYERS(2);
+};
 #endif

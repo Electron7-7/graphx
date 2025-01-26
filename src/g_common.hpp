@@ -6,9 +6,9 @@
 #define QUATERNION_CHANGE_EULER 1
 
 #define ACTOR_ACTOR 			0
-#define ACTOR_PHYSICS			0
 #define ACTOR_TOOL  			1
 #define ACTOR_LIGHT 			1
+#define ACTOR_PHYSICS			2
 
 #define DEVICE_DEVICE			0
 #define DEVICE_COLLIDER			1

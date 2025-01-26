@@ -18,8 +18,10 @@ struct Theatre
 	int spot_lights_count = 0;
 	Mesh stage;
 
-	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_troupe = {}, Mesh init_stage = Mesh(NULL));
+	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_troupe = {}, Mesh init_stage = Mesh());
 
+	void initializeActors(JPH::PhysicsSystem *physics_system);
+	void encore(JPH::PhysicsSystem *physics_system);
 	void actorEnter(Actor *new_actor);
 	void troupeEnter(std::vector<Actor *> new_troupe);
 	void actorLeave(Actor *old_actor);

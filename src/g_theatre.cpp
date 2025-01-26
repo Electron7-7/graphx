@@ -15,8 +15,32 @@ Theatre::Theatre(std::string init_name, std::vector<Actor *> init_troupe, Mesh i
 	stage.name = "THEATRE STAGE";
 	sortTroupe();
 	countLights();
+}
+
+void Theatre::initializeActors(JPH::PhysicsSystem *physics_system)
+{
 	for(Actor *actor : troupe)
+	{
 		actor->init(this);
+		if(actor->actor_type == ACTOR_PHYSICS)
+		{
+			static_cast<PhysicsActor *>(actor)->physics_system = physics_system;
+			static_cast<PhysicsActor *>(actor)->physics_body_id = physics_system->GetBodyInterface().CreateAndAddBody(static_cast<PhysicsActor *>(actor)->box_settings, JPH::EActivation::Activate);
+		}
+	}
+}
+
+void Theatre::encore(JPH::PhysicsSystem *physics_system)
+{
+	for(Actor *actor : troupe)
+	{
+		if(actor->actor_type == ACTOR_PHYSICS)
+		{
+			JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
+			body_interface.RemoveBody(static_cast<PhysicsActor *>(actor)->physics_body_id);
+			body_interface.DestroyBody(static_cast<PhysicsActor *>(actor)->physics_body_id);
+		}
+	}
 }
 
 void Theatre::actorEnter(Actor *new_actor)

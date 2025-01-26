@@ -4,29 +4,30 @@ CC = clang
 WCXX = x86_64-w64-mingw32-g++
 WCC = x86_64-w64-mingw32-gcc
 
-CXXFLAGS = -g -Wall -std=c++20 -D GRAPHX_COMPILING
-CFLAGS = -g -Wall
+CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) -D GRAPHX_COMPILING -D GRAPHX_DEBUG
+CCFLAGS = -g -Wall
+
+JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
 
 WCXXFLAGS = -g -Wall -std=c++20 -D GRAPHX_COMPILING -static -mwindows
-WCFLAGS = -g -Wall -static -mwindows
+WCCFLAGS = -g -Wall -static -mwindows
 
 INCLUDES = -I src/include
 WINCLUDES = -I src/include -I src/windows_dependencies/include
 
-LIBS = -l glfw
+LIBS = -l glfw -L src/lib -l:libJolt.a
 WLIBS = -L src/windows_dependencies/lib src/windows_dependencies/lib/lib-mingw-w64/libglfw3.a -l gdi32
 
 SRC := src
 
 O = build
 
-OBJS = \
-	$(O)/glad.o				\
-	$(O)/r_common.opp		\
-	$(O)/r_renderer.opp		\
-	$(O)/g_collision.opp	\
-	$(O)/g_devices.opp		\
-	$(O)/g_actors.opp		\
+OBJS = 					\
+	$(O)/glad.o			\
+	$(O)/r_common.opp	\
+	$(O)/r_renderer.opp	\
+	$(O)/g_devices.opp	\
+	$(O)/g_actors.opp	\
  	$(O)/g_theatre.opp
 
 CWOBJS = $(OBJS:.o=.wo)
@@ -92,16 +93,16 @@ $(O)/$(LINUX): $(O)/images.o $(O)/shaders.opp $(OBJS) $(O)/main.opp
 	-o $(O)/$(LINUX) $(LIBS)
 
 $(O)/images.o: $(I_C)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
 
 $(O)/shaders.opp: $(S_C)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
 
 $(O)/%.opp:	$(SRC)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(O)/%.o:	$(SRC)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
 
 
 build_windows: $(O)/$(WINDOWS)
@@ -117,10 +118,10 @@ $(O)/%.wopp: $(SRC)/%.cpp
 	$(WCXX) $(WCXXFLAGS) $(WINCLUDES) -c $< -o $@
 
 $(O)/%.wo: $(SRC)/%.c
-	$(WCC) $(WCFLAGS) $(WINCLUDES) -c $< -o $@
+	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
 
 $(O)/images.wo: $(I_C)
-	$(WCC) $(WCFLAGS) $(WINCLUDES) -c $< -o $@
+	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
 
 $(O)/shaders.wopp: $(S_C)
-	$(WCC) $(WCFLAGS) $(WINCLUDES) -c $< -o $@
+	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@

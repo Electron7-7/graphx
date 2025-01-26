@@ -1,5 +1,4 @@
 #include "g_devices.hpp"
-// #include "g_common.hpp"
 
 bool Collider::checkCollision(Collider *other_collider)
 {

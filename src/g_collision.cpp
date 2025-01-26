@@ -51,7 +51,6 @@ void P_CheckCollisions(std::vector<Actor *> troupe)
 			if(actor->getDevice(DEVICE_COLLIDER) != NULL)
 			{
 				static_cast<Collider *>(actor->getDevice(DEVICE_COLLIDER))->sleeping = true;
-				static_cast<PhysicsActor *>(actor)->falling = false; // Testing; make this not a thing, lol
 				// Print stuff for debugging
 				// std::string collider_position = glm::to_string(static_cast<Collider *>(actor->getDevice(DEVICE_COLLIDER))->position);
 				// std::string collider_scale = glm::to_string(static_cast<Collider *>(actor->getDevice(DEVICE_COLLIDER))->scale);
@@ -74,12 +73,3 @@ void P_CheckCollisions(std::vector<Actor *> troupe)
 		- V1 = initial velocity of the first object in m/s
 		- V2 = initial velocity of the second object in m/s
 */
-// NOT FINISHED!!
-/*glm::vec3 P_CalculateInelasticCollision(Actor *stooge_left, Actor *stooge_right)
-{
-	glm::vec3 top_half = (stooge_left->mass * stooge_left->velocity) + (stooge_right->mass * stooge_right->velocity);
-	float bottom_half = (stooge_left->mass + stooge_right->mass);
-	glm::vec3 final_velocity = top_half / bottom_half;
-
-	return final_velocity;
-}*/

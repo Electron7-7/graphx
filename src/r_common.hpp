@@ -105,7 +105,6 @@ struct Material
 
 struct Mesh
 {
-	Actor *owner;
 	Material material; // Change to vector of materials later(?)
 
 	std::string name = "MESH";
@@ -117,16 +116,16 @@ struct Mesh
 	unsigned int IBO;
 	bool is_buffered = false;
 	
-	Mesh(Actor *init_owner = NULL, Material init_material = Material(), const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, const unsigned int init_vao_index = VAO_HANDMADE)
-	: owner(init_owner), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
+	Mesh(Material init_material = Material(), const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, const unsigned int init_vao_index = VAO_HANDMADE)
+	: material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
 	{}
 };
 
 struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Actor *init_owner = NULL, Material init_material = Material(), const unsigned int init_vao_index = VAO_HANDMADE)
-	: Mesh(init_owner, init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
+	Sprite(Material init_material = Material(), const unsigned int init_vao_index = VAO_HANDMADE)
+	: Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
 	{}
 };
 

@@ -13,27 +13,29 @@ class PhysicsActor: public Actor
 {
 public:
 	float mass = 1.0f; // in kg
-	bool falling = true;
+	float drag = 0.0f;
+	float friction = 0.0f;
 
-	PhysicsActor(std::string new_name, Mesh init_mesh, Collider *init_collider, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	JPH::BodyID physics_body_id;
+	JPH::BodyCreationSettings box_settings;
+	JPH::PhysicsSystem *physics_system = NULL;
+
+	PhysicsActor(std::string new_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
 	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale)
-	{
-		actor_type = ACTOR_PHYSICS;
-		giveDevice(init_collider);
-	}
+	{ actor_type = ACTOR_PHYSICS; }
 
-	virtual void doGravity(glm::vec3 gravity_direction, float gravity_amount);
-	virtual void updateCollider();
+	void init(Theatre *parent_theatre) override;
+	void Tick(int current_tick) override;
 };
 
-class GraphXPlayer: public PhysicsActor
+class GraphXPlayer: public Actor
 {
 public:
 	float mouse_sensitivity;
 	float movement_speed = 0.05f;
 
-	GraphXPlayer(std::string new_name, Collider *init_collider, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
-	: PhysicsActor(new_name, Mesh(this), init_collider, init_position, init_rotation_euler), mouse_sensitivity(INIT_SENSITIVITY)
+	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
+	: Actor(new_name, Mesh(), init_position, init_rotation_euler), mouse_sensitivity(INIT_SENSITIVITY)
 	{
 		visible = false;
 		debug_visible = false;
@@ -67,12 +69,9 @@ public:
 	float movement_speed = 0.025f;
 	int movement_direction[3];
 
-	ControlledTester(std::string init_name, Mesh init_mesh, Collider *init_collider, glm::vec3 init_position = glm::vec3(0.0f, 3.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: PhysicsActor(init_name, init_mesh, init_collider, init_position, glm::vec3(0.0f, 0.0f, 0.0f), init_scale)
-	{
-		actor_type = ACTOR_PHYSICS;
-		giveDevice(init_collider);
-	}
+	ControlledTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 3.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: PhysicsActor(init_name, init_mesh, init_position, glm::vec3(0.0f, 0.0f, 0.0f), init_scale)
+	{}
 
 	void Tick(int current_tick) override;
 };
@@ -90,7 +89,7 @@ public:
 	float falloff;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
 
 	Light(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f))
-	: Actor(init_name, Mesh(this, Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f)), init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
+	: Actor(init_name, Mesh(Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f)), init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
 	{
 		actor_type = ACTOR_TOOL;
 		light_type = LIGHT_POINT;
@@ -153,7 +152,7 @@ public:
 	Actor pivot_point;
 
 	LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f))
-	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed), pivot_point(Actor(std::string("pivot point for ") + init_name, Mesh(&pivot_point, Material(true, glm::vec3(1.0f, 0.0f, 0.0f))), init_pivot_position, glm::vec3(0.0f), glm::vec3(0.2f)))
+	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed), pivot_point(Actor(std::string("pivot point for ") + init_name, Mesh(Material(true, glm::vec3(1.0f, 0.0f, 0.0f))), init_pivot_position, glm::vec3(0.0f), glm::vec3(0.2f)))
 	{
 		pivot_point.mesh.name = "PIVOT";
 	}

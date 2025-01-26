@@ -661,3 +661,10 @@ Note: yes, change unordered_map to multi_map and make collision checks go throug
 Collision is implemented and a rough draft of gravity is also implemented. I tried to get it to work on the player but it doesn't yet. Part of the problem is that the movement will override the gravity changes because of how it works with orientation_front; I've reverted movement back to normal which includes this problem, so be mindful of that when next working on this. However, it does work on a cube. It currently is in a very rough draft stage but it does work. Jolt implementation was started (i.e: copying the Jolt Hello World) but not finished. I'm very fucking excited!
 
 :3
+
+[01/26/25] (at 12:26)
+Fucking finally! I have (poorly) implemented Jolt Physics into GraphX! All PhysicsActors now create box physics bodies for themselves and are affected by gravity. Note that the floor is currently hardcoded, because the current implementation of physics is very bare bones and I haven't created distinction between static and dynamic bodies in PhysicsActor. This took a while to fucking wrap my head around, but I am so happy that I have Jolt Physics in GraphX!!
+
+Shame that my custom Collider code will go unused but that's fine by me if it means I don't have to fucking create my own physics engine from scratch (that will be for a later project).
+
+Added in physics rotations at the last second!

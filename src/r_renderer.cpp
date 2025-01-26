@@ -114,8 +114,8 @@ void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 proj
 			// Note: Quaternions (and angular movement) should use slerp instead of lerp
 			std::lock_guard guard(state_mutex);
 
-			RenderState current_state		=	mesh->owner->current_state_buffer[mesh->owner->state_index];
-			RenderState previous_state		=	mesh->owner->previous_state_buffer[mesh->owner->state_index];
+			RenderState current_state		=	actor->current_state_buffer[actor->state_index];
+			RenderState previous_state		=	actor->previous_state_buffer[actor->state_index];
 
 			glm::vec3 interpolated_position	=	current_state.render_position;
 			glm::quat interpolated_quat		=	current_state.render_quaternion;

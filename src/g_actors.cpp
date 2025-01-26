@@ -3,16 +3,6 @@
 #include "g_devices.hpp"
 #include "g_theatre.hpp"
 #include <unordered_map>
-#include <Jolt/RegisterTypes.h>
-#include <Jolt/Core/Factory.h>
-#include <Jolt/Core/TempAllocator.h>
-#include <Jolt/Core/JobSystemThreadPool.h>
-#include <Jolt/Physics/PhysicsSettings.h>
-#include <Jolt/Physics/PhysicsSystem.h>
-#include <Jolt/Physics/Collision/Shape/BoxShape.h>
-#include <Jolt/Physics/Collision/Shape/SphereShape.h>
-#include <Jolt/Physics/Body/BodyCreationSettings.h>
-#include <Jolt/Physics/Body/BodyActivationListener.h>
 
 GraphXPlayer *current_player = NULL;
 
@@ -66,7 +56,6 @@ int Actor::giveDevice(Device *new_device)
 			break;
 
 		case DEVICE_COLLIDER:
-			PRINT("NEW COLLIDER!");
 			static_cast<Collider *>(new_device)->scale = scale;
 			static_cast<Collider *>(new_device)->position = position_global;
 			break;
@@ -103,21 +92,18 @@ bool Actor::wantsToBeBuffered()
 //
 // PhysicsActor
 //
-void PhysicsActor::doGravity(glm::vec3 gravity_direction, float gravity_amount)
+void PhysicsActor::init(Theatre *parent_theatre)
 {
-	if(!falling)
-		return;
-
-	position_global += gravity_direction * gravity_amount;
+	box_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), JPH::Quat(rotation_quaternion[0], rotation_quaternion[1], rotation_quaternion[2], rotation_quaternion[3]), JPH::EMotionType::Dynamic, Layers::MOVING);
 }
 
-void PhysicsActor::updateCollider()
+void PhysicsActor::Tick(int current_tick)
 {
-	if(auto find_collider = devices.find(DEVICE_COLLIDER) ; find_collider != devices.end())
-	{
-		static_cast<Collider *>(find_collider->second)->position = position_global;
-		static_cast<Collider *>(find_collider->second)->scale = scale;
-	}
+	JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
+	position_global = glm::vec3(body_interface.GetCenterOfMassPosition(physics_body_id)[0], body_interface.GetCenterOfMassPosition(physics_body_id)[1], body_interface.GetCenterOfMassPosition(physics_body_id)[2]);
+	JPH::Vec3 jph_euler = body_interface.GetRotation(physics_body_id).GetEulerAngles();
+	rotation_euler = glm::vec3(jph_euler[0], jph_euler[1], jph_euler[2]);
+	updateRotation(EULER_CHANGE_QUATERNION);
 }
 
 //
@@ -174,8 +160,7 @@ void MoverTester::Tick(int current_tick)
 
 void ControlledTester::Tick(int current_tick)
 {
-	PhysicsActor::doGravity(glm::vec3(0.0f, -1.0f, 0.0f), 0.05f);
-	PhysicsActor::updateCollider();
+	PhysicsActor::Tick(current_tick);
 
 	position_global[2] -= static_cast<float>(movement_direction[0] * movement_speed);
 	position_global[0] += static_cast<float>(movement_direction[1] * movement_speed);
