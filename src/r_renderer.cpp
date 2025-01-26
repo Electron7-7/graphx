@@ -135,8 +135,8 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 			}
 
 			model_matrix = glm::translate(model_matrix, interpolated_position);
-			model_matrix = glm::scale(model_matrix, interpolated_scale);
 			model_matrix *= glm::toMat4(interpolated_quat);
+			model_matrix = glm::scale(model_matrix, interpolated_scale);
 
 			glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);

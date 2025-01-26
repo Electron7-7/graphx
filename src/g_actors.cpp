@@ -100,6 +100,8 @@ void PhysicsActor::init(Theatre *parent_theatre)
 {
 	Actor::init(parent_theatre);
 	box_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EMotionType::Dynamic, Layers::MOVING);
+	reset_position = convertMath<JPH::Vec3>(position_global);
+	reset_quaternion = rotation_quaternion;
 }
 
 void PhysicsActor::Tick(int current_tick)
@@ -113,7 +115,7 @@ void PhysicsActor::Tick(int current_tick)
 void PhysicsActor::reset_to_initial_orientation_for_testing()
 {
 	JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
-	body_interface.SetPositionAndRotation(physics_body_id, JPH::RVec3(convertMath<JPH::Vec3>(position_global)), reset_quaternion, JPH::EActivation::Activate);
+	body_interface.SetPositionAndRotation(physics_body_id, JPH::RVec3(reset_position), reset_quaternion, JPH::EActivation::Activate);
 	body_interface.SetLinearAndAngularVelocity(physics_body_id, JPH::Vec3::sZero(), JPH::Vec3::sZero());
 }
 

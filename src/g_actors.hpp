@@ -20,11 +20,11 @@ public:
 	JPH::BodyCreationSettings box_settings;
 	JPH::PhysicsSystem *physics_system = NULL;
 
-	glm::vec3 reset_position;
+	JPH::Vec3 reset_position;
 	JPH::Quat reset_quaternion;
 
 	PhysicsActor(std::string new_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale), reset_position(init_position), reset_quaternion(JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(init_rotation_euler)))
+	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale)
 	{ actor_type = ACTOR_PHYSICS; }
 
 	void init(Theatre *parent_theatre) override;

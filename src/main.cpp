@@ -293,7 +293,7 @@ void testGameTick(GLFWwindow *main_window)
 	JPH::Body *wall = body_interface.CreateBody(wall_settings);
 	body_interface.AddBody(wall->GetID(), JPH::EActivation::DontActivate);
 
-	const float cDeltaTime = 1.0f / 120.0f;
+	const float cDeltaTime = 1.0f / (120.0f * 1); // That (120.0f * 1) is for testing so I can slow down or speed up the physics engine
 	physics_system.OptimizeBroadPhase();
 
 	current_theatre = &collision_testing_theatre;
