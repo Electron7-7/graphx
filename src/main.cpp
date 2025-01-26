@@ -278,13 +278,21 @@ void testGameTick(GLFWwindow *main_window)
 
 	JPH::BodyInterface &body_interface = physics_system.GetBodyInterface();
 
-	JPH::BoxShapeSettings floor_shape_settings(JPH::Vec3(100.0f, 1.0f, 100.0f));
+	JPH::BoxShapeSettings floor_shape_settings(JPH::Vec3(20.0f, 1.0f, 20.0f));
 	floor_shape_settings.SetEmbedded();
 	JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
 	JPH::ShapeRefC floor_shape = floor_shape_result.Get();
 	JPH::BodyCreationSettings floor_settings(floor_shape, JPH::RVec3(JPH::Real3(0.0, 0.0, 0.0)), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
 	JPH::Body *floor = body_interface.CreateBody(floor_settings);
 	body_interface.AddBody(floor->GetID(), JPH::EActivation::DontActivate);
+
+	JPH::BoxShapeSettings wall_shape_settings(JPH::Vec3(20.0f, 20.0f, 1.0f));
+	wall_shape_settings.SetEmbedded();
+	JPH::ShapeSettings::ShapeResult wall_shape_result = wall_shape_settings.Create();
+	JPH::ShapeRefC wall_shape = wall_shape_result.Get();
+	JPH::BodyCreationSettings wall_settings(wall_shape, JPH::RVec3(JPH::Real3(0.0, 0.0, -21.5)), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
+	JPH::Body *wall = body_interface.CreateBody(wall_settings);
+	body_interface.AddBody(wall->GetID(), JPH::EActivation::DontActivate);
 
 	const float cDeltaTime = 1.0f / 120.0f;
 	physics_system.OptimizeBroadPhase();
@@ -344,6 +352,8 @@ void testGameTick(GLFWwindow *main_window)
 
 	body_interface.RemoveBody(floor->GetID());
 	body_interface.DestroyBody(floor->GetID());
+	body_interface.RemoveBody(wall->GetID());
+	body_interface.DestroyBody(wall->GetID());
 
 	JPH::UnregisterTypes();
 

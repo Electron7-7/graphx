@@ -69,8 +69,8 @@ public:
 	float movement_speed = 0.025f;
 	int movement_direction[3];
 
-	ControlledTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 3.0f, -3.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: PhysicsActor(init_name, init_mesh, init_position, glm::vec3(0.0f, 0.0f, 0.0f), init_scale)
+	ControlledTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 3.0f, -3.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: PhysicsActor(init_name, init_mesh, init_position, init_rotation_euler, init_scale)
 	{}
 
 	void Tick(int current_tick) override;
