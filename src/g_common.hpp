@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "r_common.hpp"
+#include "g_math.hpp"
 
 #define EULER_CHANGE_QUATERNION 0
 #define QUATERNION_CHANGE_EULER 1
@@ -9,6 +10,7 @@
 #define ACTOR_TOOL  			1
 #define ACTOR_LIGHT 			1
 #define ACTOR_PHYSICS			2
+#define ACTOR_PLAYER			3
 
 #define DEVICE_DEVICE			0
 #define DEVICE_COLLIDER			1
@@ -27,11 +29,11 @@ struct Device
 struct RenderState
 {
 	glm::vec3 render_position;
-	glm::quat render_quaternion;
+	JPH::Quat render_quaternion;
 	// glm::vec3 render_euler;
 	glm::vec3 render_scale;
 
-	RenderState(glm::vec3 init_position = glm::vec3(0.0f), glm::quat init_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	RenderState(glm::vec3 init_position = glm::vec3(0.0f), JPH::Quat init_quaternion = JPH::Quat::sIdentity(), glm::vec3 init_scale = glm::vec3(1.0f))
 	: render_position(init_position), render_quaternion(init_quaternion), render_scale(init_scale)
 	{}
 };
@@ -49,7 +51,7 @@ public:
 
 	glm::vec3 position_global;
 	glm::vec3 rotation_euler;
-	glm::quat rotation_quaternion;
+	JPH::Quat rotation_quaternion;
 	glm::vec3 scale = glm::vec3(1.0f);
 	glm::vec2 velocity_horizontal;
 	glm::vec3 velocity;
@@ -78,7 +80,7 @@ public:
 		name = new_name;
 		world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 		rotation_euler = init_rotation_euler;
-		rotation_quaternion = glm::quat(init_rotation_euler);
+		rotation_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(init_rotation_euler));
 		current_state = RenderState(init_position, rotation_quaternion);
 		updateVectors();
 	}

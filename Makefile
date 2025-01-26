@@ -26,6 +26,7 @@ OBJS = 					\
 	$(O)/glad.o			\
 	$(O)/r_common.opp	\
 	$(O)/r_renderer.opp	\
+	$(O)/g_math.opp		\
 	$(O)/g_devices.opp	\
 	$(O)/g_actors.opp	\
  	$(O)/g_theatre.opp

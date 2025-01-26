@@ -13,10 +13,12 @@ void Actor::updateRotation(bool override_which)
 {
 	if(override_which == EULER_CHANGE_QUATERNION)
 	{
-		rotation_quaternion = glm::quat(rotation_euler);
+		rotation_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(rotation_euler));
 		return;
 	}
-	rotation_euler = glm::eulerAngles(rotation_quaternion);
+
+	JPH::Vec3 temp_rotation_euler = rotation_quaternion.GetEulerAngles();
+	rotation_euler = convertMath<glm::vec3>(temp_rotation_euler);
 }
 
 void Actor::updateVectors()
@@ -77,11 +79,13 @@ void Actor::Tick(int current_tick)
 {}
 
 void Actor::init(Theatre *parent_theatre)
-{}
+{
+	rotation_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(rotation_euler));
+}
 
 bool Actor::wantsToBeRendered()
 {
-	return (actor_type != ACTOR_TOOL && visible) || debug_visible;
+	return ( (actor_type != ACTOR_TOOL && visible) || debug_visible );
 }
 
 bool Actor::wantsToBeBuffered()
@@ -94,26 +98,28 @@ bool Actor::wantsToBeBuffered()
 //
 void PhysicsActor::init(Theatre *parent_theatre)
 {
-	box_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), JPH::Quat(rotation_quaternion[0], rotation_quaternion[1], rotation_quaternion[2], rotation_quaternion[3]), JPH::EMotionType::Dynamic, Layers::MOVING);
+	Actor::init(parent_theatre);
+	box_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EMotionType::Dynamic, Layers::MOVING);
 }
 
 void PhysicsActor::Tick(int current_tick)
 {
 	JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
 	position_global = glm::vec3(body_interface.GetCenterOfMassPosition(physics_body_id)[0], body_interface.GetCenterOfMassPosition(physics_body_id)[1], body_interface.GetCenterOfMassPosition(physics_body_id)[2]);
-	JPH::Vec3 jph_euler = body_interface.GetRotation(physics_body_id).GetEulerAngles();
-	rotation_euler = glm::vec3(jph_euler[0], jph_euler[1], jph_euler[2]);
-	updateRotation(EULER_CHANGE_QUATERNION);
+	rotation_quaternion = body_interface.GetRotation(physics_body_id);
+	updateRotation(QUATERNION_CHANGE_EULER);
+}
+
+void PhysicsActor::reset_to_initial_orientation_for_testing()
+{
+	JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
+	body_interface.SetPositionAndRotation(physics_body_id, JPH::RVec3(convertMath<JPH::Vec3>(position_global)), reset_quaternion, JPH::EActivation::Activate);
+	body_interface.SetLinearAndAngularVelocity(physics_body_id, JPH::Vec3::sZero(), JPH::Vec3::sZero());
 }
 
 //
 // GraphXPlayer
 //
-bool GraphXPlayer::wantsToBeRendered()
-{
-	return false;
-}
-
 void GraphXPlayer::doMovement(int direction[2])
 {
 	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
@@ -141,6 +147,23 @@ void GraphXPlayer::doMouseMovement(std::vector<float> offset, bool constrain_pit
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
 	return glm::lookAt(position_global, position_global + orientation_front, orientation_up);
+}
+
+bool GraphXPlayer::wantsToBeRendered()
+{
+	return false;
+}
+
+void GraphXPlayer::init(Theatre *parent_theatre)
+{
+	box_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EMotionType::Dynamic, Layers::MOVING);
+	physics_body_id = physics_system->GetBodyInterface().CreateAndAddBody(box_settings, JPH::EActivation::Activate);
+}
+
+void GraphXPlayer::Tick(int current_tick)
+{
+	JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
+	body_interface.SetPositionAndRotation(physics_body_id, JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EActivation::Activate);
 }
 
 //
@@ -191,7 +214,7 @@ void LightFlashlight::Tick(int current_tick)
 	position_global = parent->position_global + position_offset;
 	rotation_euler = parent->rotation_euler + rotation_offset;
 	updateVectors();
-	// updateRotation(EULER_CHANGE_QUATERNION);
+	updateRotation(EULER_CHANGE_QUATERNION);
 	direction = orientation_front;
 }
 

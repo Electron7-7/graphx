@@ -662,9 +662,17 @@ Collision is implemented and a rough draft of gravity is also implemented. I tri
 
 :3
 
+[01/26/25]
+Note on Actors and physics: currently, if a new Actor type inherits PhysicsActor, it always gets a box rigidbody that changes its position and rotation. This means that, for instance, the player can't derive PhysicsActor and has to have its own special code in g_theatre.cpp and custom init and Tick functions.
+
 [01/26/25] (at 12:26)
 Fucking finally! I have (poorly) implemented Jolt Physics into GraphX! All PhysicsActors now create box physics bodies for themselves and are affected by gravity. Note that the floor is currently hardcoded, because the current implementation of physics is very bare bones and I haven't created distinction between static and dynamic bodies in PhysicsActor. This took a while to fucking wrap my head around, but I am so happy that I have Jolt Physics in GraphX!!
 
 Shame that my custom Collider code will go unused but that's fine by me if it means I don't have to fucking create my own physics engine from scratch (that will be for a later project).
 
 Added in physics rotations at the last second!
+
+[01/26/25]
+Note: rotation is fucked up currently because (i think) in updateRotation, I convert from JPH euler angles to glm euler angles and they may be in a different order. Check that. Maybe not but for some reason, rotations are wack when updateRotation sets the euler angles to be the quaternion value (i think).
+
+Oh, also, don't forget to compile libJolt.a with mingw-cmake on Arch linux for executable compiling.

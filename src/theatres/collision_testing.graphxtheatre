@@ -6,7 +6,7 @@ Material doom_mat_shiny(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 128, 0.8f, glm::ve
 Mesh test_mesh = Mesh(doom_mat_dull, CUBE_VERTS, CUBE_INDICES);
 Mesh test_mesh_2 = Mesh(doom_mat_shiny, CUBE_VERTS, CUBE_INDICES);
 
-Actor theatre_floor("floor", test_mesh, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(20.0f, 1.0f, 20.0f));
+Actor theatre_floor("floor", test_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(20.0f, 1.0f, 20.0f));
 Actor theatre_wall("wall", test_mesh, glm::vec3(0.0f, 0.0f, -21.5f), glm::vec3(0.0f), glm::vec3(20.0f, 20.0f, 1.0f));
 ControlledTester controlledActor1("Controlled Actor 1", test_mesh, glm::vec3(3.0f, 12.0f, -13.0f), glm::vec3(0.0f, 10.0f, 5.0f), glm::vec3(0.5f));
 ControlledTester controlledActor2("Controlled Actor 2", test_mesh, glm::vec3(3.5f, 8.0f, -12.0f), glm::vec3(35.0f, 0.0f, 10.0f), glm::vec3(0.4f));

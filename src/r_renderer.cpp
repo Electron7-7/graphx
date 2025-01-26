@@ -83,7 +83,7 @@ void R_GL_BufferMeshData(Mesh *mesh)
 	mesh->is_buffered = true;
 }
 
-void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, Environment *current_environment)
+void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix, Environment *current_environment)
 {
 	if(current_troupe_changed)
 		R_TroupeChanged();
@@ -118,24 +118,25 @@ void R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 proj
 			RenderState previous_state		=	actor->previous_state_buffer[actor->state_index];
 
 			glm::vec3 interpolated_position	=	current_state.render_position;
-			glm::quat interpolated_quat		=	current_state.render_quaternion;
 			glm::vec3 interpolated_scale	=	current_state.render_scale;
+			glm::quat interpolated_quat		=	convertMath<glm::quat>(current_state.render_quaternion);
+			glm::quat previous_quat			=	convertMath<glm::quat>(previous_state.render_quaternion);
+			glm::quat current_quat			=	convertMath<glm::quat>(current_state.render_quaternion);
 
 			if(do_interpolation) // Eventually, I want to change interpolation to be more like GZDoom, and this will be how I test that
 			{
 				for(unsigned int i = 0 ; i < 3 ; i++)
 					interpolated_position[i] = std::lerp(previous_state.render_position[i], current_state.render_position[i], interpolation_time);
 
-				for(unsigned int i = 0 ; i < 4 ; i++)
-					interpolated_quat[i] = std::lerp(previous_state.render_quaternion[i], current_state.render_quaternion[i], interpolation_time);
+				interpolated_quat = glm::slerp(previous_quat, current_quat, interpolation_time);
 
 				for(unsigned int i = 0 ; i < 3 ; i++)
 					interpolated_scale[i] = std::lerp(previous_state.render_scale[i], current_state.render_scale[i], interpolation_time);
 			}
 
 			model_matrix = glm::translate(model_matrix, interpolated_position);
-			model_matrix *= glm::toMat4(interpolated_quat);
 			model_matrix = glm::scale(model_matrix, interpolated_scale);
+			model_matrix *= glm::toMat4(interpolated_quat);
 
 			glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);

@@ -139,7 +139,7 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking G
 void		W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
 void		R_GL_BufferMeshData(Mesh *mesh);
 void 		R_StoreBuffers();
-void 		R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, Environment *current_environment);
+void 		R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix, Environment *current_environment);
 void		R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environment *current_environment, unsigned int shader_index);
 void		R_TroupeChanged();
 #endif

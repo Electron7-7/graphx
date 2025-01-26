@@ -163,23 +163,23 @@ class MyContactListener : public JPH::ContactListener
 {
 	virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override
 	{
-		std::cout << "Contanct validate callback" << std::endl;
+		// std::cout << "Contact validate callback" << std::endl;
 		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
 	}
 
 	virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
 	{
-		std::cout << "A contact was added" << std::endl;
+		// std::cout << "A contact was added" << std::endl;
 	}
 
 	virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
 	{
-		std::cout << "A contact was persisted" << std::endl;
+		// std::cout << "A contact was persisted" << std::endl;
 	}
 
 	virtual void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
 	{
-		std::cout << "A contact was removed" << std::endl;
+		// std::cout << "A contact was removed" << std::endl;
 	}
 };
 
@@ -188,12 +188,12 @@ class MyBodyActivationListener : public JPH::BodyActivationListener
 public:
 	virtual void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
 	{
-		std::cout << "A body got activated" << std::endl;
+		// std::cout << "A body got activated" << std::endl;
 	}
 
 	virtual void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
 	{
-		std::cout << "A body went to sleep" << std::endl;
+		// std::cout << "A body went to sleep" << std::endl;
 	}
 };
 
@@ -234,10 +234,9 @@ int main()
 
 		if(time_to_render)
 		{
-
 			// De-jank all of this shit below
 			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
-			double interpolation_time = ((glfwGetTime() - last_tick_timestamp) / tickrate_ms);
+			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / tickrate_ms);
 			R_Render(actor_state_mutex, interpolation_time, projection_matrix, &default_environment);
 		}
 	}
@@ -254,13 +253,13 @@ void testGameTick(GLFWwindow *main_window)
 	JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed = AssertFailedImpl;)
 	JPH::Factory::sInstance = new JPH::Factory();
 	JPH::RegisterTypes();
-	JPH::TempAllocatorImpl temp_allocator(10 * 1024 * 1024);
+	JPH::TempAllocatorImpl temp_allocator(10 * 2048 * 2048);
 	JPH::JobSystemThreadPool job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() -1);
 
-	const JPH::uint cMaxBodies = 1024;
+	const JPH::uint cMaxBodies = 2048;
 	const JPH::uint cNumBodyMutexes = 0;
-	const JPH::uint cMaxBodyPairs = 1024;
-	const JPH::uint cMaxContactConstraints = 1024;
+	const JPH::uint cMaxBodyPairs = 2048;
+	const JPH::uint cMaxContactConstraints = 2048;
 
 	BPLayerInterfaceImpl broad_phase_layer_interface;
 	ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
@@ -282,7 +281,7 @@ void testGameTick(GLFWwindow *main_window)
 	floor_shape_settings.SetEmbedded();
 	JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
 	JPH::ShapeRefC floor_shape = floor_shape_result.Get();
-	JPH::BodyCreationSettings floor_settings(floor_shape, JPH::RVec3(JPH::Real3(0.0, 0.0, 0.0)), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
+	JPH::BodyCreationSettings floor_settings(floor_shape, JPH::RVec3(JPH::Real3(0.0f, 0.0f, 0.0f)), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
 	JPH::Body *floor = body_interface.CreateBody(floor_settings);
 	body_interface.AddBody(floor->GetID(), JPH::EActivation::DontActivate);
 
@@ -290,7 +289,7 @@ void testGameTick(GLFWwindow *main_window)
 	wall_shape_settings.SetEmbedded();
 	JPH::ShapeSettings::ShapeResult wall_shape_result = wall_shape_settings.Create();
 	JPH::ShapeRefC wall_shape = wall_shape_result.Get();
-	JPH::BodyCreationSettings wall_settings(wall_shape, JPH::RVec3(JPH::Real3(0.0, 0.0, -21.5)), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
+	JPH::BodyCreationSettings wall_settings(wall_shape, JPH::RVec3(JPH::Real3(0.0f, 0.0f, -21.5f)), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
 	JPH::Body *wall = body_interface.CreateBody(wall_settings);
 	body_interface.AddBody(wall->GetID(), JPH::EActivation::DontActivate);
 
@@ -329,9 +328,6 @@ void testGameTick(GLFWwindow *main_window)
 			}
 
 			physics_system.Update(cDeltaTime, 1, &temp_allocator, &job_system);
-
-			// if(PER_SECOND(120)) // 3 times per second
-				// P_CheckCollisions(current_theatre->troupe);
 
 			player_flashlight.setLight(test_flashlight_bool);
 			
@@ -386,13 +382,21 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			PRINT("Flashlight On");
 	}
 
-	if(key == GLFW_KEY_R && action == GLFW_PRESS)
+	if(key == GLFW_KEY_Q && action == GLFW_PRESS)
 	{
 		red_flashlight_color_bool = !red_flashlight_color_bool;
 		if(red_flashlight_color_bool)
 			PRINT("Flashlight Red");
 		else
 			PRINT("Flashlight Not Red");
+	}
+
+	if(key == GLFW_KEY_R && action == GLFW_PRESS)
+	{
+		PRINT("Resetting PhysicsActors to initial transformation!");
+		for(Actor *actor : current_theatre->troupe)
+			if(actor->actor_type == ACTOR_PHYSICS)
+				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}
 }
 

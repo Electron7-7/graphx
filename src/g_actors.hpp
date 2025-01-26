@@ -2,7 +2,7 @@
 #define GRAPHX_ACTORS
 #include "r_common.hpp"
 #include "g_common.hpp"
-#include "g_devices.hpp"
+#include "g_math.hpp"
 #include <vector>
 
 #define LIGHT_POINT				0
@@ -20,12 +20,16 @@ public:
 	JPH::BodyCreationSettings box_settings;
 	JPH::PhysicsSystem *physics_system = NULL;
 
+	glm::vec3 reset_position;
+	JPH::Quat reset_quaternion;
+
 	PhysicsActor(std::string new_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale)
+	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale), reset_position(init_position), reset_quaternion(JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(init_rotation_euler)))
 	{ actor_type = ACTOR_PHYSICS; }
 
 	void init(Theatre *parent_theatre) override;
 	void Tick(int current_tick) override;
+	void reset_to_initial_orientation_for_testing();
 };
 
 class GraphXPlayer: public Actor
@@ -34,9 +38,14 @@ public:
 	float mouse_sensitivity;
 	float movement_speed = 0.05f;
 
+	JPH::BodyID physics_body_id;
+	JPH::BodyCreationSettings box_settings;
+	JPH::PhysicsSystem *physics_system = NULL;
+
 	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
 	: Actor(new_name, Mesh(), init_position, init_rotation_euler), mouse_sensitivity(INIT_SENSITIVITY)
 	{
+		actor_type = ACTOR_PLAYER;
 		visible = false;
 		debug_visible = false;
 	}
@@ -45,6 +54,8 @@ public:
 	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
 	void doMovement(int direction[2]);
 	bool wantsToBeRendered() override;
+	void init(Theatre *parent_theatre) override;
+	void Tick(int current_tick) override;
 
 protected:
 	constexpr static const float INIT_SENSITIVITY = 0.1f;
