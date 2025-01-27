@@ -30,7 +30,7 @@ void Theatre::initializeActors(JPH::PhysicsSystem *physics_system)
 		{
 			static_cast<PhysicsActor *>(actor)->physics_system = physics_system;
 			// Put this in PhysicsActor VVV
-			static_cast<PhysicsActor *>(actor)->physics_body_id = physics_system->GetBodyInterface().CreateAndAddBody(static_cast<PhysicsActor *>(actor)->box_settings, JPH::EActivation::Activate);
+			static_cast<PhysicsActor *>(actor)->physics_body_id = physics_system->GetBodyInterface().CreateAndAddBody(static_cast<PhysicsActor *>(actor)->collider_settings, JPH::EActivation::Activate);
 		}
 	}
 }

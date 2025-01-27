@@ -3,6 +3,9 @@
 #include "g_devices.hpp"
 #include "g_theatre.hpp"
 #include <unordered_map>
+#include <Jolt/Physics/Character/Character.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 
 GraphXPlayer *current_player = NULL;
 
@@ -99,7 +102,11 @@ bool Actor::wantsToBeBuffered()
 void PhysicsActor::init(Theatre *parent_theatre)
 {
 	Actor::init(parent_theatre);
-	box_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EMotionType::Dynamic, Layers::MOVING);
+	collider_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EMotionType::Dynamic, Layers::MOVING);
+	JPH::MassProperties body_mass_properties;
+	body_mass_properties.ScaleToMass(mass);
+	collider_settings.mMassPropertiesOverride = body_mass_properties;
+	collider_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
 	reset_position = convertMath<JPH::Vec3>(position_global);
 	reset_quaternion = rotation_quaternion;
 }
@@ -122,10 +129,40 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 //
 // GraphXPlayer
 //
+void GraphXPlayer::init(Theatre *parent_theatre)
+{
+	Actor::init(parent_theatre);
+	player_settings = new JPH::CharacterSettings;
+	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
+	player_settings->mLayer = Layers::MOVING;
+	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(convertMath<JPH::Vec3>(position_global), rotation_quaternion, new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
+	player_settings->mFriction = 10.0f;
+	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), -scale[0]);
+	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), rotation_quaternion, 0, physics_system);
+	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
+}
+
+void GraphXPlayer::Tick(int current_tick)
+{
+	JPH::Vec3 jph_position = jph_character->GetPosition();
+	glm::vec3 jph_position_glm = convertMath<glm::vec3>(jph_position);
+	position_global = glm::vec3(jph_position_glm[0], jph_position_glm[1] + scale[1], jph_position_glm[2]);
+}
+
 void GraphXPlayer::doMovement(int direction[2])
 {
-	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
-	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed);
+	// position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
+	// position_global += orientation_right * static_cast<float>(direction[1] * movement_speed);
+	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
+	JPH::Vec3 wish_velocity = JPH::Vec3(direction[1] * movement_speed, 0.0f, -direction[0] * movement_speed);
+	JPH::Vec3 new_velocity = current_velocity + wish_velocity;
+
+	new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
+	new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
+
+	PRINT("position_global: " << glm::to_string(position_global) << "\ncurrent_velocity: " << current_velocity << "\nwish_velocity: " << wish_velocity << "\nnew_velocity: " << new_velocity);
+
+	jph_character->SetLinearVelocity(new_velocity);
 }
 
 void GraphXPlayer::doMouseMovement(std::vector<float> offset, bool constrain_pitch)
@@ -154,18 +191,6 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 bool GraphXPlayer::wantsToBeRendered()
 {
 	return false;
-}
-
-void GraphXPlayer::init(Theatre *parent_theatre)
-{
-	box_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EMotionType::Dynamic, Layers::MOVING);
-	physics_body_id = physics_system->GetBodyInterface().CreateAndAddBody(box_settings, JPH::EActivation::Activate);
-}
-
-void GraphXPlayer::Tick(int current_tick)
-{
-	JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
-	body_interface.SetPositionAndRotation(physics_body_id, JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), rotation_quaternion, JPH::EActivation::Activate);
 }
 
 //

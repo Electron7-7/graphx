@@ -678,3 +678,7 @@ Note: rotation is fucked up currently because (i think) in updateRotation, I con
 Oh, also, don't forget to compile libJolt.a with mingw-cmake on Arch linux for executable compiling.
 
 Note: The next thing I want to do is make a dev console. I want to be able to, for instance, change properties of certain Actors on the fly. Using either their name and/or making a new id system.
+
+Hey also, the scale of Actor is the half-scale of, say JPH::CapsuleShape.
+
+Oh, also, the player movement is not correctly following the facing direction; fix that, lol.

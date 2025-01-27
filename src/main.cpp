@@ -27,8 +27,7 @@
 
 JPH::PhysicsSystem physics_system;
 
-Collider player_collider(glm::vec3(1.0f, 3.0f, 1.0f), glm::vec3(0.0f, 3.0f, 0.0f));
-GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
+GraphXPlayer player("Player", glm::vec3(0.0f, 6.0f, 0.0f));
 Environment default_environment(true);
 
 std::mutex actor_state_mutex;

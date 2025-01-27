@@ -3,6 +3,7 @@
 #include "r_common.hpp"
 #include "g_common.hpp"
 #include "g_math.hpp"
+#include <Jolt/Physics/Character/Character.h>
 #include <vector>
 
 #define LIGHT_POINT				0
@@ -13,18 +14,16 @@ class PhysicsActor: public Actor
 {
 public:
 	float mass = 1.0f; // in kg
-	float drag = 0.0f;
-	float friction = 0.0f;
 
 	JPH::BodyID physics_body_id;
-	JPH::BodyCreationSettings box_settings;
+	JPH::BodyCreationSettings collider_settings;
 	JPH::PhysicsSystem *physics_system = NULL;
 
 	JPH::Vec3 reset_position;
 	JPH::Quat reset_quaternion;
 
-	PhysicsActor(std::string new_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale)
+	PhysicsActor(std::string new_name, Mesh init_mesh, float init_mass = 1.0f, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale), mass(init_mass)
 	{ actor_type = ACTOR_PHYSICS; }
 
 	void init(Theatre *parent_theatre) override;
@@ -36,14 +35,16 @@ class GraphXPlayer: public Actor
 {
 public:
 	float mouse_sensitivity;
-	float movement_speed = 0.05f;
+	float movement_speed = 1.5f;
+	float max_velocity = 8.0f;
 
 	JPH::BodyID physics_body_id;
-	JPH::BodyCreationSettings box_settings;
+	JPH::BodyID gravity_body_id;
 	JPH::PhysicsSystem *physics_system = NULL;
+	JPH::Ref<JPH::CharacterSettings> player_settings;
 
 	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
-	: Actor(new_name, Mesh(), init_position, init_rotation_euler), mouse_sensitivity(INIT_SENSITIVITY)
+	: Actor(new_name, Mesh(), init_position, init_rotation_euler, glm::vec3(1.5f, 3.0f, 1.5f)), mouse_sensitivity(INIT_SENSITIVITY)
 	{
 		actor_type = ACTOR_PLAYER;
 		visible = false;
@@ -59,6 +60,9 @@ public:
 
 protected:
 	constexpr static const float INIT_SENSITIVITY = 0.1f;
+
+private:
+	JPH::Ref<JPH::Character> jph_character;
 };
 
 class MoverTester: public Actor
@@ -81,7 +85,7 @@ public:
 	int movement_direction[3];
 
 	ControlledTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 3.0f, -3.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: PhysicsActor(init_name, init_mesh, init_position, init_rotation_euler, init_scale)
+	: PhysicsActor(init_name, init_mesh, 1.0f, init_position, init_rotation_euler, init_scale)
 	{}
 
 	void Tick(int current_tick) override;
