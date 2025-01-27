@@ -676,3 +676,5 @@ Added in physics rotations at the last second!
 Note: rotation is fucked up currently because (i think) in updateRotation, I convert from JPH euler angles to glm euler angles and they may be in a different order. Check that. Maybe not but for some reason, rotations are wack when updateRotation sets the euler angles to be the quaternion value (i think).
 
 Oh, also, don't forget to compile libJolt.a with mingw-cmake on Arch linux for executable compiling.
+
+Note: The next thing I want to do is make a dev console. I want to be able to, for instance, change properties of certain Actors on the fly. Using either their name and/or making a new id system.
