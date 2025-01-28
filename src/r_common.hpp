@@ -105,26 +105,24 @@ struct Material
 
 struct Mesh
 {
-	Material material; // Change to vector of materials later(?)
-
-	std::string name = "MESH";
-
-	const unsigned int vao_index;
-	const std::vector<GLfloat> vertices;
-	const std::vector<GLuint> indices;
-	unsigned int VBO;
-	unsigned int IBO;
+	std::string name = "Untitled Mesh";
+	Material material = Material();
+	int vao_index = VAO_HANDMADE;
+	std::vector<GLfloat> vertices = ERROR_VERTS;
+	std::vector<GLuint> indices = ERROR_INDICES;
+	unsigned int VBO = 0;
+	unsigned int IBO = 0;
 	bool is_buffered = false;
-	
-	Mesh(Material init_material = Material(), const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, const unsigned int init_vao_index = VAO_HANDMADE)
-	: material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
+
+	Mesh(Material init_material = Material(), std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh")
+	: name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
 	{}
 };
 
 struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Material init_material = Material(), const unsigned int init_vao_index = VAO_HANDMADE)
+	Sprite(Material init_material = Material(), int init_vao_index = VAO_HANDMADE)
 	: Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
 	{}
 };

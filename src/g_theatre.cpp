@@ -12,39 +12,35 @@ bool current_troupe_changed = false;
 Theatre::Theatre(std::string init_name, std::vector<Actor *> init_troupe, Mesh init_stage)
 : name(init_name), troupe(init_troupe), stage(init_stage)
 {
-	stage.name = "THEATRE STAGE";
+	stage.name = "Stage Mesh for Theatre (" + name + ")";
 	sortTroupe();
 	countLights();
 }
 
-void Theatre::initializeActors(JPH::PhysicsSystem *physics_system)
+void Theatre::startPreshow()
 {
+	PRINT("Entering Theatre (" << name << ")\nActors Present:");
 	for(Actor *actor : troupe)
 	{
-		if(actor->actor_type == ACTOR_PLAYER)
-		{
-			static_cast<GraphXPlayer *>(actor)->physics_system = physics_system;
-		}
 		actor->init(this);
-		if(actor->actor_type == ACTOR_PHYSICS)
-		{
-			static_cast<PhysicsActor *>(actor)->physics_system = physics_system;
-			// Put this in PhysicsActor VVV
-			static_cast<PhysicsActor *>(actor)->physics_body_id = physics_system->GetBodyInterface().CreateAndAddBody(static_cast<PhysicsActor *>(actor)->collider_settings, JPH::EActivation::Activate);
-		}
+		PRINT("\t- " << actor->name);
 	}
+
+	sortTroupe();
 }
 
-void Theatre::encore(JPH::PhysicsSystem *physics_system)
+void Theatre::dropCurtains()
 {
+	PRINT("Exiting Theatre (" << name << ")\nActors Present:");
 	for(Actor *actor : troupe)
 	{
-		if(actor->actor_type == ACTOR_PHYSICS)
+		PRINT("\t- " << actor->name);
+		/*if(actor->actor_type == ACTOR_PHYSICS)
 		{
 			JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
 			body_interface.RemoveBody(static_cast<PhysicsActor *>(actor)->physics_body_id);
 			body_interface.DestroyBody(static_cast<PhysicsActor *>(actor)->physics_body_id);
-		}
+		}*/
 	}
 }
 
@@ -53,6 +49,7 @@ void Theatre::actorEnter(Actor *new_actor)
 	troupe.insert(troupe.end(), new_actor); // This can be expanded to multiple Actors
 	sortTroupe();
 	countLights();
+	new_actor->init(this);
 	current_troupe_changed = time_to_render;
 }
 
@@ -61,6 +58,8 @@ void Theatre::troupeEnter(std::vector<Actor *> new_troupe)
 	troupe.insert(troupe.end(), new_troupe.begin(), new_troupe.end());
 	sortTroupe();
 	countLights();
+	for(Actor *actor : new_troupe)
+		actor->init(this);
 	current_troupe_changed = time_to_render;
 }
 

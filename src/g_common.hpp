@@ -1,39 +1,26 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "r_common.hpp"
-#include "g_math.hpp"
+// #include "g_math.hpp"
 
-#define EULER_CHANGE_QUATERNION 0
-#define QUATERNION_CHANGE_EULER 1
+#define ACTOR_ACTOR 		0
+#define ACTOR_TOOL  		1
+#define ACTOR_LIGHT 		2
+#define ACTOR_PHYSICS		3
+#define ACTOR_PLAYER		4
 
-#define ACTOR_ACTOR 			0
-#define ACTOR_TOOL  			1
-#define ACTOR_LIGHT 			1
-#define ACTOR_PHYSICS			2
-#define ACTOR_PLAYER			3
-
-#define DEVICE_DEVICE			0
-#define DEVICE_COLLIDER			1
-
-struct Device
-{
-	unsigned int type;
-
-	Device()
-	{ type = DEVICE_DEVICE; }
-
-	Device(Device &sample)
-	{ type = sample.type; }
-};
+extern std::unordered_map<double, Actor *> actor_uid_lookup;
+extern glm::vec3 vector3_up;
+extern glm::vec3 vector3_front;
+extern glm::vec3 vector3_right;
 
 struct RenderState
 {
 	glm::vec3 render_position;
-	JPH::Quat render_quaternion;
-	// glm::vec3 render_euler;
+	glm::quat render_quaternion;
 	glm::vec3 render_scale;
 
-	RenderState(glm::vec3 init_position = glm::vec3(0.0f), JPH::Quat init_quaternion = JPH::Quat::sIdentity(), glm::vec3 init_scale = glm::vec3(1.0f))
+	RenderState(glm::vec3 init_position = glm::vec3(0.0f), glm::quat init_quaternion = glm::quat(), glm::vec3 init_scale = glm::vec3(1.0f))
 	: render_position(init_position), render_quaternion(init_quaternion), render_scale(init_scale)
 	{}
 };
@@ -41,19 +28,17 @@ struct RenderState
 class Actor
 {
 public:
-	Mesh mesh;
-	std::unordered_map<unsigned int, Device *> devices;
+	long UID;
 
 	unsigned int actor_type;
-	bool visible = true;
 	std::string name;
-	float movement_speed = 1.0f;
+	bool visible = true;
+
+	Mesh *mesh; // std::vector<Mesh *> meshes;
 
 	glm::vec3 position_global;
-	glm::vec3 rotation_euler;
-	JPH::Quat rotation_quaternion;
-	glm::vec3 scale = glm::vec3(1.0f);
-	glm::vec2 velocity_horizontal;
+	glm::quat quaternion;
+	glm::vec3 scale;
 	glm::vec3 velocity;
 
 	glm::vec3 orientation_front;
@@ -63,32 +48,34 @@ public:
 	glm::vec3 world_orientation_up;
 
 	RenderState current_state;
-	RenderState current_state_copy = current_state;
+	RenderState current_state_copy;
 
-	RenderState previous_state = current_state;
-	RenderState previous_state_copy = current_state;
+	RenderState previous_state;
+	RenderState previous_state_copy;
 
-	std::vector<RenderState> current_state_buffer = { current_state, current_state_copy };
-	std::vector<RenderState> previous_state_buffer = { previous_state, previous_state_copy };
+	std::vector<RenderState> current_state_buffer;
+	std::vector<RenderState> previous_state_buffer;
 
 	int state_index = 0;
 
-	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+	Actor(std::string new_name, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	: UID(actor_uid_lookup.size()), mesh(init_mesh), position_global(init_position), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 	{
 		actor_type = ACTOR_ACTOR;
 		name = new_name;
+		// actor_uid_lookup.insert(actor_uid_lookup.end(), std::pair<double, Actor *>{UID, this});
 		world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
-		rotation_euler = init_rotation_euler;
-		rotation_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(init_rotation_euler));
-		current_state = RenderState(init_position, rotation_quaternion);
+		quaternion = glm::quat(init_rotation_euler);
+		current_state = RenderState(init_position, quaternion, init_scale);
+		current_state_copy = current_state;
+		previous_state = current_state;
+		previous_state_copy = current_state;
+		current_state_buffer = { current_state, current_state_copy };
+		previous_state_buffer = { previous_state, previous_state_copy };
 		updateVectors();
 	}
 
-	int giveDevice(Device *new_device);
-	Device *getDevice(unsigned int device_type);
-
-	virtual void Tick(int current_tick);
+	virtual void tick(int current_tick);
 	virtual void init(Theatre *parent_theatre);
 	virtual void updateStates(std::mutex &state_mutex);
 	virtual bool wantsToBeRendered();
@@ -96,13 +83,6 @@ public:
 
 protected:
 	bool debug_visible;
-
-	void updateRotation(bool override_which);
 	void updateVectors();
 };
-
-void P_CheckCollisions(std::vector<Actor *> troupe);
-glm::vec3 P_CalculateInelasticCollision(Actor *stooge_left, Actor *stooge_right); // Naming colliding Actors "stooges"
-
-extern std::vector<std::vector<Actor *>> to_be_collided;
 #endif

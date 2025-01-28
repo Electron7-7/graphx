@@ -2,9 +2,7 @@
 #define GRAPHX_ACTORS
 #include "r_common.hpp"
 #include "g_common.hpp"
-#include "g_math.hpp"
-#include <Jolt/Physics/Character/Character.h>
-#include <vector>
+// #include <Jolt/Physics/Character/Character.h>
 
 #define LIGHT_POINT				0
 #define LIGHT_DIRECTIONAL		1
@@ -15,85 +13,60 @@ class PhysicsActor: public Actor
 public:
 	float mass = 1.0f; // in kg
 
-	JPH::BodyID physics_body_id;
-	JPH::BodyCreationSettings collider_settings;
-	JPH::PhysicsSystem *physics_system = NULL;
+	// JPH::BodyID physics_body_id;
+	// JPH::BodyCreationSettings collider_settings;
+	// JPH::PhysicsSystem *physics_system = NULL;
 
-	JPH::Vec3 reset_position;
-	JPH::Quat reset_quaternion;
+	// JPH::Vec3 reset_position;
+	// JPH::Quat reset_quaternion;
 
-	PhysicsActor(std::string new_name, Mesh init_mesh, float init_mass = 1.0f, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	PhysicsActor(std::string new_name, Mesh *init_mesh, float init_mass = 1.0f, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
 	: Actor(new_name, init_mesh, init_position, init_rotation_euler, init_scale), mass(init_mass)
 	{ actor_type = ACTOR_PHYSICS; }
 
 	void init(Theatre *parent_theatre) override;
-	void Tick(int current_tick) override;
+	void tick(int current_tick) override;
 	void reset_to_initial_orientation_for_testing();
 };
 
 class GraphXPlayer: public Actor
 {
 public:
-	float mouse_sensitivity;
+	Mesh player_mesh = Mesh();
+
+	float mouse_sensitivity = 10.0f;
 	float movement_speed = 1.5f;
 	float max_velocity = 8.0f;
+	glm::vec2 camera_angle;
 
-	JPH::BodyID physics_body_id;
-	JPH::BodyID gravity_body_id;
-	JPH::PhysicsSystem *physics_system = NULL;
-	JPH::Ref<JPH::CharacterSettings> player_settings;
+	// JPH::BodyID physics_body_id;
+	// JPH::BodyID gravity_body_id;
+	// JPH::PhysicsSystem *physics_system = NULL;
+	// JPH::Ref<JPH::CharacterSettings> player_settings;
 
 	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
-	: Actor(new_name, Mesh(), init_position, init_rotation_euler, glm::vec3(1.5f, 3.0f, 1.5f)), mouse_sensitivity(INIT_SENSITIVITY)
+	: Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.5f, 3.0f, 1.5f))
 	{
 		actor_type = ACTOR_PLAYER;
-		visible = false;
 		debug_visible = false;
 	}
 
 	glm::mat4 getViewMatrix();
-	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
+	void doMouseMovement(glm::vec2 offset, bool constrain_pitch = true);
 	void doMovement(int direction[2]);
 	bool wantsToBeRendered() override;
 	void init(Theatre *parent_theatre) override;
-	void Tick(int current_tick) override;
+	void tick(int current_tick) override;
 
-protected:
-	constexpr static const float INIT_SENSITIVITY = 0.1f;
-
-private:
-	JPH::Ref<JPH::Character> jph_character;
-};
-
-class MoverTester: public Actor
-{
-public:
-	float movement_speed = 0.025f;
-	int t_direction = 0;
-
-	MoverTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(init_name, init_mesh, init_position, init_rotation, init_scale)
-	{}
-
-	void Tick(int current_tick) override;
-};
-
-class ControlledTester: public PhysicsActor
-{
-public:
-	float movement_speed = 0.025f;
-	int movement_direction[3];
-
-	ControlledTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 3.0f, -3.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: PhysicsActor(init_name, init_mesh, 1.0f, init_position, init_rotation_euler, init_scale)
-	{}
-
-	void Tick(int current_tick) override;
+/*private:
+	JPH::Ref<JPH::Character> jph_character;*/
 };
 
 class Light: public Actor
 {
 public:
+	Mesh temporary_light_mesh = Mesh(Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f));
+
 	unsigned int light_type;
 	glm::vec3 light_color;
 	float light_strength; // A more direct "brightness" value than just changing Attenuation values
@@ -104,9 +77,9 @@ public:
 	float falloff;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
 
 	Light(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f))
-	: Actor(init_name, Mesh(Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f)), init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
+	: Actor(init_name, &temporary_light_mesh, init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
 	{
-		actor_type = ACTOR_TOOL;
+		actor_type = ACTOR_LIGHT;
 		light_type = LIGHT_POINT;
 		debug_visible = true;
 	}
@@ -151,7 +124,7 @@ public:
 	}
 
 	void setLight(bool is_off);
-	void Tick(int current_tick) override;
+	void tick(int current_tick) override;
 
 private:
 	float _intensity;
@@ -164,15 +137,19 @@ public:
 	float pivot_radius;
 	float pivot_speed;
 	float pivot_theta = 0.0f;
-	Actor pivot_point;
+
+	Mesh temporary_pivot_mesh = Mesh(Material(true, glm::vec3(1.0f, 0.0f, 0.0f)));
+	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
 
 	LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f))
-	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed), pivot_point(Actor(std::string("pivot point for ") + init_name, Mesh(Material(true, glm::vec3(1.0f, 0.0f, 0.0f))), init_pivot_position, glm::vec3(0.0f), glm::vec3(0.2f)))
+	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
 	{
-		pivot_point.mesh.name = "PIVOT";
+		pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+		pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+		pivot_point.position_global = init_pivot_position;
 	}
 
-	void Tick(int current_tick) override;
+	void tick(int current_tick) override;
 	void init(Theatre *parent_theatre) override;
 };
 

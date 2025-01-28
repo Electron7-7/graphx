@@ -2,7 +2,7 @@
 // :3
 #ifndef GRAPHX_THEATRE
 #define GRAPHX_THEATRE
-#include "sanity.hpp"
+// #include "sanity.hpp"
 #include "r_common.hpp"
 #include <string>
 #include <vector>
@@ -11,17 +11,18 @@ class Actor;	// forward-declare Actor
 
 struct Theatre
 {
-	std::string name;
-	std::vector<Actor *> troupe;
+	std::string name = "Untitled Theatre";
+	std::vector<Actor *> troupe = {};
 	// std::vector<Light *> catwalk; // Change to "std::vector<Tool *> tools;" later?
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
-	Mesh stage;
+	Mesh stage = Mesh();
 
-	Theatre(std::string init_name = "UNTITLED_THEATRE", std::vector<Actor *> init_troupe = {}, Mesh init_stage = Mesh());
+	Theatre(std::string init_name = "Untitled Theatre", std::vector<Actor *> init_troupe = {}, Mesh init_stage = Mesh());
 
-	void initializeActors(JPH::PhysicsSystem *physics_system);
-	void encore(JPH::PhysicsSystem *physics_system);
+	void startPreshow();
+	void dropCurtains();
+
 	void actorEnter(Actor *new_actor);
 	void troupeEnter(std::vector<Actor *> new_troupe);
 	void actorLeave(Actor *old_actor);

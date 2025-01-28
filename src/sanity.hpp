@@ -28,7 +28,7 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #include <glm/gtx/string_cast.hpp>
 #include <glm/ext.hpp>
 
-#include <Jolt/Jolt.h>
+/*#include <Jolt/Jolt.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -46,5 +46,5 @@ namespace BroadPhaseLayers
 	static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
 	static constexpr JPH::BroadPhaseLayer MOVING(1);
 	static constexpr JPH::uint NUM_LAYERS(2);
-};
+};*/
 #endif

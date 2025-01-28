@@ -181,7 +181,7 @@ For my first implementation, I might actually end up using my static list after 
 
 I'm also going to be choosing the official name for chunks of stuff in GraphX: "spaces". Basically what Godot and Unity call "scenes".
 
-Final notes: as per the comments I left in main.cpp, the current gametick testing function (which is a surrogate for the eventual final gametick function) should call the Tick() function of every Actor in the current Space, then handle the state swapping and buffering logic for each respective Actor... unless I decide to have the Actors handle that themselves (in the Tick function or with another function that's called after Tick in the gametick function). If future me is confused by my thought process, I'm partially following this (https://gamedev.stackexchange.com/questions/12754/how-to-interpolate-between-two-game-states) but I'm also sticking to DOOM's structure a bit as well. The result is (hopefully) every actor having buffered state structs that either contain the variables like "global_position" and such, or get populated with the data from the Actor's relevant variables (I like that idea more). These state structs will be used to render the Actors with the relevant (and potentially interpolated) information. How the RenderCmd queue will work and implement with this is unknown; either I link Actors' states with their relevant RenderCmd, or store it in the RenderCmd, or have the RenderCmd be a struct containing the vao_id and vertex+index offsets AND the buffered states, or some other idea.
+Final notes: as per the comments I left in main.cpp, the current gametick testing function (which is a surrogate for the eventual final gametick function) should call the tick() function of every Actor in the current Space, then handle the state swapping and buffering logic for each respective Actor... unless I decide to have the Actors handle that themselves (in the Tick function or with another function that's called after Tick in the gametick function). If future me is confused by my thought process, I'm partially following this (https://gamedev.stackexchange.com/questions/12754/how-to-interpolate-between-two-game-states) but I'm also sticking to DOOM's structure a bit as well. The result is (hopefully) every actor having buffered state structs that either contain the variables like "global_position" and such, or get populated with the data from the Actor's relevant variables (I like that idea more). These state structs will be used to render the Actors with the relevant (and potentially interpolated) information. How the RenderCmd queue will work and implement with this is unknown; either I link Actors' states with their relevant RenderCmd, or store it in the RenderCmd, or have the RenderCmd be a struct containing the vao_id and vertex+index offsets AND the buffered states, or some other idea.
 
 Piece by piece, you can do this; just focus, learn, and always be open to failure. Failure is always an option. Failure is progress. Success is just a reward for your consistent failures and the information you learn from them. This is a positive affirmation. Failure is positive.
 
@@ -682,3 +682,51 @@ Note: The next thing I want to do is make a dev console. I want to be able to, f
 Hey also, the scale of Actor is the half-scale of, say JPH::CapsuleShape.
 
 Oh, also, the player movement is not correctly following the facing direction; fix that, lol.
+
+Aight, at work now; I'm gonna abstract the camera into its own class. I also want to abstract usage of Jolt so that way I can isolate all calls to and from Jolt into just a few functions/structs/classes.
+
+First, though, I want to clean up and refactor Actor and its subclasses. That'll make everything else easier. I think I might switch to a different branch for that, or just comment out all Jolt stuff while I refactor.
+
+I'm also going to delete g_state.hpp finally; it has an old comment that I'd like to keep a record of, so here it is:
+:::C++
+// g_state.hpp
+/*
+State
+-
+i know that i'm going to need to compare states to either check if it's changed or to confirm i'm using the same state (mainly for double buffering).
+
+the problem is how i'm going to do that. one idea was to implement a sort of "hash" creator function that would generate a unique number based on
+all of the state's variables. however, this won't work if literally any of my variables are floats (which many will be), since in order to not cause
+the hash generation to be gargantuan, I'd have to know a lot more about hash generation and I don't wanna spend all that time doing something barely
+useful in this situation.
+
+instead, i'm going to implement a simple check, like a flag that gets set when the state is created, for code that doesn't care too much about the
+inner details of that state (like exact location, rotation, etc), OR include an inner state machine that can be customized, like for enemy and player
+state regarding higher-level game mechanics (like, "crouching", "standing", "shooting", "chasing player", etc).
+
+but that won't be all; i'll also implement a way to check on certain details for code that really needs to (i.e: the gametick interpolation logic).
+this could just boil down to testing the inner variable "global_location" and I don't have to write any custom checker function. that sounds nice,
+but it also sounds too easy, so I may be misinterpreting how this kind of "state" is supposed to be used.
+
+I could also use pointers? like, can you make sure that an object's state hasn't changed by comparing the pointer to that state with the previous 
+value of the state's pointer? I'll have to check.
+
+this also means that I'm going to need to know for sure whether or not I want to make this "state" struct mutable or immutable.
+
+I could also try learning/using Templates.
+
+I could also make an abstract "State" struct, then make inherited structs for more specific cases (i.e: ActorState, RenderState, etc.).
+If I do this, I'd need to make sure the abstract "State" struct is where I keep all the generic functions, variables, and constructors; which means that
+the abstract "State" struct is where I'll need to write any generic state checking functions and also account for any number of variables. This is where
+Templates could come in handy.
+*/
+:::
+
+I might also add a simple implementation of an ID system for Actors.
+
+Okay, on refactoring:
+ - I want to move away from Theatres being header files so I can have better instantiation
+ 	- if it could work like imgui or Jolt, that'd be sweet
+ - I want to be able to create Actors/Meshes/Materials/etc, populate their specific variables, and initialize them before doing any sort of buffering or rendering actions.
+
+I think refactoring is almost done, just the fucking player head rotation is fucked bc I'm trying to use Quaternions and I'm fucking shit at using Quaternions. Anyways, time to decomp.

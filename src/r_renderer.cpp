@@ -20,18 +20,18 @@ void R_TroupeChanged()
 {
 	for(Actor *actor : current_theatre->troupe)
 	{
-		if(!actor->wantsToBeBuffered() || actor->mesh.is_buffered)
+		if(!actor->wantsToBeBuffered() || actor->mesh->is_buffered)
 			continue;
 
 		unsigned int current_vao_index = VAOS_AMOUNT + 1;
 
-		if(actor->mesh.vao_index != current_vao_index)
+		if(actor->mesh->vao_index != current_vao_index)
 		{
-			current_vao_index = actor->mesh.vao_index;
+			current_vao_index = actor->mesh->vao_index;
 			glBindVertexArray(VAOs[current_vao_index]);
 		}
 		
-		R_GL_BufferMeshData(&actor->mesh);
+		R_GL_BufferMeshData(actor->mesh);
 	}
 
 	current_troupe_changed = false;
@@ -39,20 +39,20 @@ void R_TroupeChanged()
 
 void R_StoreBuffers()
 {
-	unsigned int current_vao_index = VAOS_AMOUNT + 1;
+	int current_vao_index = VAOS_AMOUNT + 1;
 
 	for(Actor *actor : current_theatre->troupe)
 	{
 		if(!actor->wantsToBeBuffered())
 			continue;
 
-		if(actor->mesh.vao_index != current_vao_index)
+		if(actor->mesh->vao_index != current_vao_index)
 		{
-			current_vao_index = actor->mesh.vao_index;
+			current_vao_index = actor->mesh->vao_index;
 			glBindVertexArray(VAOs[current_vao_index]);
 		}
 
-		R_GL_BufferMeshData(&actor->mesh);
+		R_GL_BufferMeshData(actor->mesh);
 	}
 
 	R_GL_BufferMeshData(&current_theatre->stage);
@@ -88,7 +88,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 	if(current_troupe_changed)
 		R_TroupeChanged();
 
-	unsigned int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
+	int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
 	unsigned int shader_index = SHADER_PHONG;
 	int point_light_index = 0;
 	int spot_light_index = 0;
@@ -99,7 +99,9 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 
 	for(Actor *actor : current_theatre->troupe)
 	{
-		Mesh *mesh = &actor->mesh;
+		glm::mat4 model_matrix = glm::mat4(1.0f);
+
+		Mesh *mesh = actor->mesh;
 
 		if(mesh->vao_index != current_vao_index)
 		{
@@ -107,11 +109,8 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 			glBindVertexArray(VAOs[current_vao_index]);
 		}
 
-		glm::mat4 model_matrix = glm::mat4(1.0f);
-
-		if(actor->wantsToBeRendered()) // If the Mesh has no owner, this stops the engine from crashing
+		if(actor->wantsToBeRendered())
 		{
-			// Note: Quaternions (and angular movement) should use slerp instead of lerp
 			std::lock_guard guard(state_mutex);
 
 			RenderState current_state		=	actor->current_state_buffer[actor->state_index];
@@ -119,16 +118,14 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 
 			glm::vec3 interpolated_position	=	current_state.render_position;
 			glm::vec3 interpolated_scale	=	current_state.render_scale;
-			glm::quat interpolated_quat		=	convertMath<glm::quat>(current_state.render_quaternion);
-			glm::quat previous_quat			=	convertMath<glm::quat>(previous_state.render_quaternion);
-			glm::quat current_quat			=	convertMath<glm::quat>(current_state.render_quaternion);
+			glm::quat interpolated_quat		=	current_state.render_quaternion;
 
 			if(do_interpolation) // Eventually, I want to change interpolation to be more like GZDoom, and this will be how I test that
 			{
 				for(unsigned int i = 0 ; i < 3 ; i++)
 					interpolated_position[i] = std::lerp(previous_state.render_position[i], current_state.render_position[i], interpolation_time);
 
-				interpolated_quat = glm::slerp(previous_quat, current_quat, interpolation_time);
+				interpolated_quat = glm::slerp(previous_state.render_quaternion, current_state.render_quaternion, interpolation_time);
 
 				for(unsigned int i = 0 ; i < 3 ; i++)
 					interpolated_scale[i] = std::lerp(previous_state.render_scale[i], current_state.render_scale[i], interpolation_time);
@@ -217,12 +214,14 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		}
 
 		shaders[shader_index]->setUniform("environment.ambient_light", current_environment->getAmbientLight());
-		shaders[shader_index]->setUniform("material.specular_sharpness", mesh->material.specular_sharpness);
-		shaders[shader_index]->setUniform("material.specular_strength", mesh->material.specular_strength);
-		shaders[shader_index]->setUniform("mat_fullbright", mesh->material.mat_fullbright);
 
 		if(actor->wantsToBeRendered())
-			glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
+		{
+			shaders[shader_index]->setUniform("material.specular_sharpness", actor->mesh->material.specular_sharpness);
+			shaders[shader_index]->setUniform("material.specular_strength", actor->mesh->material.specular_strength);
+			shaders[shader_index]->setUniform("mat_fullbright", actor->mesh->material.mat_fullbright);
+			glDrawElements(GL_TRIANGLES, actor->mesh->indices.size(), GL_UNSIGNED_INT, 0);
+		}
 	}
 
 	R_RenderFlats(projection_matrix, glm::mat4(1.0f), current_environment, shader_index);

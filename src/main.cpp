@@ -7,13 +7,13 @@
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include "g_common.hpp"
-#include "theatres/collision_testing.graphxtheatre"
 #include <iostream>
 #include <cstdarg>
 #include <thread>
 #include <vector>
 #include <mutex>
-#include <Jolt/Jolt.h>
+#include <unordered_map>
+/*#include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Core/TempAllocator.h>
@@ -23,26 +23,19 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
-#include <Jolt/Physics/Body/BodyActivationListener.h>
-
-JPH::PhysicsSystem physics_system;
+#include <Jolt/Physics/Body/BodyActivationListener.h>*/
+std::unordered_map<double, Actor *> actor_uid_lookup;
+glm::vec3 vector3_up(0.0f, 1.0f, 0.0f);
+glm::vec3 vector3_front(0.0f, 0.0f, -1.0f);
+glm::vec3 vector3_right(1.0f, 0.0f, 0.0f);
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 6.0f, 0.0f));
 Environment default_environment(true);
 
 std::mutex actor_state_mutex;
 
-std::vector<int> main_window_size =
-{
-	1280,
-	720
-};
-
-std::vector<float> mouse_last =
-{
-	main_window_size[0] / 2.0f,
-	main_window_size[1] / 2.0f
-};
+glm::vec2 main_window_size(1280, 720);
+glm::vec2 mouse_last(main_window_size / 2.0f);
 
 static int TICKRATE = 120;
 static double tickrate_ms = 1.0f / TICKRATE;	// Maybe turn this into a function to make the tickrate more easily changeable?
@@ -61,7 +54,11 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
 
-// JPH_SUPPRESS_WARNINGS
+#include "theatres/collision_testing.graphxtheatre"
+
+/* JPH_SUPPRESS_WARNINGS
+
+JPH::PhysicsSystem physics_system;
 
 static void TraceImpl(const char *inFMT, ...)
 {
@@ -194,7 +191,7 @@ public:
 	{
 		// std::cout << "A body went to sleep" << std::endl;
 	}
-};
+};*/
 
 int main()
 {
@@ -247,7 +244,7 @@ int main()
 
 void testGameTick(GLFWwindow *main_window)
 {
-	JPH::RegisterDefaultAllocator();
+/*	JPH::RegisterDefaultAllocator();
 	JPH::Trace = TraceImpl;
 	JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed = AssertFailedImpl;)
 	JPH::Factory::sInstance = new JPH::Factory();
@@ -293,11 +290,11 @@ void testGameTick(GLFWwindow *main_window)
 	body_interface.AddBody(wall->GetID(), JPH::EActivation::DontActivate);
 
 	const float cDeltaTime = 1.0f / (120.0f * 1); // That (120.0f * 1) is for testing so I can slow down or speed up the physics engine
-	physics_system.OptimizeBroadPhase();
+	physics_system.OptimizeBroadPhase();*/
 
 	current_theatre = &collision_testing_theatre;
 	current_theatre->actorEnter(&player);
-	current_theatre->initializeActors(&physics_system);
+	current_theatre->startPreshow();
 
 	time_to_store_buffers = true;
 
@@ -320,13 +317,13 @@ void testGameTick(GLFWwindow *main_window)
 
 			for(Actor *actor : current_theatre->troupe)
 			{
-				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
+				// Call the tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
 				// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
-				actor->Tick(current_tick_since_start);
+				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
 
-			physics_system.Update(cDeltaTime, 1, &temp_allocator, &job_system);
+			// physics_system.Update(cDeltaTime, 1, &temp_allocator, &job_system);
 
 			player_flashlight.setLight(test_flashlight_bool);
 			
@@ -343,9 +340,9 @@ void testGameTick(GLFWwindow *main_window)
 			current_tick_since_second = 0;
 	}
 
-	current_theatre->encore(&physics_system);
+	current_theatre->dropCurtains();
 
-	body_interface.RemoveBody(floor->GetID());
+	/*body_interface.RemoveBody(floor->GetID());
 	body_interface.DestroyBody(floor->GetID());
 	body_interface.RemoveBody(wall->GetID());
 	body_interface.DestroyBody(wall->GetID());
@@ -353,7 +350,7 @@ void testGameTick(GLFWwindow *main_window)
 	JPH::UnregisterTypes();
 
 	delete JPH::Factory::sInstance;
-	JPH::Factory::sInstance = NULL;
+	JPH::Factory::sInstance = NULL;*/
 
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 }
@@ -409,30 +406,13 @@ void processInput(GLFWwindow *window)
 	};
 
 	player.doMovement(input_vector);
-
-#ifdef COLLISION_TESTING_THEATRE
-	controlledActor1.movement_direction[0] = glfwGetKey(window, GLFW_KEY_UP) - glfwGetKey(window, GLFW_KEY_DOWN);
-	controlledActor1.movement_direction[1] = glfwGetKey(window, GLFW_KEY_RIGHT) - glfwGetKey(window, GLFW_KEY_LEFT);
-
-	// controlledActor2.movement_direction[2] = glfwGetKey(window, GLFW_KEY_KP_8) - glfwGetKey(window, GLFW_KEY_KP_2);
-	// controlledActor2.movement_direction[1] = glfwGetKey(window, GLFW_KEY_KP_6) - glfwGetKey(window, GLFW_KEY_KP_4);
-#endif
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
-	std::vector<float> m_position =
-	{
-		static_cast<float>(x_position_in),
-		static_cast<float>(y_position_in)
-	};
-	std::vector<float> mouse_offset =
-	{
-		m_position[0] - mouse_last[0],
-		mouse_last[1] - m_position[1]
-	};
-
-	mouse_last = m_position;
+	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
+	glm::vec2 mouse_offset = mouse_position - mouse_last;
+	mouse_last = mouse_position;
 
 	player.doMouseMovement(mouse_offset);
 }
