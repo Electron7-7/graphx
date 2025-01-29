@@ -58,7 +58,7 @@ public:
 
 	int state_index = 0;
 
-	Actor(std::string new_name, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
+	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
 	: UID(actor_uid_lookup.size()), mesh(init_mesh), position_global(init_position), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 	{
 		actor_type = ACTOR_ACTOR;
@@ -83,6 +83,6 @@ public:
 
 protected:
 	bool debug_visible;
-	void updateVectors();
+	virtual void updateVectors();
 };
 #endif

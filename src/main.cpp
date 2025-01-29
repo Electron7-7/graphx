@@ -413,7 +413,6 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
 	glm::vec2 mouse_offset = mouse_position - mouse_last;
 	mouse_last = mouse_position;
-
 	player.doMouseMovement(mouse_offset);
 }
 

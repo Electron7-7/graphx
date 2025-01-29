@@ -12,17 +12,6 @@ GraphXPlayer *current_player = NULL;
 //
 void Actor::updateVectors()
 {
-	// glm::vec3 new_front;
-	// glm::vec3 rotation_euler = glm::eulerAngles(quaternion);
-
-	// new_front[0] = cos(glm::radians(rotation_euler[1])) * cos(glm::radians(rotation_euler[0]));
-	// new_front[1] = sin(glm::radians(rotation_euler[0]));
-	// new_front[2] = sin(glm::radians(rotation_euler[1])) * cos(glm::radians(rotation_euler[0]));
-	
-	// orientation_front = glm::normalize(new_front);
-	// orientation_right = glm::normalize(glm::cross(orientation_front, world_orientation_up));
-	// orientation_up = glm::normalize(glm::cross(orientation_right, orientation_front));
-
 	orientation_up = quaternion * vector3_up;
 	orientation_front = quaternion * vector3_front;
 	orientation_right = quaternion * vector3_right;
@@ -97,6 +86,24 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 }
 
 //
+// Camera
+//
+void Camera::doRotation(glm::vec2 mouse_input)
+{
+	euler_rotation += euler_rotation_local;
+	euler_rotation[0] -= glm::radians(mouse_input[1]);
+	euler_rotation[1] -= glm::radians(mouse_input[0]);
+
+	if(std::abs(glm::degrees(euler_rotation[0])) > view_pitch_clamp)
+		euler_rotation[0] = glm::radians(view_pitch_clamp * ((glm::degrees(euler_rotation[0]) > 0) - (glm::degrees(euler_rotation[0]) < 0)));
+}
+
+void Camera::tick(int current_tick)
+{
+	position_global = parent->position_global + position_local;
+}
+
+//
 // GraphXPlayer
 //
 void GraphXPlayer::init(Theatre *parent_theatre)
@@ -114,6 +121,7 @@ void GraphXPlayer::init(Theatre *parent_theatre)
 
 void GraphXPlayer::tick(int current_tick)
 {
+	player_camera.tick(current_tick);
 	// JPH::Vec3 jph_position = jph_character->GetPosition();
 	// glm::vec3 jph_position_glm = convertMath<glm::vec3>(jph_position);
 	// position_global = glm::vec3(jph_position_glm[0], jph_position_glm[1] + scale[1], jph_position_glm[2]);
@@ -121,8 +129,8 @@ void GraphXPlayer::tick(int current_tick)
 
 void GraphXPlayer::doMovement(int direction[2])
 {
-	// position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
-	// position_global += orientation_right * static_cast<float>(direction[1] * movement_speed);
+	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
+	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed);
 	// JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	// JPH::Vec3 wish_velocity = JPH::Vec3(direction[1] * movement_speed, 0.0f, -direction[0] * movement_speed);
 	// JPH::Vec3 new_velocity = current_velocity + wish_velocity;
@@ -135,20 +143,16 @@ void GraphXPlayer::doMovement(int direction[2])
 	// jph_character->SetLinearVelocity(new_velocity);
 }
 
-void GraphXPlayer::doMouseMovement(glm::vec2 offset, bool constrain_pitch)
+void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
 {
-	camera_angle += offset * 0.05f;
-
-	if(constrain_pitch && (std::abs(camera_angle[0]) > 89.0f))
-		camera_angle[0] = glm::radians(89.0f * ((camera_angle[0] > 0) - (camera_angle[0] < 0)));
-
-	quaternion = glm::angleAxis(glm::radians(camera_angle[1]), orientation_right) + glm::angleAxis(glm::radians(camera_angle[0]), orientation_up);
+	player_camera.doRotation(mouse_offset * mouse_sensitivity);
+	quaternion = glm::quat(player_camera.euler_rotation);
 	updateVectors();
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
-	return glm::lookAt(position_global, position_global + orientation_front, orientation_up);
+	return glm::lookAt(player_camera.position_global, player_camera.position_global + orientation_front, orientation_up);
 }
 
 bool GraphXPlayer::wantsToBeRendered()
@@ -177,9 +181,8 @@ void LightFlashlight::tick(int current_tick)
 		parent = current_player;
 
 	position_global = parent->position_global + position_offset;
-	quaternion = parent->quaternion + glm::quat(rotation_offset);
-	updateVectors();
-	direction = orientation_front;
+	quaternion = parent->quaternion * glm::quat(glm::radians(rotation_offset));
+	direction = quaternion * vector3_front;
 }
 
 void LightFlashlight::setLight(bool is_off)

@@ -29,30 +29,47 @@ public:
 	void reset_to_initial_orientation_for_testing();
 };
 
+class Camera : public Actor
+{
+public:
+	Actor *parent = NULL;
+	float view_pitch_clamp = 89.0f;
+	glm::vec3 position_global = glm::vec3(0.0f);
+	glm::vec3 position_local = glm::vec3(0.0f, 3.0f, 0.0f); // temporary default offset
+	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
+	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
+
+	void doRotation(glm::vec2 mouse_input);
+	void tick(int current_tick);
+};
+
 class GraphXPlayer: public Actor
 {
 public:
 	Mesh player_mesh = Mesh();
+	Camera player_camera;
 
-	float mouse_sensitivity = 10.0f;
-	float movement_speed = 1.5f;
+	float mouse_sensitivity = 0.05f;
+	float movement_speed = 0.1f;
 	float max_velocity = 8.0f;
-	glm::vec2 camera_angle;
 
 	// JPH::BodyID physics_body_id;
 	// JPH::BodyID gravity_body_id;
 	// JPH::PhysicsSystem *physics_system = NULL;
 	// JPH::Ref<JPH::CharacterSettings> player_settings;
 
-	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
+	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, 0.0f, 0.0f))
 	: Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.5f, 3.0f, 1.5f))
 	{
 		actor_type = ACTOR_PLAYER;
 		debug_visible = false;
+		player_camera.euler_rotation = glm::radians(init_rotation_euler);
+		player_camera.position_global = init_position;
+		player_camera.parent = this;
 	}
 
 	glm::mat4 getViewMatrix();
-	void doMouseMovement(glm::vec2 offset, bool constrain_pitch = true);
+	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
 	bool wantsToBeRendered() override;
 	void init(Theatre *parent_theatre) override;

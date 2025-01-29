@@ -730,3 +730,14 @@ Okay, on refactoring:
  - I want to be able to create Actors/Meshes/Materials/etc, populate their specific variables, and initialize them before doing any sort of buffering or rendering actions.
 
 I think refactoring is almost done, just the fucking player head rotation is fucked bc I'm trying to use Quaternions and I'm fucking shit at using Quaternions. Anyways, time to decomp.
+
+[01/28/25]
+I'm doing what I should've done yesterday. The camera Actor will use euler_angles, but will supply/use a quaternion for rendering/orientation.
+
+Also, huge note: uhhh I forgot that euler angles in GLM are supposed to be radians... they're degrees by default.
+
+Oh my fucking god... was I... was that the problem?
+
+Okay, finally... I'm a bit skeptical of it, but I've implemented a very basic PlayerCamera class that GraphXPlayer will have and use for all viewing-related things. It's decent but may need a little more refactoring. As for the rest, I'm pretty happy with everything so far and I think that tommorow I'll start integrating Jolt back into the codebase and refactor everything a bit more.
+
+:3
