@@ -1,15 +1,43 @@
 #include "g_common.hpp"
 #include "g_actors.hpp"
-#include "g_theatre.hpp"
-// #include <Jolt/Physics/Character/Character.h>
-// #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
-// #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include "g_jolt.hpp"
+#include "g_math.hpp"
+#include <vector>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
 
 GraphXPlayer *current_player = NULL;
+glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
+std::unordered_map<double, Actor *> actor_uid_lookup;
+
+//
+// RenderState
+//
+RenderState::RenderState(glm::vec3 init_position, glm::quat init_quaternion, glm::vec3 init_scale)
+: render_position(init_position), render_quaternion(init_quaternion), render_scale(init_scale)
+{}
 
 //
 // Actor
 //
+Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+: UID(actor_uid_lookup.size()), mesh(init_mesh), position_global(init_position), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+{
+	actor_type = ACTOR_ACTOR;
+	name = new_name;
+	actor_uid_lookup.insert(actor_uid_lookup.end(), std::pair<double, Actor *>{UID, this});
+	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
+	quaternion = glm::quat(glm::radians(init_euler_degrees));
+	current_state = RenderState(init_position, quaternion, init_scale);
+	current_state_copy = current_state;
+	previous_state = current_state;
+	previous_state_copy = current_state;
+	current_state_buffer = { current_state, current_state_copy };
+	previous_state_buffer = { previous_state, previous_state_copy };
+	updateVectors();
+}
+
 void Actor::updateVectors()
 {
 	orientation_up = quaternion * vector3_up;
@@ -36,53 +64,109 @@ void Actor::updateStates(std::mutex &state_mutex)
 void Actor::tick(int current_tick)
 {}
 
-void Actor::init(Theatre *parent_theatre)
+void Actor::callToStage(Theatre *parent_theatre)
 {
-	// quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(rotation_euler));
+	std::cout << "\n\t- " << name << std::endl;
+}
+
+void Actor::takeABow()
+{
+	std::cout << "\n\t- (Actor) " << name << std::endl;
 }
 
 bool Actor::wantsToBeRendered()
 {
-	if(actor_type == ACTOR_TOOL || actor_type == ACTOR_LIGHT)
-		return (debug_visible);
-
-	return ( mesh != NULL && visible );
+	return (wantsToBeBuffered() && visible);
 }
 
 bool Actor::wantsToBeBuffered()
 {
-	if(actor_type == ACTOR_TOOL || actor_type == ACTOR_LIGHT)
+	if(actor_type == ACTOR_LIGHT)
 		return (debug_visible);
-	return( mesh != NULL );
+	return(mesh != NULL);
 }
+
+//
+// jolt_collider_options
+//
+jolt_collider_options::jolt_collider_options(JPH::ShapeSettings *body_shape_settings, JPH::EMotionType body_motion_type, JPH::ObjectLayer body_object_layer, JPH::EActivation body_activation)
+: shape_settings(body_shape_settings), motion_type(body_motion_type), object_layer(body_object_layer), activation(body_activation)
+{}
 
 //
 // PhysicsActor
 //
-void PhysicsActor::init(Theatre *parent_theatre)
+PhysicsActor::PhysicsActor(std::vector<jolt_collider_options *> init_collider_options, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+: Actor("Untitled Physics Actor", init_mesh, init_position, init_euler_degrees, init_scale), collider_options(init_collider_options)
 {
-	Actor::init(parent_theatre);
-	// collider_settings = JPH::BodyCreationSettings(new JPH::BoxShape(JPH::Vec3(scale[0], scale[1], scale[2])), JPH::RVec3(JPH::Real3(position_global[0], position_global[1], position_global[2])), quaternion, JPH::EMotionType::Dynamic, Layers::MOVING);
-	// JPH::MassProperties body_mass_properties;
-	// body_mass_properties.ScaleToMass(mass);
-	// collider_settings.mMassPropertiesOverride = body_mass_properties;
-	// collider_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
-	// reset_position = convertMath<JPH::Vec3>(position_global);
-	// reset_quaternion = quaternion;
+	actor_type = ACTOR_PHYSICS;
+}
+
+PhysicsActor::PhysicsActor(jolt_collider_options *init_collider_options, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+: Actor("Untitled Physics Actor", init_mesh, init_position, init_euler_degrees, init_scale), collider_options(std::vector<jolt_collider_options *>{init_collider_options})
+{
+	actor_type = ACTOR_PHYSICS;
+}
+
+void PhysicsActor::callToStage(Theatre *parent_theatre)
+{
+	Actor::callToStage(parent_theatre);
+	for(jolt_collider_options *collider_data : collider_options)
+	{
+		// collider_shape_result could be used for error checking using HasError() / GetError()
+		JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+		JPH::BoxShapeSettings test_collider_settings(JPH::Vec3(1.0f, 1.0f, 1.0f));
+		JPH::ShapeSettings::ShapeResult collider_shape_result = test_collider_settings.Create();
+		JPH::ShapeRefC collider_shape = collider_shape_result.Get();
+		JPH::RVec3 collider_position(0.0, 0.0, 0.0);
+		JPH::Quat collider_quat = JPH::Quat::sIdentity();
+		JPH::BodyCreationSettings collider_settings(collider_shape, collider_position, collider_quat, JPH::EMotionType::Dynamic, Layers::MOVING);
+		PRINT_MARKER;
+		body_interface.CreateAndAddBody(collider_settings, JPH::EActivation::Activate);
+		// JPH::BodyID collider_id = body_interface.CreateAndAddBody(collider_settings, collider_data->activation);
+		PRINT_MARKER;
+		// collider_ids.insert(collider_ids.end(), collider_id);
+	}
+}
+
+void PhysicsActor::takeABow()
+{
+	for(JPH::BodyID collider_id : collider_ids)
+		J_RemoveAndDestroyBody(collider_id);
 }
 
 void PhysicsActor::tick(int current_tick)
+{}
+
+//
+// RigidBodyActor
+//
+void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
-	// JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
-	// position_global = glm::vec3(body_interface.GetCenterOfMassPosition(physics_body_id)[0], body_interface.GetCenterOfMassPosition(physics_body_id)[1], body_interface.GetCenterOfMassPosition(physics_body_id)[2]);
-	// quaternion = body_interface.GetRotation(physics_body_id);
+	name = "Untitled RigidBodyActor";
+	PhysicsActor::callToStage(parent_theatre);
+	reset_position = convertMath<JPH::Vec3>(position_global);
+	reset_quaternion = convertMath<JPH::Quat>(quaternion);
 }
 
-void PhysicsActor::reset_to_initial_orientation_for_testing()
+void RigidBodyActor::tick(int current_tick)
 {
-	// JPH::BodyInterface &body_interface = physics_system->GetBodyInterface();
-	// body_interface.SetPositionAndRotation(physics_body_id, JPH::RVec3(reset_position), reset_quaternion, JPH::EActivation::Activate);
-	// body_interface.SetLinearAndAngularVelocity(physics_body_id, JPH::Vec3::sZero(), JPH::Vec3::sZero());
+	PhysicsActor::tick(current_tick);
+
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider_ids[controller_collider_index]);
+	JPH::Quat body_quaternion = body_interface.GetRotation(collider_ids[controller_collider_index]);
+
+	position_global = convertMath<glm::vec3>(body_position);
+	quaternion = convertMath<glm::quat>(body_quaternion);
+	updateVectors();
+}
+
+void RigidBodyActor::reset_to_initial_orientation_for_testing()
+{
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	body_interface.SetPositionAndRotation(collider_ids[controller_collider_index], reset_position, reset_quaternion, JPH::EActivation::Activate);
+	body_interface.SetLinearAndAngularVelocity(collider_ids[controller_collider_index], JPH::Vec3::sZero(), JPH::Vec3::sZero());
 }
 
 //
@@ -106,9 +190,19 @@ void Camera::tick(int current_tick)
 //
 // GraphXPlayer
 //
-void GraphXPlayer::init(Theatre *parent_theatre)
+GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::vec3 init_rotation_euler)
+: Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.5f, 3.0f, 1.5f))
 {
-	Actor::init(parent_theatre);
+	actor_type = ACTOR_PLAYER;
+	debug_visible = false;
+	player_camera.euler_rotation = glm::radians(init_rotation_euler);
+	player_camera.position_global = init_position;
+	player_camera.parent = this;
+}
+
+void GraphXPlayer::callToStage(Theatre *parent_theatre)
+{
+	Actor::callToStage(parent_theatre);
 	// player_settings = new JPH::CharacterSettings;
 	// player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	// player_settings->mLayer = Layers::MOVING;
@@ -161,8 +255,32 @@ bool GraphXPlayer::wantsToBeRendered()
 }
 
 //
-// Lights
+// Light
 //
+Light::Light(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, glm::vec3 init_position, glm::vec3 init_rotation, glm::vec3 init_scale)
+: Actor(init_name, &temporary_light_mesh, init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
+{
+	actor_type = ACTOR_LIGHT;
+	light_type = LIGHT_POINT;
+	debug_visible = true;
+}
+
+//
+// LightDirectional
+//
+LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_direction, float init_strength, glm::vec3 init_color)
+: Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color), direction(init_direction)
+{ light_type = LIGHT_DIRECTIONAL; }
+
+//
+// LightSpot
+//
+LightSpot::LightSpot(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, float init_inner_cutoff_angle, float init_outer_cutoff_angle, glm::vec3 init_direction, glm::vec3 init_position, glm::vec3 init_rotation)
+: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
+{
+	light_type = LIGHT_SPOT;
+}
+
 glm::vec2 LightSpot::getCutoffAngles()
 {
 	return glm::vec2
@@ -170,6 +288,16 @@ glm::vec2 LightSpot::getCutoffAngles()
 		glm::cos(glm::radians(inner_cutoff_angle)),
 		glm::cos(glm::radians(outer_cutoff_angle)),
 	};
+}
+
+//
+// LightFlashlight
+//
+LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, float init_inner_cutoff_angle, float init_outer_cutoff_angle, glm::vec3 init_position_offset, glm::vec3 init_rotation_offset)
+: LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset), _intensity(init_intensity)
+{
+	light_type = LIGHT_SPOT;
+	debug_visible = false;
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -190,6 +318,17 @@ void LightFlashlight::setLight(bool is_off)
 	intensity = _intensity + (100.0f * is_off);
 }
 
+//
+// LightTesterMover
+//
+LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color)
+: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
+{
+	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+	pivot_point.position_global = init_pivot_position;
+}
+
 void LightTesterMover::tick(int current_tick)
 {
 	pivot_point.position_global = pivot_position;
@@ -203,8 +342,8 @@ void LightTesterMover::tick(int current_tick)
 		pivot_theta = 0.0f;
 }
 
-void LightTesterMover::init(Theatre *parent_theatre)
+void LightTesterMover::callToStage(Theatre *parent_theatre)
 {
 	parent_theatre->actorEnter(&pivot_point);
-	pivot_point.init(parent_theatre); // Might be calling init() twice here, will have to test
+	pivot_point.callToStage(parent_theatre); // Might be calling callToStage() twice here, will have to test
 }

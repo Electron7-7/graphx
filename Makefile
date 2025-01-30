@@ -4,13 +4,14 @@ CC = clang
 WCXX = x86_64-w64-mingw32-g++
 WCC = x86_64-w64-mingw32-gcc
 
-CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) -D GRAPHX_COMPILING -D GRAPHX_DEBUG
+CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
-JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
-
-WCXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) -D GRAPHX_COMPILING -D GRAPHX_DEBUG -static -mwindows
+WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows $(JOLTFLAGS) $(GRAPHXFLAGS)
 WCCFLAGS = -g -Wall -static -mwindows
+
+GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG
+JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
 
 INCLUDES = -I src/include
 WINCLUDES = -I src/include -I src/windows_dependencies/include
@@ -22,12 +23,14 @@ SRC := src
 
 O = build
 
-OBJS = 					\
-	$(O)/glad.o			\
-	$(O)/r_common.opp	\
-	$(O)/r_renderer.opp	\
-	$(O)/g_math.opp		\
-	$(O)/g_actors.opp	\
+OBJS = 						\
+	$(O)/glad.o				\
+	$(O)/g_math.opp			\
+	$(O)/j_boilerplate.opp	\
+	$(O)/j_common.opp		\
+	$(O)/r_common.opp		\
+	$(O)/g_actors.opp		\
+	$(O)/r_renderer.opp		\
  	$(O)/g_theatre.opp
 
 CWOBJS = $(OBJS:.o=.wo)
@@ -65,6 +68,9 @@ clean_resources:
 	rm -f $(I_C) $(I_H) $(S_C) $(S_H)
 
 embed_resources: $(I_C) $(I_H) $(S_C) $(S_H)
+
+compile_commands:
+	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
 build: $(O)/$(LINUX)
 

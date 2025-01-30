@@ -1,6 +1,5 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
-#include "g_theatre.hpp"
 #include <cmath>
 
 std::array<GLuint, VAOS_AMOUNT> VAOs;
