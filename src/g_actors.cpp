@@ -96,14 +96,14 @@ jolt_collider_options::jolt_collider_options(JPH::ShapeSettings *body_shape_sett
 //
 // PhysicsActor
 //
-PhysicsActor::PhysicsActor(std::vector<jolt_collider_options *> init_collider_options, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: Actor("Untitled Physics Actor", init_mesh, init_position, init_euler_degrees, init_scale), collider_options(init_collider_options)
+PhysicsActor::PhysicsActor(std::string init_name, std::vector<jolt_collider_options *> init_collider_options, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+: Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale), collider_options(init_collider_options)
 {
 	actor_type = ACTOR_PHYSICS;
 }
 
-PhysicsActor::PhysicsActor(jolt_collider_options *init_collider_options, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: Actor("Untitled Physics Actor", init_mesh, init_position, init_euler_degrees, init_scale), collider_options(std::vector<jolt_collider_options *>{init_collider_options})
+PhysicsActor::PhysicsActor(std::string init_name, jolt_collider_options *init_collider_options, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+: Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale), collider_options(std::vector<jolt_collider_options *>{init_collider_options})
 {
 	actor_type = ACTOR_PHYSICS;
 }
@@ -113,19 +113,10 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 	Actor::callToStage(parent_theatre);
 	for(jolt_collider_options *collider_data : collider_options)
 	{
-		// collider_shape_result could be used for error checking using HasError() / GetError()
-		JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-		JPH::BoxShapeSettings test_collider_settings(JPH::Vec3(1.0f, 1.0f, 1.0f));
-		JPH::ShapeSettings::ShapeResult collider_shape_result = test_collider_settings.Create();
-		JPH::ShapeRefC collider_shape = collider_shape_result.Get();
-		JPH::RVec3 collider_position(0.0, 0.0, 0.0);
-		JPH::Quat collider_quat = JPH::Quat::sIdentity();
-		JPH::BodyCreationSettings collider_settings(collider_shape, collider_position, collider_quat, JPH::EMotionType::Dynamic, Layers::MOVING);
-		PRINT_MARKER;
-		body_interface.CreateAndAddBody(collider_settings, JPH::EActivation::Activate);
-		// JPH::BodyID collider_id = body_interface.CreateAndAddBody(collider_settings, collider_data->activation);
-		PRINT_MARKER;
-		// collider_ids.insert(collider_ids.end(), collider_id);
+		collider_data->position = convertMath<JPH::Vec3>(position_global);
+		collider_data->quaternion = convertMath<JPH::Quat>(quaternion);
+		JPH::BodyID collider_id = J_AddAndCreateBody(collider_data);
+		collider_ids.insert(collider_ids.end(), collider_id);
 	}
 }
 
@@ -143,7 +134,6 @@ void PhysicsActor::tick(int current_tick)
 //
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
-	name = "Untitled RigidBodyActor";
 	PhysicsActor::callToStage(parent_theatre);
 	reset_position = convertMath<JPH::Vec3>(position_global);
 	reset_quaternion = convertMath<JPH::Quat>(quaternion);
@@ -154,9 +144,13 @@ void RigidBodyActor::tick(int current_tick)
 	PhysicsActor::tick(current_tick);
 
 	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	// body_interface.ActivateBody(collider_ids[controller_collider_index]);
+	PRINT(body_interface.IsAdded(collider_ids[controller_collider_index]));
 	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider_ids[controller_collider_index]);
 	JPH::Quat body_quaternion = body_interface.GetRotation(collider_ids[controller_collider_index]);
 
+	PRINT(name << "\n\tposition: " << glm::to_string(position_global) << "\n\tquaternion: " << glm::to_string(quaternion));
+	PRINT(name << "\n\tbody position: " << body_position << "\n\tbody quaternion: " << body_quaternion);
 	position_global = convertMath<glm::vec3>(body_position);
 	quaternion = convertMath<glm::quat>(body_quaternion);
 	updateVectors();

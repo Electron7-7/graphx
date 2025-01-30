@@ -18,7 +18,7 @@ namespace Layers
 	static constexpr JPH::ObjectLayer NUM_LAYERS = 2;
 };
 
-namespace BPLayers
+namespace BroadPhaseLayers
 {
 	static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
 	static constexpr JPH::BroadPhaseLayer MOVING(1);
@@ -70,12 +70,24 @@ public:
 //
 // and now, original code...
 //
+struct jolt_collider_options
+{
+	JPH::Vec3			position;
+	JPH::Quat			quaternion;
+	JPH::ShapeSettings *shape_settings;
+	JPH::EMotionType	motion_type;
+	JPH::ObjectLayer	object_layer;
+	JPH::EActivation	activation;
+
+	jolt_collider_options(JPH::ShapeSettings *body_shape_settings, JPH::EMotionType body_motion_type, JPH::ObjectLayer body_object_layer, JPH::EActivation body_activation);
+};
 
 extern JPH::PhysicsSystem 		jolt_physics_system;
 extern JPH::TempAllocatorImpl 	jolt_temp_allocator;
 extern JPH::JobSystemThreadPool jolt_job_system;
 
 void J_InitJolt();
+JPH::BodyID J_AddAndCreateBody(jolt_collider_options *collider_options);
 void J_StopJolt();
 void J_RemoveAndDestroyBody(JPH::BodyID body_id);
 #endif

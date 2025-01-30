@@ -765,6 +765,4 @@ floor_shape_settings.SetEmbedded(); // A ref counted object on the stack (base c
 Okay, I have abstracted collider creation a bit, but each PhysicsActor will have a vector of "colliders" (Jolt Bodies) that will be created from at least one jolt_collider_options struct; this is a custom struct I wrote that just holds a JPH::ShapeSettings pointer, a JPH::EMotionType value, a JPH::EActivation value, and a JPH::ObjectLayer value.
 
 [01/30/25]
-Note: here are the (I think) memory/disassembly addresses of the JPH seg-fault:
-0x5CCEF0ADDD1E - segmentation fault
-0x5CCEF414C410 - fault address
+I'm getting burnt out; I need to take a break. When I come back, big takeaway should be: I have to learn how to use Jolt and what Jolt is and shit a lot more. Actually study Jolt. Then you can integrate it properly.

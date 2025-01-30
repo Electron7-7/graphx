@@ -2,7 +2,7 @@
 #define COLLISION_TESTING_THEATRE
 #include "../theatre_includes.hpp"
 JPH::Vec3 test_size_1(1.0f, 0.8f, 1.5f);
-JPH::Vec3 test_size_2(5.0f, -65.0f, 28.0f);
+JPH::Vec3 test_size_2(0.5f, 0.5f, 0.5f);
 JPH::Vec3 test_size_3(1.0f, 0.2f, 1.7f);
 Material doom_mat_dull(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 16, 0.3f, glm::vec3(1.0f));
 Material doom_mat_shiny(DOOM_TEXTURE_DIFF, DOOM_TEXTURE_SPEC, 256, 1.0f, glm::vec3(1.0f));
@@ -22,10 +22,10 @@ Actor theatre_floor("floor", &test_mesh_2, glm::vec3(0.0f), glm::vec3(0.0f), glm
 Actor theatre_wall("wall", &test_mesh, glm::vec3(0.0f, 0.0f, -21.5f), glm::vec3(0.0f), glm::vec3(20.0f, 20.0f, 1.0f));
 // ControlledTester controlledActor1("Controlled Actor 1", test_mesh, glm::vec3(3.0f, 12.0f, -13.0f), glm::vec3(0.0f, 10.0f, 5.0f), glm::vec3(0.5f));
 // ControlledTester controlledActor2("Controlled Actor 2", test_mesh, glm::vec3(3.5f, 8.0f, -12.0f), glm::vec3(35.0f, 0.0f, 10.0f), glm::vec3(0.4f));
-RigidBodyActor rigidBodyActor1(&test_collider_1, &test_mesh, glm::vec3(2.8f, 14.0f, -13.7f), glm::vec3(20.0f, -90.0f, -10.0f), convertMath<glm::vec3>(test_size_1));
-RigidBodyActor rigidBodyActor2(&test_collider_2, &test_mesh_2, glm::vec3(2.8f, 18.0f, -11.0f), glm::vec3(0.0f), convertMath<glm::vec3>(test_size_2));
-RigidBodyActor rigidBodyActor3(&test_collider_3, &test_mesh_2, glm::vec3(3.8f, 2.8f, -12.0f), glm::vec3(2.0f, 0.0f, -1.0f));
-RigidBodyActor rigidBodyActor4(&test_collider_4, &test_mesh, glm::vec3(3.8f, 22.0f, -14.0f), glm::vec3(45.0f, 10.0f, -8.0f), convertMath<glm::vec3>(test_size_3));
+RigidBodyActor rigidBodyActor1("RigidBodyActor 1", &test_collider_1, &test_mesh, glm::vec3(2.8f, 14.0f, -13.7f), glm::vec3(20.0f, -90.0f, -10.0f), convertMath<glm::vec3>(test_size_1));
+RigidBodyActor rigidBodyActor2("RigidBodyActor 2", &test_collider_2, &test_mesh_2, glm::vec3(2.8f, 18.0f, -11.0f), glm::vec3(5.0f, -65.0f, 28.0f), convertMath<glm::vec3>(test_size_2));
+RigidBodyActor rigidBodyActor3("RigidBodyActor 3", &test_collider_3, &test_mesh_2, glm::vec3(3.8f, 2.8f, -12.0f), glm::vec3(2.0f, 0.0f, -1.0f));
+RigidBodyActor rigidBodyActor4("RigidBodyActor 4", &test_collider_4, &test_mesh, glm::vec3(3.8f, 22.0f, -14.0f), glm::vec3(45.0f, 10.0f, -8.0f), convertMath<glm::vec3>(test_size_3));
 
 LightDirectional temp_sun("temp sun", glm::vec3(-0.2f, -1.0f, -0.3f), 0.05f);
 LightFlashlight player_flashlight("flashlight", 0.5f, 100.0f, 0.0f, 1.0f, glm::vec3(1.0f), 14.5f, 18.5f, glm::vec3(0.0f, 3.0f, 0.0f));

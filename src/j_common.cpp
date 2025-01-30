@@ -8,7 +8,6 @@
 
 using namespace JPH;
 using namespace JPH::literals;
-using namespace std;
 
 PhysicsSystem jolt_physics_system;
 
@@ -23,7 +22,7 @@ void GraphXJoltTrace(const char *inFMT, ...)
 	std::cout << buffer << std::endl;
 }
 
-bool GraphXJoltAssertFailed(const char *inExpression, const char *inMessage, const char *inFile, JPH::uint inLine)
+bool GraphXJoltAssertFailed(const char *inExpression, const char *inMessage, const char *inFile, uint inLine)
 {
 	std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage !=nullptr? inMessage: "") << std::endl;
 	return true;
@@ -37,16 +36,6 @@ void J_InitJolt()
 
 	Trace = GraphXJoltTrace;
 	JPH_IF_ENABLE_ASSERTS(AssertFailed = GraphXJoltAssertFailed;)
-
-	const uint cMaxBodies = 2048;
-	const uint cNumBodyMutexes = 0;
-	const uint cMaxBodyPairs = 2048;
-	const uint cMaxContactConstraints = 2048;
-
-	GraphXBroadPhaseLayerInterface broad_phase_layer_interface;
-	GraphXObjectVsBroadPhaseLayerFilter object_vs_broadphase_layer_filter;
-	GraphXObjectLayerPairFilter object_vs_object_layer_filter;
-	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 #ifdef GRAPHX_DEBUG
 	GraphXBodyActivationListener body_activation_listener;
@@ -63,6 +52,17 @@ void J_StopJolt()
 
 	delete Factory::sInstance;
 	Factory::sInstance = NULL;
+}
+
+JPH::BodyID J_AddAndCreateBody(jolt_collider_options *collider_options)
+{
+	JPH::ShapeSettings::ShapeResult collider_shape_result = collider_options->shape_settings->Create();
+	if(collider_shape_result.HasError())
+		PRINT(collider_shape_result.GetError());
+	JPH::ShapeRefC collider_shape = collider_shape_result.Get();
+	JPH::BodyCreationSettings collider_settings(collider_shape, collider_options->position, collider_options->quaternion, collider_options->motion_type, collider_options->object_layer);
+	JPH::BodyID collider_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(collider_settings, JPH::EActivation::Activate);
+	return collider_id;
 }
 
 void J_RemoveAndDestroyBody(BodyID body_id)

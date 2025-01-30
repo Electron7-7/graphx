@@ -72,6 +72,9 @@ embed_resources: $(I_C) $(I_H) $(S_C) $(S_H)
 compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
+debug:
+	$(eval LINUX = GraphXDebug)
+
 build: $(O)/$(LINUX)
 
 linux_test:	build

@@ -22,13 +22,13 @@ bool GraphXObjectLayerPairFilter::ShouldCollide(JPH::ObjectLayer inObject1, JPH:
 //
 GraphXBroadPhaseLayerInterface::GraphXBroadPhaseLayerInterface()
 {
-	mObjectToBroadPhase[Layers::NON_MOVING] = BPLayers::NON_MOVING;
-	mObjectToBroadPhase[Layers::MOVING] = BPLayers::MOVING;
+	mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
+	mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
 }
 
 JPH::uint GraphXBroadPhaseLayerInterface::GetNumBroadPhaseLayers() const
 {
-	return BPLayers::NUM_LAYERS;
+	return BroadPhaseLayers::NUM_LAYERS;
 }
 
 JPH::BroadPhaseLayer GraphXBroadPhaseLayerInterface::GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const
@@ -42,9 +42,9 @@ const char *GraphXBroadPhaseLayerInterface::GetBroadPhaseLayerName(JPH::BroadPha
 {
 	switch ((JPH::BroadPhaseLayer::Type)inLayer)
 	{
-		case(JPH::BroadPhaseLayer::Type)BPLayers::NON_MOVING:
+		case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:
 			return "NON_MOVING";
-		case(JPH::BroadPhaseLayer::Type)BPLayers::MOVING:
+		case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::MOVING:
 			return "MOVING";
 		default:
 			JPH_ASSERT(false);
@@ -61,7 +61,7 @@ bool GraphXObjectVsBroadPhaseLayerFilter::ShouldCollide(JPH::ObjectLayer inLayer
 	switch(inLayer1)
 	{
 		case Layers::NON_MOVING:
-			return inLayer2 == BPLayers::MOVING;
+			return inLayer2 == BroadPhaseLayers::MOVING;
 		case Layers::MOVING:
 			return true;
 		default:

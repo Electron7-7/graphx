@@ -1,10 +1,9 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
 #include "g_common.hpp"
-#include <Jolt/Jolt.h>
+#include "g_jolt.hpp"
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
-#include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/EmptyShape.h>
@@ -19,16 +18,6 @@
 #define LIGHT_DIRECTIONAL	1
 #define LIGHT_SPOT			2
 
-struct jolt_collider_options
-{
-	JPH::ShapeSettings *shape_settings;
-	JPH::EMotionType	motion_type;
-	JPH::ObjectLayer	object_layer;
-	JPH::EActivation	activation;
-
-	jolt_collider_options(JPH::ShapeSettings *body_shape_settings, JPH::EMotionType body_motion_type, JPH::ObjectLayer body_object_layer, JPH::EActivation body_activation);
-};
-
 class PhysicsActor: public Actor
 {
 public:
@@ -36,8 +25,8 @@ public:
 
 	float mass = 1.0f; // in kg
 
-	PhysicsActor(std::vector<jolt_collider_options *> init_collider_options, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
-	PhysicsActor(jolt_collider_options *init_collider_options, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	PhysicsActor(std::string init_name, std::vector<jolt_collider_options *> init_collider_options, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	PhysicsActor(std::string init_name, jolt_collider_options *init_collider_options, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
 	void tick(int current_tick) override;
 	void callToStage(Theatre *parent_theatre) override;

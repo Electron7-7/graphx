@@ -38,8 +38,6 @@ void testGameTick(GLFWwindow *window);
 #define TICKLENGTH (1.0f / TICKRATE)
 #define PER_SECOND(interval) (current_tick_since_second % (TICKRATE/interval) == 0)
 
-#include "theatres/collision_testing.graphxtheatre"
-
 int main()
 {
 	glfwInit();
@@ -49,7 +47,8 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
-	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
@@ -89,9 +88,24 @@ int main()
 	return 0;
 }
 
+#include "theatres/collision_testing.graphxtheatre"
+
 void testGameTick(GLFWwindow *main_window)
 {
 	J_InitJolt();
+	JPH::TempAllocatorImpl jolt_temp_allocator(10 * 1024 * 1024);
+	JPH::JobSystemThreadPool jolt_job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
+
+	const JPH::uint cMaxBodies = 2048;
+	const JPH::uint cNumBodyMutexes = 0;
+	const JPH::uint cMaxBodyPairs = 2048;
+	const JPH::uint cMaxContactConstraints = 2048;
+
+	GraphXBroadPhaseLayerInterface broad_phase_layer_interface;
+	GraphXObjectVsBroadPhaseLayerFilter object_vs_broadphase_layer_filter;
+	GraphXObjectLayerPairFilter object_vs_object_layer_filter;
+
+	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 	current_theatre = &collision_testing_theatre;
 	current_theatre->actorEnter(&player);
@@ -102,8 +116,6 @@ void testGameTick(GLFWwindow *main_window)
 	double current_tick_length = 0;
 	double now_time = 0;
 
-	JPH::TempAllocatorImpl jolt_temp_allocator(10 * 1024 * 1024);
-	JPH::JobSystemThreadPool jolt_job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
 	jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
 
 	while(!glfwWindowShouldClose(main_window))
@@ -127,12 +139,12 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
-			/*player_flashlight.setLight(test_flashlight_bool);
+			player_flashlight.setLight(test_flashlight_bool);
 			
 			if(red_flashlight_color_bool)
 				player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
 			else
-				player_flashlight.light_color = glm::vec3(1.0f);*/
+				player_flashlight.light_color = glm::vec3(1.0f);
 			
 			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
