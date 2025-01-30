@@ -765,4 +765,4 @@ floor_shape_settings.SetEmbedded(); // A ref counted object on the stack (base c
 Okay, I have abstracted collider creation a bit, but each PhysicsActor will have a vector of "colliders" (Jolt Bodies) that will be created from at least one jolt_collider_options struct; this is a custom struct I wrote that just holds a JPH::ShapeSettings pointer, a JPH::EMotionType value, a JPH::EActivation value, and a JPH::ObjectLayer value.
 
 [01/30/25]
-I'm getting burnt out; I need to take a break. When I come back, big takeaway should be: I have to learn how to use Jolt and what Jolt is and shit a lot more. Actually study Jolt. Then you can integrate it properly.
+I'm getting burnt out; I need to take a break. When I come back, big takeaway should be: Don't waste time learning Jolt inside and out for GraphX; maybe for the next engine, but for this one just do the sloppy HelloWorld integration. Everything in the main.cpp file, JPH:: functions in random files, the whole nasty works. Just get this shit out the door. It won't be pretty, but that's okay. This isn't your magnum opus so stop treating it like one.
