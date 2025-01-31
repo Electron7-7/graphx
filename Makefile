@@ -25,12 +25,11 @@ O = build
 
 OBJS = 						\
 	$(O)/glad.o				\
-	$(O)/g_math.opp			\
-	$(O)/j_boilerplate.opp	\
 	$(O)/j_common.opp		\
 	$(O)/r_common.opp		\
-	$(O)/g_actors.opp		\
 	$(O)/r_renderer.opp		\
+	$(O)/g_math.opp			\
+	$(O)/g_actors.opp		\
  	$(O)/g_theatre.opp
 
 CWOBJS = $(OBJS:.o=.wo)

@@ -25,8 +25,7 @@ public:
 
 	float mass = 1.0f; // in kg
 
-	PhysicsActor(std::string init_name, std::vector<jolt_collider_options *> init_collider_options, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
-	PhysicsActor(std::string init_name, jolt_collider_options *init_collider_options, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	PhysicsActor(std::string init_name, JPH::BodyCreationSettings init_body_creation_settings, JPH::EActivation body_activation, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
 	void tick(int current_tick) override;
 	void callToStage(Theatre *parent_theatre) override;
@@ -36,7 +35,7 @@ public:
 	{};
 
 protected:
-	std::vector<jolt_collider_options *> collider_options;
+	std::vector<JPH::BodyCreationSettings> body_creation_settings;
 };
 
 class RigidBodyActor : public PhysicsActor

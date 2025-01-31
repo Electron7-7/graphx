@@ -766,3 +766,17 @@ Okay, I have abstracted collider creation a bit, but each PhysicsActor will have
 
 [01/30/25]
 I'm getting burnt out; I need to take a break. When I come back, big takeaway should be: Don't waste time learning Jolt inside and out for GraphX; maybe for the next engine, but for this one just do the sloppy HelloWorld integration. Everything in the main.cpp file, JPH:: functions in random files, the whole nasty works. Just get this shit out the door. It won't be pretty, but that's okay. This isn't your magnum opus so stop treating it like one.
+
+[01/31/25]
+I just fucking put all the Jolt stuff in the main file... and it compiled, ran, and had correct active physics on the first try. Fuck my perfectionist life.
+
+Aight, I'm thinking that I still want to abstract Jolt functions and calls aside from the setup and shit in the main file. This means keeping J_AddAndCreate and J_RemoveAndDestroy.
+
+Ughhhh wasted time again. Watch yourself, man, you're getting pigeon-holed. I don't even need to make a specific type of shape settings object, I can skip over that to JPH::BodyCreationSettings.
+
+Yeah, the jolt_collider_recipe abstraction is unneeded. Just use JPH::BodyCreationSettings...
+
+I have lots of errors but I need a break. Tomorrow, here's what to do:
+ Decide whether I want to create a full JPH::BodyCreationSettings object in the Theatre or create a partial one and have the PhysicsActor decide whether or not to override its Shape (for default BoxShape colliders and such).
+
+:3

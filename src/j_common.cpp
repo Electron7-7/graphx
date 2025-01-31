@@ -1,69 +1,17 @@
 #include "sanity.hpp"
 #include "g_jolt.hpp"
 #include <Jolt/RegisterTypes.h>
-#include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 
 using namespace JPH;
 using namespace JPH::literals;
 
 PhysicsSystem jolt_physics_system;
-
-void GraphXJoltTrace(const char *inFMT, ...)
-{
-	va_list list;
-	va_start(list, inFMT);
-	char buffer[1024];
-	vsnprintf(buffer, sizeof(buffer), inFMT, list);
-	va_end(list);
-
-	std::cout << buffer << std::endl;
-}
-
-bool GraphXJoltAssertFailed(const char *inExpression, const char *inMessage, const char *inFile, uint inLine)
-{
-	std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage !=nullptr? inMessage: "") << std::endl;
-	return true;
-}
-
-void J_InitJolt()
-{
-	RegisterDefaultAllocator();
-	Factory::sInstance = new Factory();
-	RegisterTypes();
-
-	Trace = GraphXJoltTrace;
-	JPH_IF_ENABLE_ASSERTS(AssertFailed = GraphXJoltAssertFailed;)
-
-#ifdef GRAPHX_DEBUG
-	GraphXBodyActivationListener body_activation_listener;
-	jolt_physics_system.SetBodyActivationListener(&body_activation_listener);
-
-	GraphXContactListener contact_listener;
-	jolt_physics_system.SetContactListener(&contact_listener);
-#endif
-}
-
-void J_StopJolt()
-{
-	UnregisterTypes();
-
-	delete Factory::sInstance;
-	Factory::sInstance = NULL;
-}
-
-JPH::BodyID J_AddAndCreateBody(jolt_collider_options *collider_options)
-{
-	JPH::ShapeSettings::ShapeResult collider_shape_result = collider_options->shape_settings->Create();
-	if(collider_shape_result.HasError())
-		PRINT(collider_shape_result.GetError());
-	JPH::ShapeRefC collider_shape = collider_shape_result.Get();
-	JPH::BodyCreationSettings collider_settings(collider_shape, collider_options->position, collider_options->quaternion, collider_options->motion_type, collider_options->object_layer);
-	JPH::BodyID collider_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(collider_settings, JPH::EActivation::Activate);
-	return collider_id;
-}
 
 void J_RemoveAndDestroyBody(BodyID body_id)
 {
