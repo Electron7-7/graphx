@@ -89,18 +89,35 @@ bool Actor::wantsToBeRendered()
 //
 // PhysicsActor
 //
+PhysicsActor::PhysicsActor(std::string init_name, JPH::EMotionType init_motion_type, JPH::ObjectLayer init_object_layer, JPH::EActivation init_body_activation, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+: Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
+{
+	actor_type = ACTOR_PHYSICS;
+	JPH::Vec3 body_scale = convertMath<JPH::Vec3>(init_scale);
+	JPH::Vec3 body_position = convertMath<JPH::Vec3>(init_position);
+	glm::vec3 body_rotation_radians = glm::radians(init_euler_degrees);
+	JPH::Quat body_quat = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(body_rotation_radians));
+	JPH::BodyCreationSettings init_body_creation_settings = JPH::BodyCreationSettings(new JPH::BoxShape(body_scale), body_position, body_quat, init_motion_type, init_object_layer);
+	body_creation_settings.insert(body_creation_settings.end(), init_body_creation_settings);
+	body_activation.insert(body_activation.end(), init_body_activation);
+}
 
-PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init_body_creation_settings, JPH::EActivation body_activation, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init_body_creation_settings, JPH::EActivation init_body_activation, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale), body_creation_settings(std::vector<JPH::BodyCreationSettings>{init_body_creation_settings})
 {
 	actor_type = ACTOR_PHYSICS;
-	JPH::BodyID collider_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(init_body_creation_settings, body_activation);
-	collider_ids.insert(collider_ids.end(), collider_id);
+	body_creation_settings.insert(body_creation_settings.end(), init_body_creation_settings);
+	body_activation.insert(body_activation.end(), init_body_activation);
 }
 
 void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
+	for(int i = 0 ; i < body_creation_settings.size() ; i++) // Todo: merge body_creation_settings and body_activation into an unordered_map
+	{
+		JPH::BodyID collider_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_creation_settings[i], body_activation[i]);
+		collider_ids.insert(collider_ids.end(), collider_id);
+	}
 }
 
 void PhysicsActor::takeABow()

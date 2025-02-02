@@ -780,3 +780,10 @@ I have lots of errors but I need a break. Tomorrow, here's what to do:
  Decide whether I want to create a full JPH::BodyCreationSettings object in the Theatre or create a partial one and have the PhysicsActor decide whether or not to override its Shape (for default BoxShape colliders and such).
 
 :3
+
+[02/02/25]
+I want to do the first option: create a full JPH::BodyCreationSettings object in the Theatre.
+
+I'm also implementing a way for PhysicsActors to create a default BoxShape with user-supplied JPH::BodyCreationSettings arguments (see the floor and wall Actors in the collision testing Theatre).
+
+Okay, so, JPH::BodyCreationSettings objects can only be created after I've set up Jolt, which of course is done in the game logic thread function. This means I can't #include the Theatre header before the function but I obviously can't #include it in the middle of the function or after it. My current duck-tape solution is inside the Theatre header, I make a custom struct that has all the objects in it, then I create a variable called "new_theatre" from that struct and I set current_theatre to &new_theatre.collision_testing_theatre. This is pretty shit and it also causes the program to exit ungracefully (probably due to some scoping or destructor shit). I want to get rid of this and the only idea I have is to basically abstract the arguments in JPH::BodyCreationSettings to the PhysicsActor constructor and store them in vectors so I can grab them in PhysicsActor::callToStage.

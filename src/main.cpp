@@ -267,7 +267,9 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
-	current_theatre = &collision_testing_theatre;
+	test_theatre new_theatre;
+
+	current_theatre = &new_theatre.collision_testing_theatre;
 	current_theatre->actorEnter(&player);
 	current_theatre->startPreshow();
 	time_to_store_buffers = true;
@@ -299,12 +301,12 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
-			player_flashlight.setLight(test_flashlight_bool);
+			new_theatre.player_flashlight.setLight(test_flashlight_bool);
 			
 			if(red_flashlight_color_bool)
-				player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
+				new_theatre.player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
 			else
-				player_flashlight.light_color = glm::vec3(1.0f);
+				new_theatre.player_flashlight.light_color = glm::vec3(1.0f);
 			
 			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
