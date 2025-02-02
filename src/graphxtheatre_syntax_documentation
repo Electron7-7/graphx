@@ -1,0 +1,93 @@
+// Below is the general syntax for GraphXTheatre files
+
+Theatre:SubClass [Name]
+Class:SubClass [Name]
+{
+	StringVariable           "String"
+	DataVariable             (Data)/<Name>
+	DataVariable:SubVariable (Data)/<Name>:(Data)/<Name>
+	ReferenceVariable        [Reference]
+}
+
+// Below is an example with lengthy descriptions
+//
+// The first line will name the Theatre and optionally give it a specific sub-class (currently, Theatres don't have subclasses)
+// Class & Theatre names can include whitespace, but that can complicate things and potentially introduce errors depending on how I write the syntax reader, so use whitespace at your own risk
+Theatre [HelloWorld_Theatre]
+
+// After the Theatre line, you can create resources and Actors in any order; although, depending on how I've written the parser, it may be faster to write them in order of appearance (e.g: make a Material above the Actor/Mesh that needs it instead of below it)
+// Since Material doesn't have a subclass (yet), I don't include a ":SubClass"
+// Class names are technically string variables, but use square brackets instead of quotes; the reason for this is that when copying the value of a data variable from one class to another, you write the class' name in angled brackets, so putting the name in quotes felt a bit wrong since they're being used like a reference
+Material [Doom_Shiny] // A Material named "Doom_Shiny"
+{
+	// A reference variable is simply a variable that references something in the actual C++ code; in this example, the variable "Diffuse" is referencing a preprocessor definition called "DOOM_TEXTURE_DIFF" (which you can find in the header file "r_common.hpp")
+	Diffuse           [DOOM_TEXTURE_DIFF]
+	Specular          [DOOM_TEXTURE_SPEC]
+	// A data variable takes numerical data; the syntax interpreter will (I assume) simply convert it using C++ conversion. Further below, you'll see an example of a data variable taking a name-reference instead which is one of the main reasons I created this custom syntax
+	SpecularSharpness (256)
+	SpecularStrength  (1.0)
+}
+
+Material [Doom_Dull]
+{
+	Diffuse           [DOOM_TEXTURE_DIFF]
+	Specular          [DOOM_TEXTURE_SPEC]
+	SpecularSharpness (16)
+	SpecularStrength  (0.5)
+}
+
+Mesh     [Cube]
+{
+	VAO      [VAO_HANDMADE]
+	MeshData [GRAPHX_CUBE]
+}
+
+Collider [Test_Actor_1_Collider]
+{
+	// Reference variables may or may not be either pre-set or dynamic to your codebase. Currently, the idea is to keep it pre-set (i.e: the interpreter knows that "Dynamic" means "JPH::EMotionType::Dynamic"), but I do like the thought of making this file-format (and/or the interpreter) able to be tweaked by the user to add/change definitions or make it fully dynamic to a codebase (which would be very hard to do)
+	MotionType  [Dynamic]
+	ObjectLayer [Moving]
+	Activation  [Activate]
+	Shape       [Box]
+	// This is a data variable that is referencing another class instead of taking a numerical value. By writing the name of a class in angled brackets, the interpreter will copy the value of the same variable from the class in brackets to the class that called it
+	// In this example, Test_Actor_1's Scale, Position, and Quaternion values are copied into Test_Actor_1_Collider's Scale, Position, and Quaternion variables (the Quaternion variable isn't directly used in this example, but it does exist and is calculated from "RotationDegrees" if not directly set)
+	Scale       <Test_Actor_1>
+	Position    <Test_Actor_1>
+	Quaternion  <Test_Actor_1>
+}
+
+Collider [Floor_Collider]
+{
+	MotionType  [Static]
+	ObjectLayer [NonMoving]
+	Activation  [DontActivate]
+	Shape       [Box]
+	Scale       <Floor>
+	Position    <Floor>
+	Quaternion  <Floor>
+}
+
+// If you're not using a sub-class, you can just use the parent class; in this example it would be "Actor" instead of "Actor:RigidBodyActor"
+Actor:RigidBodyActor [Test_Actor_1]
+{
+	// This is an example of setting/overriding a variable inside of a referenced variable. To do this, add a colon to the variable, followed by the name of the variable you want to override. Then, make sure you do the same with the values
+	// In this example, I set Test_Actor_1's Mesh variable to the "Cube" Mesh that I made earlier, but I override Cube's "Material" variable to the "Doom_Shiny" Material. I didn't set Cube's "Material" variable, but if I had, this would have overridden the value. Keep in mind that when referencing classes in variables that take that class, a copy of that class is used. This means that I can override Cube's "Material" variable here without it affecting other classes
+	// e.g: Mesh <Cube> sets the class' "Mesh" variable to a copy of the "Cube" Mesh, and Mesh:Material <Cube>:<Doom_Shiny> sets the class' "Mesh" variable to a copy of the "Cube" Mesh and changes that copy's "Material" variable to be the "Doom_Shiny" Material
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Position        (0.0, 2.5, -6.0)
+	RotationDegrees (0.0, -90.0, 0.0)
+	Scale           (1.2, 2.0, 1.0)
+}
+Actor:RigidBodyActor [Floor]
+{
+	Mesh:Material  <Cube>:<Doom_Dull>
+	Scale          (20.0, 1.0, 20.0)
+}
+Actor:LightDirectional [Sun]
+{
+	Direction (-0.2, -1.0, -0.3)
+	Strength  (0.05)
+}
+
+// All variables have default values that will be used if you don't set them. For instance, LightDirectional has a "LightColor" variable that defaults to "(1.0, 1.0, 1.0)" which is the color white in RGB. I want a white colored sun, so I just don't set this variable
+// Keep in mind that I could still have set "LightColor" to "(1.0, 1.0, 1.0)" with no problems, even though that's redundant.

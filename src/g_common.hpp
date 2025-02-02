@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "r_common.hpp"
+#include <any>
 // #include "g_math.hpp"
 
 extern Theatre *current_theatre;
@@ -65,6 +66,8 @@ struct Theatre
 	Mesh stage = Mesh();
 	std::string name = "Untitled Theatre";
 	std::vector<Actor *> troupe = {};
+	std::unordered_map<int, std::any> actor_storage = {};
+	std::unordered_map<int, std::any> resource_storage = {}; // Material/Mesh/Collider(?)
 
 	int point_lights_count = 0;
 	int spot_lights_count = 0;

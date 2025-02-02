@@ -787,3 +787,7 @@ I want to do the first option: create a full JPH::BodyCreationSettings object in
 I'm also implementing a way for PhysicsActors to create a default BoxShape with user-supplied JPH::BodyCreationSettings arguments (see the floor and wall Actors in the collision testing Theatre).
 
 Okay, so, JPH::BodyCreationSettings objects can only be created after I've set up Jolt, which of course is done in the game logic thread function. This means I can't #include the Theatre header before the function but I obviously can't #include it in the middle of the function or after it. My current duck-tape solution is inside the Theatre header, I make a custom struct that has all the objects in it, then I create a variable called "new_theatre" from that struct and I set current_theatre to &new_theatre.collision_testing_theatre. This is pretty shit and it also causes the program to exit ungracefully (probably due to some scoping or destructor shit). I want to get rid of this and the only idea I have is to basically abstract the arguments in JPH::BodyCreationSettings to the PhysicsActor constructor and store them in vectors so I can grab them in PhysicsActor::callToStage.
+
+You know what? I might just have to make that custom file format...
+
+Oh my fucking god, I can use std::any to avoid using std::vector<Actor *> troupe. I think. I don't want to fucking convert all my fucking code, so I'll give Theatre a second vector of std::any (which would be for Actors). The main reason is that I need to make sure all the classes in a Theatre get kept alive.
