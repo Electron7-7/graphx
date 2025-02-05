@@ -1,10 +1,8 @@
 #include <string>
 #include <map>
-std::map<int, std::string> embedded_theatre_names =
-{{0, std::string("HelloWorld")}
-};
 std::map<int, std::string> embedded_theatres =
 {{0, std::string{R"~(
+@HelloWorldTheatre
 Material [Doom_Shiny]
 {
 	Diffuse           [DOOM_TEXTURE_DIFF]

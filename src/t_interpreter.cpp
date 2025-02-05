@@ -1,10 +1,23 @@
+// #include "r_common.hpp"
 #include "t_common.hpp"
+#include "g_jolt.hpp"
 #include "theatres.hpp"
+#include "sanity.hpp"
 // #include "g_common.hpp"
-#include <algorithm>
-#include <iostream>
-#include <string>
 #include <set>
+#include <any>
+#include <string>
+#include <iostream>
+#include <algorithm>
+#include <unordered_map>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
+
+#define VAO_HANDMADE 0
+#define DOOM_TEXTURE_DIFF 3
+#define DOOM_TEXTURE_SPEC 4
 
 // std::unordered_map<int, Theatre> all_theatres;
 
@@ -30,14 +43,134 @@ template<> long translateData(std::string data)
 
 int loadTheatre(std::string embedded_theatre)
 {
-	std::vector<std::vector<std::string>> parsed_data = theatreParser(embedded_theatre);
+	std::unordered_map<std::string, std::string> parsed_data = theatreParser(embedded_theatre);
 	theatreInterpreter(parsed_data);
 	return 0;
 }
 
-std::vector<std::vector<std::string>> theatreParser(std::string theatre_data)
+std::unordered_map<std::string, std::string> theatreParser(std::string theatre_data)
 {
-	// variables:
+	std::set<char> whitespace =
+	{
+		' ',
+		'	',
+		'\n',
+		'\t'
+	};
+
+	std::unordered_map<std::string, std::string> definition_value_pairs;
+	bool in_curly_brackets = false;
+	bool reading_definition = false;
+	bool reading_value = false;
+
+	std::string buffer = "";
+	std::pair<std::string, std::string> pair_buffer = {};
+
+	for(int i = 0 ; i < theatre_data.size() ; i++)
+	{
+		char character = theatre_data[i];
+		if(whitespace.contains(character))
+		{
+			if(reading_definition)
+			{
+				reading_definition = false;
+				pair_buffer.first = buffer;
+				buffer = "";
+			}
+
+			else if(reading_value)
+			{
+				reading_value = false;
+				pair_buffer.second = buffer;
+				buffer = "";
+			}
+
+			continue;
+		}
+
+		buffer += character;
+	}
+
+}
+
+#define UID_THEATRE			0
+#define UID_ACTOR			1
+#define UID_RIGIDBODYACTOR	2
+#define UID_MESH			3
+#define UID_MATERIAL		4
+
+std::unordered_map<std::string, int> class_names =
+{
+	{"Theatre", UID_THEATRE},
+	{"Actor", UID_ACTOR},
+	{"Actor::RigidBodyActor", UID_RIGIDBODYACTOR},
+	{"Mesh", UID_MESH},
+	{"Material", UID_MATERIAL}
+};
+
+std::unordered_map<std::string, std::any> definitions =
+{
+	{"DOOM_TEXTURE_DIFF", DOOM_TEXTURE_DIFF},
+	{"DOOM_TEXTURE_SPEC", DOOM_TEXTURE_SPEC},
+	{"VAO_HANDMADE", VAO_HANDMADE},
+	{"GRAPHX_CUBE", std::vector<std::any>{CUBE_VERTS, CUBE_INDICES}},
+	{"Dynamic", JPH::EMotionType::Dynamic},
+	{"Static", JPH::EMotionType::Static},
+	{"Kinematic", JPH::EMotionType::Kinematic},
+	{"Moving", Layers::MOVING},
+	{"NonMoving", Layers::NON_MOVING},
+	{"Activate", JPH::EActivation::Activate},
+	{"DontActivate", JPH::EActivation::DontActivate},
+	{"BoxShape", ""},
+	{"SphereShape", ""},
+	{"CapsuleShape", ""},
+	{"CylinderShape", ""},
+};
+
+std::vector<std::string> names =
+{};
+
+void createNewClass(int class_uid, std::string object_name)
+{
+	switch(class_uid)
+	{
+	case UID_THEATRE:
+		PRINT("New Theatre [" << object_name << "]");
+		break;
+	case UID_ACTOR:
+		PRINT("New Actor [" << object_name << "]");
+		break;
+	case UID_RIGIDBODYACTOR:
+		PRINT("New RigidBodyActor [" << object_name << "]");
+		break;
+	case UID_MESH:
+		PRINT("New Mesh [" << object_name << "]");
+		break;
+	case UID_MATERIAL:
+		PRINT("New Material [" << object_name << "]");
+		break;
+	}
+}
+
+void theatreInterpreter(std::unordered_map<std::string, std::string> variable_data_pairs)
+{
+	// all_theatres[theatre_index] = Theatre();
+	// Theatre *current_theatre = &all_theatres[theatre_index];
+
+	// for(std::vector<std::string> &pair : variable_data_pairs)
+	// {
+	// 	std::cout << pair[0] << " = " << pair[1] << std::endl;
+	// 	std::string variable = pair[0];
+	// 	std::string data = pair[1];
+
+	// 	if(class_names.contains(variable))
+	// 		createNewClass(class_names[variable], data);
+	// }
+}
+
+/*
+OLD PARSER CODE:
+// variables:
 	// (?<=^|^\s)(\w+(:\w+)?)
 	// data:
 	// (?<=\[|\(|\<)((-?\w+(\.|,\s)?)+)(?=\]|\)|\>)(:(?<=\[|\(|\<)((-?\w+(\.|,\s)?)+)(?=\]|\)|\>))?
@@ -174,46 +307,4 @@ std::vector<std::vector<std::string>> theatreParser(std::string theatre_data)
 		variable_data_pairs.insert(variable_data_pairs.end(), std::vector<std::string>{variables[i], data[i]});
 
 	return variable_data_pairs;
-}
-
-std::vector<std::string> variable_definitions =
-{
-	"Actor",
-	"Actor::RigidBodyActor",
-	"Mesh",
-	"Material"
-};
-
-void theatreInterpreter(std::vector<std::vector<std::string>> variable_data_pairs)
-{
-	// all_theatres[theatre_index] = Theatre(embedded_theatre_names[theatre_index]);
-	// Theatre *current_theatre = &all_theatres[theatre_index];
-
-	for(std::vector<std::string> &pair : variable_data_pairs)
-	{
-		std::cout << pair[0] << " = " << pair[1] << std::endl;
-		std::string variable = pair[0];
-		std::string data = pair[1];
-		
-		auto variable_compare = [variable](std::string a)
-		{
-			return variable == a;
-		};
-
-		int variable_index = std::distance(variable_definitions.begin(), std::find(variable_definitions.begin(), variable_definitions.end(), pair[0]));
-
-		switch(variable_index)
-		{
-		case 0:
-		case 1:
-			std::cout << "New Actor\n";
-			break;
-		case 2:
-			std::cout << "New Mesh\n";
-			break;
-		case 3:
-			std::cout << "New Material\n";
-			break;
-		}
-	}
-}
+*/

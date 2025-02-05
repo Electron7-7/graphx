@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "r_common.hpp"
+#include <unordered_map>
 #include <any>
 // #include "g_math.hpp"
 

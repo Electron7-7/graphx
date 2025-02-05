@@ -65,18 +65,19 @@ FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped 
 
 all: build build_windows
 
-clean: clean_resources embed_resources
+clean: clean_resources
 	rm -f build/*
+	make -s embed_resources
 
 clean_resources:
-	rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H)
+	$(shell rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H))
 
 embed_resources: $(IMAGES_C) $(SHADERS_C) $(THEATRES_C)
 
 compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
-testing_interpreter: embed_resources debug
+testing_interpreter: clean_resources embed_resources debug
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC)/t_interpreter.cpp $(SRC)/theatres.cpp $(SRC)/testing.cpp -o testing
 
 debug:
@@ -112,11 +113,8 @@ $(THEATRES_H):
 	$(shell printf "extern std::map<int, std::string> embedded_theatre_names;\nextern std::map<int, std::string> embedded_theatres;\n#endif" >> $(THEATRES_H))
 
 $(THEATRES_C): $(THEATRES_H)
-	$(shell printf "#include <string>\n#include <map>\nstd::map<int, std::string> embedded_theatre_names =\n{" >> $(THEATRES_C))
-	$(foreach theatre,$(shell find $(T) -name '*.graphxtheatre'),$(shell printf ",{$(shell grep -P --only-matching '(.+\/)+\K[0-9]+' <<< $(theatre)), std::string$(leftparen)\"$(shell grep -P --only-matching '(.+\/)+[0-9]+\.\K.+(?=\.graphxtheatre)' <<< $(theatre))\"$(rightparen)}" >> $(THEATRES_C)))
-	$(shell printf "\n};" >> $(THEATRES_C))
-	$(shell printf "\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
-	$(foreach theatre,$(shell find $(T) -name '*.graphxtheatre'),$(shell printf ",{$(shell grep -P --only-matching '(.+\/)+\K[0-9]+' <<< $(theatre)), std::string{R\"~(\n" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
+	$(shell printf "#include <string>\n#include <map>\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
+	$(foreach theatre,$(shell find $(T) -name '*.graphxtheatre'),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(\n" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
 	$(shell sed 's/^{,{/{{/' -i $(THEATRES_C))
 	$(shell printf "\n};" >> $(THEATRES_C))
 

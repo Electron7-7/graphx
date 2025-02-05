@@ -816,3 +816,8 @@ Theatre names must also not include whitespace.
 Almost there! I have the Theatres correctly embedding, I have one map with pairs of integers and Theatre string data, and a second map with pairs of integers and Theatre names (as strings). The integers in both should match the same Theatre (and are taken directly from the filename). I have a printout test in the interpreter that works as well! It uses a switch statement to match vector indices in order to determine which typename a string is referring to! I'm super excited because once I finish this, I can start working on a game!!
 
 :3
+
+[02/05/25]
+It's 11:16. I want to see how far into the interpreter I can get before 12/12:30.
+
+I need to re-write the parser entirely. It's way too finniky. I started work on it but I need to stop and decomp.
