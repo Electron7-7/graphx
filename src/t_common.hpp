@@ -14,10 +14,11 @@
 class Theatre;
 extern int current_theatre_uid;
 extern std::unordered_map<int, Theatre> all_theatres;
-extern std::unordered_map<std::string, std::any> interpreter_definitions;
 
 template<typename T> T translateData(std::string data);
 
-Theatre *loadTheatre(const char *theatre_data);
-Theatre *getCurrentTheatre();
+// int loadTheatre(std::string theatre_file_path);
+int loadTheatre(std::string embedded_theatre);
+std::vector<std::vector<std::string>> theatreParser(std::string theatre_data);
+void theatreInterpreter(std::vector<std::vector<std::string>> variable_data_pairs);
 #endif

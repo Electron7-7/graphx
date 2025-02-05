@@ -4,7 +4,7 @@
 #include <any>
 // #include "g_math.hpp"
 
-extern Theatre *current_theatre;
+// extern Theatre *current_theatre;
 extern bool current_troupe_changed;
 
 struct RenderState

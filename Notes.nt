@@ -791,3 +791,28 @@ Okay, so, JPH::BodyCreationSettings objects can only be created after I've set u
 You know what? I might just have to make that custom file format...
 
 Oh my fucking god, I can use std::any to avoid using std::vector<Actor *> troupe. I think. I don't want to fucking convert all my fucking code, so I'll give Theatre a second vector of std::any (which would be for Actors). The main reason is that I need to make sure all the classes in a Theatre get kept alive.
+
+[02/03/25]
+I'm going to continue with the interpreter, however, making a note that I need Theatres to store ALL the data that they require (i.e: Materials, Meshes, etc.), and/or give GraphX the ability to store certain objects globally (i.e: for a Material that's used a lot). Either way, I can't use pointers for everything since I'll be changing Theatre instantiation from a header file to a function, which means it'll be scoped. I need all the objects in a Theater to stay alive, so I can either pre-allocate a maximum number of them (not a good idea), or figure out a way to keep them alive dynamically; std::any seems like the perfect solution... which is why I'm skeptical of it. It seems too good to be true, so keep an eye on it.
+BIG NOTE: a prediction on a possible failure point for std::any would be that under certain conditions it doesn't keep its objects alive (i.e: somewhere deep in std::any, it's using references/pointers or some shit). This is just a note of "hey I have a guess at what's going wrong IF anything goes wrong".
+
+The parser works! Mostly... the first line "Theatre [name_of_theatre]" throws it off because there are no curly brackets. The short term fix would be to just add empty curly brackets (or include all of the objects in the curly brackets? could be interesting), but I want to fix it for good.
+
+Tomorrow.
+
+:3
+
+[02/04/25]
+What I wrote yesterday is more accurately a "lexer" and a "parser" put together (or maybe just a parser). Either way, I need to fix that bug which shouldn't be too hard, and then I need to write the interpreter. Once this file format is done, I think I should be able to make a full on game with the pieces I have here. Sure, I'll need more derivations of Actor and maybe even Mesh or other classes, but I shouldn't need any new unique ones for a simple game. For the bug, I think I'll stick with the simple fix of just putting an open curly bracket after Theater and a closing one at the very end of the file.
+
+Oh, also, why not just make the Theatre's name the name of the fucking file? Duh. Fixes the whitespace problem, too (kind of).
+
+Oh my god I'm seeing the puzzle pieces as they're being put together: writing the embedding process for Theatres made me realize why using functions to access the current Theatre, switch Theatres, etc is REQUIRED! Because the Theatres will be embedded as string-data in source file format, and need to be parsed and (more importantly) actual objects need to be created from that parsed data! That means that the Theatre objects won't exist at compile time, but rather when they are requested to be loaded/instantiated!
+
+Okay, Theatres will be embedded as std::pair<int, std::string> with the integer being the order of importance/load. This number will be written in the filename like so:
+#.name.graphxtheatre
+Theatre names must also not include whitespace.
+
+Almost there! I have the Theatres correctly embedding, I have one map with pairs of integers and Theatre string data, and a second map with pairs of integers and Theatre names (as strings). The integers in both should match the same Theatre (and are taken directly from the filename). I have a printout test in the interpreter that works as well! It uses a switch statement to match vector indices in order to determine which typename a string is referring to! I'm super excited because once I finish this, I can start working on a game!!
+
+:3

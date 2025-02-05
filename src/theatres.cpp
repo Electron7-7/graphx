@@ -1,0 +1,64 @@
+#include <string>
+#include <map>
+std::map<int, std::string> embedded_theatre_names =
+{{0, std::string("HelloWorld")}
+};
+std::map<int, std::string> embedded_theatres =
+{{0, std::string{R"~(
+Material [Doom_Shiny]
+{
+	Diffuse           [DOOM_TEXTURE_DIFF]
+	Specular          [DOOM_TEXTURE_SPEC]
+	SpecularSharpness (256)
+	SpecularStrength  (1.0)
+}
+Material [Doom_Dull]
+{
+	Diffuse           [DOOM_TEXTURE_DIFF]
+	Specular          [DOOM_TEXTURE_SPEC]
+	SpecularSharpness (16)
+	SpecularStrength  (0.5)
+}
+Mesh     [Cube]
+{
+	VAO      [VAO_HANDMADE]
+	MeshData [GRAPHX_CUBE]
+}
+Collider [Test_Actor_1_Collider]
+{
+	MotionType  [Dynamic]
+	ObjectLayer [Moving]
+	Activation  [Activate]
+	Shape       [Box]
+	Scale       <Test_Actor_1>
+	Position    <Test_Actor_1>
+	Quaternion  <Test_Actor_1>
+}
+Collider [Floor_Collider]
+{
+	MotionType  [Static]
+	ObjectLayer [NonMoving]
+	Activation  [DontActivate]
+	Shape       [Box]
+	Scale       <Floor>
+	Position    <Floor>
+	Quaternion  <Floor>
+}
+Actor:RigidBodyActor [Test_Actor_1]
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Position        (0.0, 2.5, -6.0)
+	RotationDegrees (0.0, -90.0, 0.0)
+	Scale           (1.2, 2.0, 1.0)
+}
+Actor:RigidBodyActor [Floor]
+{
+	Mesh:Material  <Cube>:<Doom_Dull>
+	Scale          (20.0, 1.0, 20.0)
+}
+Actor:LightDirectional [Sun]
+{
+	Direction (-0.2, -1.0, -0.3)
+	Strength  (0.05)
+})~"}}
+};

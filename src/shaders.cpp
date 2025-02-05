@@ -1,5 +1,5 @@
 #include <string>
-std::string phong_vertex_glsl = R"(
+std::string phong_vertex_glsl = R"~(
 #version 460 core
 layout (location = 0) in vec3 _vertex_position;
 layout (location = 1) in vec3 _vertex_normal;
@@ -21,8 +21,8 @@ void main()
 	fragment_position = vec3(model_matrix * vec4(_vertex_position, 1.0f)); // Transforming vertex position from local to global coordinates
 	gl_Position = projection_matrix * view_matrix * model_matrix * vec4(_vertex_position, 1.0);
 };
-)";
-std::string phong_fragment_glsl = R"(
+)~";
+std::string phong_fragment_glsl = R"~(
 #version 460 core
 #define MAX_NUMBER_OF_LIGHTS 20
 out vec4 FragColor;
@@ -160,4 +160,4 @@ vec3 calculateLight(Light light, bool is_spot_light)
 
 	return (this_ambient + this_diffuse + this_specular);
 }
-)";
+)~";
