@@ -20,6 +20,5 @@ void createNewClass(int class_uid, std::string object_name);
 
 // int loadTheatre(std::string theatre_file_path);
 int loadTheatre(std::string embedded_theatre);
-std::unordered_map<std::string, std::string> theatreParser(std::string theatre_data);
-void theatreInterpreter(std::unordered_map<std::string, std::string> variable_data_pairs);
+void theatreParser(std::string theatre_data);
 #endif

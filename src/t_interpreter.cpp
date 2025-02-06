@@ -20,6 +20,12 @@
 #define DOOM_TEXTURE_SPEC 4
 
 // std::unordered_map<int, Theatre> all_theatres;
+std::string theatre_name;
+std::map<int, std::pair<std::string, std::string>> objects_bucket;
+std::multimap<int, std::pair<std::string, std::string>> cpp_references;
+std::multimap<int, std::pair<std::string, int>> theatre_references;
+std::multimap<int, std::pair<std::string, std::string>> raw_data;
+std::multimap<int, std::vector<std::pair<std::string, int>>> layered_definitions;
 
 template<> int translateData(std::string data)
 {
@@ -41,14 +47,7 @@ template<> long translateData(std::string data)
 	return std::stol(data);
 }
 
-int loadTheatre(std::string embedded_theatre)
-{
-	std::unordered_map<std::string, std::string> parsed_data = theatreParser(embedded_theatre);
-	theatreInterpreter(parsed_data);
-	return 0;
-}
-
-std::unordered_map<std::string, std::string> theatreParser(std::string theatre_data)
+void theatreParser(std::string theatre_data)
 {
 	std::set<char> whitespace =
 	{
@@ -58,39 +57,163 @@ std::unordered_map<std::string, std::string> theatreParser(std::string theatre_d
 		'\t'
 	};
 
-	std::unordered_map<std::string, std::string> definition_value_pairs;
+	std::set<char> begin_value =
+	{
+		'[',
+		'<',
+		'('
+	};
+
+	std::set<char> end_value =
+	{
+		']',
+		'>',
+		')'
+	};
+
 	bool in_curly_brackets = false;
 	bool reading_definition = false;
 	bool reading_value = false;
+	bool layered = false;
 
 	std::string buffer = "";
-	std::pair<std::string, std::string> pair_buffer = {};
+	std::string pair_definition_buffer = {}; // {definition, value}
+	std::vector<std::pair<std::string, int>> layered_pairs_buffer = {};
 
-	for(int i = 0 ; i < theatre_data.size() ; i++)
+	int object_uid = 0;
+	int layer_index = 0;
+	int start_index = 0;
+
+	for(int i = 1 ; i < theatre_data.size() ; i++)
+	{
+		if(theatre_data[0] != '@')
+		{
+			theatre_name = std::string("untitled_theatre");
+			break;
+		}
+
+		if(whitespace.contains(theatre_data[i]))
+		{
+			theatre_name = buffer;
+			PRINT("theatre name: " << buffer);
+			buffer = "";
+			start_index = i;
+			PRINT("start index: " << start_index);
+			break;
+		}
+
+		buffer += theatre_data[i];
+	}
+
+	for(int i = start_index ; i < theatre_data.size() ; i++)
 	{
 		char character = theatre_data[i];
-		if(whitespace.contains(character))
+		// PRINT("object uid before: " << object_uid << "\nobject_uid_after: " << (object_uid + (character == '{')));
+
+		if(character == '{' || character == '}')
+		{
+			object_uid += (character == '}');
+			in_curly_brackets = (character == '{');
+			buffer = "";
+			continue;
+		}
+
+		if(whitespace.contains(character) || character == ':')
 		{
 			if(reading_definition)
 			{
-				reading_definition = false;
-				pair_buffer.first = buffer;
+				PRINT("definition caught!\n\t" << buffer << " (Object#" << object_uid << ")");
+				reading_definition = !whitespace.contains(character);
+				layered = (character == ':');
+				if(layered)
+					layered_pairs_buffer.insert(layered_pairs_buffer.end(), std::make_pair(buffer, (int)0));
+				else
+					pair_definition_buffer = std::string(buffer);
 				buffer = "";
+				continue;
 			}
 
-			else if(reading_value)
+			if(reading_value)
 			{
-				reading_value = false;
-				pair_buffer.second = buffer;
-				buffer = "";
+				if(character == ':')
+				{
+					reading_value = true;
+					continue;
+				}
+
+				// Whitespace can show up in numerical values (might not want to keep it, though)
+				buffer += character;
+				continue;
 			}
 
 			continue;
 		}
 
+		if(begin_value.contains(character))
+		{
+			reading_value = true;
+			buffer = "";
+			continue;
+		}
+
+		if(end_value.contains(character))
+		{
+			PRINT("value caught!\n\t" << buffer << " (Object#" << object_uid << ")");
+			reading_value = (theatre_data[i+1] == ':');
+			
+			if(!in_curly_brackets)
+			{
+				objects_bucket.insert(objects_bucket.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, buffer)));
+				buffer = "";
+				continue;
+			}
+
+			switch(character)
+			{
+			case ']':
+				cpp_references.insert(cpp_references.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, buffer)));
+				break;
+			case ')':
+				raw_data.insert(raw_data.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, buffer)));
+				break;
+			case '>':
+				int linked_object_uid;
+
+				for(auto it = objects_bucket.begin(); it != objects_bucket.end() ; ++it)
+				{
+					if(it->second.second == buffer)
+					{
+						linked_object_uid = it->first;
+					}
+				}
+
+				if(layered)
+				{
+					layered_pairs_buffer[layer_index].second = linked_object_uid;
+					buffer = "";
+					layer_index++;
+
+					if(!reading_value)
+					{
+						layered_definitions.insert(layered_definitions.end(), std::make_pair(object_uid, layered_pairs_buffer));
+						layer_index = 0;
+						continue;
+					}
+
+					continue;
+				}
+
+				theatre_references.insert(theatre_references.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, linked_object_uid)));	
+				break;
+			}
+
+			buffer = "";
+			continue;
+		}
+
+		reading_definition = !reading_value;
 		buffer += character;
 	}
-
 }
 
 #define UID_THEATRE			0
@@ -152,8 +275,32 @@ void createNewClass(int class_uid, std::string object_name)
 	}
 }
 
-void theatreInterpreter(std::unordered_map<std::string, std::string> variable_data_pairs)
+int loadTheatre(std::string embedded_theatre)
 {
+	theatreParser(embedded_theatre);
+	PRINT("Interpreting Theatre (" << theatre_name << ")");
+	for(int i = 0 ; i < objects_bucket.size() ; i++)
+	{
+		auto it = objects_bucket[i];
+		PRINT("New " << objects_bucket[i].first << " named \"" << objects_bucket[i].second << "\" with UID #" << i);
+		
+		for(auto[itr, end] = cpp_references.equal_range(i) ; itr != end ; ++itr)
+			std::cout << "\t" << itr->second.first << " = " << itr->second.second << std::endl;
+		
+		for(auto[itr, end] = theatre_references.equal_range(i) ; itr != end ; ++itr)
+			std::cout << "\t" << itr->second.first << " = " << objects_bucket[itr->second.second].second << "." << itr->second.first << std::endl;
+		
+		for(auto[itr, end] = raw_data.equal_range(i) ; itr != end ; ++itr)
+			std::cout << "\t" << itr->second.first << " = " << itr->second.second << std::endl;
+		
+		for(auto[itr, end] = layered_definitions.equal_range(i) ; itr != end ; ++itr)
+		{
+			std::cout << "\t" << itr->second[0].first << " [" << itr->second[0].second << "] =\n";
+			for(auto &pair : itr->second)
+				std::cout << "\t\t" << pair.first << " = " << objects_bucket[pair.second].first << "." << pair.first << std::endl;
+		}
+	}
+
 	// all_theatres[theatre_index] = Theatre();
 	// Theatre *current_theatre = &all_theatres[theatre_index];
 
@@ -166,6 +313,8 @@ void theatreInterpreter(std::unordered_map<std::string, std::string> variable_da
 	// 	if(class_names.contains(variable))
 	// 		createNewClass(class_names[variable], data);
 	// }
+
+	return 0;
 }
 
 /*

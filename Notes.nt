@@ -821,3 +821,14 @@ Almost there! I have the Theatres correctly embedding, I have one map with pairs
 It's 11:16. I want to see how far into the interpreter I can get before 12/12:30.
 
 I need to re-write the parser entirely. It's way too finniky. I started work on it but I need to stop and decomp.
+
+Here's my plan for the parser & interpreter:
+ - Store all object definitions in a map; the pairs will be of an integer uid, and a pair of strings, one for the class name and one for the actual name of the class object.
+ - There will be at least three maps for the three different types of data values (C++ references, Theatre references, and raw data). These maps will have a pair of an integer uid corresponding to an object's uid, and a vector/pair. The vector/pair will contain the definition/variable as a string, and the data/value as either a string or an integer uid corresponding to another object's uid. I won't need to use std::any, since linked values will be in the "linked values" multimap.
+ - I'm limiting the ':' to only allow layers of Theatre references
+ 	- e.g: Mesh:Material <Cube>:<Doom_Shiny> is allowed
+ 	- e.g: Mesh:MeshData <Cube>:[GRAPHX_PYRAMID] is not allowed, a new Mesh must be made
+
+I'm almost done!!! A few bugs with how I access the data after parsing, I don't think the parser has any bugs right now. It fucking works!!!! Tomorrow I should be able to write the interpreter portion very quickly. This is really fucking exciting!!!
+
+Note: Theatre files must include "@<theatre name>" at the top, and all layered expressions (e.g: Mesh:Material <Cube>:<Doom_Shiny>) must always be Theatre references (the angled brackets). Also, no whitespace at the beginning of the file (which also means the embedded data, too, so I removed the "\n" from "R"~(\n" in the makefile).
