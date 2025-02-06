@@ -7,6 +7,8 @@
 #include "g_actors.hpp"
 #include "g_common.hpp"
 #include "g_jolt.hpp"
+#include "t_common.hpp"
+#include "theatres.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -17,6 +19,7 @@
 #include <cstdarg>
 #include <thread>
 #include <mutex>
+Theatre *current_theatre_deprecated;
 
 GraphXPlayer player("Player", glm::vec3(0.0f, 6.0f, 0.0f));
 Environment default_environment(true);
@@ -233,7 +236,7 @@ public:
 // END OF JOLT PHYSICS BOILERPLATE
 //--------------------------------
 
-#include "theatres/collision_testing.graphxtheatre"
+#include "theatres/deprecated_header_format/collision_testing.oldtheatretemplate"
 
 void testGameTick(GLFWwindow *main_window)
 {
@@ -266,11 +269,15 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
-	test_theatre new_theatre;
+//------------------------------------
+//------------------------------------
+	loadTheatre(embedded_theatres[0]);
+//------------------------------------
+//------------------------------------
 
-	current_theatre = &new_theatre.collision_testing_theatre;
-	current_theatre->actorEnter(&player);
-	current_theatre->startPreshow();
+	current_theatre_deprecated = &collision_testing_theatre;
+	current_theatre_deprecated->actorEnter(&player);
+	current_theatre_deprecated->startPreshow();
 	time_to_store_buffers = true;
 
 	double last_time = glfwGetTime();
@@ -292,7 +299,7 @@ void testGameTick(GLFWwindow *main_window)
 
 			processInput(main_window);
 
-			for(Actor *actor : current_theatre->troupe)
+			for(Actor *actor : current_theatre_deprecated->troupe)
 			{
 				// Call the tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
 				// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
@@ -300,12 +307,12 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
-			new_theatre.player_flashlight.setLight(test_flashlight_bool);
+			player_flashlight.setLight(test_flashlight_bool);
 			
 			if(red_flashlight_color_bool)
-				new_theatre.player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
+				player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
 			else
-				new_theatre.player_flashlight.light_color = glm::vec3(1.0f);
+				player_flashlight.light_color = glm::vec3(1.0f);
 			
 			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
@@ -316,15 +323,15 @@ void testGameTick(GLFWwindow *main_window)
 		if(current_tick_since_second >= TICKRATE)
 			current_tick_since_second = 0;
 	}
+	
+	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 
-	current_theatre->dropCurtains();
+	current_theatre_deprecated->dropCurtains();
 
 	JPH::UnregisterTypes();
 
 	delete JPH::Factory::sInstance;
 	JPH::Factory::sInstance = NULL;
-
-	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -362,9 +369,21 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINT("Resetting PhysicsActors to initial transformation!");
-		for(Actor *actor : current_theatre->troupe)
+		for(Actor *actor : current_theatre_deprecated->troupe)
 			if(actor->actor_type == ACTOR_PHYSICS)
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
+	}
+
+	if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
+	{
+		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
+		{
+			PRINT("Cursor Mode: Disabled (hidden + locked at center)");
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			return;
+		}
+		PRINT("Cursor Mode: Normal (cursor visible & camera ignoring movement)");
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 }
 
@@ -385,6 +404,10 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
 	glm::vec2 mouse_offset = mouse_position - mouse_last;
 	mouse_last = mouse_position;
+	
+	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
+		return;
+	
 	player.doMouseMovement(mouse_offset);
 }
 

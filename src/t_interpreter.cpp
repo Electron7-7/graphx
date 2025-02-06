@@ -1,23 +1,13 @@
-// #include "r_common.hpp"
-#include "t_common.hpp"
-#include "g_jolt.hpp"
-#include "theatres.hpp"
 #include "sanity.hpp"
-// #include "g_common.hpp"
+#include "t_common.hpp"
+#include "r_common.hpp"
+#include "theatres.hpp"
 #include <set>
-#include <any>
-#include <string>
-#include <iostream>
+// #include <any>
+// #include <string>
+// #include <iostream>
 #include <algorithm>
 #include <unordered_map>
-#include <Jolt/Physics/Collision/Shape/BoxShape.h>
-#include <Jolt/Physics/Collision/Shape/SphereShape.h>
-#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
-#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
-
-#define VAO_HANDMADE 0
-#define DOOM_TEXTURE_DIFF 3
-#define DOOM_TEXTURE_SPEC 4
 
 // std::unordered_map<int, Theatre> all_theatres;
 std::string theatre_name;
@@ -25,7 +15,7 @@ std::map<int, std::pair<std::string, std::string>> objects_bucket;
 std::multimap<int, std::pair<std::string, std::string>> cpp_references;
 std::multimap<int, std::pair<std::string, int>> theatre_references;
 std::multimap<int, std::pair<std::string, std::string>> raw_data;
-std::multimap<int, std::vector<std::pair<std::string, int>>> layered_definitions;
+std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> layered_definitions;
 
 template<> int translateData(std::string data)
 {
@@ -77,7 +67,9 @@ void theatreParser(std::string theatre_data)
 	bool layered = false;
 
 	std::string buffer = "";
-	std::string pair_definition_buffer = {}; // {definition, value}
+	std::string pair_definition_buffer = "";
+	std::vector<std::string> layered_pairs_definitions_buffer = {};
+	std::pair<std::string, int> layered_pairs_first_definition = {};
 	std::vector<std::pair<std::string, int>> layered_pairs_buffer = {};
 
 	int object_uid = 0;
@@ -95,10 +87,10 @@ void theatreParser(std::string theatre_data)
 		if(whitespace.contains(theatre_data[i]))
 		{
 			theatre_name = buffer;
-			PRINT("theatre name: " << buffer);
+			// PRINT("theatre name: " << buffer);
 			buffer = "";
 			start_index = i;
-			PRINT("start index: " << start_index);
+			// PRINT("start index: " << start_index);
 			break;
 		}
 
@@ -120,13 +112,17 @@ void theatreParser(std::string theatre_data)
 
 		if(whitespace.contains(character) || character == ':')
 		{
+			if(character == ':' || layered)
+			{
+				layered = true;
+			}
+
 			if(reading_definition)
 			{
-				PRINT("definition caught!\n\t" << buffer << " (Object#" << object_uid << ")");
-				reading_definition = !whitespace.contains(character);
-				layered = (character == ':');
+				// PRINT("definition caught!\n\t" << buffer << " (Object#" << object_uid << ")");
+				reading_definition = !whitespace.contains(character);				
 				if(layered)
-					layered_pairs_buffer.insert(layered_pairs_buffer.end(), std::make_pair(buffer, (int)0));
+					layered_pairs_definitions_buffer.insert(layered_pairs_definitions_buffer.end(), buffer);
 				else
 					pair_definition_buffer = std::string(buffer);
 				buffer = "";
@@ -158,9 +154,9 @@ void theatreParser(std::string theatre_data)
 
 		if(end_value.contains(character))
 		{
-			PRINT("value caught!\n\t" << buffer << " (Object#" << object_uid << ")");
+			// PRINT("value caught!\n\t" << buffer << " (Object#" << object_uid << ")");
 			reading_value = (theatre_data[i+1] == ':');
-			
+
 			if(!in_curly_brackets)
 			{
 				objects_bucket.insert(objects_bucket.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, buffer)));
@@ -189,17 +185,31 @@ void theatreParser(std::string theatre_data)
 
 				if(layered)
 				{
-					layered_pairs_buffer[layer_index].second = linked_object_uid;
-					buffer = "";
-					layer_index++;
 
-					if(!reading_value)
+					if(layer_index == 0)
 					{
-						layered_definitions.insert(layered_definitions.end(), std::make_pair(object_uid, layered_pairs_buffer));
-						layer_index = 0;
+						layered_pairs_first_definition = std::make_pair(layered_pairs_definitions_buffer[0], linked_object_uid);
+						buffer = "";
+						layer_index++;
 						continue;
 					}
 
+					if(!reading_value)
+					{
+						layered_pairs_buffer.insert(layered_pairs_buffer.end(), std::make_pair(layered_pairs_definitions_buffer.back(), linked_object_uid));
+						layered_definitions.insert(layered_definitions.end(), std::make_pair(object_uid, std::make_pair(layered_pairs_first_definition, layered_pairs_buffer)));
+						layer_index = 0;
+						layered = false;
+						layered_pairs_definitions_buffer = {};
+						layered_pairs_buffer = {};
+						layered_pairs_first_definition = {};
+						buffer = "";
+						continue;
+					}
+
+					layered_pairs_buffer.insert(layered_pairs_buffer.end(), std::make_pair(layered_pairs_definitions_buffer[layer_index], linked_object_uid));
+					layer_index++;
+					buffer = "";
 					continue;
 				}
 
@@ -216,20 +226,54 @@ void theatreParser(std::string theatre_data)
 	}
 }
 
-#define UID_THEATRE			0
-#define UID_ACTOR			1
-#define UID_RIGIDBODYACTOR	2
-#define UID_MESH			3
-#define UID_MATERIAL		4
-
-std::unordered_map<std::string, int> class_names =
+std::string getTheatreStructure()
 {
-	{"Theatre", UID_THEATRE},
-	{"Actor", UID_ACTOR},
-	{"Actor::RigidBodyActor", UID_RIGIDBODYACTOR},
-	{"Mesh", UID_MESH},
-	{"Material", UID_MATERIAL}
-};
+	std::string structure_out = "Internal structure of Theatre \"" + theatre_name + "\":\n-----------------------------------------------------------\n";
+	structure_out += "std::map<int, std::pair<std::string, std::string>> objects_bucket =\n{\n";
+	for(const auto& elem : objects_bucket)
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::pair<std::string, std::string>> cpp_references =\n{\n";
+	for(const auto& elem : cpp_references)
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::pair<std::string, int>> theatre_references =\n{\n";
+	for(const auto& elem : theatre_references)
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + std::to_string(elem.second.second) + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::pair<std::string, std::string>> raw_data =\n{\n";
+	for(const auto& elem : raw_data)
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::vector<std::pair<std::string, int>>> layered_definitions =\n{\n";
+	for(const auto& elem : layered_definitions) // pair #1
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) /*int*/ + ",\n"; // int
+		structure_out += "\t\t{\n"; // pair #2
+		structure_out += "\t\t\t{\n\t\t\t\t" + elem.second.first.first + ", " + std::to_string(elem.second.first.second) + "\n\t\t\t},\n";
+		structure_out += "\t\t\t{\n"; // vector
+		for(auto &pair : elem.second.second)
+		{
+			structure_out += "\t\t\t\t{\n\t\t\t\t\t" + pair.first + ", " + std::to_string(pair.second) + "\n\t\t\t\t},\n";
+		}
+		structure_out += "\t\t\t},\n\t\t},\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	return structure_out;
+}
 
 std::unordered_map<std::string, std::any> definitions =
 {
@@ -237,13 +281,13 @@ std::unordered_map<std::string, std::any> definitions =
 	{"DOOM_TEXTURE_SPEC", DOOM_TEXTURE_SPEC},
 	{"VAO_HANDMADE", VAO_HANDMADE},
 	{"GRAPHX_CUBE", std::vector<std::any>{CUBE_VERTS, CUBE_INDICES}},
-	{"Dynamic", JPH::EMotionType::Dynamic},
-	{"Static", JPH::EMotionType::Static},
-	{"Kinematic", JPH::EMotionType::Kinematic},
-	{"Moving", Layers::MOVING},
-	{"NonMoving", Layers::NON_MOVING},
-	{"Activate", JPH::EActivation::Activate},
-	{"DontActivate", JPH::EActivation::DontActivate},
+	// {"Dynamic", JPH::EMotionType::Dynamic},
+	// {"Static", JPH::EMotionType::Static},
+	// {"Kinematic", JPH::EMotionType::Kinematic},
+	// {"Moving", Layers::MOVING},
+	// {"NonMoving", Layers::NON_MOVING},
+	// {"Activate", JPH::EActivation::Activate},
+	// {"DontActivate", JPH::EActivation::DontActivate},
 	{"BoxShape", ""},
 	{"SphereShape", ""},
 	{"CapsuleShape", ""},
@@ -253,24 +297,48 @@ std::unordered_map<std::string, std::any> definitions =
 std::vector<std::string> names =
 {};
 
-void createNewClass(int class_uid, std::string object_name)
+std::unordered_map<std::string, int> graphx_class_names
 {
-	switch(class_uid)
+	{"Theatre", graphx_classes::THEATRE},
+	{"Actor", graphx_classes::ACTOR},
+	{"RigidBodyActor", graphx_classes::RIGIDBODYACTOR},
+	{"Collider", graphx_classes::COLLIDER},
+	{"Mesh", graphx_classes::MESH},
+	{"Material", graphx_classes::MATERIAL},
+	{"Light", graphx_classes::LIGHT},
+};
+
+int getClassHash(std::string &class_name)
+{
+	if(graphx_class_names.contains(class_name))
+		return graphx_class_names.at(class_name);
+	return -1;
+}
+
+void createNewClass(std::string class_name, std::string object_name)
+{
+	switch(getClassHash(class_name))
 	{
-	case UID_THEATRE:
+	case graphx_classes::THEATRE:
 		PRINT("New Theatre [" << object_name << "]");
 		break;
-	case UID_ACTOR:
+	case graphx_classes::ACTOR:
 		PRINT("New Actor [" << object_name << "]");
 		break;
-	case UID_RIGIDBODYACTOR:
+	case graphx_classes::RIGIDBODYACTOR:
 		PRINT("New RigidBodyActor [" << object_name << "]");
 		break;
-	case UID_MESH:
+	case graphx_classes::COLLIDER:
+		PRINT("New Collider [" << object_name << "]");
+		break;
+	case graphx_classes::MESH:
 		PRINT("New Mesh [" << object_name << "]");
 		break;
-	case UID_MATERIAL:
+	case graphx_classes::MATERIAL:
 		PRINT("New Material [" << object_name << "]");
+		break;
+	default:
+		PRINT("[ERROR] - Unknown class \"" << class_name << "\"!");
 		break;
 	}
 }
@@ -278,182 +346,14 @@ void createNewClass(int class_uid, std::string object_name)
 int loadTheatre(std::string embedded_theatre)
 {
 	theatreParser(embedded_theatre);
-	PRINT("Interpreting Theatre (" << theatre_name << ")");
-	for(int i = 0 ; i < objects_bucket.size() ; i++)
-	{
-		auto it = objects_bucket[i];
-		PRINT("New " << objects_bucket[i].first << " named \"" << objects_bucket[i].second << "\" with UID #" << i);
-		
-		for(auto[itr, end] = cpp_references.equal_range(i) ; itr != end ; ++itr)
-			std::cout << "\t" << itr->second.first << " = " << itr->second.second << std::endl;
-		
-		for(auto[itr, end] = theatre_references.equal_range(i) ; itr != end ; ++itr)
-			std::cout << "\t" << itr->second.first << " = " << objects_bucket[itr->second.second].second << "." << itr->second.first << std::endl;
-		
-		for(auto[itr, end] = raw_data.equal_range(i) ; itr != end ; ++itr)
-			std::cout << "\t" << itr->second.first << " = " << itr->second.second << std::endl;
-		
-		for(auto[itr, end] = layered_definitions.equal_range(i) ; itr != end ; ++itr)
-		{
-			std::cout << "\t" << itr->second[0].first << " [" << itr->second[0].second << "] =\n";
-			for(auto &pair : itr->second)
-				std::cout << "\t\t" << pair.first << " = " << objects_bucket[pair.second].first << "." << pair.first << std::endl;
-		}
-	}
+#ifdef GRAPHX_DEBUG
+	PRINT(getTheatreStructure());
+#endif
 
-	// all_theatres[theatre_index] = Theatre();
-	// Theatre *current_theatre = &all_theatres[theatre_index];
-
-	// for(std::vector<std::string> &pair : variable_data_pairs)
+	// for(const auto &object : objects_bucket)
 	// {
-	// 	std::cout << pair[0] << " = " << pair[1] << std::endl;
-	// 	std::string variable = pair[0];
-	// 	std::string data = pair[1];
-
-	// 	if(class_names.contains(variable))
-	// 		createNewClass(class_names[variable], data);
+	// 	createNewClass(object.second.first, object.second.second);
 	// }
 
 	return 0;
 }
-
-/*
-OLD PARSER CODE:
-// variables:
-	// (?<=^|^\s)(\w+(:\w+)?)
-	// data:
-	// (?<=\[|\(|\<)((-?\w+(\.|,\s)?)+)(?=\]|\)|\>)(:(?<=\[|\(|\<)((-?\w+(\.|,\s)?)+)(?=\]|\)|\>))?
-
-	std::set<char> data_start =
-	{
-		'[',
-		'(',
-		'<'
-	};
-
-	std::set<char> data_end =
-	{
-		']',
-		')',
-		'>'
-	};
-
-	std::set<char> whitespace =
-	{
-		' ',
-		'	',
-		'\n',
-		'\t',
-		'{',
-		'}',
-		':'
-	};
-
-	std::string buffer = "";
-	bool is_data = false;
-	bool is_variable = false;
-	bool is_in_object = false;
-	bool is_theatre_name = false;
-	std::vector<std::string> variables;
-	std::vector<std::string> data;
-	std::vector<std::vector<std::string>> variable_data_pairs;
-	std::string object_variable;
-	std::string variable_variable;
-
-	for(char &character : theatre_data)
-	{
-		if(character == '@' && &character != &theatre_data.back())
-		{
-			is_theatre_name = true;
-			buffer = "";
-			continue;
-		}
-
-		if(is_theatre_name)
-		{
-			if(whitespace.contains(character))
-			{
-				variables.insert(variables.end(), "Theatre");
-				data.insert(data.end(), buffer);
-				buffer = "";
-				is_theatre_name = false;
-				continue;
-			}
-
-			buffer += character;
-			continue;
-		}
-
-		if(character == '{')
-		{
-			is_in_object = true;
-		}
-		if(character == '}')
-		{
-			is_in_object = false;
-			object_variable = "";
-		}
-		if(character == ':' && is_variable)
-		{
-			if(is_in_object)
-			{
-				object_variable += "." + buffer;
-				continue;
-			}
-			if(!is_in_object)
-			{
-				buffer += "::";
-				continue;
-			}
-		}
-
-		if(whitespace.contains(character))
-		{
-			if(is_variable)
-			{
-				is_variable = false;
-				if(!is_in_object)
-				{
-					object_variable += buffer;
-				}
-
-				if(is_in_object)
-					buffer = object_variable + "." + buffer;
-
-				variables.insert(variables.end(), buffer);
-
-				buffer = "";
-			}
-			continue;
-		}
-
-		if(data_start.contains(character))
-		{
-			is_data = true;
-			is_variable = false;
-			continue;
-		}
-
-		if(data_end.contains(character))
-		{
-			is_data = false;
-			data.insert(data.end(), buffer);
-			buffer = "";
-			continue;
-		}
-
-		if(is_data)
-		{
-			buffer += character;
-			continue;
-		}
-
-		is_variable = true;
-		buffer += character;
-	}
-
-	for(int i = 0 ; i < variables.size() ; i++)
-		variable_data_pairs.insert(variable_data_pairs.end(), std::vector<std::string>{variables[i], data[i]});
-
-	return variable_data_pairs;
-*/

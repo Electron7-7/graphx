@@ -38,6 +38,12 @@ public:
 protected:
 	std::vector<JPH::BodyCreationSettings> body_creation_settings;
 	std::vector<JPH::EActivation> body_activation;
+	JPH::Vec3 body_scale;
+	JPH::Vec3 body_position;
+	JPH::Quat body_quat;
+	JPH::EActivation test_body_activation;
+	JPH::EMotionType test_motion_type;
+	JPH::ObjectLayer test_object_layer;
 };
 
 class RigidBodyActor : public PhysicsActor

@@ -17,7 +17,7 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 
 void R_TroupeChanged()
 {
-	for(Actor *actor : current_theatre->troupe)
+	for(Actor *actor : current_theatre_deprecated->troupe)
 	{
 		if(!actor->wantsToBeBuffered() || actor->mesh->is_buffered)
 			continue;
@@ -40,7 +40,7 @@ void R_StoreBuffers()
 {
 	int current_vao_index = VAOS_AMOUNT + 1;
 
-	for(Actor *actor : current_theatre->troupe)
+	for(Actor *actor : current_theatre_deprecated->troupe)
 	{
 		if(!actor->wantsToBeBuffered())
 			continue;
@@ -54,7 +54,7 @@ void R_StoreBuffers()
 		R_GL_BufferMeshData(actor->mesh);
 	}
 
-	R_GL_BufferMeshData(&current_theatre->stage);
+	R_GL_BufferMeshData(&current_theatre_deprecated->stage);
 
 	time_to_store_buffers = false;
 	time_to_render = true;
@@ -93,10 +93,10 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 	int spot_light_index = 0;
 
 	glUseProgram(shaders[shader_index]->id);
-	shaders[shader_index]->setUniform("point_lights_count", current_theatre->point_lights_count);
-	shaders[shader_index]->setUniform("spot_lights_count", current_theatre->spot_lights_count);
+	shaders[shader_index]->setUniform("point_lights_count", current_theatre_deprecated->point_lights_count);
+	shaders[shader_index]->setUniform("spot_lights_count", current_theatre_deprecated->spot_lights_count);
 
-	for(Actor *actor : current_theatre->troupe)
+	for(Actor *actor : current_theatre_deprecated->troupe)
 	{
 		glm::mat4 model_matrix = glm::mat4(1.0f);
 
@@ -228,8 +228,8 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 
 void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environment *current_environment, unsigned int shader_index)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, current_theatre->stage.VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, current_theatre->stage.IBO);
+	glBindBuffer(GL_ARRAY_BUFFER, current_theatre_deprecated->stage.VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, current_theatre_deprecated->stage.IBO);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -241,10 +241,10 @@ void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environm
 	glEnableVertexAttribArray(2);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, current_theatre->stage.material.texture_diffuse);
+	glBindTexture(GL_TEXTURE_2D, current_theatre_deprecated->stage.material.texture_diffuse);
 	
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, current_theatre->stage.material.texture_specular);
+	glBindTexture(GL_TEXTURE_2D, current_theatre_deprecated->stage.material.texture_specular);
 
 	shaders[shader_index]->setUniform("material.texture_color", 0);
 	shaders[shader_index]->setUniform("material.texture_specular", 1);
@@ -255,5 +255,5 @@ void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environm
 	shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 	shaders[shader_index]->setUniform("view_position", current_player->position_global);
 
-	glDrawElements(GL_TRIANGLES, current_theatre->stage.indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, current_theatre_deprecated->stage.indices.size(), GL_UNSIGNED_INT, 0);
 }

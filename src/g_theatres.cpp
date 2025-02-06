@@ -2,7 +2,6 @@
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
 #include <algorithm>
 
-Theatre *current_theatre;
 bool current_troupe_changed = false;
 
 //
@@ -18,7 +17,7 @@ Theatre::Theatre(std::string init_name, std::vector<Actor *> init_troupe, Mesh i
 
 void Theatre::startPreshow()
 {
-	PRINT("Entering Theatre (" << name << ")\nActors Present:");
+	// PRINT("Entering Theatre (" << name << ")\nActors Present:");
 	for(Actor *actor : troupe)
 		actor->callToStage(this);
 	sortTroupe();
@@ -26,7 +25,7 @@ void Theatre::startPreshow()
 
 void Theatre::dropCurtains()
 {
-	PRINT("Exiting Theatre (" << name << ")\nActors Present:");
+	// PRINT("Exiting Theatre (" << name << ")\nActors Present:");
 	for(Actor *actor : troupe)
 		actor->takeABow();
 }

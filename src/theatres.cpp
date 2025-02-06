@@ -1,5 +1,4 @@
-#include <string>
-#include <map>
+#include "theatres.hpp"
 std::map<int, std::string> embedded_theatres =
 {{0, std::string{R"~(@HelloWorldTheatre
 Material (Doom_Shiny)
@@ -51,7 +50,7 @@ RigidBodyActor (Test_Actor_1)
 }
 RigidBodyActor (Floor)
 {
-	Mesh  <Cube>
+	Mesh:Material  <Cube>:<Doom_Dull>
 	Scale (20.0, 1.0, 20.0)
 }
 LightDirectional (Sun)

@@ -832,3 +832,8 @@ Here's my plan for the parser & interpreter:
 I'm almost done!!! A few bugs with how I access the data after parsing, I don't think the parser has any bugs right now. It fucking works!!!! Tomorrow I should be able to write the interpreter portion very quickly. This is really fucking exciting!!!
 
 Note: Theatre files must include "@<theatre name>" at the top, and all layered expressions (e.g: Mesh:Material <Cube>:<Doom_Shiny>) must always be Theatre references (the angled brackets). Also, no whitespace at the beginning of the file (which also means the embedded data, too, so I removed the "\n" from "R"~(\n" in the makefile).
+
+[02/06/25]
+Gonna work on the parser a bit while at home.
+
+The parser is finally actually finished! Not only that, but it's added to the main file and doesn't cause crashes! It might cause crashes/memory leaks if I keep all of the maps in the global scope and start including JPH headers+objects and other things, so NOTE: gracefully move the map definitions into either functions or a struct that you can create when loading a new Theatre.

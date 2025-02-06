@@ -48,7 +48,7 @@ RigidBodyActor (Test_Actor_1)
 }
 RigidBodyActor (Floor)
 {
-	Mesh  <Cube>
+	Mesh:Material  <Cube>:<Doom_Dull>
 	Scale (20.0, 1.0, 20.0)
 }
 LightDirectional (Sun)

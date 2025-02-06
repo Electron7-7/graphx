@@ -4,7 +4,7 @@ CC = clang
 WCXX = x86_64-w64-mingw32-g++
 WCC = x86_64-w64-mingw32-gcc
 
-CXXFLAGS = -g -Wall -std=c++20 -fsanitize=address $(JOLTFLAGS) $(GRAPHXFLAGS)
+CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS) #-fsanitize=address
 CCFLAGS = -g -Wall
 
 WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows $(JOLTFLAGS) $(GRAPHXFLAGS)
@@ -25,12 +25,12 @@ O = build
 
 OBJS = 						\
 	$(O)/glad.o				\
-	$(O)/t_interpreter.opp	\
 	$(O)/j_common.opp		\
 	$(O)/r_common.opp		\
 	$(O)/r_renderer.opp		\
 	$(O)/g_math.opp			\
 	$(O)/g_actors.opp		\
+	$(O)/t_interpreter.opp	\
  	$(O)/g_theatres.opp
 
 CWOBJS = $(OBJS:.o=.wo)
@@ -109,11 +109,10 @@ leftparen := (
 rightparen := )
 
 $(THEATRES_H):
-	$(shell printf "#ifndef GRAPHX_EMBEDDED_THEATRES\n#define GRAPHX_EMBEDDED_THEATRES\n#include <string>\n#include <map>\n" >> $(THEATRES_H))
-	$(shell printf "extern std::map<int, std::string> embedded_theatre_names;\nextern std::map<int, std::string> embedded_theatres;\n#endif" >> $(THEATRES_H))
+	$(shell printf "#ifndef GRAPHX_EMBEDDED_THEATRES\n#define GRAPHX_EMBEDDED_THEATRES\n#include <string>\n#include <map>\nextern std::map<int, std::string> embedded_theatres;\n#endif" >> $(THEATRES_H))
 
 $(THEATRES_C): $(THEATRES_H)
-	$(shell printf "#include <string>\n#include <map>\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
+	$(shell printf "#include \"theatres.hpp\"\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
 	$(foreach theatre,$(shell find $(T) -name '*.graphxtheatre'),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
 	$(shell sed 's/^{,{/{{/' -i $(THEATRES_C))
 	$(shell printf "\n};" >> $(THEATRES_C))

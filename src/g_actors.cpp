@@ -66,12 +66,12 @@ void Actor::tick(int current_tick)
 
 void Actor::callToStage(Theatre *parent_theatre)
 {
-	std::cout << "\n\t- " << name << std::endl;
+	// std::cout << "\n\t- " << name << std::endl;
 }
 
 void Actor::takeABow()
 {
-	std::cout << "\n\t- (Actor) " << name << std::endl;
+	// std::cout << "\n\t- (Actor) " << name << std::endl;
 }
 
 bool Actor::wantsToBeBuffered()
@@ -93,13 +93,13 @@ PhysicsActor::PhysicsActor(std::string init_name, JPH::EMotionType init_motion_t
 : Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
 {
 	actor_type = ACTOR_PHYSICS;
-	JPH::Vec3 body_scale = convertMath<JPH::Vec3>(init_scale);
-	JPH::Vec3 body_position = convertMath<JPH::Vec3>(init_position);
+	body_scale = convertMath<JPH::Vec3>(init_scale);
+	body_position = convertMath<JPH::Vec3>(init_position);
 	glm::vec3 body_rotation_radians = glm::radians(init_euler_degrees);
-	JPH::Quat body_quat = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(body_rotation_radians));
-	JPH::BodyCreationSettings init_body_creation_settings = JPH::BodyCreationSettings(new JPH::BoxShape(body_scale), body_position, body_quat, init_motion_type, init_object_layer);
-	body_creation_settings.insert(body_creation_settings.end(), init_body_creation_settings);
-	body_activation.insert(body_activation.end(), init_body_activation);
+	body_quat = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(body_rotation_radians));
+	test_body_activation = init_body_activation;
+	test_motion_type = init_motion_type;
+	test_object_layer = init_object_layer;
 }
 
 PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init_body_creation_settings, JPH::EActivation init_body_activation, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
@@ -113,6 +113,9 @@ PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init
 void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
+	JPH::BodyCreationSettings init_body_creation_settings = JPH::BodyCreationSettings(new JPH::BoxShape(body_scale), body_position, body_quat, test_motion_type, test_object_layer);
+	body_creation_settings.insert(body_creation_settings.end(), init_body_creation_settings);
+	body_activation.insert(body_activation.end(), test_body_activation);
 	for(int i = 0 ; i < body_creation_settings.size() ; i++) // Todo: merge body_creation_settings and body_activation into an unordered_map
 	{
 		JPH::BodyID collider_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_creation_settings[i], body_activation[i]);
@@ -134,7 +137,6 @@ void PhysicsActor::tick(int current_tick)
 //
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
-	PRINT(name);
 	PhysicsActor::callToStage(parent_theatre);
 	reset_position = convertMath<JPH::Vec3>(position_global);
 	reset_quaternion = convertMath<JPH::Quat>(quaternion);
