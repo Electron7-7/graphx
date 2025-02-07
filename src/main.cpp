@@ -19,10 +19,9 @@
 #include <cstdarg>
 #include <thread>
 #include <mutex>
-Theatre *current_theatre_deprecated;
 
-// GraphXPlayer player("Player", glm::vec3(0.0f, 6.0f, 0.0f));
-Environment default_environment(true);
+// Theatre *current_theatre_deprecated;
+// Environment default_environment(true);
 
 std::mutex actor_state_mutex;
 
@@ -69,13 +68,11 @@ int main()
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	shaders.insert(shaders.end(), {&phong_shader});
 
-	current_player = &player;
-
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		W_SwapAndClear(main_window, default_environment.getAmbientLight());
+		W_SwapAndClear(main_window, getCurrentEnvironment()->getAmbientLight());
 		glfwPollEvents();
 
 		if(time_to_store_buffers)
@@ -86,7 +83,7 @@ int main()
 			// De-jank all of this shit below
 			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
-			R_Render(actor_state_mutex, interpolation_time, projection_matrix, &default_environment);
+			R_Render(actor_state_mutex, interpolation_time, projection_matrix);
 		}
 	}
 
@@ -236,7 +233,7 @@ public:
 // END OF JOLT PHYSICS BOILERPLATE
 //--------------------------------
 
-#include "theatres/deprecated_header_format/collision_testing.oldtheatretemplate"
+// #include "theatres/deprecated_header_format/collision_testing.oldtheatretemplate"
 
 void testGameTick(GLFWwindow *main_window)
 {
@@ -269,15 +266,12 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
-//------------------------------------
-//------------------------------------
-	loadTheatre(embedded_theatres[0]);
-//------------------------------------
-//------------------------------------
+	// This will change to include loading external Theatres and to not just only load the first Theatre lmfao
+	loadTheatre(embedded_theatres[0]); // So, when I add UI, this will go behind a "start game"/"load level"/etc
 
-	current_theatre_deprecated = &collision_testing_theatre;
-	current_theatre_deprecated->actorEnter(&player);
-	current_theatre_deprecated->startPreshow();
+	// current_theatre_deprecated = &collision_testing_theatre;
+	// current_theatre_deprecated->actorEnter(&player);
+	// current_theatre_deprecated->startPreshow();
 	time_to_store_buffers = true;
 
 	double last_time = glfwGetTime();
@@ -299,20 +293,18 @@ void testGameTick(GLFWwindow *main_window)
 
 			processInput(main_window);
 
-			for(Actor *actor : current_theatre_deprecated->troupe)
+			for(Actor *actor : getCurrentTheatre()->troupe)
 			{
-				// Call the tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
-				// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
 
-			player_flashlight.setLight(test_flashlight_bool);
+			// player_flashlight.setLight(test_flashlight_bool);
 			
-			if(red_flashlight_color_bool)
-				player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
-			else
-				player_flashlight.light_color = glm::vec3(1.0f);
+			// if(red_flashlight_color_bool)
+				// player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
+			// else
+				// player_flashlight.light_color = glm::vec3(1.0f);
 			
 			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
@@ -341,8 +333,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_G && action == GLFW_PRESS)
 	{
-		default_environment.ambient_lighting_enabled = !default_environment.ambient_lighting_enabled;
-		if(!default_environment.ambient_lighting_enabled)
+		getCurrentEnvironment()->ambient_lighting_enabled = !getCurrentEnvironment()->ambient_lighting_enabled;
+		if(!getCurrentEnvironment()->ambient_lighting_enabled)
 			PRINTLN("Ambient Lighting Disabled")
 		else
 			PRINTLN("Ambient Lighting Enabled")
@@ -397,7 +389,7 @@ void processInput(GLFWwindow *window)
 		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
 	};
 
-	player.doMovement(input_vector);
+	current_player->doMovement(input_vector);
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
@@ -409,7 +401,7 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		return;
 	
-	player.doMouseMovement(mouse_offset);
+	current_player->doMouseMovement(mouse_offset);
 }
 
 void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param)

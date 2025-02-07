@@ -1,4 +1,6 @@
 #include "r_common.hpp"
+#include "g_common.hpp"
+#include "quad.graphxmodel"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -159,6 +161,31 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 void Device::loadSettings()
 {
 
+}
+
+void Device::setUID(long manual_uid)
+{
+	if(manual_uid != -1)
+	{
+		UID = manual_uid;
+		return;
+	}
+
+	// The UID set/get should only be called on objects where this is safe to do
+	// Also, the UID should be set manually by an external object; this is mainly just
+	// a fail-safe
+	for(auto &pair : getCurrentTheatre()->devices)
+	{
+		if(pair.second != this)
+			continue;
+
+		UID = (long)pair.first;
+	}
+}
+
+long Device::getUID()
+{
+	return UID;
 }
 
 //

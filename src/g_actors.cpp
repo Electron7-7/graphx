@@ -22,7 +22,7 @@ RenderState::RenderState(glm::vec3 init_position, glm::quat init_quaternion, glm
 // Actor
 //
 Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: UID(actor_uid_lookup.size()), mesh(init_mesh), position_global(init_position), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
+: mesh(init_mesh), position_global(init_position), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
 {
 	actor_type = ACTOR_ACTOR;
 	name = new_name;
@@ -36,6 +36,31 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	current_state_buffer = { current_state, current_state_copy };
 	previous_state_buffer = { previous_state, previous_state_copy };
 	updateVectors();
+}
+
+void Actor::setUID(long manual_uid)
+{
+	if(manual_uid != -1)
+	{
+		UID = manual_uid;
+		return;
+	}
+
+	// The UID set/get should only be called on objects where this is safe to do
+	// Also, the UID should be set manually by an external object; this is mainly just
+	// a fail-safe
+	for(auto &pair : getCurrentTheatre()->objects)
+	{
+		if(pair.second != this)
+			continue;
+
+		UID = (long)pair.first;
+	}
+}
+
+long Actor::getUID()
+{
+	return UID;
 }
 
 void Actor::updateVectors()

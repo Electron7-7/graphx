@@ -1,4 +1,5 @@
 #include "sanity.hpp"
+#include "g_math.hpp"
 #include "g_jolt.hpp"
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSettings.h>
@@ -10,6 +11,23 @@
 
 using namespace JPH;
 using namespace JPH::literals;
+
+const JPH::Shape *createAShape(int shape, jolt_shape_args shape_args)
+{
+	switch(shape)
+	{
+	case ColliderShapes::BOX:
+		return new JPH::BoxShape(convertMath<JPH::Vec3>(std::get<0>(shape_args)));
+	case ColliderShapes::SPHERE:
+		return new JPH::SphereShape(std::get<1>(shape_args));
+	case ColliderShapes::CAPSULE:
+		return new JPH::CapsuleShape(std::get<2>(shape_args), std::get<1>(shape_args));
+	case ColliderShapes::CYLINDER:
+		return new JPH::CylinderShape(std::get<2>(shape_args), std::get<1>(shape_args));
+	};
+
+	return new JPH::BoxShape;
+};
 
 PhysicsSystem jolt_physics_system;
 
@@ -27,23 +45,21 @@ Collider::Collider()
 	device_type = DEVICE_COLLIDER;
 }
 
-//
-// Code for making the floor and wall (toss if not needed)
-//
-/*	BodyInterface &body_interface = physics_system.GetBodyInterface();
+JPH::BodyCreationSettings *Collider::getBodySettings()
+{
+	return &body_settings;
+}
 
-	BoxShapeSettings floor_shape_settings(Vec3(20.0f, 1.0f, 20.0f));
-	floor_shape_settings.SetEmbedded();
-	ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
-	ShapeRefC floor_shape = floor_shape_result.Get();
-	BodyCreationSettings floor_settings(floor_shape, RVec3(Real3(0.0f, 0.0f, 0.0f)), Quat::sIdentity(), EMotionType::Static, Layers::NON_MOVING);
-	Body *floor = body_interface.CreateBody(floor_settings);
-	body_interface.AddBody(floor->GetID(), EActivation::DontActivate);
+JPH::BodyID *Collider::getBodyID()
+{
+	return &body_id;
+}
 
-	BoxShapeSettings wall_shape_settings(Vec3(20.0f, 20.0f, 1.0f));
-	wall_shape_settings.SetEmbedded();
-	ShapeSettings::ShapeResult wall_shape_result = wall_shape_settings.Create();
-	ShapeRefC wall_shape = wall_shape_result.Get();
-	BodyCreationSettings wall_settings(wall_shape, RVec3(Real3(0.0f, 0.0f, -21.5f)), Quat::sIdentity(), EMotionType::Static, Layers::NON_MOVING);
-	Body *wall = body_interface.CreateBody(wall_settings);
-	body_interface.AddBody(wall->GetID(), EActivation::DontActivate);*/
+void Collider::createBody()
+{
+	JPH::RVec3 body_position = convertMath<JPH::Vec3>(position);
+	JPH::Quat body_quaternion = convertMath<JPH::Quat>(quaternion);
+
+	body_settings = JPH::BodyCreationSettings(createAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
+	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
+}

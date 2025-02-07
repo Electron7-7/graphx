@@ -920,3 +920,21 @@ Here's what I think should be up next:
 	- Replace deprecated Theatre loading in main file with new Theatre loading
 
 :3
+
+I'm at work now; Dexter (my boyfriend) is very anxious today about his flight tomorrow, so I'm going to try and finish as much as I can as quickly as possible and call him earlier than usual. Hopefully I can get this finished in an hour but if not, I want to at least be in an improved state with little to no errors; basically, I'd rather be almost done with no errors than done with errors when I have to stop today.
+
+I've implemented a way for Actors and Devices to both set and get their UID using a virtual function. Using a function means that I can implement this without having to change every single class.
+
+HUGE NOTE: I should replace all raw pointers (*) with smart pointers (std::unique_ptr)
+
+Okay, I'm gonna try to build and run it for the first time. Expected problems: objects that aren't pointers (e.g: Mesh.material). Oh, and none of the Actors or Devices know what to do with their settings and the settings they're receiving are all for Actor LMFAO.
+
+I'm going to implement Collider, then start work on the unique settings, then write down ideas for how Actors and Devices should load settings.
+
+Aight, it's 6:02 and I've finished up Collider. Here's what's up next (tomorrow):
+	- Create unique gSettings for each sub-class
+	- Implement unique gSettings function override for each sub-class (i.e: youGotACallBack in Actor)
+		- Maybe try to avoid having to write a new function for every single class?
+		- That's not sarcastic, it might just be less headache to not bother
+
+:3

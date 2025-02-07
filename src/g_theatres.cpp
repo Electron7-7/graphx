@@ -2,7 +2,22 @@
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
 #include <algorithm>
 
+std::unordered_map<int, Theatre> all_theatres;
+
+int current_theatre_uid = -1;
 bool current_troupe_changed = false;
+
+Theatre *getCurrentTheatre()
+{
+	return &all_theatres[current_theatre_uid];
+}
+
+Environment *getCurrentEnvironment()
+{
+	if(getCurrentTheatre()->environment_uid == -1)
+		return new Environment();
+	return static_cast<Environment *>(getCurrentTheatre()->devices[getCurrentTheatre()->environment_uid]);
+}
 
 //
 // Theatre
@@ -15,10 +30,13 @@ Theatre::Theatre(std::string init_name)
 
 void Theatre::startPreshow()
 {
+	for(auto &pair : objects)
+		troupe.insert(troupe.end(), pair.second);
+
 	sortTroupe();
 	countLights();
 
-	// PRINT("Entering Theatre (" << name << ")\nActors Present:");
+	PRINTLN("Entering Theatre (" << name << ")\nActors Present:")
 	for(Actor *actor : troupe)
 		actor->callToStage(this);
 	sortTroupe();
@@ -26,14 +44,45 @@ void Theatre::startPreshow()
 
 void Theatre::dropCurtains()
 {
-	// PRINT("Exiting Theatre (" << name << ")\nActors Present:");
-	for(Actor *actor : troupe)
-		actor->takeABow();
+	PRINTLN("Exiting Theatre (" << name << ")\nActors Present:")
+	for(auto &pair : objects)
+		pair.second->takeABow();
+
+	// for(auto &pair : devices)
+		// EXIT DEVICES
+}
+
+void Theatre::addActor(Actor *new_actor)
+{
+	int object_uid = objects.end()->first + 1;
+	objects[object_uid] = new_actor;
+	troupe.insert(troupe.end(), new_actor);
+}
+
+void Theatre::removeActor(Actor *old_actor)
+{
+	int i = 0;
+	for(auto it = troupe.begin() ; it != troupe.end() ; it++,i++)
+	{
+		if (troupe[i] == old_actor)
+		{
+			delete troupe[i];
+			troupe[i] = NULL;
+			troupe.erase(it);
+		}
+	}
+
+	if(auto it = objects.find(old_actor->getUID()) ; it != objects.end())
+	{
+		delete it->second;
+		it->second = NULL;
+		objects.erase(it);
+	}
 }
 
 void Theatre::actorEnter(Actor *new_actor)
 {
-	troupe.insert(troupe.end(), new_actor); // This can be expanded to multiple Actors
+	addActor(new_actor);
 	sortTroupe();
 	countLights();
 	new_actor->callToStage(this);
@@ -42,7 +91,9 @@ void Theatre::actorEnter(Actor *new_actor)
 
 void Theatre::troupeEnter(std::vector<Actor *> new_troupe)
 {
-	troupe.insert(troupe.end(), new_troupe.begin(), new_troupe.end());
+	for(Actor *actor : new_troupe)
+		addActor(actor);
+
 	sortTroupe();
 	countLights();
 	for(Actor *actor : new_troupe)
@@ -52,12 +103,7 @@ void Theatre::troupeEnter(std::vector<Actor *> new_troupe)
 
 void Theatre::actorLeave(Actor *old_actor)
 {
-	for(int i = 0 ; i < troupe.size() ; i++)
-	{
-		if(troupe[i] == old_actor)
-			troupe.erase(troupe.begin() + i);
-	}
-
+	removeActor(old_actor);
 	countLights();
 	current_troupe_changed = time_to_render;
 }

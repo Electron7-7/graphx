@@ -1,6 +1,7 @@
 #ifndef GRAPHX_JOLT
 #define GRAPHX_JOLT
 #include "r_common.hpp"
+#include <map>
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -27,13 +28,31 @@ namespace ColliderShapes
 	static constexpr int CYLINDER = 3;
 };
 
+typedef std::tuple<glm::vec3, float, float> jolt_shape_args;
+
 struct Collider : Device
 {
-	JPH::BodyCreationSettings settings;
+	glm::vec3			position = glm::vec3(0.0f);
+	glm::vec3			scale = glm::vec3(1.0f);
+	glm::quat			quaternion = glm::quat();
+	JPH::EMotionType	motion_type = JPH::EMotionType::Dynamic;
+	JPH::ObjectLayer	object_layer = Layers::MOVING;
+	JPH::EActivation	activation = JPH::EActivation::Activate;
+	
+	int					shape = ColliderShapes::BOX;
+	jolt_shape_args		shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
 
 	Collider();
 
+	void createBody();
+	JPH::BodyID *getBodyID();
+	JPH::BodyCreationSettings *getBodySettings();
+
 	void loadSettings() override;
+
+protected:
+	JPH::BodyID body_id;
+	JPH::BodyCreationSettings body_settings;
 };
 
 /*struct jolt_collider_recipe
@@ -65,4 +84,5 @@ public:
 extern JPH::PhysicsSystem jolt_physics_system;
 
 void J_RemoveAndDestroyBody(JPH::BodyID body_id);
+const JPH::Shape *createAShape(int shape, jolt_shape_args shape_args);
 #endif

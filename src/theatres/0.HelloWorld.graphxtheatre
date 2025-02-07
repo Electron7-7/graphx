@@ -42,14 +42,16 @@ Collider (Floor_Collider)
 RigidBodyActor (Test_Actor_1)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
+	Collider		<Test_Actor_1_Collider>
 	Position        (0.0, 2.5, -6.0)
 	RotationDegrees (0.0, -90.0, 0.0)
 	Scale           (1.2, 2.0, 1.0)
 }
 RigidBodyActor (Floor)
 {
-	Mesh:Material  <Cube>:<Doom_Dull>
-	Scale (20.0, 1.0, 20.0)
+	Mesh:Material <Cube>:<Doom_Dull>
+	Collider	  <Floor_Collider>
+	Scale		  (20.0, 1.0, 20.0)
 }
 LightDirectional (Sun)
 {

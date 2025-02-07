@@ -2,7 +2,6 @@
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "sanity.hpp"
-#include "quad.graphxmodel"
 #include "ERROR.graphxmodel"
 #include <any>
 #include <array>
@@ -77,6 +76,11 @@ struct Device
 	gSettings settings;
 
 	virtual void loadSettings();
+	virtual long getUID();
+	virtual void setUID(long manual_uid = -1); // If manual_uid is -1, a new UID is generated instead
+
+protected:
+	long UID = -1; // A UID of -1 means it's not been set yet
 };
 
 struct Environment : public Device // Will be extended
@@ -147,11 +151,12 @@ extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern bool do_interpolation;
 
-GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void		W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void		R_GL_BufferMeshData(Mesh *mesh);
-void 		R_StoreBuffers();
-void 		R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix, Environment *current_environment);
-void		R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environment *current_environment, unsigned int shader_index);
-void		R_TroupeChanged();
+GLFWwindow  *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
+void		 W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void		 R_GL_BufferMeshData(Mesh *mesh);
+void 		 R_StoreBuffers();
+void 		 R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
+void		 R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index);
+void		 R_TroupeChanged();
+Environment *getCurrentEnvironment();
 #endif

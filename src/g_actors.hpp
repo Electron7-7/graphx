@@ -100,7 +100,7 @@ public:
 	// JPH::PhysicsSystem *physics_system = NULL;
 	// JPH::Ref<JPH::CharacterSettings> player_settings;
 
-	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, 0.0f, 0.0f));
+	GraphXPlayer(std::string new_nam = "DEFAULT PLAYER", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, 0.0f, 0.0f));
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(glm::vec2 mouse_offset);

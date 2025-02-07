@@ -1,11 +1,9 @@
 #ifndef GRAPHX_THEATRE_FILE_FORMAT
 #define GRAPHX_THEATRE_FILE_FORMAT
-#include "g_actors.hpp"
-// #include "g_common.hpp"
+#include "g_common.hpp"
 // #include "g_jolt.hpp"
 #include <map>
 #include <any>
-#include <set>
 #include <tuple>
 #include <string>
 #include <vector>
@@ -60,8 +58,8 @@ std::any getNumber(std::vector<std::string> string_input, char type);
 std::any extractData(std::string data_in_here);
 gSettings getSettingsTemplate(std::string class_name);
 void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre *parent_theatre);
-int loadTheatre(std::string embedded_theatre);
 gTheatreStorage theatreParser(std::string theatre_data);
 std::string getTheatreStructure(gTheatreStorage theatre_storage);
 int getClassHash(std::string class_name);
+Theatre *loadTheatre(std::string embedded_theatre);
 #endif

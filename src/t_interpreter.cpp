@@ -11,7 +11,22 @@
 #include <any>
 #include <unordered_map>
 
-std::unordered_map<int, Theatre> all_theatres;
+template<Actor *> std::any getVariableFrom(Actor *object_pointer, std::string variable_name)
+{
+	// Oh sweet lord god up in heaven above, what am I about to do?
+	if(variable_name == "Name")
+		return object_pointer->name;
+	if(variable_name == "Visible")
+		return object_pointer->visible;
+	if(variable_name == "Mesh")
+		return object_pointer->mesh;
+	if(variable_name == "Position")
+		return object_pointer->position_global;
+	if(variable_name == "RotationDegrees")
+		return glm::radians(glm::eulerAngles(object_pointer->quaternion));
+	if(variable_name == "Scale")
+		return object_pointer->scale;
+}
 
 gTheatreStorage theatreParser(std::string theatre_data)
 {
@@ -334,23 +349,6 @@ gSettings getSettingsTemplate(std::string class_name)
 	return actor_settings; // Default return for now; remove later
 }
 
-template<Actor *> std::any getVariableFrom(Actor *object_pointer, std::string variable_name)
-{
-	// Oh sweet lord god up in heaven above, what am I about to do?
-	if(variable_name == "Name")
-		return object_pointer->name;
-	if(variable_name == "Visible")
-		return object_pointer->visible;
-	if(variable_name == "Mesh")
-		return object_pointer->mesh;
-	if(variable_name == "Position")
-		return object_pointer->position_global;
-	if(variable_name == "RotationDegrees")
-		return glm::radians(glm::eulerAngles(object_pointer->quaternion));
-	if(variable_name == "Scale")
-		return object_pointer->scale;
-}
-
 std::any getNumber(std::vector<std::string> string_input, char type)
 {
 	glm::vec3 numbers;
@@ -459,14 +457,60 @@ std::any extractData(std::string data_in_here)
 	return data_in_here;
 }
 
-int loadTheatre(std::string embedded_theatre)
+using namespace graphx_classes;
+gActorMap actor_map =
+{
+	{ACTOR, &createNewObject<Actor, Actor>},
+	{PHYSICSACTOR, &createNewObject<PhysicsActor, Actor>},
+	{RIGIDBODYACTOR, &createNewObject<RigidBodyActor, Actor>},
+	{CAMERA, &createNewObject<Camera, Actor>},
+	{GRAPHXPLAYER, &createNewObject<GraphXPlayer, Actor>},
+	{LIGHT, &createNewObject<Light, Actor>},
+	{LIGHTDIRECTIONAL, &createNewObject<LightDirectional, Actor>},
+	{LIGHTSPOT, &createNewObject<LightSpot, Actor>},
+	{LIGHTFLASHLIGHT, &createNewObject<LightFlashlight, Actor>},
+	{LIGHTTESTERMOVER, &createNewObject<LightTesterMover, Actor>},
+};
+
+gDeviceMap device_map =
+{
+	{ENVIRONMENT, &createNewObject<Environment, Device>},
+	{MATERIAL, &createNewObject<Material, Device>},
+	{MESH, &createNewObject<Mesh, Device>},
+	{SPRITE, &createNewObject<Sprite, Device>},
+	{COLLIDER, &createNewObject<Collider, Device>},
+};
+
+void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre *parent_theatre)
+{
+	int class_hash = getClassHash(class_name);
+
+	if(ACTORS[0] <= class_hash && class_hash >= ACTORS[1])
+	{
+		parent_theatre->objects[object_uid] = actor_map[class_hash]();
+		std::any_cast<Actor *>(parent_theatre->objects[object_uid])->settings = class_settings;
+		std::any_cast<Actor *>(parent_theatre->objects[object_uid])->setUID(object_uid);
+	}
+
+	if(DEVICES[0] <= class_hash && class_hash >= DEVICES[1])
+	{
+		parent_theatre->devices[object_uid] = device_map[class_hash]();
+		std::any_cast<Device *>(parent_theatre->objects[object_uid])->settings = class_settings;
+		std::any_cast<Device *>(parent_theatre->objects[object_uid])->setUID(object_uid);
+		if(class_name == "Environment")
+			parent_theatre->environment_uid = object_uid;
+	}
+}
+
+Theatre *loadTheatre(std::string embedded_theatre)
 {
 	gTheatreStorage theatre_data = theatreParser(embedded_theatre);
 #ifdef GRAPHX_DEBUG
 	PRINT(getTheatreStructure(theatre_data));
 #endif
 
-	all_theatres.insert(all_theatres.end(), std::make_pair(all_theatres.size(), Theatre(std::get<0>(theatre_data))));
+	current_theatre_uid = all_theatres.size();
+	all_theatres.insert(all_theatres.end(), std::make_pair(current_theatre_uid, Theatre(std::get<0>(theatre_data))));
 	Theatre *new_theatre = &all_theatres.end()->second;
 
 	auto theatre_name = std::get<0>(theatre_data);
@@ -512,47 +556,5 @@ int loadTheatre(std::string embedded_theatre)
 		createNewClass(object.second.first, object.first, new_class_settings, new_theatre);
 	}
 
-	return 0;
-}
-
-using namespace graphx_classes;
-gActorMap actor_map =
-{
-	{ACTOR, &createNewObject<Actor, Actor>},
-	{PHYSICSACTOR, &createNewObject<PhysicsActor, Actor>},
-	{RIGIDBODYACTOR, &createNewObject<RigidBodyActor, Actor>},
-	{CAMERA, &createNewObject<Camera, Actor>},
-	{GRAPHXPLAYER, &createNewObject<GraphXPlayer, Actor>},
-	{LIGHT, &createNewObject<Light, Actor>},
-	{LIGHTDIRECTIONAL, &createNewObject<LightDirectional, Actor>},
-	{LIGHTSPOT, &createNewObject<LightSpot, Actor>},
-	{LIGHTFLASHLIGHT, &createNewObject<LightFlashlight, Actor>},
-	{LIGHTTESTERMOVER, &createNewObject<LightTesterMover, Actor>},
-};
-
-gDeviceMap device_map =
-{
-	{ENVIRONMENT, &createNewObject<Environment, Device>},
-	{MATERIAL, &createNewObject<Material, Device>},
-	{MESH, &createNewObject<Mesh, Device>},
-	{SPRITE, &createNewObject<Sprite, Device>},
-	{COLLIDER, &createNewObject<Collider, Device>},
-};
-
-void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre *parent_theatre)
-{
-	int class_hash = getClassHash(class_name);
-
-	if(ACTORS[0] <= class_hash && class_hash >= ACTORS[1])
-	{
-		parent_theatre->objects[object_uid] = actor_map[class_hash]();
-		parent_theatre->troupe.insert(parent_theatre->troupe.end(), std::any_cast<Actor *>(parent_theatre->objects[object_uid]));
-		std::any_cast<Actor *>(parent_theatre->objects[object_uid])->settings = class_settings;
-	}
-
-	if(DEVICES[0] <= class_hash && class_hash >= DEVICES[1])
-	{
-		parent_theatre->devices[object_uid] = device_map[class_hash]();
-		std::any_cast<Device *>(parent_theatre->objects[object_uid])->settings = class_settings;
-	}
+	return getCurrentTheatre();
 }
