@@ -1,19 +1,17 @@
 #ifndef GRAPHX_THEATRE_FILE_FORMAT
 #define GRAPHX_THEATRE_FILE_FORMAT
-// #include "g_common.hpp"
+#include "g_common.hpp"
 // #include "g_jolt.hpp"
-#include "cube.graphxmodel"
-#include "ERROR.graphxmodel"
-#include "pyramid.graphxmodel"
-#include "quad.graphxmodel"
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include <map>
 #include <any>
+#include <tuple>
+#include <string>
+#include <vector>
 #include <unordered_map>
 extern int current_theatre_uid;
-// extern std::unordered_map<int, Theatre> all_theatres;
+extern std::unordered_map<int, Theatre> all_theatres;
 extern std::unordered_map<std::string, int> graphx_class_names;
+extern std::unordered_map<std::string, std::any> cpp_definitions;
 
 namespace graphx_classes
 {
@@ -26,10 +24,25 @@ namespace graphx_classes
 	static constexpr int LIGHT			= 6;
 };
 
-// void createNewClass(int class_uid, std::string object_name);
-template<typename T> T translateData(std::string data);
+typedef std::map<int, std::pair<std::string, std::string>>														gObjectStore;
+typedef std::multimap<int, std::pair<std::string, std::string>>													gSourceRefStore;
+typedef std::multimap<int, std::pair<std::string, int>>															gTheatreRefStore;
+typedef std::multimap<int, std::pair<std::string, std::string>>													gRawDataStore;
+typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>>	gSandwichStore;
+typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore>	gTheatreStorage;
+typedef std::unordered_map<std::string, std::any> 																gSettings;
+
+extern gSettings actor_settings;
+
+template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
+template<typename T> std::any getNumber(std::vector<std::string> string_input);
+
+std::any extractData(std::string data_in_here);
+std::any snagCppData(std::string reference);
+gSettings getSettingsTemplate(std::string class_name);
+void createNewClass(int class_uid, gTheatreStorage *theatre_data);
 int loadTheatre(std::string embedded_theatre);
-void theatreParser(std::string theatre_data);
-std::string getTheatreStructure();
-int getClassHash(std::string &class_name);
+gTheatreStorage theatreParser(std::string theatre_data);
+std::string getTheatreStructure(gTheatreStorage theatre_storage);
+int getClassHash(std::string class_name);
 #endif

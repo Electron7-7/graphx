@@ -1,44 +1,26 @@
 #include "sanity.hpp"
 #include "t_common.hpp"
+#include "cube.graphxmodel"
+// #include "ERROR.graphxmodel"
+// #include "pyramid.graphxmodel"
+// #include "quad.graphxmodel"
+#include "g_common.hpp"
 #include "r_common.hpp"
-#include "theatres.hpp"
 #include <set>
-// #include <any>
-// #include <string>
-// #include <iostream>
-#include <algorithm>
+#include <any>
 #include <unordered_map>
 
-// std::unordered_map<int, Theatre> all_theatres;
-std::string theatre_name;
-std::map<int, std::pair<std::string, std::string>> objects_bucket;
-std::multimap<int, std::pair<std::string, std::string>> cpp_references;
-std::multimap<int, std::pair<std::string, int>> theatre_references;
-std::multimap<int, std::pair<std::string, std::string>> raw_data;
-std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> layered_definitions;
+std::unordered_map<int, Theatre> all_theatres;
 
-template<> int translateData(std::string data)
+gTheatreStorage theatreParser(std::string theatre_data)
 {
-	return std::stoi(data);
-}
+	gObjectStore objects_bucket;
+	gSourceRefStore cpp_references;
+	gTheatreRefStore theatre_references;
+	gRawDataStore raw_data;
+	gSandwichStore layered_definitions;
+	std::string theatre_name;
 
-template<> float translateData(std::string data)
-{
-	return std::stof(data);
-}
-
-template<> double translateData(std::string data)
-{
-	return std::stod(data);
-}
-
-template<> long translateData(std::string data)
-{
-	return std::stol(data);
-}
-
-void theatreParser(std::string theatre_data)
-{
 	std::set<char> whitespace =
 	{
 		' ',
@@ -87,10 +69,8 @@ void theatreParser(std::string theatre_data)
 		if(whitespace.contains(theatre_data[i]))
 		{
 			theatre_name = buffer;
-			// PRINT("theatre name: " << buffer);
 			buffer = "";
 			start_index = i;
-			// PRINT("start index: " << start_index);
 			break;
 		}
 
@@ -100,7 +80,6 @@ void theatreParser(std::string theatre_data)
 	for(int i = start_index ; i < theatre_data.size() ; i++)
 	{
 		char character = theatre_data[i];
-		// PRINT("object uid before: " << object_uid << "\nobject_uid_after: " << (object_uid + (character == '{')));
 
 		if(character == '{' || character == '}')
 		{
@@ -119,7 +98,6 @@ void theatreParser(std::string theatre_data)
 
 			if(reading_definition)
 			{
-				// PRINT("definition caught!\n\t" << buffer << " (Object#" << object_uid << ")");
 				reading_definition = !whitespace.contains(character);				
 				if(layered)
 					layered_pairs_definitions_buffer.insert(layered_pairs_definitions_buffer.end(), buffer);
@@ -137,8 +115,7 @@ void theatreParser(std::string theatre_data)
 					continue;
 				}
 
-				// Whitespace can show up in numerical values (might not want to keep it, though)
-				buffer += character;
+				buffer += character; // Whitespace can show up in numerical values (might not want to keep it, though)
 				continue;
 			}
 
@@ -154,7 +131,6 @@ void theatreParser(std::string theatre_data)
 
 		if(end_value.contains(character))
 		{
-			// PRINT("value caught!\n\t" << buffer << " (Object#" << object_uid << ")");
 			reading_value = (theatre_data[i+1] == ':');
 
 			if(!in_curly_brackets)
@@ -224,41 +200,51 @@ void theatreParser(std::string theatre_data)
 		reading_definition = !reading_value;
 		buffer += character;
 	}
+
+	return std::make_tuple
+	(
+		theatre_name,
+		objects_bucket,
+		cpp_references,
+		theatre_references,
+		raw_data,
+		layered_definitions
+	);
 }
 
-std::string getTheatreStructure()
+std::string getTheatreStructure(gTheatreStorage theatre_storage)
 {
-	std::string structure_out = "Internal structure of Theatre \"" + theatre_name + "\":\n-----------------------------------------------------------\n";
+	std::string structure_out = "Internal structure of Theatre \"" + std::get<0>(theatre_storage) + "\":\n-----------------------------------------------------------\n";
 	structure_out += "std::map<int, std::pair<std::string, std::string>> objects_bucket =\n{\n";
-	for(const auto& elem : objects_bucket)
+	for(const auto& elem : std::get<1>(theatre_storage))
 	{
 		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
 	}
 	structure_out += "};\n";
 
 	structure_out += "std::multimap<int, std::pair<std::string, std::string>> cpp_references =\n{\n";
-	for(const auto& elem : cpp_references)
+	for(const auto& elem : std::get<2>(theatre_storage))
 	{
 		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
 	}
 	structure_out += "};\n";
 
 	structure_out += "std::multimap<int, std::pair<std::string, int>> theatre_references =\n{\n";
-	for(const auto& elem : theatre_references)
+	for(const auto& elem : std::get<3>(theatre_storage))
 	{
 		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + std::to_string(elem.second.second) + "}\n\t},\n";
 	}
 	structure_out += "};\n";
 
 	structure_out += "std::multimap<int, std::pair<std::string, std::string>> raw_data =\n{\n";
-	for(const auto& elem : raw_data)
+	for(const auto& elem : std::get<4>(theatre_storage))
 	{
 		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
 	}
 	structure_out += "};\n";
 
 	structure_out += "std::multimap<int, std::vector<std::pair<std::string, int>>> layered_definitions =\n{\n";
-	for(const auto& elem : layered_definitions) // pair #1
+	for(const auto& elem : std::get<5>(theatre_storage)) // pair #1
 	{
 		structure_out += "\t{\n\t\t" + std::to_string(elem.first) /*int*/ + ",\n"; // int
 		structure_out += "\t\t{\n"; // pair #2
@@ -275,7 +261,7 @@ std::string getTheatreStructure()
 	return structure_out;
 }
 
-std::unordered_map<std::string, std::any> definitions =
+std::unordered_map<std::string, std::any> cpp_definitions =
 {
 	{"DOOM_TEXTURE_DIFF", DOOM_TEXTURE_DIFF},
 	{"DOOM_TEXTURE_SPEC", DOOM_TEXTURE_SPEC},
@@ -308,52 +294,236 @@ std::unordered_map<std::string, int> graphx_class_names
 	{"Light", graphx_classes::LIGHT},
 };
 
-int getClassHash(std::string &class_name)
+int getClassHash(std::string class_name)
 {
 	if(graphx_class_names.contains(class_name))
 		return graphx_class_names.at(class_name);
 	return -1;
 }
 
-void createNewClass(std::string class_name, std::string object_name)
+gSettings actor_settings =
+{
+	{"Name", "Untitled Actor"},
+	{"Visible", true},
+	{"Mesh", NULL},
+	{"Position", glm::vec3(0.0f)},
+	{"RotationDegrees", glm::vec3(0.0f)},
+	{"Scale", glm::vec3(1.0f)},
+};
+
+gSettings getSettingsTemplate(std::string class_name)
 {
 	switch(getClassHash(class_name))
 	{
-	case graphx_classes::THEATRE:
-		PRINT("New Theatre [" << object_name << "]");
-		break;
 	case graphx_classes::ACTOR:
-		PRINT("New Actor [" << object_name << "]");
-		break;
+		// new_theatre->troupe.insert(new_theatre->troupe.end(), new Actor());
+		// Actor *new_actor = new_theatre->troupe[new_theatre->troupe.size()];
+		return actor_settings;
 	case graphx_classes::RIGIDBODYACTOR:
-		PRINT("New RigidBodyActor [" << object_name << "]");
 		break;
 	case graphx_classes::COLLIDER:
-		PRINT("New Collider [" << object_name << "]");
 		break;
 	case graphx_classes::MESH:
-		PRINT("New Mesh [" << object_name << "]");
 		break;
 	case graphx_classes::MATERIAL:
-		PRINT("New Material [" << object_name << "]");
 		break;
 	default:
-		PRINT("[ERROR] - Unknown class \"" << class_name << "\"!");
+		PRINTERR("[ERROR] - Unknown class \"" << class_name << "\"!")
 		break;
 	}
+
+	return actor_settings; // Default return for now; remove later
+}
+
+template<Actor *> std::any getVariableFrom(Actor *object_pointer, std::string variable_name)
+{
+	// Oh sweet lord god up in heaven above, what am I about to do?
+	if(variable_name == "Name")
+		return object_pointer->name;
+	if(variable_name == "Visible")
+		return object_pointer->visible;
+	if(variable_name == "Mesh")
+		return object_pointer->mesh;
+	if(variable_name == "Position")
+		return object_pointer->position_global;
+	if(variable_name == "RotationDegrees")
+		return glm::radians(glm::eulerAngles(object_pointer->quaternion));
+	if(variable_name == "Scale")
+		return object_pointer->scale;
+}
+
+template<int> std::any getNumber(std::vector<std::string> string_input)
+{
+	switch(string_input.size())
+	{
+	case 1:
+		return std::stoi(string_input[0]);
+	case 2:
+		return glm::vec2(std::stoi(string_input[0]), std::stoi(string_input[1]));
+	case 3:
+		return glm::vec3(std::stoi(string_input[0]), std::stoi(string_input[1]), std::stoi(string_input[2]));
+	}
+}
+
+template<long> std::any getNumber(std::vector<std::string> string_input)
+{
+	switch(string_input.size())
+	{
+	case 1:
+		return std::stol(string_input[0]);
+	case 2:
+		return glm::vec2(std::stol(string_input[0]), std::stol(string_input[1]));
+	case 3:
+		return glm::vec3(std::stol(string_input[0]), std::stol(string_input[1]), std::stol(string_input[2]));
+	}
+}
+
+template<float> std::any getNumber(std::vector<std::string> string_input)
+{
+	switch(string_input.size())
+	{
+	case 1:
+		return std::stof(string_input[0]);
+	case 2:
+		return glm::vec2(std::stof(string_input[0]), std::stof(string_input[1]));
+	case 3:
+		return glm::vec3(std::stof(string_input[0]), std::stof(string_input[1]), std::stof(string_input[2]));
+	}
+}
+
+template<double> std::any getNumber(std::vector<std::string> string_input)
+{
+	switch(string_input.size())
+	{
+	case 1:
+		return std::stod(string_input[0]);
+	case 2:
+		return glm::vec2(std::stod(string_input[0]), std::stod(string_input[1]));
+	case 3:
+		return glm::vec3(std::stod(string_input[0]), std::stod(string_input[1]), std::stod(string_input[2]));
+	}
+}
+
+std::any extractData(std::string data_in_here)
+{
+	std::set<char> forgiveness =
+	{
+		' ',
+		'	',
+		'\n',
+		'\t'
+	};
+
+	std::set<char> special =
+	{
+		'-',
+		'.',
+		',',
+		'f',
+		'd',
+		'l',
+		'i'
+	};
+
+	if(data_in_here == "false" || data_in_here == "true")
+		return (data_in_here == "true");
+
+	std::string buffer = "";
+	std::vector<std::string> vector_buffer;
+
+	// i = integer
+	// f = float
+	// d = double
+	// l = long
+	char type = 'i';
+
+	for(char &character : data_in_here)
+	{
+		if(special.contains(character))
+		{
+			if(character != 'f' && 'd' && 'l' && 'f' && ',')
+				buffer += character;
+
+			if(character == 'f')
+				type = 'f';
+			if(character == '.' && type != 'f')
+				type = 'd';
+			if(character == 'l')
+				type = 'l';
+			if(character == 'i' && type != 'l')
+				type = 'i';
+			
+			if(character == ',')
+			{
+				vector_buffer.insert(vector_buffer.end(), buffer);
+				buffer = "";
+			}
+
+			continue;
+		}
+
+		if(!std::isdigit(character))
+		{
+			if(forgiveness.contains(character))
+				continue;
+			break;
+		}
+
+		buffer += character;
+	}
+
+	vector_buffer.insert(vector_buffer.end(), buffer);
+
+	switch(type)
+	{
+	case 'f':
+		return getNumber(vector_buffer, )
+	case 2:
+		
+	};
 }
 
 int loadTheatre(std::string embedded_theatre)
 {
-	theatreParser(embedded_theatre);
+	gTheatreStorage theatre_data = theatreParser(embedded_theatre);
 #ifdef GRAPHX_DEBUG
-	PRINT(getTheatreStructure());
+	PRINT(getTheatreStructure(theatre_data));
 #endif
 
-	// for(const auto &object : objects_bucket)
-	// {
-	// 	createNewClass(object.second.first, object.second.second);
-	// }
+	all_theatres.insert(all_theatres.end(), std::make_pair(all_theatres.size(), Theatre(std::get<0>(theatre_data))));
+	Theatre *new_theatre = &all_theatres.end()->second;
+
+	auto theatre_name = std::get<0>(theatre_data);
+	auto objects_bucket = std::get<1>(theatre_data);
+	auto cpp_references = std::get<2>(theatre_data);
+	auto theatre_references = std::get<3>(theatre_data);
+	auto raw_data = std::get<4>(theatre_data);
+	auto layered_definitions = std::get<5>(theatre_data);
+
+	for(const auto &object : objects_bucket)
+	{
+		gSettings new_class_settings = getSettingsTemplate(object.second.first);
+
+		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
+		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
+		auto raw_data_range = std::get<4>(theatre_data).equal_range(object.first);
+		auto sandwiches_range = std::get<5>(theatre_data).equal_range(object.first);
+
+		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
+		{
+			new_class_settings[it->second.first] = cpp_definitions[it->second.second];
+		}
+
+		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
+		{
+			new_class_settings[it->second.first] = getVariableFrom(&new_theatre->troupe.at(it->second.second), it->second.first);
+		}
+
+		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
+		{
+			new_class_settings[it->second.first] = extractData(it->second.second);
+		}
+	}
 
 	return 0;
 }

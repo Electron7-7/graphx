@@ -343,32 +343,32 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		default_environment.ambient_lighting_enabled = !default_environment.ambient_lighting_enabled;
 		if(!default_environment.ambient_lighting_enabled)
-			PRINT("Ambient Lighting Disabled");
+			PRINTLN("Ambient Lighting Disabled")
 		else
-			PRINT("Ambient Lighting Enabled");
+			PRINTLN("Ambient Lighting Enabled")
 	}
 
 	if(key == GLFW_KEY_F && action == GLFW_PRESS)
 	{
 		test_flashlight_bool = !test_flashlight_bool;
 		if(test_flashlight_bool)
-			PRINT("Flashlight Off");
+			PRINTLN("Flashlight Off")
 		else
-			PRINT("Flashlight On");
+			PRINTLN("Flashlight On")
 	}
 
 	if(key == GLFW_KEY_Q && action == GLFW_PRESS)
 	{
 		red_flashlight_color_bool = !red_flashlight_color_bool;
 		if(red_flashlight_color_bool)
-			PRINT("Flashlight Red");
+			PRINTLN("Flashlight Red")
 		else
-			PRINT("Flashlight Not Red");
+			PRINTLN("Flashlight Not Red")
 	}
 
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
-		PRINT("Resetting PhysicsActors to initial transformation!");
+		PRINTLN("Resetting PhysicsActors to initial transformation!")
 		for(Actor *actor : current_theatre_deprecated->troupe)
 			if(actor->actor_type == ACTOR_PHYSICS)
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
@@ -378,11 +378,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		{
-			PRINT("Cursor Mode: Disabled (hidden + locked at center)");
+			PRINTLN("Cursor Mode: Disabled (hidden + locked at center)")
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			return;
 		}
-		PRINT("Cursor Mode: Normal (cursor visible & camera ignoring movement)");
+
+		PRINTLN("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 }

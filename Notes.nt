@@ -837,3 +837,39 @@ Note: Theatre files must include "@<theatre name>" at the top, and all layered e
 Gonna work on the parser a bit while at home.
 
 The parser is finally actually finished! Not only that, but it's added to the main file and doesn't cause crashes! It might cause crashes/memory leaks if I keep all of the maps in the global scope and start including JPH headers+objects and other things, so NOTE: gracefully move the map definitions into either functions or a struct that you can create when loading a new Theatre.
+
+At work; time to finish this thing! The interpreter is gonna be a glorified nested if/else (or, hopefully, switch/case) tree, so it shouldn't be difficult to get the main structure set up. I just want to try and keep the design modular enough that adding to it (i.e: new classes/subclasses) will only take a couple lines of "this = that" code (header file stuff, basically).
+
+Back in g_common.hpp to tweak Theatre... I don't want to use std::any. The solution is to use pointers but to instantiate them like this:
+:::C++
+Actor *test;
+
+in_scope
+{
+	test = new Actor();
+}
+:::
+
+Or with a pre-allocated array like this:
+:::C++
+Actor *actors[MAX_NUM_OF_ACTORS];
+
+in_scope
+{
+	actors[num] = new Actor();
+}
+:::
+
+I want to avoid the pre-allocated array as I'd like to keep this dynamic, but those are my two options. Actually, I wonder if I can use "new Actor" on the Actor pointer vector to the same effect?
+
+Yeah, I need to create the Theatre and it's objects on the heap, not the stack; however, this means I need to either manually clear the heap, or use a smart pointer class (look this up) instead. If the heap overflows, I'll probably see an std::bad_alloc.
+
+Okay, so I'm going to put all the default values for variables that you can set in a Theatre file in unordered maps for every class and sub-class. Yeah, it'll be a little bit annoying, but worst case scenario is I have to write out, like, 20 unordered maps. If I do this correctly, I'll only have to make these maps once. Then, I just make sure that the order of variables in the maps matches the order of variables in the class constructor or, a separate function that I can even overload a few times so the order could be mixed a little bit (but that wouldn't account for mixed variables of the same type so maybe don't do overloading, it's just a quick thought). I like the function idea because it means I don't have to re-write the maps every fucking time I change a constructor. I think that's what I'll do.
+
+Figured out why I changed troupe from a vector to an unordered map: theatre references. I won't know which object I'm referencing (not easily, at least) unless I store that object's uid.
+
+ALMOST DONE!!!! THE INTERPRETER CODE IS... untested, but more importantly ITS ALMOST DONE!! I just have to figure out how to do layered variables (I call 'em sandwiches). Once that's done, though, I'll be home free! I think... I still have to test it and finish writing up the actual Theatre setup, but that should be as easy as "new_actor.youGotACallBack(data...)".
+
+I'M SO FUCKING EXCITED!!
+
+:3

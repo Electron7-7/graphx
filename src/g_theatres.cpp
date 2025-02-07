@@ -7,16 +7,17 @@ bool current_troupe_changed = false;
 //
 // Theatre
 //
-Theatre::Theatre(std::string init_name, std::vector<Actor *> init_troupe, Mesh init_stage)
-: stage(init_stage), name(init_name), troupe(init_troupe)
+Theatre::Theatre(std::string init_name)
+: name(init_name)
 {
 	stage.name = "Stage Mesh for Theatre (" + name + ")";
-	sortTroupe();
-	countLights();
 }
 
 void Theatre::startPreshow()
 {
+	sortTroupe();
+	countLights();
+
 	// PRINT("Entering Theatre (" << name << ")\nActors Present:");
 	for(Actor *actor : troupe)
 		actor->callToStage(this);

@@ -24,6 +24,8 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #include <glm/gtx/string_cast.hpp>
 #include <glm/ext.hpp>
 
-#define PRINT_MARKER (std::cout << std::endl << "[=======================================]" << std::endl)
-#define PRINT(thing) (std::cout << std::endl << thing << std::endl << std::endl)
+#define PRINT_MARKER std::cout << std::endl << "[=======================================]" << std::endl;
+#define PRINT(thing) std::cout << thing;
+#define PRINTLN(thing) std::cout << std::endl << thing << std::endl;
+#define PRINTERR(thing) std::cerr << std::endl << thing << std::endl;
 #endif

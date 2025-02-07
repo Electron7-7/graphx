@@ -77,9 +77,6 @@ embed_resources: $(IMAGES_C) $(SHADERS_C) $(THEATRES_C)
 compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
-testing_interpreter: clean_resources embed_resources debug
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC)/t_interpreter.cpp $(SRC)/theatres.cpp $(SRC)/testing.cpp -o testing
-
 debug:
 	$(eval LINUX = GraphXDebug)
 

@@ -1,8 +1,8 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "r_common.hpp"
-#include <unordered_map>
-#include <any>
+// #include <unordered_map>
+// #include <any>
 // #include "g_math.hpp"
 
 extern Theatre *current_theatre_deprecated;
@@ -23,14 +23,14 @@ public:
 	long UID;
 	unsigned int actor_type; // Slowly phase this out via visitor system
 
-	std::string name;
+	std::string name = "Untitled Actor";
 	bool visible = true;
 
-	Mesh *mesh; // replace with std::vector<Mesh *> meshes later(?)
+	Mesh *mesh = NULL; // replace with std::vector<Mesh *> meshes later(?)
 
-	glm::vec3 position_global;
-	glm::quat quaternion;
-	glm::vec3 scale;
+	glm::vec3 position_global = glm::vec3(0.0f);
+	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec3 scale = glm::vec3(1.0f);
 
 	glm::vec3 orientation_front;
 	glm::vec3 orientation_up;
@@ -50,6 +50,9 @@ public:
 
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
+	virtual void youGotACallBack(std::string new_name, bool is_visible, Mesh *new_mesh, glm::vec3 new_position, glm::quat new_quaternion, glm::vec3 new_scale); // Theatre file calls this!
+	virtual void youGotACallBack(std::string new_name, bool is_visible, Mesh *new_mesh, glm::vec3 new_position, glm::vec3 new_rotation_degrees, glm::vec3 new_scale); // Theatre file calls this!
+
 	virtual void tick(int current_tick);
 	virtual void callToStage(Theatre *parent_theatre);
 	virtual void takeABow();
@@ -66,14 +69,14 @@ struct Theatre
 {
 	Mesh stage = Mesh();
 	std::string name = "Untitled Theatre";
-	std::vector<Actor *> troupe = {};
-	std::unordered_map<int, std::any> actor_storage = {};
-	std::unordered_map<int, std::any> resource_storage = {}; // Material/Mesh/Collider(?)
+	std::unordered_map<int, std::vector<Actor *>> troupe = {};
+	std::unordered_map<int, std::vector<Material *>> materials = {};
+	std::unordered_map<int, std::vector<Mesh *>> meshes = {};
 
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 
-	Theatre(std::string init_name = "Untitled Theatre", std::vector<Actor *> init_troupe = {}, Mesh init_stage = Mesh());
+	Theatre(std::string init_name = "Untitled Theatre");
 
 	void startPreshow();
 	void dropCurtains();
