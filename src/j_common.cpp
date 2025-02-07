@@ -20,6 +20,14 @@ void J_RemoveAndDestroyBody(BodyID body_id)
 }
 
 //
+// Collider
+//
+Collider::Collider()
+{
+	device_type = DEVICE_COLLIDER;
+}
+
+//
 // Code for making the floor and wall (toss if not needed)
 //
 /*	BodyInterface &body_interface = physics_system.GetBodyInterface();

@@ -1,5 +1,6 @@
 #ifndef GRAPHX_JOLT
 #define GRAPHX_JOLT
+#include "r_common.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -24,6 +25,15 @@ namespace ColliderShapes
 	static constexpr int SPHERE = 1;
 	static constexpr int CAPSULE = 2;
 	static constexpr int CYLINDER = 3;
+};
+
+struct Collider : Device
+{
+	JPH::BodyCreationSettings settings;
+
+	Collider();
+
+	void loadSettings() override;
 };
 
 /*struct jolt_collider_recipe

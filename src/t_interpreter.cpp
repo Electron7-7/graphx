@@ -4,8 +4,9 @@
 // #include "ERROR.graphxmodel"
 // #include "pyramid.graphxmodel"
 // #include "quad.graphxmodel"
-#include "g_common.hpp"
+#include "g_actors.hpp"
 #include "r_common.hpp"
+#include "g_jolt.hpp"
 #include <set>
 #include <any>
 #include <unordered_map>
@@ -280,9 +281,6 @@ std::unordered_map<std::string, std::any> cpp_definitions =
 	{"CylinderShape", ""},
 };
 
-std::vector<std::string> names =
-{};
-
 std::unordered_map<std::string, int> graphx_class_names
 {
 	{"Theatre", graphx_classes::THEATRE},
@@ -303,6 +301,7 @@ int getClassHash(std::string class_name)
 
 gSettings actor_settings =
 {
+	{"CLASS_TYPE", graphx_classes::ACTOR},
 	{"Name", "Untitled Actor"},
 	{"Visible", true},
 	{"Mesh", NULL},
@@ -352,56 +351,35 @@ template<Actor *> std::any getVariableFrom(Actor *object_pointer, std::string va
 		return object_pointer->scale;
 }
 
-template<int> std::any getNumber(std::vector<std::string> string_input)
+std::any getNumber(std::vector<std::string> string_input, char type)
 {
-	switch(string_input.size())
-	{
-	case 1:
-		return std::stoi(string_input[0]);
-	case 2:
-		return glm::vec2(std::stoi(string_input[0]), std::stoi(string_input[1]));
-	case 3:
-		return glm::vec3(std::stoi(string_input[0]), std::stoi(string_input[1]), std::stoi(string_input[2]));
-	}
-}
+	glm::vec3 numbers;
 
-template<long> std::any getNumber(std::vector<std::string> string_input)
-{
-	switch(string_input.size())
+	switch(type)
 	{
-	case 1:
-		return std::stol(string_input[0]);
-	case 2:
-		return glm::vec2(std::stol(string_input[0]), std::stol(string_input[1]));
-	case 3:
-		return glm::vec3(std::stol(string_input[0]), std::stol(string_input[1]), std::stol(string_input[2]));
+	case 'f':
+		for(int i = 0 ; i < string_input.size() ; i++)
+			numbers[i] = std::stof(string_input[i]);
+	case 'l':
+		for(int i = 0 ; i < string_input.size() ; i++)
+			numbers[i] = std::stol(string_input[i]);
+	case 'd':
+		for(int i = 0 ; i < string_input.size() ; i++)
+			numbers[i] = std::stod(string_input[i]);
+	case 'i':
+		for(int i = 0 ; i < string_input.size() ; i++)
+			numbers[i] = std::stoi(string_input[i]);
 	}
-}
 
-template<float> std::any getNumber(std::vector<std::string> string_input)
-{
 	switch(string_input.size())
 	{
 	case 1:
-		return std::stof(string_input[0]);
+		return numbers[0];
 	case 2:
-		return glm::vec2(std::stof(string_input[0]), std::stof(string_input[1]));
-	case 3:
-		return glm::vec3(std::stof(string_input[0]), std::stof(string_input[1]), std::stof(string_input[2]));
+		return glm::vec2(numbers[0], numbers[1]);
 	}
-}
 
-template<double> std::any getNumber(std::vector<std::string> string_input)
-{
-	switch(string_input.size())
-	{
-	case 1:
-		return std::stod(string_input[0]);
-	case 2:
-		return glm::vec2(std::stod(string_input[0]), std::stod(string_input[1]));
-	case 3:
-		return glm::vec3(std::stod(string_input[0]), std::stod(string_input[1]), std::stod(string_input[2]));
-	}
+	return numbers;
 }
 
 std::any extractData(std::string data_in_here)
@@ -430,6 +408,7 @@ std::any extractData(std::string data_in_here)
 
 	std::string buffer = "";
 	std::vector<std::string> vector_buffer;
+	bool is_number = true;
 
 	// i = integer
 	// f = float
@@ -466,6 +445,7 @@ std::any extractData(std::string data_in_here)
 		{
 			if(forgiveness.contains(character))
 				continue;
+			is_number = false;
 			break;
 		}
 
@@ -474,13 +454,9 @@ std::any extractData(std::string data_in_here)
 
 	vector_buffer.insert(vector_buffer.end(), buffer);
 
-	switch(type)
-	{
-	case 'f':
-		return getNumber(vector_buffer, )
-	case 2:
-		
-	};
+	if(is_number)
+		return getNumber(vector_buffer, type);
+	return data_in_here;
 }
 
 int loadTheatre(std::string embedded_theatre)
@@ -523,7 +499,60 @@ int loadTheatre(std::string embedded_theatre)
 		{
 			new_class_settings[it->second.first] = extractData(it->second.second);
 		}
+
+		for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
+		{
+			new_class_settings[it->second.first.first] = &new_theatre->objects.at(it->second.first.second);
+			for(auto &pair : it->second.second)
+			{
+				new_class_settings[pair.first] = &new_theatre->objects.at(pair.second);
+			}
+		}
+
+		createNewClass(object.second.first, object.first, new_class_settings, new_theatre);
 	}
 
 	return 0;
+}
+
+using namespace graphx_classes;
+gActorMap actor_map =
+{
+	{ACTOR, &createNewObject<Actor, Actor>},
+	{PHYSICSACTOR, &createNewObject<PhysicsActor, Actor>},
+	{RIGIDBODYACTOR, &createNewObject<RigidBodyActor, Actor>},
+	{CAMERA, &createNewObject<Camera, Actor>},
+	{GRAPHXPLAYER, &createNewObject<GraphXPlayer, Actor>},
+	{LIGHT, &createNewObject<Light, Actor>},
+	{LIGHTDIRECTIONAL, &createNewObject<LightDirectional, Actor>},
+	{LIGHTSPOT, &createNewObject<LightSpot, Actor>},
+	{LIGHTFLASHLIGHT, &createNewObject<LightFlashlight, Actor>},
+	{LIGHTTESTERMOVER, &createNewObject<LightTesterMover, Actor>},
+};
+
+gDeviceMap device_map =
+{
+	{ENVIRONMENT, &createNewObject<Environment, Device>},
+	{MATERIAL, &createNewObject<Material, Device>},
+	{MESH, &createNewObject<Mesh, Device>},
+	{SPRITE, &createNewObject<Sprite, Device>},
+	{COLLIDER, &createNewObject<Collider, Device>},
+};
+
+void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre *parent_theatre)
+{
+	int class_hash = getClassHash(class_name);
+
+	if(ACTORS[0] <= class_hash && class_hash >= ACTORS[1])
+	{
+		parent_theatre->objects[object_uid] = actor_map[class_hash]();
+		parent_theatre->troupe.insert(parent_theatre->troupe.end(), std::any_cast<Actor *>(parent_theatre->objects[object_uid]));
+		std::any_cast<Actor *>(parent_theatre->objects[object_uid])->settings = class_settings;
+	}
+
+	if(DEVICES[0] <= class_hash && class_hash >= DEVICES[1])
+	{
+		parent_theatre->devices[object_uid] = device_map[class_hash]();
+		std::any_cast<Device *>(parent_theatre->objects[object_uid])->settings = class_settings;
+	}
 }

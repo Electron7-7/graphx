@@ -1,9 +1,11 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "r_common.hpp"
-// #include <unordered_map>
-// #include <any>
+#include <unordered_map>
+#include <any>
 // #include "g_math.hpp"
+
+typedef std::unordered_map<std::string, std::any> gSettings;
 
 extern Theatre *current_theatre_deprecated;
 extern bool current_troupe_changed;
@@ -48,10 +50,11 @@ public:
 
 	int state_index = 0;
 
+	gSettings settings;
+
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
-	virtual void youGotACallBack(std::string new_name, bool is_visible, Mesh *new_mesh, glm::vec3 new_position, glm::quat new_quaternion, glm::vec3 new_scale); // Theatre file calls this!
-	virtual void youGotACallBack(std::string new_name, bool is_visible, Mesh *new_mesh, glm::vec3 new_position, glm::vec3 new_rotation_degrees, glm::vec3 new_scale); // Theatre file calls this!
+	virtual void youGotACallBack(); // Loads settings
 
 	virtual void tick(int current_tick);
 	virtual void callToStage(Theatre *parent_theatre);
@@ -69,9 +72,10 @@ struct Theatre
 {
 	Mesh stage = Mesh();
 	std::string name = "Untitled Theatre";
-	std::unordered_map<int, std::vector<Actor *>> troupe = {};
-	std::unordered_map<int, std::vector<Material *>> materials = {};
-	std::unordered_map<int, std::vector<Mesh *>> meshes = {};
+	// Try using one unordered_map instead of 3+
+	std::unordered_map<int, Actor *> objects = {};
+	std::unordered_map<int, Device *> devices = {};
+	std::vector<Actor *> troupe = {};
 
 	int point_lights_count = 0;
 	int spot_lights_count = 0;

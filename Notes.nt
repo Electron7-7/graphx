@@ -873,3 +873,50 @@ ALMOST DONE!!!! THE INTERPRETER CODE IS... untested, but more importantly ITS AL
 I'M SO FUCKING EXCITED!!
 
 :3
+
+[02/07/25]
+Dexter gets here tomorrow! Today I'm gonna try and get the interpreter finished!
+
+Holy shit. I've just discovered a way to instantiate objects based on an arbitrary input:
+(https://stackoverflow.com/questions/582331/is-there-a-way-to-instantiate-objects-from-a-string-holding-their-class-name)
+Example C++ code creating a class based on a string of their classname (i.e: "Actor")
+:::C++
+template<typename T> Base * createInstance() { return new T; }
+
+typedef std::map<std::string, Base*(*)()> map_type;
+
+map_type map;
+map["DerivedA"] = &createInstance<DerivedA>;
+map["DerivedB"] = &createInstance<DerivedB>;
+
+// In the example, they use "return map[some_string]();" to demonstrate how to get the
+// type, but I added this pseudo main function which I think should do the same thing,
+// just more directly.
+int main()
+{
+	auto new_instance = map[some_string]();
+}
+:::
+
+It's 12:40, here's a changelog (no testing has been done yet):
+	- New typedef called "gSettings" which defines the type:
+		- std::unordered_map<std::string, std::any>
+	- Theatre now has an unordered map of <int, Actor *>, so that the interpreter can properly interpret Theatre references.
+		- Theatre also has an unordered map of <int, Device *> that should actually be a vector (TODO: Change to vector)
+	- Created new Collider struct that will hold all the relevant data for creating a JPH::Body
+	- Created new Device struct that will provide a virtual function for loading settings
+	- Device is inherited by:
+		- Environment
+		- Material
+		- Mesh/Sprite
+		- Collider
+	- Interpreter now populates a Theatre with new Actors and Devices, as well as storing their relevant settings (both Actor and Device have a new gSettings member called "settings")
+
+Here's what I think should be up next:
+	- Create unique gSettings templates for each class
+		- or find a way to avoid having to do this
+			- one giant gSettings template for both Actor and Device with a range specifier for individual classes?
+	- Specify how each class handles loading settings
+	- Replace deprecated Theatre loading in main file with new Theatre loading
+
+:3

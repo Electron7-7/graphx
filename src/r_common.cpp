@@ -154,6 +154,14 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 }
 
 //
+// Device
+//
+void Device::loadSettings()
+{
+
+}
+
+//
 // Environment
 //
 glm::vec3 Environment::getAmbientLight()
@@ -162,35 +170,44 @@ glm::vec3 Environment::getAmbientLight()
 }
 
 //
+// Environment
+//
+Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color, float init_ambient_strength)
+: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
+{
+	device_type = DEVICE_ENVIRONMENT;
+}
+
+void Environment::loadSettings()
+{
+
+}
+
+//
 // Material
 //
-// Texture Function
-// Todo: go from generating one texture per one filepath to n textures per n filepaths (and returning their pointers)
-/*unsigned int Material::bufferTexture(std::filesystem::path path)
+Material::Material(bool is_fullbright, glm::vec3 init_color)
+: embedded_texture_diffuse(NO_TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {
-	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+	device_type = DEVICE_MATERIAL;
+}
 
-	unsigned int texture_id;
-	glGenTextures(1, &texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
+: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+{
+	device_type = DEVICE_MATERIAL;
+}
 
-	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load(path.generic_string().c_str(), &t_width, &t_height, &t_channels, 0);
+Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
+: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+{
+	device_type = DEVICE_MATERIAL;
+}
 
-	if(!t_data)
-		std::cerr << "Failed to load texture!" << std::endl;
+void Material::loadSettings()
+{
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	stbi_image_free(t_data);
-
-	return texture_id;
-}*/
+}
 
 unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 {
@@ -219,4 +236,32 @@ unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 	stbi_image_free(t_data);
 
 	return texture_id;
+}
+
+//
+// Mesh
+//
+Mesh::Mesh(Material init_material, std::vector<GLfloat> init_vertices, std::vector<GLuint> init_indices, int init_vao_index, std::string init_name)
+: name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
+{
+	device_type = DEVICE_MESH;
+}
+
+void Mesh::loadSettings()
+{
+
+}
+
+//
+// Sprite
+//
+Sprite::Sprite(Material init_material, int init_vao_index)
+: Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
+{
+	device_type = DEVICE_SPRITE;
+}
+
+void Sprite::loadSettings()
+{
+	
 }

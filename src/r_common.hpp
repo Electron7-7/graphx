@@ -4,11 +4,13 @@
 #include "sanity.hpp"
 #include "quad.graphxmodel"
 #include "ERROR.graphxmodel"
-#include <vector>
+#include <any>
 #include <array>
-#include <string>
 #include <mutex>
+#include <vector>
+#include <string>
 #include <filesystem>
+#include <unordered_map>
 
 #define GLSHADER_TYPE_VERTEX	0
 #define GLSHADER_TYPE_FRAGMENT	1
@@ -42,9 +44,19 @@
 //---------------------------
 #define VAO_HANDMADE		0
 
+
+#define DEVICE_DEVICE		0
+#define DEVICE_ENVIRONMENT	1
+#define DEVICE_MATERIAL		2
+#define DEVICE_MESH			3
+#define DEVICE_SPRITE		3
+#define DEVICE_COLLIDER		4
+
 class Actor;		// Forward-declare Actor
 class GraphXPlayer;	// Forward-declare GraphXPlayer
 struct Theatre;		// Forward-declare Theatre
+
+typedef std::unordered_map<std::string, std::any> gSettings;
 
 struct GLShader
 {
@@ -59,20 +71,28 @@ struct GLShader
 	void buildShader(std::string vertex_shader_code, std::string fragment_shader_code);
 };
 
-struct Environment // Will be extended
+struct Device
+{
+	int device_type;
+	gSettings settings;
+
+	virtual void loadSettings();
+};
+
+struct Environment : public Device // Will be extended
 {
 	bool ambient_lighting_enabled;
 	glm::vec3 ambient_light_color;
 	float ambient_light_strength;
 
-	Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f)
-	: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
-	{}
+	Environment(bool enable_ambient_lighting = true, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f);
 
 	glm::vec3 getAmbientLight();
+
+	void loadSettings() override;
 };
 
-struct Material
+struct Material : public Device
 {
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
@@ -87,23 +107,17 @@ struct Material
 	float specular_strength;
 	bool mat_fullbright;
 
-	Material(bool is_fullbright, glm::vec3 init_color)
-	: embedded_texture_diffuse(NO_TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
-	{}
-
-	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f))
-	: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
-	{}
-
-	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32)
-	: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
-	{}
+	Material(bool is_fullbright, glm::vec3 init_color);
+	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
+	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
 	// unsigned int bufferTexture(std::filesystem::path path);
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
+
+	void loadSettings() override;
 };
 
-struct Mesh
+struct Mesh : public Device
 {
 	std::string name = "Untitled Mesh";
 	Material material = Material();
@@ -114,17 +128,17 @@ struct Mesh
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 
-	Mesh(Material init_material = Material(), std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh")
-	: name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
-	{}
+	Mesh(Material init_material = Material(), std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
+
+	void loadSettings() override;
 };
 
-struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
+struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Material init_material = Material(), int init_vao_index = VAO_HANDMADE)
-	: Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
-	{}
+	Sprite(Material init_material = Material(), int init_vao_index = VAO_HANDMADE);
+
+	void loadSettings() override;
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line

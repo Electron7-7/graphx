@@ -21,7 +21,7 @@
 #include <mutex>
 Theatre *current_theatre_deprecated;
 
-GraphXPlayer player("Player", glm::vec3(0.0f, 6.0f, 0.0f));
+// GraphXPlayer player("Player", glm::vec3(0.0f, 6.0f, 0.0f));
 Environment default_environment(true);
 
 std::mutex actor_state_mutex;
