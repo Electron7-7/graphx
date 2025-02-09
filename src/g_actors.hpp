@@ -22,6 +22,7 @@ class PhysicsActor: public Actor
 {
 public:
 	std::vector<JPH::BodyID> collider_ids;
+	Collider *collider;
 
 	float mass = 1.0f; // in kg
 

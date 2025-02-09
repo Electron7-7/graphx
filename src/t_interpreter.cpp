@@ -481,6 +481,105 @@ gDeviceMap device_map =
 	{COLLIDER, &createNewObject<Collider, Device>},
 };
 
+gSettings actor_settings =
+{
+	{"Name", "Untitled Actor"},
+	{"Visible", true},
+	{"Mesh", NULL},
+	{"Position", glm::vec3(0.0f)},
+	{"RotationDegrees", glm::vec3(0.0f)},
+	{"Scale", glm::vec3(1.0f)},
+};
+
+gSettings physics_actor_settings =
+{
+	{"Mass", 1.0f},
+	{"Collider", NULL},
+};
+
+gSettings rigidbody_actor_settings =
+{};
+
+gSettings camera_settings =
+{
+	{"Parent", NULL},
+	{"LocalPosition", glm::vec3(0.0f, 3.0f, 0.0f)},
+	{"LocalRotationDegrees", glm::vec3(0.0f)}
+};
+
+gSettings graphxplayer_settings =
+{
+	{"PlayerMesh", Mesh()},
+	{"PlayerCamera", Camera()},
+	{"MouseSensitivity", 0.05f},
+	{"MovementSpeed", 0.1f},
+	{"MaxVelocity", 8.0f}
+};
+
+gSettings light_settings =
+{
+	{"Color", glm::vec3(1.0f)},
+	{"Strength", 1.0f},
+	{"Range", 100.0f},
+	{"Intensity", 1.0f},
+	{"Falloff", 0.0f}
+};
+
+gSettings light_directional_settings =
+{
+	{"Direction", glm::vec3(0.0f, -1.0f, 0.0f)}
+};
+
+gSettings light_spot_settings =
+{
+	{"InnerCutoffAngle", 12.5f},
+	{"OuterCutoffAngle", 17.5f}
+};
+
+gSettings light_flashlight_settings =
+{
+	{"PositionOffset", glm::vec3(0.0f)},
+	{"RotationOffset", glm::vec3(0.0f)}
+};
+
+gSettings light_tester_mover_settings =
+{
+	{"PivotPosition", glm::vec3(0.0f)},
+	{"PivotRadius", 3.0f},
+	{"PivotSpeed", 1.0f}
+};
+
+std::unordered_map<int, std::pair<int, gSettings>> settings_map =
+{
+	{ACTOR, {-1, actor_settings}},
+	{PHYSICSACTOR, {ACTOR, physics_actor_settings}},
+	{RIGIDBODYACTOR, {PHYSICSACTOR, rigidbody_actor_settings}},
+	{CAMERA, {ACTOR, camera_settings}},
+	{GRAPHXPLAYER, {ACTOR, graphxplayer_settings}},
+	{LIGHT, {ACTOR, light_settings}},
+	{LIGHTDIRECTIONAL, {LIGHT, light_directional_settings}},
+	{LIGHTSPOT, {LIGHT, light_spot_settings}},
+	{LIGHTFLASHLIGHT, {LIGHT, light_flashlight_settings}},
+	{LIGHTTESTERMOVER, {LIGHT, light_tester_mover_settings}},
+};
+
+std::vector<gSettings> getSettingsTemplate(std::string class_name)
+{
+	int class_hash = getClassHash(class_name);
+	std::pair<int, gSettings> settings_pair = settings_map[class_hash];
+	std::vector<gSettings> all_settings = {};
+	int abort = 0;
+	while(settings_pair.first != -1 && abort != 50) // abort != 50 is a fail-safe
+	{
+		// Find out how to insert an unordered map into an unordered map (without a for loop, duh)
+		all_settings.insert(all_settings.end(), settings_map[settings_pair.first].second);
+		settings_pair = settings_map[settings_pair.first];
+		abort++;
+	}
+
+	return all_settings;
+}
+
 void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre *parent_theatre)
 {
 	int class_hash = getClassHash(class_name);
@@ -522,38 +621,41 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 	for(const auto &object : objects_bucket)
 	{
-		gSettings new_class_settings = getSettingsTemplate(object.second.first);
+		std::vector<gSettings> new_settings_all = getSettingsTemplate(object.second.first);
 
-		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
-		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
-		auto raw_data_range = std::get<4>(theatre_data).equal_range(object.first);
-		auto sandwiches_range = std::get<5>(theatre_data).equal_range(object.first);
-
-		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
+		for(gSettings &new_class_settings : new_settings_all)
 		{
-			new_class_settings[it->second.first] = cpp_definitions[it->second.second];
-		}
+			auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
+			auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
+			auto raw_data_range = std::get<4>(theatre_data).equal_range(object.first);
+			auto sandwiches_range = std::get<5>(theatre_data).equal_range(object.first);
 
-		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
-		{
-			new_class_settings[it->second.first] = getVariableFrom(&new_theatre->troupe.at(it->second.second), it->second.first);
-		}
-
-		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
-		{
-			new_class_settings[it->second.first] = extractData(it->second.second);
-		}
-
-		for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
-		{
-			new_class_settings[it->second.first.first] = &new_theatre->objects.at(it->second.first.second);
-			for(auto &pair : it->second.second)
+			for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
 			{
-				new_class_settings[pair.first] = &new_theatre->objects.at(pair.second);
+				new_class_settings[it->second.first] = cpp_definitions[it->second.second];
+			}
+
+			for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
+			{
+				new_class_settings[it->second.first] = getVariableFrom(&new_theatre->troupe.at(it->second.second), it->second.first);
+			}
+
+			for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
+			{
+				new_class_settings[it->second.first] = extractData(it->second.second);
+			}
+
+			for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
+			{
+				new_class_settings[it->second.first.first] = &new_theatre->objects.at(it->second.first.second);
+				for(auto &pair : it->second.second)
+				{
+					new_class_settings[pair.first] = &new_theatre->objects.at(pair.second);
+				}
 			}
 		}
 
-		createNewClass(object.second.first, object.first, new_class_settings, new_theatre);
+		createNewClass(object.second.first, object.first, new_settings_all, new_theatre);
 	}
 
 	return getCurrentTheatre();

@@ -73,7 +73,7 @@ struct GLShader
 struct Device
 {
 	int device_type;
-	gSettings settings;
+	std::vector<gSettings> settings;
 
 	virtual void loadSettings();
 	virtual long getUID();
