@@ -37,8 +37,15 @@ void Theatre::startPreshow()
 	countLights();
 
 	PRINTLN("Entering Theatre (" << name << ")\nActors Present:")
+	for(auto &pair : devices)
+		pair.second->loadSettings();
+
 	for(Actor *actor : troupe)
+	{
+		actor->youGotACallBack();
 		actor->callToStage(this);
+	}
+
 	sortTroupe();
 }
 

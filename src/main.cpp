@@ -268,6 +268,7 @@ void testGameTick(GLFWwindow *main_window)
 
 	// This will change to include loading external Theatres and to not just only load the first Theatre lmfao
 	loadTheatre(embedded_theatres[0]); // So, when I add UI, this will go behind a "start game"/"load level"/etc
+	getCurrentTheatre()->startPreshow();
 
 	// current_theatre_deprecated = &collision_testing_theatre;
 	// current_theatre_deprecated->actorEnter(&player);

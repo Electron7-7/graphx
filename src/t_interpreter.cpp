@@ -11,21 +11,11 @@
 #include <any>
 #include <unordered_map>
 
-template<Actor *> std::any getVariableFrom(Actor *object_pointer, std::string variable_name)
+void setVariable(auto *variable, std::any set_value)
 {
-	// Oh sweet lord god up in heaven above, what am I about to do?
-	if(variable_name == "Name")
-		return object_pointer->name;
-	if(variable_name == "Visible")
-		return object_pointer->visible;
-	if(variable_name == "Mesh")
-		return object_pointer->mesh;
-	if(variable_name == "Position")
-		return object_pointer->position_global;
-	if(variable_name == "RotationDegrees")
-		return glm::radians(glm::eulerAngles(object_pointer->quaternion));
-	if(variable_name == "Scale")
-		return object_pointer->scale;
+	// decltype(*std::declval<variable>());
+	// I want to get the type that "variable" points to, and std::any_cast to that type
+	// this is just so I don't have to retype std::any_cast over and over again in youGotACallBack and loadSettings
 }
 
 gTheatreStorage theatreParser(std::string theatre_data)
@@ -314,41 +304,6 @@ int getClassHash(std::string class_name)
 	return -1;
 }
 
-gSettings actor_settings =
-{
-	{"CLASS_TYPE", graphx_classes::ACTOR},
-	{"Name", "Untitled Actor"},
-	{"Visible", true},
-	{"Mesh", NULL},
-	{"Position", glm::vec3(0.0f)},
-	{"RotationDegrees", glm::vec3(0.0f)},
-	{"Scale", glm::vec3(1.0f)},
-};
-
-gSettings getSettingsTemplate(std::string class_name)
-{
-	switch(getClassHash(class_name))
-	{
-	case graphx_classes::ACTOR:
-		// new_theatre->troupe.insert(new_theatre->troupe.end(), new Actor());
-		// Actor *new_actor = new_theatre->troupe[new_theatre->troupe.size()];
-		return actor_settings;
-	case graphx_classes::RIGIDBODYACTOR:
-		break;
-	case graphx_classes::COLLIDER:
-		break;
-	case graphx_classes::MESH:
-		break;
-	case graphx_classes::MATERIAL:
-		break;
-	default:
-		PRINTERR("[ERROR] - Unknown class \"" << class_name << "\"!")
-		break;
-	}
-
-	return actor_settings; // Default return for now; remove later
-}
-
 std::any getNumber(std::vector<std::string> string_input, char type)
 {
 	glm::vec3 numbers;
@@ -580,7 +535,7 @@ std::vector<gSettings> getSettingsTemplate(std::string class_name)
 	return all_settings;
 }
 
-void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre *parent_theatre)
+void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre *parent_theatre)
 {
 	int class_hash = getClassHash(class_name);
 

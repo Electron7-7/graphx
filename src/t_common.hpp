@@ -71,9 +71,9 @@ std::any getNumber(std::vector<std::string> string_input, char type);
 std::any extractData(std::string data_in_here);
 std::vector<gSettings> getSettingsTemplate(std::string class_name);
 void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre *parent_theatre);
-int loadTheatre(std::string embedded_theatre);
 gTheatreStorage theatreParser(std::string theatre_data);
 std::string getTheatreStructure(gTheatreStorage theatre_storage);
 int getClassHash(std::string class_name);
 Theatre *loadTheatre(std::string embedded_theatre);
+void setVariable(auto *variable, std::any set_value);
 #endif

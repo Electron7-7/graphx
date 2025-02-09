@@ -38,6 +38,12 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
+void Actor::youGotACallBack()
+{
+	gSettings actor_settings = settings.back();
+	name = std::any_cast<std::string>(actor_settings["Name"]);
+}
+
 void Actor::setUID(long manual_uid)
 {
 	if(manual_uid != -1)
