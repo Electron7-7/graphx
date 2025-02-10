@@ -11,13 +11,6 @@
 #include <any>
 #include <unordered_map>
 
-void setVariable(auto *variable, std::any set_value)
-{
-	// decltype(*std::declval<variable>());
-	// I want to get the type that "variable" points to, and std::any_cast to that type
-	// this is just so I don't have to retype std::any_cast over and over again in youGotACallBack and loadSettings
-}
-
 gTheatreStorage theatreParser(std::string theatre_data)
 {
 	gObjectStore objects_bucket;
@@ -436,6 +429,11 @@ gDeviceMap device_map =
 	{COLLIDER, &createNewObject<Collider, Device>},
 };
 
+gSettings null_settings =
+{
+	{"NULL", NULL}
+};
+
 gSettings actor_settings =
 {
 	{"Name", "Untitled Actor"},
@@ -453,7 +451,8 @@ gSettings physics_actor_settings =
 };
 
 gSettings rigidbody_actor_settings =
-{};
+{
+};
 
 gSettings camera_settings =
 {
@@ -493,6 +492,7 @@ gSettings light_spot_settings =
 
 gSettings light_flashlight_settings =
 {
+	{"Parent", NULL},
 	{"PositionOffset", glm::vec3(0.0f)},
 	{"RotationOffset", glm::vec3(0.0f)}
 };
@@ -535,24 +535,24 @@ std::vector<gSettings> getSettingsTemplate(std::string class_name)
 	return all_settings;
 }
 
-void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre *parent_theatre)
+void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre &parent_theatre)
 {
 	int class_hash = getClassHash(class_name);
 
-	if(ACTORS[0] <= class_hash && class_hash >= ACTORS[1])
+	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 	{
-		parent_theatre->objects[object_uid] = actor_map[class_hash]();
-		std::any_cast<Actor *>(parent_theatre->objects[object_uid])->settings = class_settings;
-		std::any_cast<Actor *>(parent_theatre->objects[object_uid])->setUID(object_uid);
+		parent_theatre.objects[object_uid] = actor_map[class_hash]();
+		std::any_cast<Actor *>(parent_theatre.objects[object_uid])->settings = class_settings;
+		std::any_cast<Actor *>(parent_theatre.objects[object_uid])->setUID(object_uid);
 	}
 
-	if(DEVICES[0] <= class_hash && class_hash >= DEVICES[1])
+	if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
 	{
-		parent_theatre->devices[object_uid] = device_map[class_hash]();
-		std::any_cast<Device *>(parent_theatre->objects[object_uid])->settings = class_settings;
-		std::any_cast<Device *>(parent_theatre->objects[object_uid])->setUID(object_uid);
+		parent_theatre.devices[object_uid] = device_map[class_hash]();
+		std::any_cast<Device *>(parent_theatre.devices[object_uid])->settings = class_settings;
+		std::any_cast<Device *>(parent_theatre.devices[object_uid])->setUID(object_uid);
 		if(class_name == "Environment")
-			parent_theatre->environment_uid = object_uid;
+			parent_theatre.environment_uid = object_uid;
 	}
 }
 
@@ -565,7 +565,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 	current_theatre_uid = all_theatres.size();
 	all_theatres.insert(all_theatres.end(), std::make_pair(current_theatre_uid, Theatre(std::get<0>(theatre_data))));
-	Theatre *new_theatre = &all_theatres.end()->second;
+	Theatre *new_theatre = &all_theatres.at(current_theatre_uid);
 
 	auto theatre_name = std::get<0>(theatre_data);
 	auto objects_bucket = std::get<1>(theatre_data);
@@ -592,7 +592,27 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 			for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
 			{
-				new_class_settings[it->second.first] = getVariableFrom(&new_theatre->troupe.at(it->second.second), it->second.first);
+				std::string reference_name = objects_bucket[it->first].first;
+				std::vector<gSettings> referenced_settings_vector;
+				
+				if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+				{
+					referenced_settings_vector = new_theatre->objects.at(it->second.second)->settings;
+				}
+
+				if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
+				{
+					referenced_settings_vector = new_theatre->devices.at(it->second.second)->settings;
+				}
+
+				for(gSettings &settings_list : referenced_settings_vector)
+				{
+					if(settings_list.contains(it->second.first))
+					{
+						new_class_settings[it->second.first] = settings_list.at(it->second.first);
+						break;
+					}
+				}
 			}
 
 			for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
@@ -610,7 +630,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 			}
 		}
 
-		createNewClass(object.second.first, object.first, new_settings_all, new_theatre);
+		createNewClass(object.second.first, object.first, new_settings_all, *new_theatre);
 	}
 
 	return getCurrentTheatre();

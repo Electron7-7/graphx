@@ -5,6 +5,7 @@
 #include <any>
 
 typedef std::unordered_map<std::string, std::any> gSettings;
+extern gSettings null_settings;
 
 struct RenderState
 {
@@ -49,8 +50,7 @@ public:
 
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
-	virtual void youGotACallBack(); // Loads settings
-
+	virtual void youGotACallBack(gSettings new_settings = null_settings); // Loads settings
 	virtual void tick(int current_tick);
 	virtual void callToStage(Theatre *parent_theatre);
 	virtual void takeABow();
@@ -98,5 +98,5 @@ extern std::unordered_map<int, Theatre> all_theatres;
 extern int current_theatre_uid;
 extern bool current_troupe_changed;
 
-extern Theatre *current_theatre_deprecated;
+// extern Theatre *current_theatre_deprecated;
 #endif

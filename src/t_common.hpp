@@ -51,6 +51,8 @@ typedef std::map<int, Device*(*)()>																				gDeviceMap;
 extern gActorMap actor_map;
 extern gDeviceMap device_map;
 
+extern gSettings null_settings;
+
 extern gSettings actor_settings;
 extern gSettings physics_actor_settings;
 extern gSettings rigidbody_actor_settings;
@@ -66,14 +68,17 @@ extern std::unordered_map<int, std::pair<int, gSettings>> settings_map;
 
 template<typename T, typename A> A *createNewObject() { return new T; }
 template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
+template<typename T> void setVariable(T &variable, auto set_value)
+{
+	variable = std::any_cast<T>(set_value);
+};
 
 std::any getNumber(std::vector<std::string> string_input, char type);
 std::any extractData(std::string data_in_here);
 std::vector<gSettings> getSettingsTemplate(std::string class_name);
-void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre *parent_theatre);
+void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre &parent_theatre);
 gTheatreStorage theatreParser(std::string theatre_data);
 std::string getTheatreStructure(gTheatreStorage theatre_storage);
 int getClassHash(std::string class_name);
 Theatre *loadTheatre(std::string embedded_theatre);
-void setVariable(auto *variable, std::any set_value);
 #endif

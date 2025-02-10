@@ -26,10 +26,11 @@ public:
 
 	float mass = 1.0f; // in kg
 
-	PhysicsActor(std::string init_name, JPH::BodyCreationSettings init_body_creation_settings, JPH::EActivation init_body_activation = JPH::EActivation::Activate, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	PhysicsActor(std::string init_name = "Untitled Physics Actor", JPH::BodyCreationSettings init_body_creation_settings = JPH::BodyCreationSettings(), JPH::EActivation init_body_activation = JPH::EActivation::Activate, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 	PhysicsActor(std::string init_name, JPH::EMotionType init_motion_type, JPH::ObjectLayer init_object_layer, JPH::EActivation init_body_activation = JPH::EActivation::Activate, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
 	void tick(int current_tick) override;
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
@@ -54,9 +55,11 @@ public:
 
 	using PhysicsActor::PhysicsActor;
 
-	void reset_to_initial_orientation_for_testing() override;
 	void tick(int current_tick) override;
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
+
+	void reset_to_initial_orientation_for_testing() override;
 
 protected:
 	JPH::Vec3 reset_position;
@@ -74,6 +77,7 @@ public:
 	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
 
 	void tick(int current_tick) override;
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void doRotation(glm::vec2 mouse_input);
 };
 
@@ -107,8 +111,9 @@ public:
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
 	bool wantsToBeRendered() override;
-	void callToStage(Theatre *parent_theatre) override;
 	void tick(int current_tick) override;
+	void youGotACallBack(gSettings new_settings = null_settings) override;
+	void callToStage(Theatre *parent_theatre) override;
 
 /*private:
 	JPH::Ref<JPH::Character> jph_character;*/
@@ -129,6 +134,8 @@ public:
 	float falloff;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
 
 	Light(std::string init_name = "UNTITLED LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f));
+
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 };
 
 class LightDirectional: public Light
@@ -137,6 +144,8 @@ public:
 	glm::vec3 direction;
 
 	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
+
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 };
 
 class LightSpot: public Light
@@ -149,6 +158,8 @@ public:
 	LightSpot(std::string init_name = "UNTITLED SPOT LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_direction = glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f));
 
 	glm::vec2 getCutoffAngles();
+
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 };
 
 class LightFlashlight: public LightSpot
@@ -161,7 +172,9 @@ public:
 	LightFlashlight(std::string init_name = "UNTITLED FLASHLIGHT", float init_intensity = 0.5f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_position_offset = glm::vec3(0.0f), glm::vec3 init_rotation_offset = glm::vec3(0.0f));
 
 	void setLight(bool is_off);
+
 	void tick(int current_tick) override;
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 
 private:
 	float _intensity;
@@ -181,6 +194,7 @@ public:
 	LightTesterMover(std::string init_name = "UNTITLED MOVING LIGHT TESTER", glm::vec3 init_pivot_position = glm::vec3(0.0f), float init_pivot_radius = 3.0f, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f));
 
 	void tick(int current_tick) override;
+	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
 };
 

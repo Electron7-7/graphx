@@ -1,4 +1,5 @@
 #include "g_common.hpp"
+#include "t_common.hpp"
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "g_math.hpp"
@@ -38,10 +39,21 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
-void Actor::youGotACallBack()
+void Actor::youGotACallBack(gSettings new_settings)
 {
-	gSettings actor_settings = settings.back();
-	name = std::any_cast<std::string>(actor_settings["Name"]);
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	glm::vec3 rotation_degrees;
+	setVariable(name, new_settings["Name"]);
+	setVariable(mesh, new_settings["Mesh"]);
+	setVariable(position_global, new_settings["Position"]);
+	setVariable(rotation_degrees, new_settings["RotationDegrees"]);
+	quaternion = glm::quat(glm::radians(rotation_degrees));
+	setVariable(scale, new_settings["Scale"]);
 }
 
 void Actor::setUID(long manual_uid)
@@ -141,6 +153,19 @@ PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init
 	body_activation.insert(body_activation.end(), init_body_activation);
 }
 
+void PhysicsActor::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+	setVariable(mass, new_settings["Mass"]);
+	setVariable(collider, new_settings["Collider"]);
+
+	Actor::youGotACallBack(settings.back());
+}
+
 void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
@@ -166,6 +191,22 @@ void PhysicsActor::tick(int current_tick)
 //
 // RigidBodyActor
 //
+void RigidBodyActor::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	// RigidBodyActor's settings are empty, but settings.back() may be an empty map.
+	// if it is, we have to erase it still, but if it isn't then this erases
+	// PhysicsActor's settings and will cause problems.
+	PRINTLN("RigidBodyActor settings.back(): " << new_settings.begin()->first);
+
+	PhysicsActor::youGotACallBack(settings.back());
+}
+
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
@@ -206,6 +247,18 @@ void Camera::doRotation(glm::vec2 mouse_input)
 		euler_rotation[0] = glm::radians(view_pitch_clamp * ((glm::degrees(euler_rotation[0]) > 0) - (glm::degrees(euler_rotation[0]) < 0)));
 }
 
+void Camera::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+		new_settings = settings.back();
+
+	setVariable(parent, new_settings["Parent"]);
+	setVariable(position_local, new_settings["LocalPosition"]);
+	setVariable(euler_rotation_local, new_settings["LocalRotationDegrees"]);
+
+	Actor::youGotACallBack(settings.back());
+}
+
 void Camera::tick(int current_tick)
 {
 	position_global = parent->position_global + position_local;
@@ -222,6 +275,23 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
 	player_camera.position_global = init_position;
 	player_camera.parent = this;
+}
+
+void GraphXPlayer::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	setVariable(mesh, new_settings["PlayerMesh"]);
+	setVariable(player_camera, new_settings["PlayerCamera"]);
+	setVariable(mouse_sensitivity, new_settings["MouseSensitivity"]);
+	setVariable(movement_speed, new_settings["MovementSpeed"]);
+	setVariable(max_velocity, new_settings["MaxVelocity"]);
+
+	Actor::youGotACallBack(settings.back());
 }
 
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
@@ -289,12 +359,42 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 	debug_visible = true;
 }
 
+void Light::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	setVariable(light_color, new_settings["Color"]);
+	setVariable(light_strength, new_settings["Strength"]);
+	setVariable(range, new_settings["Range"]);
+	setVariable(intensity, new_settings["Intensity"]);
+	setVariable(falloff, new_settings["Falloff"]);
+
+	Actor::youGotACallBack(settings.back());
+}
+
 //
 // LightDirectional
 //
 LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_direction, float init_strength, glm::vec3 init_color)
 : Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color), direction(init_direction)
 { light_type = LIGHT_DIRECTIONAL; }
+
+void LightDirectional::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	setVariable(direction, new_settings["Direction"]);
+
+	Light::youGotACallBack();
+}
 
 //
 // LightSpot
@@ -303,6 +403,20 @@ LightSpot::LightSpot(std::string init_name, float init_intensity, float init_ran
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
 {
 	light_type = LIGHT_SPOT;
+}
+
+void LightSpot::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	setVariable(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
+	setVariable(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
+
+	Light::youGotACallBack();
 }
 
 glm::vec2 LightSpot::getCutoffAngles()
@@ -322,6 +436,21 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 {
 	light_type = LIGHT_SPOT;
 	debug_visible = false;
+}
+
+void LightFlashlight::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	setVariable(parent, new_settings["Parent"]);
+	setVariable(position_offset, new_settings["PositionOffset"]);
+	setVariable(rotation_offset, new_settings["RotationOffset"]);
+
+	LightSpot::youGotACallBack();
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -351,6 +480,21 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.position_global = init_pivot_position;
+}
+
+void LightTesterMover::youGotACallBack(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+
+	setVariable(pivot_position, new_settings["PivotPosition"]);
+	setVariable(pivot_radius, new_settings["PivotRadius"]);
+	setVariable(pivot_speed, new_settings["PivotSpeed"]);
+
+	Light::youGotACallBack();
 }
 
 void LightTesterMover::tick(int current_tick)

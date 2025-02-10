@@ -30,7 +30,7 @@ namespace ColliderShapes
 
 typedef std::tuple<glm::vec3, float, float> jolt_shape_args;
 
-struct Collider : Device
+struct Collider : public Device
 {
 	glm::vec3			position = glm::vec3(0.0f);
 	glm::vec3			scale = glm::vec3(1.0f);
@@ -48,7 +48,7 @@ struct Collider : Device
 	JPH::BodyID *getBodyID();
 	JPH::BodyCreationSettings *getBodySettings();
 
-	void loadSettings() override;
+	void loadSettings(gSettings new_settings = null_settings) override;
 
 protected:
 	JPH::BodyID body_id;

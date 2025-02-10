@@ -1,5 +1,6 @@
 #include "r_common.hpp"
 #include "g_common.hpp"
+#include "t_common.hpp"
 #include "quad.graphxmodel"
 #include <iostream>
 #include <fstream>
@@ -158,9 +159,13 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 //
 // Device
 //
-void Device::loadSettings()
+void Device::loadSettings(gSettings new_settings)
 {
-
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
 }
 
 void Device::setUID(long manual_uid)
@@ -205,9 +210,13 @@ Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_co
 	device_type = DEVICE_ENVIRONMENT;
 }
 
-void Environment::loadSettings()
+void Environment::loadSettings(gSettings new_settings)
 {
-
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
 }
 
 //
@@ -231,9 +240,13 @@ Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned 
 	device_type = DEVICE_MATERIAL;
 }
 
-void Material::loadSettings()
+void Material::loadSettings(gSettings new_settings)
 {
-
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
 }
 
 unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
@@ -274,10 +287,15 @@ Mesh::Mesh(Material init_material, std::vector<GLfloat> init_vertices, std::vect
 	device_type = DEVICE_MESH;
 }
 
-void Mesh::loadSettings()
+void Mesh::loadSettings(gSettings new_settings)
 {
-
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
 }
+
 
 //
 // Sprite
@@ -288,7 +306,11 @@ Sprite::Sprite(Material init_material, int init_vao_index)
 	device_type = DEVICE_SPRITE;
 }
 
-void Sprite::loadSettings()
+void Sprite::loadSettings(gSettings new_settings)
 {
-	
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
 }

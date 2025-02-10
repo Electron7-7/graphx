@@ -45,6 +45,15 @@ Collider::Collider()
 	device_type = DEVICE_COLLIDER;
 }
 
+void Collider::loadSettings(gSettings new_settings)
+{
+	if(new_settings.cbegin() == null_settings.cbegin())
+	{
+		new_settings = settings.back();
+		settings.erase(settings.cend() - 1);
+	}
+}
+
 JPH::BodyCreationSettings *Collider::getBodySettings()
 {
 	return &body_settings;

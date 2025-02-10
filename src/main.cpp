@@ -54,7 +54,9 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
-	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
@@ -319,7 +321,9 @@ void testGameTick(GLFWwindow *main_window)
 	
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 
-	current_theatre_deprecated->dropCurtains();
+	// current_theatre_deprecated->dropCurtains();
+	getCurrentTheatre()->dropCurtains();
+
 
 	JPH::UnregisterTypes();
 
@@ -362,7 +366,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTLN("Resetting PhysicsActors to initial transformation!")
-		for(Actor *actor : current_theatre_deprecated->troupe)
+		for(Actor *actor : 	getCurrentTheatre()->troupe)
 			if(actor->actor_type == ACTOR_PHYSICS)
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}
