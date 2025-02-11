@@ -57,7 +57,7 @@ struct Theatre;		// Forward-declare Theatre
 
 typedef std::unordered_map<std::string, std::any> gSettings;
 extern gSettings null_settings;
-// 
+
 struct GLShader
 {
 	unsigned int id;
@@ -74,7 +74,7 @@ struct GLShader
 struct Device
 {
 	int device_type;
-	std::vector<gSettings> settings;
+	gSettings settings;
 
 	virtual void loadSettings(gSettings new_settings = null_settings);
 	virtual long getUID();
@@ -124,7 +124,7 @@ struct Material : public Device
 struct Mesh : public Device
 {
 	std::string name = "Untitled Mesh";
-	Material material = Material();
+	Material *material = NULL;
 	int vao_index = VAO_HANDMADE;
 	std::vector<GLfloat> vertices = ERROR_VERTS;
 	std::vector<GLuint> indices = ERROR_INDICES;
@@ -132,7 +132,7 @@ struct Mesh : public Device
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 
-	Mesh(Material init_material = Material(), std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
+	Mesh(Material *init_material = NULL, std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
 
 	void loadSettings(gSettings new_settings = null_settings) override;
 };
@@ -140,7 +140,7 @@ struct Mesh : public Device
 struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Material init_material = Material(), int init_vao_index = VAO_HANDMADE);
+	Sprite(Material *init_material = NULL, int init_vao_index = VAO_HANDMADE);
 
 	void loadSettings(gSettings new_settings = null_settings) override;
 };

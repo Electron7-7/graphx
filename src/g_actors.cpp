@@ -42,10 +42,7 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 void Actor::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
 
 	glm::vec3 rotation_degrees;
 	setVariable(name, new_settings["Name"]);
@@ -156,14 +153,12 @@ PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init
 void PhysicsActor::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
+
+	Actor::youGotACallBack();
+
 	setVariable(mass, new_settings["Mass"]);
 	setVariable(collider, new_settings["Collider"]);
-
-	Actor::youGotACallBack(settings.back());
 }
 
 void PhysicsActor::callToStage(Theatre *parent_theatre)
@@ -194,17 +189,9 @@ void PhysicsActor::tick(int current_tick)
 void RigidBodyActor::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
 
-	// RigidBodyActor's settings are empty, but settings.back() may be an empty map.
-	// if it is, we have to erase it still, but if it isn't then this erases
-	// PhysicsActor's settings and will cause problems.
-	PRINTLN("RigidBodyActor settings.back(): " << new_settings.begin()->first);
-
-	PhysicsActor::youGotACallBack(settings.back());
+	PhysicsActor::youGotACallBack();
 }
 
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
@@ -250,13 +237,13 @@ void Camera::doRotation(glm::vec2 mouse_input)
 void Camera::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-		new_settings = settings.back();
+		new_settings = settings;
+
+	Actor::youGotACallBack();
 
 	setVariable(parent, new_settings["Parent"]);
 	setVariable(position_local, new_settings["LocalPosition"]);
 	setVariable(euler_rotation_local, new_settings["LocalRotationDegrees"]);
-
-	Actor::youGotACallBack(settings.back());
 }
 
 void Camera::tick(int current_tick)
@@ -280,18 +267,15 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 void GraphXPlayer::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
+
+	Actor::youGotACallBack();
 
 	setVariable(mesh, new_settings["PlayerMesh"]);
 	setVariable(player_camera, new_settings["PlayerCamera"]);
 	setVariable(mouse_sensitivity, new_settings["MouseSensitivity"]);
 	setVariable(movement_speed, new_settings["MovementSpeed"]);
 	setVariable(max_velocity, new_settings["MaxVelocity"]);
-
-	Actor::youGotACallBack(settings.back());
 }
 
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
@@ -362,18 +346,15 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 void Light::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
+
+	Actor::youGotACallBack();
 
 	setVariable(light_color, new_settings["Color"]);
 	setVariable(light_strength, new_settings["Strength"]);
 	setVariable(range, new_settings["Range"]);
 	setVariable(intensity, new_settings["Intensity"]);
 	setVariable(falloff, new_settings["Falloff"]);
-
-	Actor::youGotACallBack(settings.back());
 }
 
 //
@@ -386,14 +367,11 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 void LightDirectional::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
-
-	setVariable(direction, new_settings["Direction"]);
+		new_settings = settings;
 
 	Light::youGotACallBack();
+
+	setVariable(direction, new_settings["Direction"]);
 }
 
 //
@@ -408,15 +386,12 @@ LightSpot::LightSpot(std::string init_name, float init_intensity, float init_ran
 void LightSpot::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
+
+	Light::youGotACallBack();
 
 	setVariable(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
 	setVariable(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
-
-	Light::youGotACallBack();
 }
 
 glm::vec2 LightSpot::getCutoffAngles()
@@ -441,16 +416,13 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 void LightFlashlight::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
+
+	Light::youGotACallBack();
 
 	setVariable(parent, new_settings["Parent"]);
 	setVariable(position_offset, new_settings["PositionOffset"]);
 	setVariable(rotation_offset, new_settings["RotationOffset"]);
-
-	LightSpot::youGotACallBack();
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -485,16 +457,13 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 void LightTesterMover::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
+
+	Light::youGotACallBack();
 
 	setVariable(pivot_position, new_settings["PivotPosition"]);
 	setVariable(pivot_radius, new_settings["PivotRadius"]);
 	setVariable(pivot_speed, new_settings["PivotSpeed"]);
-
-	Light::youGotACallBack();
 }
 
 void LightTesterMover::tick(int current_tick)

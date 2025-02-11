@@ -264,19 +264,20 @@ std::unordered_map<std::string, std::any> cpp_definitions =
 {
 	{"DOOM_TEXTURE_DIFF", DOOM_TEXTURE_DIFF},
 	{"DOOM_TEXTURE_SPEC", DOOM_TEXTURE_SPEC},
-	{"VAO_HANDMADE", VAO_HANDMADE},
-	{"GRAPHX_CUBE", std::vector<std::any>{CUBE_VERTS, CUBE_INDICES}},
-	// {"Dynamic", JPH::EMotionType::Dynamic},
-	// {"Static", JPH::EMotionType::Static},
-	// {"Kinematic", JPH::EMotionType::Kinematic},
-	// {"Moving", Layers::MOVING},
-	// {"NonMoving", Layers::NON_MOVING},
-	// {"Activate", JPH::EActivation::Activate},
-	// {"DontActivate", JPH::EActivation::DontActivate},
-	{"BoxShape", ""},
-	{"SphereShape", ""},
-	{"CapsuleShape", ""},
-	{"CylinderShape", ""},
+	{"MISSING_TEXTURE_DIFF", MISSING_TEXTURE_DIFF},
+	{"MISSING_TEXTURE_SPEC", MISSING_TEXTURE_SPEC},
+	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
+	{"Dynamic", JPH::EMotionType::Dynamic},
+	{"Static", JPH::EMotionType::Static},
+	{"Kinematic", JPH::EMotionType::Kinematic},
+	{"Moving", Layers::MOVING},
+	{"NonMoving", Layers::NON_MOVING},
+	{"Activate", JPH::EActivation::Activate},
+	{"DontActivate", JPH::EActivation::DontActivate},
+	{"BoxShape", ColliderShapes::BOX},
+	{"SphereShape", ColliderShapes::SPHERE},
+	{"CapsuleShape", ColliderShapes::CAPSULE},
+	{"CylinderShape", ColliderShapes::CYLINDER},
 };
 
 std::unordered_map<std::string, int> graphx_class_names
@@ -436,7 +437,7 @@ gSettings null_settings =
 
 gSettings actor_settings =
 {
-	{"Name", "Untitled Actor"},
+	{"Name", std::string("Untitled Actor")},
 	{"Visible", true},
 	{"Mesh", NULL},
 	{"Position", glm::vec3(0.0f)},
@@ -504,6 +505,44 @@ gSettings light_tester_mover_settings =
 	{"PivotSpeed", 1.0f}
 };
 
+gSettings environment_settings =
+{
+	{"AmbientLightingEnabled", true},
+	{"AmbientLightingColor", glm::vec3(1.0f)},
+	{"AmbientLightingStrength", 0.05f}
+};
+
+gSettings material_settings =
+{
+	{"DiffuseTexture", MISSING_TEXTURE_DIFF},
+	{"SpecularTexture", MISSING_TEXTURE_SPEC},
+	{"Color", glm::vec3(1.0f)},
+	{"SpecularSharpness", 32},
+	{"SpecularStrength", 0.5f},
+	{"mat_fullbright", false}
+};
+
+gSettings mesh_settings =
+{
+	{"Name", std::string("Untitled Mesh")},
+	{"Material", NULL},
+	{"MeshData", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)}
+};
+
+gSettings sprite_settings =
+{};
+
+gSettings collider_settings =
+{
+	{"Position", glm::vec3(0.0f)},
+	{"Scale", glm::vec3(1.0f)},
+	{"Quaternion", glm::quat()},
+	{"MotionType", JPH::EMotionType::Dynamic},
+	{"ObjectLayer", Layers::MOVING},
+	{"Activation", JPH::EActivation::Activate},
+	{"Shape", ColliderShapes::BOX}
+};
+
 std::unordered_map<int, std::pair<int, gSettings>> settings_map =
 {
 	{ACTOR, {-1, actor_settings}},
@@ -516,26 +555,40 @@ std::unordered_map<int, std::pair<int, gSettings>> settings_map =
 	{LIGHTSPOT, {LIGHT, light_spot_settings}},
 	{LIGHTFLASHLIGHT, {LIGHT, light_flashlight_settings}},
 	{LIGHTTESTERMOVER, {LIGHT, light_tester_mover_settings}},
+	{ENVIRONMENT, {-1, environment_settings}},
+	{MATERIAL, {-1, material_settings}},
+	{MESH, {-1, mesh_settings}},
+	{SPRITE, {MESH, sprite_settings}},
+	{COLLIDER, {-1, collider_settings}},
 };
 
-std::vector<gSettings> getSettingsTemplate(std::string class_name)
+gSettings getSettingsTemplate(std::string class_name)
 {
 	int class_hash = getClassHash(class_name);
 	std::pair<int, gSettings> settings_pair = settings_map[class_hash];
-	std::vector<gSettings> all_settings = {};
+	gSettings all_settings = {};
 	int abort = 0;
 	while(settings_pair.first != -1 && abort != 50) // abort != 50 is a fail-safe
 	{
 		// Find out how to insert an unordered map into an unordered map (without a for loop, duh)
-		all_settings.insert(all_settings.end(), settings_map[settings_pair.first].second);
+		for(auto &pair : settings_map[settings_pair.first].second)
+			all_settings[pair.first] = pair.second;
 		settings_pair = settings_map[settings_pair.first];
 		abort++;
 	}
 
+	for(auto &pair : settings_pair.second)
+		all_settings[pair.first] = pair.second;
+
+	if(!all_settings.contains("Name"))
+		return all_settings;
+	std::cout << "Name = ";
+	std::cout << std::any_cast<std::string>(all_settings["Name"]) << std::endl;
+
 	return all_settings;
 }
 
-void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre &parent_theatre)
+void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre &parent_theatre)
 {
 	int class_hash = getClassHash(class_name);
 
@@ -560,12 +613,12 @@ Theatre *loadTheatre(std::string embedded_theatre)
 {
 	gTheatreStorage theatre_data = theatreParser(embedded_theatre);
 #ifdef GRAPHX_DEBUG
-	PRINT(getTheatreStructure(theatre_data));
+	PRINTLN(getTheatreStructure(theatre_data));
 #endif
 
-	current_theatre_uid = all_theatres.size();
-	all_theatres.insert(all_theatres.end(), std::make_pair(current_theatre_uid, Theatre(std::get<0>(theatre_data))));
-	Theatre *new_theatre = &all_theatres.at(current_theatre_uid);
+	current_theatre_uid++;
+	all_theatres.insert(all_theatres.end(), std::make_pair(current_theatre_uid, new Theatre(std::get<0>(theatre_data))));
+	Theatre *new_theatre = all_theatres.at(current_theatre_uid);
 
 	auto theatre_name = std::get<0>(theatre_data);
 	auto objects_bucket = std::get<1>(theatre_data);
@@ -576,61 +629,93 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 	for(const auto &object : objects_bucket)
 	{
-		std::vector<gSettings> new_settings_all = getSettingsTemplate(object.second.first);
+		gSettings new_class_settings = getSettingsTemplate(object.second.first);
 
-		for(gSettings &new_class_settings : new_settings_all)
+		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
+		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
+		auto raw_data_range = std::get<4>(theatre_data).equal_range(object.first);
+		auto sandwiches_range = std::get<5>(theatre_data).equal_range(object.first);
+
+		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
 		{
-			auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
-			auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
-			auto raw_data_range = std::get<4>(theatre_data).equal_range(object.first);
-			auto sandwiches_range = std::get<5>(theatre_data).equal_range(object.first);
-
-			for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
-			{
-				new_class_settings[it->second.first] = cpp_definitions[it->second.second];
-			}
-
-			for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
-			{
-				std::string reference_name = objects_bucket[it->first].first;
-				std::vector<gSettings> referenced_settings_vector;
-				
-				if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
-				{
-					referenced_settings_vector = new_theatre->objects.at(it->second.second)->settings;
-				}
-
-				if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
-				{
-					referenced_settings_vector = new_theatre->devices.at(it->second.second)->settings;
-				}
-
-				for(gSettings &settings_list : referenced_settings_vector)
-				{
-					if(settings_list.contains(it->second.first))
-					{
-						new_class_settings[it->second.first] = settings_list.at(it->second.first);
-						break;
-					}
-				}
-			}
-
-			for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
-			{
-				new_class_settings[it->second.first] = extractData(it->second.second);
-			}
-
-			for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
-			{
-				new_class_settings[it->second.first.first] = &new_theatre->objects.at(it->second.first.second);
-				for(auto &pair : it->second.second)
-				{
-					new_class_settings[pair.first] = &new_theatre->objects.at(pair.second);
-				}
-			}
+			new_class_settings[it->second.first] = cpp_definitions[it->second.second];
 		}
 
-		createNewClass(object.second.first, object.first, new_settings_all, *new_theatre);
+		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
+		{
+			std::string reference_name = objects_bucket.at(it->second.second).first;
+			gSettings referenced_settings;
+
+			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+			{
+				new_class_settings[it->second.first] = new_theatre->objects.at(it->second.second);
+				// referenced_settings = new_theatre->objects.at(it->second.second)->settings;
+			}
+
+			if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
+			{
+				new_class_settings[it->second.first] = new_theatre->devices.at(it->second.second);
+				// referenced_settings = new_theatre->devices.at(it->second.second)->settings;
+			}
+			
+			/*if(referenced_settings.contains(it->second.first))
+			{
+				new_class_settings[it->second.first] = referenced_settings.at(it->second.first);
+				break;
+			}*/
+		}
+
+		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
+		{
+			new_class_settings[it->second.first] = extractData(it->second.second);
+		}
+
+		for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
+		{
+			gSettings settings_to_modify = null_settings;
+			std::string reference_name = objects_bucket.at(it->second.first.second).first;
+			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+			{
+				new_class_settings[it->second.first.first] = actor_map[getClassHash(it->second.first.first)]();
+				settings_to_modify = new_theatre->objects.at(it->second.first.second)->settings;
+				for(auto &pair : it->second.second)
+				{
+					if(settings_to_modify.contains(pair.first))
+					{
+						if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+						{
+							settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
+							continue;
+						}
+
+						settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
+					}
+				}
+
+				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->youGotACallBack(settings_to_modify);
+				continue;
+			}
+
+			new_class_settings[it->second.first.first] = device_map[getClassHash(it->second.first.first)]();
+			settings_to_modify = new_theatre->devices.at(it->second.first.second)->settings;
+			for(auto &pair : it->second.second)
+			{
+				if(settings_to_modify.contains(pair.first))
+				{
+					if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+					{
+						settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
+						continue;
+					}
+
+					settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
+				}
+			}
+
+			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings(settings_to_modify);
+		}
+
+		createNewClass(object.second.first, object.first, new_class_settings, *new_theatre);
 	}
 
 	return getCurrentTheatre();

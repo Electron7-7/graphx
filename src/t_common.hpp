@@ -10,7 +10,6 @@
 #include <vector>
 #include <unordered_map>
 extern int current_theatre_uid;
-extern std::unordered_map<int, Theatre> all_theatres;
 extern std::unordered_map<std::string, int> graphx_class_names;
 extern std::unordered_map<std::string, std::any> cpp_definitions;
 
@@ -47,6 +46,7 @@ typedef std::unordered_map<std::string, std::any> 																gSettings;
 typedef std::pair<int, std::string>																				gSandwichPair;
 typedef std::map<int, Actor*(*)()>																				gActorMap;
 typedef std::map<int, Device*(*)()>																				gDeviceMap;
+typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int>													gMeshData;
 
 extern gActorMap actor_map;
 extern gDeviceMap device_map;
@@ -63,6 +63,11 @@ extern gSettings light_directional_settings;
 extern gSettings light_spot_settings;
 extern gSettings light_flashlight_settings;
 extern gSettings light_tester_mover_settings;
+extern gSettings environment_settings;
+extern gSettings material_settings;
+extern gSettings mesh_settings;
+extern gSettings sprite_settings;
+extern gSettings collider_settings;
 
 extern std::unordered_map<int, std::pair<int, gSettings>> settings_map;
 
@@ -75,8 +80,8 @@ template<typename T> void setVariable(T &variable, auto set_value)
 
 std::any getNumber(std::vector<std::string> string_input, char type);
 std::any extractData(std::string data_in_here);
-std::vector<gSettings> getSettingsTemplate(std::string class_name);
-void createNewClass(std::string class_name, int object_uid, std::vector<gSettings> class_settings, Theatre &parent_theatre);
+gSettings getSettingsTemplate(std::string class_name);
+void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre &parent_theatre);
 gTheatreStorage theatreParser(std::string theatre_data);
 std::string getTheatreStructure(gTheatreStorage theatre_storage);
 int getClassHash(std::string class_name);

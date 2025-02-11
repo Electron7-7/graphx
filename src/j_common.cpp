@@ -1,6 +1,7 @@
 #include "sanity.hpp"
 #include "g_math.hpp"
 #include "g_jolt.hpp"
+#include "t_common.hpp"
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -48,10 +49,17 @@ Collider::Collider()
 void Collider::loadSettings(gSettings new_settings)
 {
 	if(new_settings.cbegin() == null_settings.cbegin())
-	{
-		new_settings = settings.back();
-		settings.erase(settings.cend() - 1);
-	}
+		new_settings = settings;
+
+	Device::loadSettings();
+
+	setVariable(position, new_settings["Position"]);
+	setVariable(scale, new_settings["Scale"]);
+	setVariable(quaternion, new_settings["Quaternion"]);
+	setVariable(motion_type, new_settings["MotionType"]);
+	setVariable(object_layer, new_settings["ObjectLayer"]);
+	setVariable(activation, new_settings["Activation"]);
+	setVariable(shape, new_settings["Shape"]);
 }
 
 JPH::BodyCreationSettings *Collider::getBodySettings()

@@ -83,6 +83,7 @@ int main()
 		if(time_to_render)
 		{
 			// De-jank all of this shit below
+			// glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
 			R_Render(actor_state_mutex, interpolation_time, projection_matrix);

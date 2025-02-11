@@ -17,7 +17,6 @@ Material (Doom_Dull)
 }
 Mesh     (Cube)
 {
-	VAO      [VAO_HANDMADE]
 	MeshData [GRAPHX_CUBE]
 	Material <Doom_Dull>
 }

@@ -62,7 +62,7 @@ void R_StoreBuffers()
 
 void R_GL_BufferMeshData(Mesh *mesh)
 {
-	Material *material = &mesh->material;
+	Material *material = mesh->material;
 	if(material->embedded_texture_diffuse != NULL)
 		material->texture_diffuse = material->bufferTextureFromMemory(material->embedded_texture_diffuse);
 	if(material->embedded_texture_specular != NULL)
@@ -153,14 +153,14 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 			}
 
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, mesh->material.texture_diffuse);
+			glBindTexture(GL_TEXTURE_2D, mesh->material->texture_diffuse);
 
 			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, mesh->material.texture_specular);
+			glBindTexture(GL_TEXTURE_2D, mesh->material->texture_specular);
 
 			shaders[shader_index]->setUniform("material.texture_diffuse", 0);
 			shaders[shader_index]->setUniform("material.texture_specular", 1);
-			shaders[shader_index]->setUniform("material.color", mesh->material.color);
+			shaders[shader_index]->setUniform("material.color", mesh->material->color);
 			shaders[shader_index]->setUniform("is_light", false);
 		}
 
@@ -216,9 +216,9 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 
 		if(actor->wantsToBeRendered())
 		{
-			shaders[shader_index]->setUniform("material.specular_sharpness", actor->mesh->material.specular_sharpness);
-			shaders[shader_index]->setUniform("material.specular_strength", actor->mesh->material.specular_strength);
-			shaders[shader_index]->setUniform("mat_fullbright", actor->mesh->material.mat_fullbright);
+			shaders[shader_index]->setUniform("material.specular_sharpness", actor->mesh->material->specular_sharpness);
+			shaders[shader_index]->setUniform("material.specular_strength", actor->mesh->material->specular_strength);
+			shaders[shader_index]->setUniform("mat_fullbright", actor->mesh->material->mat_fullbright);
 			glDrawElements(GL_TRIANGLES, actor->mesh->indices.size(), GL_UNSIGNED_INT, 0);
 		}
 	}
@@ -241,10 +241,10 @@ void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned
 	glEnableVertexAttribArray(2);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage.material.texture_diffuse);
+	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage.material->texture_diffuse);
 	
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage.material.texture_specular);
+	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage.material->texture_specular);
 
 	shaders[shader_index]->setUniform("material.texture_color", 0);
 	shaders[shader_index]->setUniform("material.texture_specular", 1);

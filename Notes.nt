@@ -944,3 +944,21 @@ Dexter is arriving today! It's 10:50 and I'm gonna fiddle with the code some mor
 
 [02/10/25]
 Chilling with Dex; it's 12:20. My throat is sore and my head stuffy so I'm a little sick but nothing too bad. Anyways, time to noodle with the code.
+
+Got to work late, but I'm here; it's 16:32 and I'm going to finish debugging GraphX. I'm assuming that most of the problems are going to either be me misusing something or not accounting for certain cases (specifically with pointers), or data transfer is being initiated with no data (i.e: Collider's loadSettings function is called but its an empty function that does nothing).
+
+Note: the compiler throws a lot of warnings about deleting pointers to class instances of a class that has virtual functions but no virtual destructor (at least I think that's what it's referring to).
+
+Problem: layered references can't exist (at least on my knowledge level) because it's far too much headache and they couldn't just be simple references/pointers to another object, they'd have to be new instantiations, and at that point just make a new object in the Theatre file.
+
+Wait a minute! I can load settings directly through the function! It's almost like I pre-planned for this although I know I didn't. This might save it!
+
+There's a problem with RigidBodyActor; "Mass" has no value in gSettings, which is a PhysicsActor setting. I need to figure out why.
+
+Fuck me, man, I don't have any Devices settings in settings_map.
+
+I HAVE NO SETTINGS FOR DEVICSE UGHHHHHHH!!
+
+Okay, settings can't be a vector of gSettings objects, they have to be one big gSettings object. Because of the way the function iterates and fills the map keys.
+
+I'm getting closer; the crashes are now when an object attempts to get a Material pointer from their settings. I think that this is a problem with how the pointer is stored; it's probably not stored at all (or the pointer is on the stack and disappears?).

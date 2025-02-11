@@ -2,19 +2,19 @@
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
 #include <algorithm>
 
-std::unordered_map<int, Theatre> all_theatres;
+std::unordered_map<int, Theatre *> all_theatres = {};
 
 int current_theatre_uid = -1;
 bool current_troupe_changed = false;
 
 Theatre *getCurrentTheatre()
 {
-	return &all_theatres[current_theatre_uid];
+	return all_theatres[current_theatre_uid];
 }
 
 Environment *getCurrentEnvironment()
 {
-	if(getCurrentTheatre()->environment_uid == -1)
+	if(current_theatre_uid == -1 || getCurrentTheatre()->environment_uid == -1)
 		return new Environment();
 	return static_cast<Environment *>(getCurrentTheatre()->devices[getCurrentTheatre()->environment_uid]);
 }
