@@ -962,3 +962,9 @@ I HAVE NO SETTINGS FOR DEVICSE UGHHHHHHH!!
 Okay, settings can't be a vector of gSettings objects, they have to be one big gSettings object. Because of the way the function iterates and fills the map keys.
 
 I'm getting closer; the crashes are now when an object attempts to get a Material pointer from their settings. I think that this is a problem with how the pointer is stored; it's probably not stored at all (or the pointer is on the stack and disappears?).
+
+[02/11/25]
+Dexter is making music on my pc and I'm gonna keep on debugging.
+
+:3
+

@@ -301,7 +301,8 @@ void Mesh::loadSettings(gSettings new_settings)
 	Device::loadSettings();
 
 	setVariable(name, new_settings["Name"]);
-	material = std::any_cast<Material *>(new_settings["Material"]);
+	material = static_cast<Material *>(std::any_cast<Device *>(new_settings["Material"]));
+
 	gMeshData mesh_data = std::any_cast<gMeshData>(new_settings["MeshData"]);
 	vertices = std::get<0>(mesh_data);
 	indices = std::get<1>(mesh_data);

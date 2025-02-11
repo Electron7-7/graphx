@@ -300,32 +300,33 @@ int getClassHash(std::string class_name)
 
 std::any getNumber(std::vector<std::string> string_input, char type)
 {
-	glm::vec3 numbers;
-
-	switch(type)
+	if(string_input.size() == 1)
 	{
-	case 'f':
-		for(int i = 0 ; i < string_input.size() ; i++)
-			numbers[i] = std::stof(string_input[i]);
-	case 'l':
-		for(int i = 0 ; i < string_input.size() ; i++)
-			numbers[i] = std::stol(string_input[i]);
-	case 'd':
-		for(int i = 0 ; i < string_input.size() ; i++)
-			numbers[i] = std::stod(string_input[i]);
-	case 'i':
-		for(int i = 0 ; i < string_input.size() ; i++)
-			numbers[i] = std::stoi(string_input[i]);
+		switch(type)
+		{
+		case 'i':
+			return std::stoi(string_input[0]);
+		case 'f':
+			return std::stof(string_input[0]);
+		case 'd':
+			return std::stod(string_input[0]);
+		case 'l':
+			return std::stol(string_input[0]);
+		}
 	}
 
-	switch(string_input.size())
+	if(type == 'i')
 	{
-	case 1:
-		return numbers[0];
-	case 2:
-		return glm::vec2(numbers[0], numbers[1]);
+		std::vector<int> numbers = {};
+		for(int i = 0 ; i < string_input.size() ; i++)
+			numbers.insert(numbers.end(), (int)std::stoi(string_input[i]));
+		return numbers;
 	}
+	
+	std::vector<float> numbers = {};
 
+	for(int i = 0 ; i < string_input.size() ; i++)
+		numbers.insert(numbers.end(), (float)std::stoi(string_input[i]));
 	return numbers;
 }
 
@@ -370,14 +371,12 @@ std::any extractData(std::string data_in_here)
 			if(character != 'f' && 'd' && 'l' && 'f' && ',')
 				buffer += character;
 
-			if(character == 'f')
+			if(character == 'f' || '.')
 				type = 'f';
-			if(character == '.' && type != 'f')
+			if(character == 'd')
 				type = 'd';
 			if(character == 'l')
 				type = 'l';
-			if(character == 'i' && type != 'l')
-				type = 'i';
 			
 			if(character == ',')
 			{
@@ -395,7 +394,6 @@ std::any extractData(std::string data_in_here)
 			is_number = false;
 			break;
 		}
-
 		buffer += character;
 	}
 
@@ -439,7 +437,7 @@ gSettings actor_settings =
 {
 	{"Name", std::string("Untitled Actor")},
 	{"Visible", true},
-	{"Mesh", NULL},
+	{"Mesh", new Mesh()},
 	{"Position", glm::vec3(0.0f)},
 	{"RotationDegrees", glm::vec3(0.0f)},
 	{"Scale", glm::vec3(1.0f)},
@@ -448,7 +446,7 @@ gSettings actor_settings =
 gSettings physics_actor_settings =
 {
 	{"Mass", 1.0f},
-	{"Collider", NULL},
+	{"Collider", new Collider()},
 };
 
 gSettings rigidbody_actor_settings =
@@ -525,7 +523,7 @@ gSettings material_settings =
 gSettings mesh_settings =
 {
 	{"Name", std::string("Untitled Mesh")},
-	{"Material", NULL},
+	{"Material", new Material()},
 	{"MeshData", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)}
 };
 
@@ -579,11 +577,6 @@ gSettings getSettingsTemplate(std::string class_name)
 
 	for(auto &pair : settings_pair.second)
 		all_settings[pair.first] = pair.second;
-
-	if(!all_settings.contains("Name"))
-		return all_settings;
-	std::cout << "Name = ";
-	std::cout << std::any_cast<std::string>(all_settings["Name"]) << std::endl;
 
 	return all_settings;
 }
@@ -648,16 +641,16 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 			{
-				new_class_settings[it->second.first] = new_theatre->objects.at(it->second.second);
+				new_class_settings[it->second.first] = &new_theatre->objects.at(it->second.second);
 				// referenced_settings = new_theatre->objects.at(it->second.second)->settings;
 			}
 
 			if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
 			{
-				new_class_settings[it->second.first] = new_theatre->devices.at(it->second.second);
+				new_class_settings[it->second.first] = &new_theatre->devices.at(it->second.second);
 				// referenced_settings = new_theatre->devices.at(it->second.second)->settings;
 			}
-			
+
 			/*if(referenced_settings.contains(it->second.first))
 			{
 				new_class_settings[it->second.first] = referenced_settings.at(it->second.first);

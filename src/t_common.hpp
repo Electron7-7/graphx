@@ -76,7 +76,17 @@ template<typename T> std::any getVariableFrom(T *object_pointer, std::string var
 template<typename T> void setVariable(T &variable, auto set_value)
 {
 	variable = std::any_cast<T>(set_value);
-};
+}
+template<glm::vec3> void setVariable(glm::vec3 &variable, auto set_value)
+{
+	std::vector<float> number = std::any_cast<std::vector<float>>(set_value);
+	variable = glm::vec3(number[0], number[1], number[2]);
+}
+template<glm::vec2> void setVariable(glm::vec2 &variable, auto set_value)
+{
+	std::vector<float> number = std::any_cast<std::vector<float>>(set_value);
+	variable = glm::vec2(number[0], number[1]);
+}
 
 std::any getNumber(std::vector<std::string> string_input, char type);
 std::any extractData(std::string data_in_here);
