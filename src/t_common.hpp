@@ -1,10 +1,8 @@
 #ifndef GRAPHX_THEATRE_FILE_FORMAT
 #define GRAPHX_THEATRE_FILE_FORMAT
-#include "g_actors.hpp"
-// #include "g_jolt.hpp"
+#include "g_common.hpp"
 #include <map>
 #include <any>
-#include <set>
 #include <tuple>
 #include <string>
 #include <vector>
@@ -46,7 +44,8 @@ typedef std::unordered_map<std::string, std::any> 																gSettings;
 typedef std::pair<int, std::string>																				gSandwichPair;
 typedef std::map<int, Actor*(*)()>																				gActorMap;
 typedef std::map<int, Device*(*)()>																				gDeviceMap;
-typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int>													gMeshData;
+typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int>											gMeshData;
+typedef std::vector<std::string>																				gRawData;
 
 extern gActorMap actor_map;
 extern gDeviceMap device_map;
@@ -73,24 +72,66 @@ extern std::unordered_map<int, std::pair<int, gSettings>> settings_map;
 
 template<typename T, typename A> A *createNewObject() { return new T; }
 template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
-template<typename T> void setVariable(T &variable, auto set_value)
+template<typename T> void setPointer(T &variable, auto set_value)
 {
-	variable = std::any_cast<T>(set_value);
-}
-template<glm::vec3> void setVariable(glm::vec3 &variable, auto set_value)
-{
-	std::vector<float> number = std::any_cast<std::vector<float>>(set_value);
-	variable = glm::vec3(number[0], number[1], number[2]);
-}
-template<glm::vec2> void setVariable(glm::vec2 &variable, auto set_value)
-{
-	std::vector<float> number = std::any_cast<std::vector<float>>(set_value);
-	variable = glm::vec2(number[0], number[1]);
+	if constexpr(std::is_same_v<T, Device *>)
+	{
+		variable = static_cast<T>(std::any_cast<Device *>(set_value));
+	}
+
+	else if constexpr(std::is_same_v<T, Actor *>)
+	{
+		variable = static_cast<T>(std::any_cast<Actor *>(set_value));
+	}
 }
 
-std::any getNumber(std::vector<std::string> string_input, char type);
-std::any extractData(std::string data_in_here);
+template<typename T> void setRawData(T &variable, auto set_value)
+{
+	if constexpr(std::is_same_v<T, std::string>)
+	{
+		gRawData new_value = std::any_cast<gRawData>(set_value);
+		variable = static_cast<T>(new_value[0]);
+	}
+
+	else if constexpr(std::is_same_v<T, bool>)
+	{
+		gRawData new_value = std::any_cast<gRawData>(set_value);
+		variable = (new_value[0] == "true");
+	}
+
+	else if constexpr(std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
+	{
+		gRawData new_value = std::any_cast<gRawData>(set_value);
+		variable = static_cast<T>(std::stod(new_value[0]));
+	}
+
+	else if constexpr(std::is_same_v<T, glm::vec2>)
+	{
+		gRawData new_value = std::any_cast<gRawData>(set_value);
+		variable = glm::vec2(std::stof(new_value[0]), std::stof(new_value[1]));
+	}
+
+	else if constexpr(std::is_same_v<T, glm::vec3>)
+	{
+		gRawData new_value = std::any_cast<gRawData>(set_value);
+		variable = glm::vec3(std::stof(new_value[0]), std::stof(new_value[1]), std::stof(new_value[2]));
+	}
+
+	else if constexpr(std::is_same_v<T, glm::quat>)
+	{
+		gRawData new_value = std::any_cast<gRawData>(set_value);
+		variable = glm::quat(std::stof(new_value[0]), std::stof(new_value[1]), std::stof(new_value[2]), std::stof(new_value[3]));
+	}
+}
+
+template<typename T> void setVariable(T &variable, auto set_value)
+{
+	PRINTLN("variable any type: " << set_value.type().name())
+	variable = std::any_cast<T>(set_value);
+}
+
 gSettings getSettingsTemplate(std::string class_name);
+gRawData extractData(std::string data_in_here);
 void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre &parent_theatre);
 gTheatreStorage theatreParser(std::string theatre_data);
 std::string getTheatreStructure(gTheatreStorage theatre_storage);

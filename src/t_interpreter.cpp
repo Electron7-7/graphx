@@ -298,39 +298,7 @@ int getClassHash(std::string class_name)
 	return -1;
 }
 
-std::any getNumber(std::vector<std::string> string_input, char type)
-{
-	if(string_input.size() == 1)
-	{
-		switch(type)
-		{
-		case 'i':
-			return std::stoi(string_input[0]);
-		case 'f':
-			return std::stof(string_input[0]);
-		case 'd':
-			return std::stod(string_input[0]);
-		case 'l':
-			return std::stol(string_input[0]);
-		}
-	}
-
-	if(type == 'i')
-	{
-		std::vector<int> numbers = {};
-		for(int i = 0 ; i < string_input.size() ; i++)
-			numbers.insert(numbers.end(), (int)std::stoi(string_input[i]));
-		return numbers;
-	}
-	
-	std::vector<float> numbers = {};
-
-	for(int i = 0 ; i < string_input.size() ; i++)
-		numbers.insert(numbers.end(), (float)std::stoi(string_input[i]));
-	return numbers;
-}
-
-std::any extractData(std::string data_in_here)
+gRawData extractData(std::string data_in_here)
 {
 	std::set<char> forgiveness =
 	{
@@ -344,64 +312,52 @@ std::any extractData(std::string data_in_here)
 	{
 		'-',
 		'.',
-		',',
-		'f',
-		'd',
-		'l',
-		'i'
+		','
 	};
 
 	if(data_in_here == "false" || data_in_here == "true")
-		return (data_in_here == "true");
+		return gRawData{data_in_here};
 
 	std::string buffer = "";
-	std::vector<std::string> vector_buffer;
+	gRawData vector_buffer;
 	bool is_number = true;
-
-	// i = integer
-	// f = float
-	// d = double
-	// l = long
-	char type = 'i';
 
 	for(char &character : data_in_here)
 	{
-		if(special.contains(character))
-		{
-			if(character != 'f' && 'd' && 'l' && 'f' && ',')
-				buffer += character;
-
-			if(character == 'f' || '.')
-				type = 'f';
-			if(character == 'd')
-				type = 'd';
-			if(character == 'l')
-				type = 'l';
-			
-			if(character == ',')
-			{
-				vector_buffer.insert(vector_buffer.end(), buffer);
-				buffer = "";
-			}
-
-			continue;
-		}
-
 		if(!std::isdigit(character))
 		{
-			if(forgiveness.contains(character))
+			if(special.contains(character))
+			{
+				if(character == ',')
+				{
+					vector_buffer.insert(vector_buffer.end(), buffer);
+					buffer = "";
+					continue;
+				}
+
+				buffer += character;
 				continue;
+			}
+
+			if(forgiveness.contains(character))
+			{
+				continue;
+			}
+
 			is_number = false;
 			break;
 		}
+
 		buffer += character;
 	}
 
-	vector_buffer.insert(vector_buffer.end(), buffer);
-
 	if(is_number)
-		return getNumber(vector_buffer, type);
-	return data_in_here;
+	{
+		vector_buffer.insert(vector_buffer.end(), buffer);
+		return vector_buffer;
+	}
+
+	return gRawData{data_in_here};
 }
 
 using namespace graphx_classes;
@@ -435,17 +391,17 @@ gSettings null_settings =
 
 gSettings actor_settings =
 {
-	{"Name", std::string("Untitled Actor")},
-	{"Visible", true},
+	{"Name", gRawData{"Untitled Actor"}},
+	{"Visible", gRawData{"true"}},
 	{"Mesh", new Mesh()},
-	{"Position", glm::vec3(0.0f)},
-	{"RotationDegrees", glm::vec3(0.0f)},
-	{"Scale", glm::vec3(1.0f)},
+	{"Position", gRawData{"0.0", "0.0", "0.0"}},
+	{"RotationDegrees", gRawData{"0.0", "0.0", "0.0"}},
+	{"Scale", gRawData{"1.0", "1.0", "1.0"}},
 };
 
 gSettings physics_actor_settings =
 {
-	{"Mass", 1.0f},
+	{"Mass", gRawData{"1.0"}},
 	{"Collider", new Collider()},
 };
 
@@ -456,73 +412,73 @@ gSettings rigidbody_actor_settings =
 gSettings camera_settings =
 {
 	{"Parent", NULL},
-	{"LocalPosition", glm::vec3(0.0f, 3.0f, 0.0f)},
-	{"LocalRotationDegrees", glm::vec3(0.0f)}
+	{"LocalPosition", gRawData{"0.0", "3.0", "0.0"}},
+	{"LocalRotationDegrees", gRawData{"0.0", "0.0", "0.0"}}
 };
 
 gSettings graphxplayer_settings =
 {
 	{"PlayerMesh", Mesh()},
 	{"PlayerCamera", Camera()},
-	{"MouseSensitivity", 0.05f},
-	{"MovementSpeed", 0.1f},
-	{"MaxVelocity", 8.0f}
+	{"MouseSensitivity", gRawData{"0.05"}},
+	{"MovementSpeed", gRawData{"0.1"}},
+	{"MaxVelocity", gRawData{"8.0"}}
 };
 
 gSettings light_settings =
 {
-	{"Color", glm::vec3(1.0f)},
-	{"Strength", 1.0f},
-	{"Range", 100.0f},
-	{"Intensity", 1.0f},
-	{"Falloff", 0.0f}
+	{"Color", gRawData{"1.0", "1.0", "1.0"}},
+	{"Strength", gRawData{"1.0"}},
+	{"Range", gRawData{"100.0"}},
+	{"Intensity", gRawData{"1.0"}},
+	{"Falloff", gRawData{"0.0"}}
 };
 
 gSettings light_directional_settings =
 {
-	{"Direction", glm::vec3(0.0f, -1.0f, 0.0f)}
+	{"Direction", gRawData{"0.0", "-1.0", "0.0"}}
 };
 
 gSettings light_spot_settings =
 {
-	{"InnerCutoffAngle", 12.5f},
-	{"OuterCutoffAngle", 17.5f}
+	{"InnerCutoffAngle", gRawData{"12.5"}},
+	{"OuterCutoffAngle", gRawData{"17.5"}}
 };
 
 gSettings light_flashlight_settings =
 {
 	{"Parent", NULL},
-	{"PositionOffset", glm::vec3(0.0f)},
-	{"RotationOffset", glm::vec3(0.0f)}
+	{"PositionOffset", gRawData{"0.0", "0.0", "0.0"}},
+	{"RotationOffset", gRawData{"0.0", "0.0", "0.0"}}
 };
 
 gSettings light_tester_mover_settings =
 {
-	{"PivotPosition", glm::vec3(0.0f)},
-	{"PivotRadius", 3.0f},
-	{"PivotSpeed", 1.0f}
+	{"PivotPosition", gRawData{"0.0", "0.0", "0.0"}},
+	{"PivotRadius", gRawData{"3.0"}},
+	{"PivotSpeed", gRawData{"1.0"}}
 };
 
 gSettings environment_settings =
 {
-	{"AmbientLightingEnabled", true},
-	{"AmbientLightingColor", glm::vec3(1.0f)},
-	{"AmbientLightingStrength", 0.05f}
+	{"AmbientLightingEnabled", gRawData{"true"}},
+	{"AmbientLightingColor", gRawData{"1.0", "1.0", "1.0"}},
+	{"AmbientLightingStrength", gRawData{"0.05"}}
 };
 
 gSettings material_settings =
 {
 	{"DiffuseTexture", MISSING_TEXTURE_DIFF},
 	{"SpecularTexture", MISSING_TEXTURE_SPEC},
-	{"Color", glm::vec3(1.0f)},
-	{"SpecularSharpness", 32},
-	{"SpecularStrength", 0.5f},
-	{"mat_fullbright", false}
+	{"Color", gRawData{"1.0", "1.0", "1.0"}},
+	{"SpecularSharpness", gRawData{"32"}},
+	{"SpecularStrength", gRawData{"0.5"}},
+	{"mat_fullbright", gRawData{"false"}}
 };
 
 gSettings mesh_settings =
 {
-	{"Name", std::string("Untitled Mesh")},
+	{"Name", gRawData{"Untitled Mesh"}},
 	{"Material", new Material()},
 	{"MeshData", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)}
 };
@@ -532,9 +488,9 @@ gSettings sprite_settings =
 
 gSettings collider_settings =
 {
-	{"Position", glm::vec3(0.0f)},
-	{"Scale", glm::vec3(1.0f)},
-	{"Quaternion", glm::quat()},
+	{"Position", gRawData{"0.0", "0.0", "0.0"}},
+	{"Scale", gRawData{"1.0", "1.0", "1.0"}},
+	{"Quaternion", gRawData{"1.0", "0.0", "0.0", "0.0"}},
 	{"MotionType", JPH::EMotionType::Dynamic},
 	{"ObjectLayer", Layers::MOVING},
 	{"Activation", JPH::EActivation::Activate},
@@ -624,6 +580,8 @@ Theatre *loadTheatre(std::string embedded_theatre)
 	{
 		gSettings new_class_settings = getSettingsTemplate(object.second.first);
 
+		new_class_settings["Name"] = gRawData{object.second.second};
+
 		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
 		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
 		auto raw_data_range = std::get<4>(theatre_data).equal_range(object.first);
@@ -631,6 +589,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
 		{
+			PRINTLN("CPP REF: " << it->second.first << " = " << it->second.second)
 			new_class_settings[it->second.first] = cpp_definitions[it->second.second];
 		}
 
@@ -642,20 +601,12 @@ Theatre *loadTheatre(std::string embedded_theatre)
 			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 			{
 				new_class_settings[it->second.first] = &new_theatre->objects.at(it->second.second);
-				// referenced_settings = new_theatre->objects.at(it->second.second)->settings;
 			}
 
 			if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
 			{
 				new_class_settings[it->second.first] = &new_theatre->devices.at(it->second.second);
-				// referenced_settings = new_theatre->devices.at(it->second.second)->settings;
 			}
-
-			/*if(referenced_settings.contains(it->second.first))
-			{
-				new_class_settings[it->second.first] = referenced_settings.at(it->second.first);
-				break;
-			}*/
 		}
 
 		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
@@ -671,17 +622,18 @@ Theatre *loadTheatre(std::string embedded_theatre)
 			{
 				new_class_settings[it->second.first.first] = actor_map[getClassHash(it->second.first.first)]();
 				settings_to_modify = new_theatre->objects.at(it->second.first.second)->settings;
+				PRINTLN(std::any_cast<gRawData>(settings_to_modify["Name"])[0])
 				for(auto &pair : it->second.second)
 				{
 					if(settings_to_modify.contains(pair.first))
 					{
 						if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 						{
-							settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
+							settings_to_modify.at(pair.first) = &new_theatre->objects.at(pair.second);
 							continue;
 						}
 
-						settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
+						settings_to_modify.at(pair.first) = &new_theatre->devices.at(pair.second);
 					}
 				}
 
@@ -695,13 +647,13 @@ Theatre *loadTheatre(std::string embedded_theatre)
 			{
 				if(settings_to_modify.contains(pair.first))
 				{
-					if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+					if(ACTORS[0] <= getClassHash(pair.first) && getClassHash(pair.first) <= ACTORS[1])
 					{
-						settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
+						settings_to_modify[pair.first] = new_theatre->objects.at(pair.second);
 						continue;
 					}
 
-					settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
+					settings_to_modify[pair.first] = new_theatre->devices.at(pair.second);
 				}
 			}
 

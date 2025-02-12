@@ -968,3 +968,12 @@ Dexter is making music on my pc and I'm gonna keep on debugging.
 
 :3
 
+I'm at work now; it's snowing! Working on that std::bad_any_cast exception. Right now, it's in Collider and it's when trying to get any numerical value; a cast of std::any_cast<std::vector<float>>
+
+Alright, I've got a partially specialized template function that correctly uses if constexpr to figure out whether or not the input is a number, a glm::vec#, a glm::quat, or anything else. However, I'm still getting std::bad_any_cast exceptions for Collider's position value.
+
+I might want to change the way the interpreter gets raw data, because currently I have to write all default values in vectors of strings and parse through them as such; if I could find a way to properly put the values in directly (numerical, boolean, glm::vec#, glm::quat, etc.) that would be best. For now, this should work.
+
+I DID IT!! THE ONLY ERROR NOW IS A JOLT ERROR FROM THE BOX SHAPE!! GSETTINGS ARE LOADED PROPERLY!!!!!!! WAAAHOOOOOO!!!
+
+:3

@@ -41,16 +41,16 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 
 void Actor::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	glm::vec3 rotation_degrees;
-	setVariable(name, new_settings["Name"]);
-	setVariable(mesh, new_settings["Mesh"]);
-	setVariable(position_global, new_settings["Position"]);
-	setVariable(rotation_degrees, new_settings["RotationDegrees"]);
+	setRawData(name, new_settings["Name"]);
+	setPointer(mesh, new_settings["Mesh"]);
+	setRawData(position_global, new_settings["Position"]);
+	setRawData(rotation_degrees, new_settings["RotationDegrees"]);
 	quaternion = glm::quat(glm::radians(rotation_degrees));
-	setVariable(scale, new_settings["Scale"]);
+	setRawData(scale, new_settings["Scale"]);
 }
 
 void Actor::setUID(long manual_uid)
@@ -152,13 +152,13 @@ PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init
 
 void PhysicsActor::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Actor::youGotACallBack();
 
-	setVariable(mass, new_settings["Mass"]);
-	setVariable(collider, new_settings["Collider"]);
+	setRawData(mass, new_settings["Mass"]);
+	setPointer(collider, new_settings["Collider"]);
 }
 
 void PhysicsActor::callToStage(Theatre *parent_theatre)
@@ -188,7 +188,7 @@ void PhysicsActor::tick(int current_tick)
 //
 void RigidBodyActor::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	PhysicsActor::youGotACallBack();
@@ -236,14 +236,14 @@ void Camera::doRotation(glm::vec2 mouse_input)
 
 void Camera::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Actor::youGotACallBack();
 
-	setVariable(parent, new_settings["Parent"]);
-	setVariable(position_local, new_settings["LocalPosition"]);
-	setVariable(euler_rotation_local, new_settings["LocalRotationDegrees"]);
+	setPointer(parent, new_settings["Parent"]);
+	setRawData(position_local, new_settings["LocalPosition"]);
+	setRawData(euler_rotation_local, new_settings["LocalRotationDegrees"]);
 }
 
 void Camera::tick(int current_tick)
@@ -266,16 +266,16 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 
 void GraphXPlayer::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Actor::youGotACallBack();
 
-	setVariable(mesh, new_settings["PlayerMesh"]);
-	setVariable(player_camera, new_settings["PlayerCamera"]);
-	setVariable(mouse_sensitivity, new_settings["MouseSensitivity"]);
-	setVariable(movement_speed, new_settings["MovementSpeed"]);
-	setVariable(max_velocity, new_settings["MaxVelocity"]);
+	setPointer(mesh, new_settings["PlayerMesh"]);
+	setPointer(player_camera, new_settings["PlayerCamera"]);
+	setRawData(mouse_sensitivity, new_settings["MouseSensitivity"]);
+	setRawData(movement_speed, new_settings["MovementSpeed"]);
+	setRawData(max_velocity, new_settings["MaxVelocity"]);
 }
 
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
@@ -345,16 +345,16 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 
 void Light::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Actor::youGotACallBack();
 
-	setVariable(light_color, new_settings["Color"]);
-	setVariable(light_strength, new_settings["Strength"]);
-	setVariable(range, new_settings["Range"]);
-	setVariable(intensity, new_settings["Intensity"]);
-	setVariable(falloff, new_settings["Falloff"]);
+	setRawData(light_color, new_settings["Color"]);
+	setRawData(light_strength, new_settings["Strength"]);
+	setRawData(range, new_settings["Range"]);
+	setRawData(intensity, new_settings["Intensity"]);
+	setRawData(falloff, new_settings["Falloff"]);
 }
 
 //
@@ -366,12 +366,12 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 
 void LightDirectional::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Light::youGotACallBack();
 
-	setVariable(direction, new_settings["Direction"]);
+	setRawData(direction, new_settings["Direction"]);
 }
 
 //
@@ -385,13 +385,13 @@ LightSpot::LightSpot(std::string init_name, float init_intensity, float init_ran
 
 void LightSpot::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Light::youGotACallBack();
 
-	setVariable(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
-	setVariable(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
+	setRawData(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
+	setRawData(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
 }
 
 glm::vec2 LightSpot::getCutoffAngles()
@@ -415,14 +415,14 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 
 void LightFlashlight::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Light::youGotACallBack();
 
-	setVariable(parent, new_settings["Parent"]);
-	setVariable(position_offset, new_settings["PositionOffset"]);
-	setVariable(rotation_offset, new_settings["RotationOffset"]);
+	setPointer(parent, new_settings["Parent"]);
+	setRawData(position_offset, new_settings["PositionOffset"]);
+	setRawData(rotation_offset, new_settings["RotationOffset"]);
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -456,14 +456,14 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 
 void LightTesterMover::youGotACallBack(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Light::youGotACallBack();
 
-	setVariable(pivot_position, new_settings["PivotPosition"]);
-	setVariable(pivot_radius, new_settings["PivotRadius"]);
-	setVariable(pivot_speed, new_settings["PivotSpeed"]);
+	setRawData(pivot_position, new_settings["PivotPosition"]);
+	setRawData(pivot_radius, new_settings["PivotRadius"]);
+	setRawData(pivot_speed, new_settings["PivotSpeed"]);
 }
 
 void LightTesterMover::tick(int current_tick)

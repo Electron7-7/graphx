@@ -161,7 +161,7 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 //
 void Device::loadSettings(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 }
 
@@ -209,14 +209,14 @@ Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_co
 
 void Environment::loadSettings(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Device::loadSettings();
 
-	setVariable(ambient_lighting_enabled, new_settings["AmbientLightingEnabled"]);
-	setVariable(ambient_light_color, new_settings["AmbientLightingColor"]);
-	setVariable(ambient_light_strength, new_settings["AmbientLightingStrength"]);
+	setRawData(ambient_lighting_enabled, new_settings["AmbientLightingEnabled"]);
+	setRawData(ambient_light_color, new_settings["AmbientLightingColor"]);
+	setRawData(ambient_light_strength, new_settings["AmbientLightingStrength"]);
 }
 
 //
@@ -242,17 +242,17 @@ Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned 
 
 void Material::loadSettings(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Device::loadSettings();
 
 	setVariable(embedded_texture_diffuse, new_settings["DiffuseTexture"]);
 	setVariable(embedded_texture_specular, new_settings["SpecularTexture"]);
-	setVariable(color, new_settings["Color"]);
-	setVariable(specular_sharpness, new_settings["SpecularSharpness"]);
-	setVariable(specular_strength, new_settings["SpecularStrength"]);
-	setVariable(mat_fullbright, new_settings["mat_fullbright"]);
+	setRawData(color, new_settings["Color"]);
+	setRawData(specular_sharpness, new_settings["SpecularSharpness"]);
+	setRawData(specular_strength, new_settings["SpecularStrength"]);
+	setRawData(mat_fullbright, new_settings["mat_fullbright"]);
 }
 
 unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
@@ -295,20 +295,19 @@ Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vec
 
 void Mesh::loadSettings(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Device::loadSettings();
 
-	setVariable(name, new_settings["Name"]);
-	material = static_cast<Material *>(std::any_cast<Device *>(new_settings["Material"]));
+	setRawData(name, new_settings["Name"]);
+	setPointer(material, new_settings["Material"]);
 
 	gMeshData mesh_data = std::any_cast<gMeshData>(new_settings["MeshData"]);
 	vertices = std::get<0>(mesh_data);
 	indices = std::get<1>(mesh_data);
 	vao_index = std::get<2>(mesh_data);
 }
-
 
 //
 // Sprite
@@ -321,7 +320,7 @@ Sprite::Sprite(Material *init_material, int init_vao_index)
 
 void Sprite::loadSettings(gSettings new_settings)
 {
-	if(new_settings.cbegin() == null_settings.cbegin())
+	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
 	Mesh::loadSettings();

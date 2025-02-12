@@ -53,20 +53,13 @@ void Collider::loadSettings(gSettings new_settings)
 
 	Device::loadSettings();
 
-	try
-	{
-		setVariable<glm::vec3>(position, new_settings["Position"]);
-		// setVariable(scale, new_settings["Scale"]);
-		// setVariable(quaternion, new_settings["Quaternion"]);
-		// setVariable(motion_type, new_settings["MotionType"]);
-		// setVariable(object_layer, new_settings["ObjectLayer"]);
-		// setVariable(activation, new_settings["Activation"]);
-		// setVariable(shape, new_settings["Shape"]);
-	}
-	catch(std::bad_any_cast &exception)
-	{
-		PRINTERR("Collider failed to load a setting!\n" << exception.what())
-	}
+	setRawData(position, new_settings["Position"]);
+	setRawData(scale, new_settings["Scale"]);
+	setRawData(quaternion, new_settings["Quaternion"]);
+	setVariable(motion_type, new_settings["MotionType"]);
+	setVariable(object_layer, new_settings["ObjectLayer"]);
+	setVariable(activation, new_settings["Activation"]);
+	setVariable(shape, new_settings["Shape"]);
 }
 
 JPH::BodyCreationSettings *Collider::getBodySettings()
