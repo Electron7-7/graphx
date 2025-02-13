@@ -308,7 +308,7 @@ void Mesh::loadSettings(gSettings new_settings)
 	gMeshData mesh_data;
 
 	setRawData(name, new_settings["Name"]);
-	setPointer(material, new_settings["Material"]);
+	setDevicePointer(material, new_settings["Material"]);
 	setVariable(mesh_data, new_settings["MeshData"]);
 
 	vertices = std::get<0>(mesh_data);

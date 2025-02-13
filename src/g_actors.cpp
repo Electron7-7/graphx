@@ -46,7 +46,7 @@ void Actor::youGotACallBack(gSettings new_settings)
 
 	glm::vec3 rotation_degrees;
 	setRawData(name, new_settings["Name"]);
-	setPointer(mesh, new_settings["Mesh"]);
+	setDevicePointer(mesh, new_settings["Mesh"]);
 	setRawData(position_global, new_settings["Position"]);
 	setRawData(rotation_degrees, new_settings["RotationDegrees"]);
 	quaternion = glm::quat(glm::radians(rotation_degrees));
@@ -83,6 +83,7 @@ void Actor::updateVectors()
 	orientation_up = quaternion * vector3_up;
 	orientation_front = quaternion * vector3_front;
 	orientation_right = quaternion * vector3_right;
+	orientation_grounded_front = glm::vec3(orientation_front[0], 0.0f, orientation_front[2]);
 }
 
 void Actor::updateStates(std::mutex &state_mutex)
@@ -143,7 +144,10 @@ void PhysicsActor::youGotACallBack(gSettings new_settings)
 	Actor::youGotACallBack();
 
 	setRawData(mass, new_settings["Mass"]);
-	setPointer(collider, new_settings["Collider"]);
+	setDevicePointer(collider, new_settings["Collider"]);
+	if(collider == NULL)
+		PRINTERR("COLLIDER IS NULL")
+	// collider = dynamic_cast<Collider *>(std::any_cast<Device *>(new_settings["Collider"]));
 }
 
 void PhysicsActor::callToStage(Theatre *parent_theatre)
@@ -218,7 +222,7 @@ void Camera::youGotACallBack(gSettings new_settings)
 
 	Actor::youGotACallBack();
 
-	setPointer(parent, new_settings["Parent"]);
+	setActorPointer(parent, new_settings["Parent"]);
 	setRawData(position_local, new_settings["LocalPosition"]);
 	setRawData(euler_rotation_local, new_settings["LocalRotationDegrees"]);
 }
@@ -243,7 +247,7 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	// player_collider.position = init_position;
 	// player_collider.shape = ColliderShapes::CAPSULE;
 	// player_collider.scale = glm::vec3(1.5f, 3.0f, 1.5f);
-	// player_collider.motion_type = JPH::EMotionType::Kinematic;
+	// player_collider.motion_type = JPH::EMotionType::Dynamic;
 	// player_collider.quaternion = quaternion;
 }
 
@@ -254,8 +258,6 @@ void GraphXPlayer::youGotACallBack(gSettings new_settings)
 
 	Actor::youGotACallBack();
 
-	setPointer(mesh, new_settings["PlayerMesh"]);
-	setPointer(player_camera, new_settings["PlayerCamera"]);
 	setRawData(mouse_sensitivity, new_settings["MouseSensitivity"]);
 	setRawData(movement_speed, new_settings["MovementSpeed"]);
 	setRawData(max_velocity, new_settings["MaxVelocity"]);
@@ -264,6 +266,7 @@ void GraphXPlayer::youGotACallBack(gSettings new_settings)
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
+
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	player_settings->mLayer = Layers::MOVING;
@@ -277,23 +280,24 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 void GraphXPlayer::tick(int current_tick)
 {
 	player_camera.tick(current_tick);
+
 	JPH::Vec3 jph_position = jph_character->GetPosition();
-	glm::vec3 jph_position_glm = convertMath<glm::vec3>(jph_position);
-	position_global = glm::vec3(jph_position_glm[0], jph_position_glm[1] + scale[1], jph_position_glm[2]);
+	position_global = convertMath<glm::vec3>(jph_position);
 }
 
 void GraphXPlayer::doMovement(int direction[2])
 {
-	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
-	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed);
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
-	JPH::Vec3 wish_velocity = JPH::Vec3(direction[1] * movement_speed, 0.0f, -direction[0] * movement_speed);
-	JPH::Vec3 new_velocity = current_velocity + wish_velocity;
+	glm::vec3 wish_velocity = glm::vec3(0.0f);
+	wish_velocity += orientation_grounded_front * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += orientation_right * static_cast<float>(direction[1] * movement_speed);
+	JPH::Vec3 new_wish_velocity = convertMath<JPH::Vec3>(wish_velocity);
+	JPH::Vec3 new_velocity = current_velocity + new_wish_velocity;
 
-	new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
-	new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
+	PRINTLN("wish_velocity: " << glm::to_string(wish_velocity) << "\ncurrent_velocity: " << current_velocity);
 
-	// PRINTLN("position_global: " << glm::to_string(position_global) << "\ncurrent_velocity: " << current_velocity << "\nwish_velocity: " << wish_velocity << "\nnew_velocity: " << new_velocity);
+	// new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
+	// new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
 
 	jph_character->SetLinearVelocity(new_velocity);
 }
@@ -403,7 +407,7 @@ void LightFlashlight::youGotACallBack(gSettings new_settings)
 
 	Light::youGotACallBack();
 
-	setPointer(parent, new_settings["Parent"]);
+	setActorPointer(parent, new_settings["Parent"]);
 	setRawData(position_offset, new_settings["PositionOffset"]);
 	setRawData(rotation_offset, new_settings["RotationOffset"]);
 }
@@ -414,7 +418,10 @@ void LightFlashlight::tick(int current_tick)
 		return;
 
 	if(parent == NULL)
+	{
 		parent = current_player;
+		position_offset[1] = parent->scale[1];
+	}
 
 	position_global = parent->position_global + position_offset;
 	quaternion = parent->quaternion * glm::quat(glm::radians(rotation_offset));

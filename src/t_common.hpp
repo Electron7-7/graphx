@@ -73,22 +73,26 @@ extern std::unordered_map<int, std::pair<int, gSettings>> settings_map;
 
 template<typename T, typename A> A *createNewObject() { return new T; }
 template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
-template<typename T> void setPointer(T &variable, std::any set_value)
+template<typename T> void setDevicePointer(T &variable, std::any set_value)
 {
-	if constexpr(std::is_same_v<T, Device *>)
+	if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
 	{
-		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
-			return;
-		else
-			variable = static_cast<T>(std::any_cast<Device *>(set_value));
+		return;
 	}
-
-	else if constexpr(std::is_same_v<T, Actor *>)
+	else
 	{
-		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
-			return;
-		else
-			variable = static_cast<T>(std::any_cast<Actor *>(set_value));
+		variable = static_cast<T>(std::any_cast<Device *>(set_value));
+	}
+}
+template<typename T> void setActorPointer(T &variable, std::any set_value)
+{
+	if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+	{
+		return;
+	}
+	else
+	{
+		variable = static_cast<T>(std::any_cast<Actor *>(set_value));
 	}
 }
 

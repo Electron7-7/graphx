@@ -998,3 +998,7 @@ Huge problem: ummmm I forgot to fill out graphx_class_names??? I should write an
 YES!! BACK TO JOLT ERRORS!! I THINK THIS MEANS I'VE FIXED IT AND GOTTEN IT BACK TO WHERE IT WAS BEFORE!!
 
 IT WORKS IT WORKS IT WORKS IT LOADS A THEATRE IT WORKS!!!!!!!!!!!!!!
+
+Bug: colliders are properly created with proper settings, but when passed as pointers to RigidBodyActors, they use the default new Collider instead?
+
+BIG NOTE: Player movement doesn't work well but it's because the application of orientation_grounded_front is making movement speed slower when the player is angled down.

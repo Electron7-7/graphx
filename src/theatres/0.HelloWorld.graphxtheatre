@@ -49,10 +49,14 @@ RigidBodyActor (Floor)
 }
 GraphXPlayer (main_player)
 {
-
+	Position      (0.0, 6.0, 0.0)
+	MovementSpeed (1.0)
 }
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
 	Strength  (0.05)
+}
+LightFlashlight (Player_Flashlight)
+{
 }

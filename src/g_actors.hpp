@@ -22,7 +22,7 @@
 class PhysicsActor: public Actor
 {
 public:
-	Collider *collider = new Collider();
+	Collider *collider = NULL;
 
 	float mass = 1.0f; // in kg
 
@@ -99,7 +99,6 @@ public:
 	Mesh player_mesh = Mesh();
 	Camera player_camera;
 	Collider player_collider;
-	Collider physics_collider;
 
 	float mouse_sensitivity = 0.05f;
 	float movement_speed = 0.1f;

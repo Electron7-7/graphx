@@ -31,6 +31,7 @@ public:
 	glm::vec3 scale = glm::vec3(1.0f);
 
 	glm::vec3 orientation_front;
+	glm::vec3 orientation_grounded_front;
 	glm::vec3 orientation_up;
 	glm::vec3 orientation_right;
 	glm::vec3 world_orientation_up;

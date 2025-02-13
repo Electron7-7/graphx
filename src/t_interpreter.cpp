@@ -561,15 +561,15 @@ void createNewClass(std::string class_name, int object_uid, gSettings class_sett
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 	{
 		parent_theatre.objects[object_uid] = actor_map[class_hash]();
-		std::any_cast<Actor *>(parent_theatre.objects[object_uid])->settings = class_settings;
-		std::any_cast<Actor *>(parent_theatre.objects[object_uid])->setUID(object_uid);
+		parent_theatre.objects[object_uid]->settings = class_settings;
+		parent_theatre.objects[object_uid]->setUID(object_uid);
 	}
 
 	if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
 	{
 		parent_theatre.devices[object_uid] = device_map[class_hash]();
-		std::any_cast<Device *>(parent_theatre.devices[object_uid])->settings = class_settings;
-		std::any_cast<Device *>(parent_theatre.devices[object_uid])->setUID(object_uid);
+		parent_theatre.devices[object_uid]->settings = class_settings;
+		parent_theatre.devices[object_uid]->setUID(object_uid);
 		if(class_name == "Environment")
 			parent_theatre.environment_uid = object_uid;
 	}
@@ -598,6 +598,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 		gSettings new_class_settings = getSettingsTemplate(object.second.first);
 
 		new_class_settings.at("Name") = gRawData{object.second.second};
+		PRINTLN("New " << object.second.first << " with name " << std::quoted(object.second.second))
 
 		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
 		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
@@ -616,12 +617,12 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 			{
-				new_class_settings.at(it->second.first) = &new_theatre->objects.at(it->second.second);
+				new_class_settings.at(it->second.first) = new_theatre->objects.at(it->second.second);
 			}
 
 			if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
 			{
-				new_class_settings.at(it->second.first) = &new_theatre->devices.at(it->second.second);
+				new_class_settings.at(it->second.first) = new_theatre->devices.at(it->second.second);
 			}
 		}
 
@@ -644,11 +645,11 @@ Theatre *loadTheatre(std::string embedded_theatre)
 					{
 						if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 						{
-							settings_to_modify.at(pair.first) = &new_theatre->objects.at(pair.second);
+							settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
 							continue;
 						}
 
-						settings_to_modify.at(pair.first) = &new_theatre->devices.at(pair.second);
+						settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
 					}
 				}
 
