@@ -4,6 +4,7 @@
 #include "g_jolt.hpp"
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
+#include <Jolt/Physics/Character/Character.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/EmptyShape.h>
@@ -21,13 +22,11 @@
 class PhysicsActor: public Actor
 {
 public:
-	std::vector<JPH::BodyID> collider_ids;
-	Collider *collider;
+	Collider *collider = new Collider();
 
 	float mass = 1.0f; // in kg
 
-	PhysicsActor(std::string init_name = "Untitled Physics Actor", JPH::BodyCreationSettings init_body_creation_settings = JPH::BodyCreationSettings(), JPH::EActivation init_body_activation = JPH::EActivation::Activate, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
-	PhysicsActor(std::string init_name, JPH::EMotionType init_motion_type, JPH::ObjectLayer init_object_layer, JPH::EActivation init_body_activation = JPH::EActivation::Activate, Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	PhysicsActor(std::string init_name = "Untitled Physics Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
 	void tick(int current_tick) override;
 	void youGotACallBack(gSettings new_settings = null_settings) override;
@@ -51,8 +50,6 @@ protected:
 class RigidBodyActor : public PhysicsActor
 {
 public:
-	int controller_collider_index = 0;
-
 	using PhysicsActor::PhysicsActor;
 
 	void tick(int current_tick) override;
@@ -90,20 +87,25 @@ public:
 	void doRotation(glm::vec2 mouse_input);
 };*/
 
-class GraphXPlayer: public Actor
+/*class CharacterController: public Actor
+{
+public:
+
+};*/
+
+class GraphXPlayer: public Actor //public CharacterController
 {
 public:
 	Mesh player_mesh = Mesh();
 	Camera player_camera;
+	Collider player_collider;
+	Collider physics_collider;
 
 	float mouse_sensitivity = 0.05f;
 	float movement_speed = 0.1f;
 	float max_velocity = 8.0f;
 
-	// JPH::BodyID physics_body_id;
-	// JPH::BodyID gravity_body_id;
-	// JPH::PhysicsSystem *physics_system = NULL;
-	// JPH::Ref<JPH::CharacterSettings> player_settings;
+	JPH::Ref<JPH::CharacterSettings> player_settings;
 
 	GraphXPlayer(std::string new_nam = "DEFAULT PLAYER", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, 0.0f, 0.0f));
 
@@ -115,8 +117,8 @@ public:
 	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
 
-/*private:
-	JPH::Ref<JPH::Character> jph_character;*/
+private:
+	JPH::Ref<JPH::Character> jph_character;
 };
 
 class Light: public Actor

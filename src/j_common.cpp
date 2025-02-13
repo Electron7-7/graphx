@@ -67,16 +67,24 @@ JPH::BodyCreationSettings *Collider::getBodySettings()
 	return &body_settings;
 }
 
-JPH::BodyID *Collider::getBodyID()
+const JPH::BodyID &Collider::getBodyID()
 {
-	return &body_id;
+	return body_id;
 }
 
 void Collider::createBody()
 {
+	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
 	JPH::RVec3 body_position = convertMath<JPH::Vec3>(position);
 	JPH::Quat body_quaternion = convertMath<JPH::Quat>(quaternion);
 
 	body_settings = JPH::BodyCreationSettings(createAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
 	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
+}
+
+void Collider::prepForDestruction()
+{
+	Device::prepForDestruction();
+
+	J_RemoveAndDestroyBody(body_id);
 }

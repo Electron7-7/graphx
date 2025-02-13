@@ -163,7 +163,12 @@ void Device::loadSettings(gSettings new_settings)
 {
 	if(new_settings.contains("NULL"))
 		new_settings = settings;
+
+	setRawData(name, new_settings["Name"]);
 }
+
+void Device::prepForDestruction()
+{}
 
 void Device::setUID(long manual_uid)
 {
@@ -300,10 +305,12 @@ void Mesh::loadSettings(gSettings new_settings)
 
 	Device::loadSettings();
 
+	gMeshData mesh_data;
+
 	setRawData(name, new_settings["Name"]);
 	setPointer(material, new_settings["Material"]);
+	setVariable(mesh_data, new_settings["MeshData"]);
 
-	gMeshData mesh_data = std::any_cast<gMeshData>(new_settings["MeshData"]);
 	vertices = std::get<0>(mesh_data);
 	indices = std::get<1>(mesh_data);
 	vao_index = std::get<2>(mesh_data);

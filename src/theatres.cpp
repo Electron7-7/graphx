@@ -3,15 +3,15 @@ std::map<int, std::string> embedded_theatres =
 {{0, std::string{R"~(@HelloWorldTheatre
 Material (Doom_Shiny)
 {
-	Diffuse           [DOOM_TEXTURE_DIFF]
-	Specular          [DOOM_TEXTURE_SPEC]
+	DiffuseTexture    [DOOM_TEXTURE_DIFF]
+	SpecularTexture   [DOOM_TEXTURE_SPEC]
 	SpecularSharpness (256)
 	SpecularStrength  (1.0)
 }
 Material (Doom_Dull)
 {
-	Diffuse           [DOOM_TEXTURE_DIFF]
-	Specular          [DOOM_TEXTURE_SPEC]
+	DiffuseTexture    [DOOM_TEXTURE_DIFF]
+	SpecularTexture   [DOOM_TEXTURE_SPEC]
 	SpecularSharpness (16)
 	SpecularStrength  (0.5)
 }
@@ -48,6 +48,10 @@ RigidBodyActor (Floor)
 	Mesh:Material <Cube>:<Doom_Dull>
 	Collider	  <Floor_Collider>
 	Scale		  (20.0, 1.0, 20.0)
+}
+GraphXPlayer (main_player)
+{
+
 }
 LightDirectional (Sun)
 {

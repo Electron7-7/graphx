@@ -48,7 +48,7 @@ public:
 
 	gSettings settings;
 
-	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = NULL, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
 	virtual void youGotACallBack(gSettings new_settings = null_settings); // Loads settings
 	virtual void tick(int current_tick);

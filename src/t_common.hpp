@@ -24,14 +24,15 @@ namespace graphx_classes
 	static constexpr int LIGHTSPOT			= 8;
 	static constexpr int LIGHTFLASHLIGHT	= 9;
 	static constexpr int LIGHTTESTERMOVER	= 10;
-	static constexpr int ENVIRONMENT		= 11;
-	static constexpr int MATERIAL			= 12;
-	static constexpr int MESH				= 13;
-	static constexpr int SPRITE				= 14;
-	static constexpr int COLLIDER			= 15;
+	static constexpr int DEVICE				= 11;
+	static constexpr int ENVIRONMENT		= 12;
+	static constexpr int MATERIAL			= 13;
+	static constexpr int MESH				= 14;
+	static constexpr int SPRITE				= 15;
+	static constexpr int COLLIDER			= 16;
 
 	static constexpr int ACTORS[2] = {ACTOR, LIGHTTESTERMOVER};
-	static constexpr int DEVICES[2] = {ENVIRONMENT, COLLIDER};
+	static constexpr int DEVICES[2] = {DEVICE, COLLIDER};
 };
 
 typedef std::map<int, std::pair<std::string, std::string>>														gObjectStore;
@@ -40,7 +41,7 @@ typedef std::multimap<int, std::pair<std::string, int>>															gTheatreRe
 typedef std::multimap<int, std::pair<std::string, std::string>>													gRawDataStore;
 typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>>	gSandwichStore;
 typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore>	gTheatreStorage;
-typedef std::unordered_map<std::string, std::any> 																gSettings;
+typedef std::unordered_map<std::string, std::any>																gSettings;
 typedef std::pair<int, std::string>																				gSandwichPair;
 typedef std::map<int, Actor*(*)()>																				gActorMap;
 typedef std::map<int, Device*(*)()>																				gDeviceMap;
@@ -72,62 +73,100 @@ extern std::unordered_map<int, std::pair<int, gSettings>> settings_map;
 
 template<typename T, typename A> A *createNewObject() { return new T; }
 template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
-template<typename T> void setPointer(T &variable, auto set_value)
+template<typename T> void setPointer(T &variable, std::any set_value)
 {
 	if constexpr(std::is_same_v<T, Device *>)
 	{
-		variable = static_cast<T>(std::any_cast<Device *>(set_value));
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+			variable = static_cast<T>(std::any_cast<Device *>(set_value));
 	}
 
 	else if constexpr(std::is_same_v<T, Actor *>)
 	{
-		variable = static_cast<T>(std::any_cast<Actor *>(set_value));
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+			variable = static_cast<T>(std::any_cast<Actor *>(set_value));
 	}
 }
 
-template<typename T> void setRawData(T &variable, auto set_value)
+template<typename T> void setRawData(T &variable, std::any set_value)
 {
 	if constexpr(std::is_same_v<T, std::string>)
 	{
-		gRawData new_value = std::any_cast<gRawData>(set_value);
-		variable = static_cast<T>(new_value[0]);
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+		{
+			gRawData new_value = std::any_cast<gRawData>(set_value);
+			variable = static_cast<T>(new_value[0]);
+		}
 	}
 
 	else if constexpr(std::is_same_v<T, bool>)
 	{
-		gRawData new_value = std::any_cast<gRawData>(set_value);
-		variable = (new_value[0] == "true");
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+		{
+			gRawData new_value = std::any_cast<gRawData>(set_value);
+			variable = (new_value[0] == "true");
+		}
 	}
 
 	else if constexpr(std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
 	{
-		gRawData new_value = std::any_cast<gRawData>(set_value);
-		variable = static_cast<T>(std::stod(new_value[0]));
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+		{
+			gRawData new_value = std::any_cast<gRawData>(set_value);
+			variable = static_cast<T>(std::stod(new_value[0]));
+		}
 	}
 
 	else if constexpr(std::is_same_v<T, glm::vec2>)
 	{
-		gRawData new_value = std::any_cast<gRawData>(set_value);
-		variable = glm::vec2(std::stof(new_value[0]), std::stof(new_value[1]));
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+		{
+			gRawData new_value = std::any_cast<gRawData>(set_value);
+			variable = glm::vec2(std::stof(new_value[0]), std::stof(new_value[1]));
+		}
 	}
 
 	else if constexpr(std::is_same_v<T, glm::vec3>)
 	{
-		gRawData new_value = std::any_cast<gRawData>(set_value);
-		variable = glm::vec3(std::stof(new_value[0]), std::stof(new_value[1]), std::stof(new_value[2]));
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+		{
+			gRawData new_value = std::any_cast<gRawData>(set_value);
+			variable = glm::vec3(std::stof(new_value[0]), std::stof(new_value[1]), std::stof(new_value[2]));
+		}
 	}
 
 	else if constexpr(std::is_same_v<T, glm::quat>)
 	{
-		gRawData new_value = std::any_cast<gRawData>(set_value);
-		variable = glm::quat(std::stof(new_value[0]), std::stof(new_value[1]), std::stof(new_value[2]), std::stof(new_value[3]));
+		if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+			return;
+		else
+		{
+			gRawData new_value = std::any_cast<gRawData>(set_value);
+			variable = glm::quat(std::stof(new_value[0]), std::stof(new_value[1]), std::stof(new_value[2]), std::stof(new_value[3]));
+		}
 	}
 }
 
-template<typename T> void setVariable(T &variable, auto set_value)
+template<typename T> void setVariable(T &variable, std::any set_value)
 {
-	PRINTLN("variable any type: " << set_value.type().name())
-	variable = std::any_cast<T>(set_value);
+	if(set_value.type().name() == typeid(nullptr).name() || !set_value.has_value())
+		return;
+	else
+		variable = std::any_cast<T>(set_value);
 }
 
 gSettings getSettingsTemplate(std::string class_name);

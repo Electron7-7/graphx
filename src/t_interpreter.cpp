@@ -280,24 +280,6 @@ std::unordered_map<std::string, std::any> cpp_definitions =
 	{"CylinderShape", ColliderShapes::CYLINDER},
 };
 
-std::unordered_map<std::string, int> graphx_class_names
-{
-	{"Theatre", graphx_classes::THEATRE},
-	{"Actor", graphx_classes::ACTOR},
-	{"RigidBodyActor", graphx_classes::RIGIDBODYACTOR},
-	{"Collider", graphx_classes::COLLIDER},
-	{"Mesh", graphx_classes::MESH},
-	{"Material", graphx_classes::MATERIAL},
-	{"Light", graphx_classes::LIGHT},
-};
-
-int getClassHash(std::string class_name)
-{
-	if(graphx_class_names.contains(class_name))
-		return graphx_class_names.at(class_name);
-	return -1;
-}
-
 gRawData extractData(std::string data_in_here)
 {
 	std::set<char> forgiveness =
@@ -384,25 +366,54 @@ gDeviceMap device_map =
 	{COLLIDER, &createNewObject<Collider, Device>},
 };
 
+std::unordered_map<std::string, int> graphx_class_names
+{
+	{"Theatre", THEATRE},
+	{"Actor", ACTOR},
+	{"PhysicsActor", PHYSICSACTOR},
+	{"RigidBodyActor", RIGIDBODYACTOR},
+	{"Camera", CAMERA},
+	{"GraphXPlayer", GRAPHXPLAYER},
+	{"Light", LIGHT},
+	{"LightDirectional", LIGHTDIRECTIONAL},
+	{"LightSpot", LIGHTSPOT},
+	{"LightFlashlight", LIGHTFLASHLIGHT},
+	{"LightTesterMover", LIGHTTESTERMOVER},
+	{"Device", DEVICE},
+	{"Environment", ENVIRONMENT},
+	{"Material", MATERIAL},
+	{"Mesh", MESH},
+	{"Sprite", SPRITE},
+	{"Collider", COLLIDER},
+};
+
+int getClassHash(std::string class_name)
+{
+	if(graphx_class_names.contains(class_name))
+		return graphx_class_names.at(class_name);
+	PRINTERR("[ERROR] Class name " << std::quoted(class_name) << " not found in \"graphx_class_names\"!\n\tSolution 1: Add it!\n\tSolution 2: Fix typo!\n\tSolution 3: Uhoh...")
+	return -1;
+}
+
 gSettings null_settings =
 {
-	{"NULL", NULL}
+	{"NULL", nullptr}
 };
 
 gSettings actor_settings =
 {
-	{"Name", gRawData{"Untitled Actor"}},
-	{"Visible", gRawData{"true"}},
-	{"Mesh", new Mesh()},
-	{"Position", gRawData{"0.0", "0.0", "0.0"}},
-	{"RotationDegrees", gRawData{"0.0", "0.0", "0.0"}},
-	{"Scale", gRawData{"1.0", "1.0", "1.0"}},
+	{"Name", nullptr},
+	{"Visible", nullptr},
+	{"Mesh", nullptr},
+	{"Position", nullptr},
+	{"RotationDegrees", nullptr},
+	{"Scale", nullptr},
 };
 
 gSettings physics_actor_settings =
 {
-	{"Mass", gRawData{"1.0"}},
-	{"Collider", new Collider()},
+	{"Mass", nullptr},
+	{"Collider", nullptr},
 };
 
 gSettings rigidbody_actor_settings =
@@ -411,76 +422,81 @@ gSettings rigidbody_actor_settings =
 
 gSettings camera_settings =
 {
-	{"Parent", NULL},
-	{"LocalPosition", gRawData{"0.0", "3.0", "0.0"}},
-	{"LocalRotationDegrees", gRawData{"0.0", "0.0", "0.0"}}
+	{"Parent", nullptr},
+	{"LocalPosition", nullptr},
+	{"LocalRotationDegrees", nullptr}
 };
 
 gSettings graphxplayer_settings =
 {
-	{"PlayerMesh", Mesh()},
-	{"PlayerCamera", Camera()},
-	{"MouseSensitivity", gRawData{"0.05"}},
-	{"MovementSpeed", gRawData{"0.1"}},
-	{"MaxVelocity", gRawData{"8.0"}}
+	{"PlayerMesh", nullptr},
+	{"PlayerCamera", nullptr},
+	{"MouseSensitivity", nullptr},
+	{"MovementSpeed", nullptr},
+	{"MaxVelocity", nullptr}
 };
 
 gSettings light_settings =
 {
-	{"Color", gRawData{"1.0", "1.0", "1.0"}},
-	{"Strength", gRawData{"1.0"}},
-	{"Range", gRawData{"100.0"}},
-	{"Intensity", gRawData{"1.0"}},
-	{"Falloff", gRawData{"0.0"}}
+	{"Color", nullptr},
+	{"Strength", nullptr},
+	{"Range", nullptr},
+	{"Intensity", nullptr},
+	{"Falloff", nullptr}
 };
 
 gSettings light_directional_settings =
 {
-	{"Direction", gRawData{"0.0", "-1.0", "0.0"}}
+	{"Direction", nullptr}
 };
 
 gSettings light_spot_settings =
 {
-	{"InnerCutoffAngle", gRawData{"12.5"}},
-	{"OuterCutoffAngle", gRawData{"17.5"}}
+	{"InnerCutoffAngle", nullptr},
+	{"OuterCutoffAngle", nullptr}
 };
 
 gSettings light_flashlight_settings =
 {
-	{"Parent", NULL},
-	{"PositionOffset", gRawData{"0.0", "0.0", "0.0"}},
-	{"RotationOffset", gRawData{"0.0", "0.0", "0.0"}}
+	{"Parent", nullptr},
+	{"PositionOffset", nullptr},
+	{"RotationOffset", nullptr}
 };
 
 gSettings light_tester_mover_settings =
 {
-	{"PivotPosition", gRawData{"0.0", "0.0", "0.0"}},
-	{"PivotRadius", gRawData{"3.0"}},
-	{"PivotSpeed", gRawData{"1.0"}}
+	{"PivotPosition", nullptr},
+	{"PivotRadius", nullptr},
+	{"PivotSpeed", nullptr}
+};
+
+gSettings device_settings =
+{
+	{"Name", nullptr}
 };
 
 gSettings environment_settings =
 {
-	{"AmbientLightingEnabled", gRawData{"true"}},
-	{"AmbientLightingColor", gRawData{"1.0", "1.0", "1.0"}},
-	{"AmbientLightingStrength", gRawData{"0.05"}}
+	{"AmbientLightingEnabled", nullptr},
+	{"AmbientLightingColor", nullptr},
+	{"AmbientLightingStrength", nullptr}
 };
 
 gSettings material_settings =
 {
-	{"DiffuseTexture", MISSING_TEXTURE_DIFF},
-	{"SpecularTexture", MISSING_TEXTURE_SPEC},
-	{"Color", gRawData{"1.0", "1.0", "1.0"}},
-	{"SpecularSharpness", gRawData{"32"}},
-	{"SpecularStrength", gRawData{"0.5"}},
-	{"mat_fullbright", gRawData{"false"}}
+	{"DiffuseTexture", nullptr},
+	{"SpecularTexture", nullptr},
+	{"Color", nullptr},
+	{"SpecularSharpness", nullptr},
+	{"SpecularStrength", nullptr},
+	{"mat_fullbright", nullptr}
 };
 
 gSettings mesh_settings =
 {
-	{"Name", gRawData{"Untitled Mesh"}},
-	{"Material", new Material()},
-	{"MeshData", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)}
+	{"Name", nullptr},
+	{"Material", nullptr},
+	{"MeshData", nullptr}
 };
 
 gSettings sprite_settings =
@@ -488,13 +504,13 @@ gSettings sprite_settings =
 
 gSettings collider_settings =
 {
-	{"Position", gRawData{"0.0", "0.0", "0.0"}},
-	{"Scale", gRawData{"1.0", "1.0", "1.0"}},
-	{"Quaternion", gRawData{"1.0", "0.0", "0.0", "0.0"}},
-	{"MotionType", JPH::EMotionType::Dynamic},
-	{"ObjectLayer", Layers::MOVING},
-	{"Activation", JPH::EActivation::Activate},
-	{"Shape", ColliderShapes::BOX}
+	{"Position", nullptr},
+	{"Scale", nullptr},
+	{"Quaternion", nullptr},
+	{"MotionType", nullptr},
+	{"ObjectLayer", nullptr},
+	{"Activation", nullptr},
+	{"Shape", nullptr}
 };
 
 std::unordered_map<int, std::pair<int, gSettings>> settings_map =
@@ -509,25 +525,26 @@ std::unordered_map<int, std::pair<int, gSettings>> settings_map =
 	{LIGHTSPOT, {LIGHT, light_spot_settings}},
 	{LIGHTFLASHLIGHT, {LIGHT, light_flashlight_settings}},
 	{LIGHTTESTERMOVER, {LIGHT, light_tester_mover_settings}},
-	{ENVIRONMENT, {-1, environment_settings}},
-	{MATERIAL, {-1, material_settings}},
-	{MESH, {-1, mesh_settings}},
+	{DEVICE, {-1, device_settings}},
+	{ENVIRONMENT, {DEVICE, environment_settings}},
+	{MATERIAL, {DEVICE, material_settings}},
+	{MESH, {DEVICE, mesh_settings}},
 	{SPRITE, {MESH, sprite_settings}},
-	{COLLIDER, {-1, collider_settings}},
+	{COLLIDER, {DEVICE, collider_settings}},
 };
 
 gSettings getSettingsTemplate(std::string class_name)
 {
 	int class_hash = getClassHash(class_name);
-	std::pair<int, gSettings> settings_pair = settings_map[class_hash];
+	std::pair<int, gSettings> settings_pair = settings_map.at(class_hash);
 	gSettings all_settings = {};
 	int abort = 0;
 	while(settings_pair.first != -1 && abort != 50) // abort != 50 is a fail-safe
 	{
 		// Find out how to insert an unordered map into an unordered map (without a for loop, duh)
-		for(auto &pair : settings_map[settings_pair.first].second)
+		for(auto &pair : settings_pair.second)
 			all_settings[pair.first] = pair.second;
-		settings_pair = settings_map[settings_pair.first];
+		settings_pair = settings_map.at(settings_pair.first);
 		abort++;
 	}
 
@@ -580,7 +597,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 	{
 		gSettings new_class_settings = getSettingsTemplate(object.second.first);
 
-		new_class_settings["Name"] = gRawData{object.second.second};
+		new_class_settings.at("Name") = gRawData{object.second.second};
 
 		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
 		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
@@ -589,8 +606,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
 		{
-			PRINTLN("CPP REF: " << it->second.first << " = " << it->second.second)
-			new_class_settings[it->second.first] = cpp_definitions[it->second.second];
+			new_class_settings.at(it->second.first) = cpp_definitions[it->second.second];
 		}
 
 		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
@@ -600,18 +616,18 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 			{
-				new_class_settings[it->second.first] = &new_theatre->objects.at(it->second.second);
+				new_class_settings.at(it->second.first) = &new_theatre->objects.at(it->second.second);
 			}
 
 			if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
 			{
-				new_class_settings[it->second.first] = &new_theatre->devices.at(it->second.second);
+				new_class_settings.at(it->second.first) = &new_theatre->devices.at(it->second.second);
 			}
 		}
 
 		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
 		{
-			new_class_settings[it->second.first] = extractData(it->second.second);
+			new_class_settings.at(it->second.first) = extractData(it->second.second);
 		}
 
 		for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
@@ -620,9 +636,8 @@ Theatre *loadTheatre(std::string embedded_theatre)
 			std::string reference_name = objects_bucket.at(it->second.first.second).first;
 			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 			{
-				new_class_settings[it->second.first.first] = actor_map[getClassHash(it->second.first.first)]();
+				new_class_settings.at(it->second.first.first) = actor_map[getClassHash(it->second.first.first)]();
 				settings_to_modify = new_theatre->objects.at(it->second.first.second)->settings;
-				PRINTLN(std::any_cast<gRawData>(settings_to_modify["Name"])[0])
 				for(auto &pair : it->second.second)
 				{
 					if(settings_to_modify.contains(pair.first))
@@ -641,7 +656,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 				continue;
 			}
 
-			new_class_settings[it->second.first.first] = device_map[getClassHash(it->second.first.first)]();
+			new_class_settings.at(it->second.first.first) = device_map[getClassHash(it->second.first.first)]();
 			settings_to_modify = new_theatre->devices.at(it->second.first.second)->settings;
 			for(auto &pair : it->second.second)
 			{
@@ -649,11 +664,11 @@ Theatre *loadTheatre(std::string embedded_theatre)
 				{
 					if(ACTORS[0] <= getClassHash(pair.first) && getClassHash(pair.first) <= ACTORS[1])
 					{
-						settings_to_modify[pair.first] = new_theatre->objects.at(pair.second);
+						settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
 						continue;
 					}
 
-					settings_to_modify[pair.first] = new_theatre->devices.at(pair.second);
+					settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
 				}
 			}
 

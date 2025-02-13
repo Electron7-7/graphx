@@ -34,21 +34,22 @@ struct Collider : public Device
 {
 	glm::vec3			position = glm::vec3(0.0f);
 	glm::vec3			scale = glm::vec3(1.0f);
-	glm::quat			quaternion = glm::quat();
+	glm::quat			quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	JPH::EMotionType	motion_type = JPH::EMotionType::Dynamic;
 	JPH::ObjectLayer	object_layer = Layers::MOVING;
 	JPH::EActivation	activation = JPH::EActivation::Activate;
 	
 	int					shape = ColliderShapes::BOX;
-	jolt_shape_args		shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
+	jolt_shape_args		shape_arguments;
 
 	Collider();
 
 	void createBody();
-	JPH::BodyID *getBodyID();
+	const JPH::BodyID &getBodyID();
 	JPH::BodyCreationSettings *getBodySettings();
 
 	void loadSettings(gSettings new_settings = null_settings) override;
+	void prepForDestruction() override;
 
 protected:
 	JPH::BodyID body_id;

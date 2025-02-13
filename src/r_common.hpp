@@ -73,10 +73,12 @@ struct GLShader
 
 struct Device
 {
+	std::string name = "Untitled Device";
 	int device_type;
 	gSettings settings;
 
 	virtual void loadSettings(gSettings new_settings = null_settings);
+	virtual void prepForDestruction();
 	virtual long getUID();
 	virtual void setUID(long manual_uid = -1); // If manual_uid is -1, a new UID is generated instead
 
@@ -124,7 +126,7 @@ struct Material : public Device
 struct Mesh : public Device
 {
 	std::string name = "Untitled Mesh";
-	Material *material = NULL;
+	Material *material = new Material();
 	int vao_index = VAO_HANDMADE;
 	std::vector<GLfloat> vertices = ERROR_VERTS;
 	std::vector<GLuint> indices = ERROR_INDICES;
@@ -132,7 +134,7 @@ struct Mesh : public Device
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 
-	Mesh(Material *init_material = NULL, std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
+	Mesh(Material *init_material = new Material(), std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
 
 	void loadSettings(gSettings new_settings = null_settings) override;
 };
@@ -140,7 +142,7 @@ struct Mesh : public Device
 struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Material *init_material = NULL, int init_vao_index = VAO_HANDMADE);
+	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
 
 	void loadSettings(gSettings new_settings = null_settings) override;
 };

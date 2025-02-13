@@ -977,3 +977,22 @@ I might want to change the way the interpreter gets raw data, because currently 
 I DID IT!! THE ONLY ERROR NOW IS A JOLT ERROR FROM THE BOX SHAPE!! GSETTINGS ARE LOADED PROPERLY!!!!!!! WAAAHOOOOOO!!!
 
 :3
+
+[02/12/25]
+At work; me and Dexter went shopping at Spencer's and Hot Topic. It was very fun. Time to (hopefully) finish this code!
+
+I also had an idea last night: instead of having default values for every variable in each class' gSettings, implement a way to detect and skip over settings that aren't filled out. That way, default settings are kept in C++ (and I avoid having to fucking use gRawData).
+
+Just learned the difference between "NULL" and "nullptr"; NULL is just 0, but nullptr is of type std::nullptr_t, so you can do type comparisons and stuff like that. This is exactly the usecase I need for gSettings, but I'm hesitant to convert every instance of NULL to nullptr, so keep this as a mental note.
+
+Ok, I couldn't do a typeid check in the template functions so I've done things a better way. Before the function createNewClass creates the new class, it goes through the settings and if any of them have nullptr for a value, their key is set to "NULL". This means that when the classes try to set their variables to settings that aren't set, they'll be trying to access a key that doesn't exist. This does mean that I'll have to make sure this doesn't cause a crash or an error.
+
+Okay, so if I'm sticking with the "if constexpr" in the template functions, I need to try to insert a constexpr if that forces an early return if the setting is the pair {"NULL", nullptr}.
+
+I've found a solution! std::any::has_value will return 0 even if unordered_map[key] is used (which creates a new empty pair if the key is not found)!
+
+None of these worked; abandoning plan. New plan: gSettings second value is now a pair of a bool and an std::any. If the bool is false, the std::any is a nullptr. If it's true, it's not. Simple as.
+
+Huge problem: ummmm I forgot to fill out graphx_class_names??? I should write an exception for that case.
+
+YES!! BACK TO JOLT ERRORS!! I THINK THIS MEANS I'VE FIXED IT AND GOTTEN IT BACK TO WHERE IT WAS BEFORE!!

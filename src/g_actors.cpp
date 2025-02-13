@@ -4,7 +4,7 @@
 #include "g_jolt.hpp"
 #include "g_math.hpp"
 #include <vector>
-#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
 GraphXPlayer *current_player = NULL;
 glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -129,25 +129,10 @@ bool Actor::wantsToBeRendered()
 //
 // PhysicsActor
 //
-PhysicsActor::PhysicsActor(std::string init_name, JPH::EMotionType init_motion_type, JPH::ObjectLayer init_object_layer, JPH::EActivation init_body_activation, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
 {
 	actor_type = ACTOR_PHYSICS;
-	body_scale = convertMath<JPH::Vec3>(init_scale);
-	body_position = convertMath<JPH::Vec3>(init_position);
-	glm::vec3 body_rotation_radians = glm::radians(init_euler_degrees);
-	body_quat = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(body_rotation_radians));
-	test_body_activation = init_body_activation;
-	test_motion_type = init_motion_type;
-	test_object_layer = init_object_layer;
-}
-
-PhysicsActor::PhysicsActor(std::string init_name, JPH::BodyCreationSettings init_body_creation_settings, JPH::EActivation init_body_activation, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale), body_creation_settings(std::vector<JPH::BodyCreationSettings>{init_body_creation_settings})
-{
-	actor_type = ACTOR_PHYSICS;
-	body_creation_settings.insert(body_creation_settings.end(), init_body_creation_settings);
-	body_activation.insert(body_activation.end(), init_body_activation);
 }
 
 void PhysicsActor::youGotACallBack(gSettings new_settings)
@@ -164,20 +149,12 @@ void PhysicsActor::youGotACallBack(gSettings new_settings)
 void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
-	JPH::BodyCreationSettings init_body_creation_settings = JPH::BodyCreationSettings(new JPH::BoxShape(body_scale), body_position, body_quat, test_motion_type, test_object_layer);
-	body_creation_settings.insert(body_creation_settings.end(), init_body_creation_settings);
-	body_activation.insert(body_activation.end(), test_body_activation);
-	for(int i = 0 ; i < body_creation_settings.size() ; i++) // Todo: merge body_creation_settings and body_activation into an unordered_map
-	{
-		JPH::BodyID collider_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_creation_settings[i], body_activation[i]);
-		collider_ids.insert(collider_ids.end(), collider_id);
-	}
+	collider->createBody();
 }
 
 void PhysicsActor::takeABow()
 {
-	for(JPH::BodyID collider_id : collider_ids)
-		J_RemoveAndDestroyBody(collider_id);
+	collider->prepForDestruction();
 }
 
 void PhysicsActor::tick(int current_tick)
@@ -206,8 +183,8 @@ void RigidBodyActor::tick(int current_tick)
 	PhysicsActor::tick(current_tick);
 
 	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider_ids[controller_collider_index]);
-	JPH::Quat body_quaternion = body_interface.GetRotation(collider_ids[controller_collider_index]);
+	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
+	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
 
 	position_global = convertMath<glm::vec3>(body_position);
 	quaternion = convertMath<glm::quat>(body_quaternion);
@@ -217,8 +194,8 @@ void RigidBodyActor::tick(int current_tick)
 void RigidBodyActor::reset_to_initial_orientation_for_testing()
 {
 	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	body_interface.SetPositionAndRotation(collider_ids[controller_collider_index], reset_position, reset_quaternion, JPH::EActivation::Activate);
-	body_interface.SetLinearAndAngularVelocity(collider_ids[controller_collider_index], JPH::Vec3::sZero(), JPH::Vec3::sZero());
+	body_interface.SetPositionAndRotation(collider->getBodyID(), reset_position, reset_quaternion, JPH::EActivation::Activate);
+	body_interface.SetLinearAndAngularVelocity(collider->getBodyID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
 }
 
 //
@@ -262,6 +239,12 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
 	player_camera.position_global = init_position;
 	player_camera.parent = this;
+	current_player = this;
+	// player_collider.position = init_position;
+	// player_collider.shape = ColliderShapes::CAPSULE;
+	// player_collider.scale = glm::vec3(1.5f, 3.0f, 1.5f);
+	// player_collider.motion_type = JPH::EMotionType::Kinematic;
+	// player_collider.quaternion = quaternion;
 }
 
 void GraphXPlayer::youGotACallBack(gSettings new_settings)
@@ -281,38 +264,38 @@ void GraphXPlayer::youGotACallBack(gSettings new_settings)
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
-	// player_settings = new JPH::CharacterSettings;
-	// player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
-	// player_settings->mLayer = Layers::MOVING;
-	// player_settings->mShape = JPH::RotatedTranslatedShapeSettings(convertMath<JPH::Vec3>(position_global), quaternion, new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
-	// player_settings->mFriction = 10.0f;
-	// player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), -scale[0]);
-	// jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), quaternion, 0, physics_system);
-	// jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
+	player_settings = new JPH::CharacterSettings;
+	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
+	player_settings->mLayer = Layers::MOVING;
+	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(convertMath<JPH::Vec3>(position_global), convertMath<JPH::Quat>(quaternion), new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
+	player_settings->mFriction = 10.0f;
+	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), -scale[0]);
+	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), convertMath<JPH::Quat>(quaternion), 0, &jolt_physics_system);
+	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
 }
 
 void GraphXPlayer::tick(int current_tick)
 {
 	player_camera.tick(current_tick);
-	// JPH::Vec3 jph_position = jph_character->GetPosition();
-	// glm::vec3 jph_position_glm = convertMath<glm::vec3>(jph_position);
-	// position_global = glm::vec3(jph_position_glm[0], jph_position_glm[1] + scale[1], jph_position_glm[2]);
+	JPH::Vec3 jph_position = jph_character->GetPosition();
+	glm::vec3 jph_position_glm = convertMath<glm::vec3>(jph_position);
+	position_global = glm::vec3(jph_position_glm[0], jph_position_glm[1] + scale[1], jph_position_glm[2]);
 }
 
 void GraphXPlayer::doMovement(int direction[2])
 {
 	position_global += orientation_front * static_cast<float>(direction[0] * movement_speed);
 	position_global += orientation_right * static_cast<float>(direction[1] * movement_speed);
-	// JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
-	// JPH::Vec3 wish_velocity = JPH::Vec3(direction[1] * movement_speed, 0.0f, -direction[0] * movement_speed);
-	// JPH::Vec3 new_velocity = current_velocity + wish_velocity;
+	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
+	JPH::Vec3 wish_velocity = JPH::Vec3(direction[1] * movement_speed, 0.0f, -direction[0] * movement_speed);
+	JPH::Vec3 new_velocity = current_velocity + wish_velocity;
 
-	// new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
-	// new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
+	new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
+	new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
 
-	// PRINT("position_global: " << glm::to_string(position_global) << "\ncurrent_velocity: " << current_velocity << "\nwish_velocity: " << wish_velocity << "\nnew_velocity: " << new_velocity);
+	// PRINTLN("position_global: " << glm::to_string(position_global) << "\ncurrent_velocity: " << current_velocity << "\nwish_velocity: " << wish_velocity << "\nnew_velocity: " << new_velocity);
 
-	// jph_character->SetLinearVelocity(new_velocity);
+	jph_character->SetLinearVelocity(new_velocity);
 }
 
 void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
