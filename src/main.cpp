@@ -273,9 +273,6 @@ void testGameTick(GLFWwindow *main_window)
 	loadTheatre(embedded_theatres[0]); // So, when I add UI, this will go behind a "start game"/"load level"/etc
 	getCurrentTheatre()->startPreshow();
 
-	// current_theatre_deprecated = &collision_testing_theatre;
-	// current_theatre_deprecated->actorEnter(&player);
-	// current_theatre_deprecated->startPreshow();
 	time_to_store_buffers = true;
 
 	double last_time = glfwGetTime();
@@ -283,6 +280,8 @@ void testGameTick(GLFWwindow *main_window)
 	double now_time = 0;
 
 	jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
+
+	LightFlashlight *player_flashlight = dynamic_cast<LightFlashlight *>(getCurrentTheatre()->objects.at(9));
 
 	while(!glfwWindowShouldClose(main_window))
 	{
@@ -303,13 +302,13 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
-			// player_flashlight.setLight(test_flashlight_bool);
-			
-			// if(red_flashlight_color_bool)
-				// player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
-			// else
-				// player_flashlight.light_color = glm::vec3(1.0f);
-			
+			player_flashlight->setLight(test_flashlight_bool);
+
+			if(red_flashlight_color_bool)
+				player_flashlight->light_color = glm::vec3(1.0f, 0.0f, 0.0f);
+			else
+				player_flashlight->light_color = glm::vec3(1.0f);
+
 			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
 			last_tick_timestamp = glfwGetTime();

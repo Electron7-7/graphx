@@ -166,7 +166,7 @@ public:
 class LightFlashlight: public LightSpot
 {
 public:
-	Actor *parent = NULL;
+	GraphXPlayer *parent = NULL;
 	glm::vec3 position_offset = glm::vec3(0.0f);
 	glm::vec3 rotation_offset = glm::vec3(0.0f);
 

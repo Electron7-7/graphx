@@ -27,7 +27,6 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 {
 	actor_type = ACTOR_ACTOR;
 	name = new_name;
-	actor_uid_lookup.insert(actor_uid_lookup.end(), std::pair<double, Actor *>{UID, this});
 	world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	current_state = RenderState(init_position, quaternion, init_scale);
@@ -44,7 +43,7 @@ void Actor::youGotACallBack(gSettings new_settings)
 	if(new_settings.contains("NULL"))
 		new_settings = settings;
 
-	glm::vec3 rotation_degrees;
+	glm::vec3 rotation_degrees = glm::eulerAngles(quaternion);
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(mesh, new_settings["Mesh"]);
 	setRawData(position_global, new_settings["Position"]);
@@ -145,9 +144,6 @@ void PhysicsActor::youGotACallBack(gSettings new_settings)
 
 	setRawData(mass, new_settings["Mass"]);
 	setDevicePointer(collider, new_settings["Collider"]);
-	if(collider == NULL)
-		PRINTERR("COLLIDER IS NULL")
-	// collider = dynamic_cast<Collider *>(std::any_cast<Device *>(new_settings["Collider"]));
 }
 
 void PhysicsActor::callToStage(Theatre *parent_theatre)
@@ -178,8 +174,10 @@ void RigidBodyActor::youGotACallBack(gSettings new_settings)
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
+
 	reset_position = convertMath<JPH::Vec3>(position_global);
 	reset_quaternion = convertMath<JPH::Quat>(quaternion);
+	// PRINTLN(std::quoted(name) << "\n\tposition: " << glm::to_string(position_global) << "\n\tquaternion: " << glm::to_string(quaternion) << "\n\trotation: " << glm::to_string(glm::eulerAngles(quaternion)) << "\n\treset position: " << reset_position << "\n\treset quaternion: " << reset_quaternion)
 }
 
 void RigidBodyActor::tick(int current_tick)
@@ -213,6 +211,9 @@ void Camera::doRotation(glm::vec2 mouse_input)
 
 	if(std::abs(glm::degrees(euler_rotation[0])) > view_pitch_clamp)
 		euler_rotation[0] = glm::radians(view_pitch_clamp * ((glm::degrees(euler_rotation[0]) > 0) - (glm::degrees(euler_rotation[0]) < 0)));
+
+	quaternion = glm::quat(euler_rotation);
+	updateVectors();
 }
 
 void Camera::youGotACallBack(gSettings new_settings)
@@ -244,11 +245,6 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	player_camera.position_global = init_position;
 	player_camera.parent = this;
 	current_player = this;
-	// player_collider.position = init_position;
-	// player_collider.shape = ColliderShapes::CAPSULE;
-	// player_collider.scale = glm::vec3(1.5f, 3.0f, 1.5f);
-	// player_collider.motion_type = JPH::EMotionType::Dynamic;
-	// player_collider.quaternion = quaternion;
 }
 
 void GraphXPlayer::youGotACallBack(gSettings new_settings)
@@ -281,6 +277,7 @@ void GraphXPlayer::tick(int current_tick)
 {
 	player_camera.tick(current_tick);
 
+	// PRINTLN("player position: " << glm::to_string(position_global) << "\nplayer collider position: " << jph_character->GetPosition() << "\nplayer collider center of mass position: " << jph_character->GetCenterOfMassPosition() << "\nplayer camera position: " << glm::to_string(player_camera.position_global))
 	JPH::Vec3 jph_position = jph_character->GetPosition();
 	position_global = convertMath<glm::vec3>(jph_position);
 }
@@ -294,10 +291,10 @@ void GraphXPlayer::doMovement(int direction[2])
 	JPH::Vec3 new_wish_velocity = convertMath<JPH::Vec3>(wish_velocity);
 	JPH::Vec3 new_velocity = current_velocity + new_wish_velocity;
 
-	PRINTLN("wish_velocity: " << glm::to_string(wish_velocity) << "\ncurrent_velocity: " << current_velocity);
+	// PRINTLN("wish_velocity: " << glm::to_string(wish_velocity) << "\ncurrent_velocity: " << current_velocity);
 
-	// new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
-	// new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
+	new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
+	new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
 
 	jph_character->SetLinearVelocity(new_velocity);
 }
@@ -305,18 +302,19 @@ void GraphXPlayer::doMovement(int direction[2])
 void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
 {
 	player_camera.doRotation(mouse_offset * mouse_sensitivity);
-	quaternion = glm::quat(player_camera.euler_rotation);
+	glm::vec3 horizontal_rotation = glm::vec3(0.0f, player_camera.euler_rotation[1], 0.0f);
+	quaternion = glm::quat(horizontal_rotation);
 	updateVectors();
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
-	return glm::lookAt(player_camera.position_global, player_camera.position_global + orientation_front, orientation_up);
+	return glm::lookAt(player_camera.position_global, player_camera.position_global + player_camera.orientation_front, player_camera.orientation_up);
 }
 
 bool GraphXPlayer::wantsToBeRendered()
 {
-	return false;
+	return true;
 }
 
 //
@@ -418,13 +416,10 @@ void LightFlashlight::tick(int current_tick)
 		return;
 
 	if(parent == NULL)
-	{
 		parent = current_player;
-		position_offset[1] = parent->scale[1];
-	}
 
-	position_global = parent->position_global + position_offset;
-	quaternion = parent->quaternion * glm::quat(glm::radians(rotation_offset));
+	position_global = parent->player_camera.position_global + position_offset;
+	quaternion = parent->player_camera.quaternion * glm::quat(glm::radians(rotation_offset));
 	direction = quaternion * vector3_front;
 }
 

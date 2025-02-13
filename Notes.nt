@@ -1002,3 +1002,10 @@ IT WORKS IT WORKS IT WORKS IT LOADS A THEATRE IT WORKS!!!!!!!!!!!!!!
 Bug: colliders are properly created with proper settings, but when passed as pointers to RigidBodyActors, they use the default new Collider instead?
 
 BIG NOTE: Player movement doesn't work well but it's because the application of orientation_grounded_front is making movement speed slower when the player is angled down.
+
+[02/13/25]
+Dexter is taking a shower, so I'm gonna noodle with the code some more.
+
+Hmm, it looks like either the player's collider or the falling cube's collider are not in the right place. Either the player's is in front of the camera view, or the cube's is behind its mesh.
+
+The theatre file crashes when removing objects, I think its because I'm not using smart pointers and the maps are not correctly clearing their memory.

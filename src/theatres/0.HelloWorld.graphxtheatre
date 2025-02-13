@@ -38,7 +38,7 @@ RigidBodyActor (Test_Actor_1)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Collider		<Test_Actor_1_Collider>
-	Position        (0.0, 2.5, -6.0)
+	Position        (0.0, 10.0, -6.0)
 	Scale           (1.2, 2.0, 1.0)
 }
 RigidBodyActor (Floor)
