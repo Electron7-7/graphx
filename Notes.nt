@@ -1009,3 +1009,23 @@ Dexter is taking a shower, so I'm gonna noodle with the code some more.
 Hmm, it looks like either the player's collider or the falling cube's collider are not in the right place. Either the player's is in front of the camera view, or the cube's is behind its mesh.
 
 The theatre file crashes when removing objects, I think its because I'm not using smart pointers and the maps are not correctly clearing their memory.
+
+At work now; gonna try and fix this problem.
+
+It was because of the way I grabbed the flashlight for testing... man. Although, I do need a better way of getting references to Actors (and also Devices?) because currently, I don't know what the fuck their ID will be and that can change. I need a way of getting a type of Actor or maybe just making special cases for each reference perhaps. What I'm doing with the flashlight is testing and shouldn't cause a big change in the code, tbh.
+
+Lot of debugging and refactoring; found a few things like how Theatres were accidentally doubling the numbers of Actors in the Theatre troupe (yikes!). I made the Actor and Device maps in Theatre private and added a couple overloading funtions for adding, removing, and getting Actors/Devices. This lets me control how objects are created, destroyed, and passed, and lets me add error messages for each one, to help with debugging.
+
+Actor sub-classes don't seem to be setting their UIDs correctly?
+
+Ok, I fixed that (Theatres weren't setting them, lol), but I think I may just fully refactor all pointers to smart pointers.
+
+I want to see if the pointers in Theatre::troupe point to the same objects as the pointers in Theatre::objects.
+
+Before testing this, I realized that the interpreter wasn't passing "new Actor" or "new Device" to the Theatre, but it was passing the pointer to a newly created Actor/Device (I think, at least). I fixed this by adding a new overloaded enterActor & placeDevice that take function pointers.
+
+It was because .compare() doesn't return a boolean value, it returns the integer difference between two strings (which is 0 if they're equal). Fucking god damnit. However, this did let me notice and fix a few minor things; plus, now all Actors have a getType function that returns a string of their typename (i.e: "Actor", "GraphXPlayer", etc).
+
+I kinda wanna write a function template for getting Actor/Device pointers downcasted to their specific sub-class; this way, if I want a LightFlashlight pointer and I know the LightFlashlight object's UID/name, I can get a specific pointer without needing to write the long-ass "static_cast<LightFLashlight *>(getCurrentTheatre()->getActor(UID/Name));" line.
+
+Added it; getting a bit lost in the sauce of making different print preprocessor defines, lol. I have PRINT which is just an abstraction of std::cout (lol), PRINTLN which appends std::endl to the input, PRINTERR which outputs to std::cerr, PRINTIMPORTANT which makes the output annoying, and PRINTDEBUG which is the same as PRINTLN when GRAPHX_DEBUG is defined but doesn't print anything when GRAPHX_DEBUG isn't defined. I wanna figure out what's up with GraphXPlayer's collision now.

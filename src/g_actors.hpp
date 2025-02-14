@@ -22,7 +22,7 @@
 class PhysicsActor: public Actor
 {
 public:
-	Collider *collider = NULL;
+	Collider *collider = nullptr;
 
 	float mass = 1.0f; // in kg
 
@@ -32,6 +32,7 @@ public:
 	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
+	std::string getType() override;
 
 	virtual void reset_to_initial_orientation_for_testing()
 	{};
@@ -55,6 +56,7 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
+	std::string getType() override;
 
 	void reset_to_initial_orientation_for_testing() override;
 
@@ -76,6 +78,7 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void doRotation(glm::vec2 mouse_input);
+	std::string getType() override;
 };
 
 /*class PlayerCamera : public Camera
@@ -98,15 +101,16 @@ class GraphXPlayer: public Actor //public CharacterController
 public:
 	Mesh player_mesh = Mesh();
 	Camera player_camera;
-	Collider player_collider;
+	Collider collider;
 
 	float mouse_sensitivity = 0.05f;
-	float movement_speed = 0.1f;
+	float movement_speed = 0.5f;
 	float max_velocity = 8.0f;
+	float friction = 0.7f;
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
 
-	GraphXPlayer(std::string new_nam = "DEFAULT PLAYER", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, 0.0f, 0.0f));
+	GraphXPlayer(std::string new_name = "DEFAULT PLAYER", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, 0.0f, 0.0f));
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(glm::vec2 mouse_offset);
@@ -115,6 +119,7 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
+	std::string getType() override;
 
 private:
 	JPH::Ref<JPH::Character> jph_character;
@@ -137,6 +142,7 @@ public:
 	Light(std::string init_name = "UNTITLED LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f));
 
 	void youGotACallBack(gSettings new_settings = null_settings) override;
+	std::string getType() override;
 };
 
 class LightDirectional: public Light
@@ -147,6 +153,7 @@ public:
 	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
 
 	void youGotACallBack(gSettings new_settings = null_settings) override;
+	std::string getType() override;
 };
 
 class LightSpot: public Light
@@ -161,6 +168,7 @@ public:
 	glm::vec2 getCutoffAngles();
 
 	void youGotACallBack(gSettings new_settings = null_settings) override;
+	std::string getType() override;
 };
 
 class LightFlashlight: public LightSpot
@@ -176,6 +184,7 @@ public:
 
 	void tick(int current_tick) override;
 	void youGotACallBack(gSettings new_settings = null_settings) override;
+	std::string getType() override;
 
 private:
 	float _intensity;
@@ -197,6 +206,7 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(gSettings new_settings = null_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
+	std::string getType() override;
 };
 
 extern GraphXPlayer *current_player;

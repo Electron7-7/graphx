@@ -35,6 +35,7 @@ namespace graphx_classes
 	static constexpr int DEVICES[2] = {DEVICE, COLLIDER};
 };
 
+// maybe namespace these?
 typedef std::map<int, std::pair<std::string, std::string>>														gObjectStore;
 typedef std::multimap<int, std::pair<std::string, std::string>>													gSourceRefStore;
 typedef std::multimap<int, std::pair<std::string, int>>															gTheatreRefStore;
@@ -179,5 +180,5 @@ void createNewClass(std::string class_name, int object_uid, gSettings class_sett
 gTheatreStorage theatreParser(std::string theatre_data);
 std::string getTheatreStructure(gTheatreStorage theatre_storage);
 int getClassHash(std::string class_name);
-Theatre *loadTheatre(std::string embedded_theatre);
+Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid);
 #endif

@@ -52,24 +52,15 @@ void Actor::youGotACallBack(gSettings new_settings)
 	setRawData(scale, new_settings["Scale"]);
 }
 
+std::string Actor::getType()
+{
+	return "Actor";
+}
+
 void Actor::setUID(long manual_uid)
 {
 	if(manual_uid != -1)
-	{
 		UID = manual_uid;
-		return;
-	}
-
-	// The UID set/get should only be called on objects where this is safe to do
-	// Also, the UID should be set manually by an external object; this is mainly just
-	// a fail-safe
-	for(auto &pair : getCurrentTheatre()->objects)
-	{
-		if(pair.second != this)
-			continue;
-
-		UID = (long)pair.first;
-	}
 }
 
 long Actor::getUID()
@@ -106,12 +97,12 @@ void Actor::tick(int current_tick)
 
 void Actor::callToStage(Theatre *parent_theatre)
 {
-	// std::cout << "\n\t- " << name << std::endl;
+	PRINTDEBUG("\t- " << name);
 }
 
 void Actor::takeABow()
 {
-	// std::cout << "\n\t- (Actor) " << name << std::endl;
+	PRINTDEBUG("\t- " << name);
 }
 
 bool Actor::wantsToBeBuffered()
@@ -135,6 +126,11 @@ PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 ini
 	actor_type = ACTOR_PHYSICS;
 }
 
+std::string PhysicsActor::getType()
+{
+	return "PhysicsActor";
+}
+
 void PhysicsActor::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.contains("NULL"))
@@ -154,6 +150,7 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 
 void PhysicsActor::takeABow()
 {
+	Actor::takeABow();
 	collider->prepForDestruction();
 }
 
@@ -171,13 +168,17 @@ void RigidBodyActor::youGotACallBack(gSettings new_settings)
 	PhysicsActor::youGotACallBack();
 }
 
+std::string RigidBodyActor::getType()
+{
+	return "RigidBodyActor";
+}
+
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
 
 	reset_position = convertMath<JPH::Vec3>(position_global);
 	reset_quaternion = convertMath<JPH::Quat>(quaternion);
-	// PRINTLN(std::quoted(name) << "\n\tposition: " << glm::to_string(position_global) << "\n\tquaternion: " << glm::to_string(quaternion) << "\n\trotation: " << glm::to_string(glm::eulerAngles(quaternion)) << "\n\treset position: " << reset_position << "\n\treset quaternion: " << reset_quaternion)
 }
 
 void RigidBodyActor::tick(int current_tick)
@@ -216,6 +217,11 @@ void Camera::doRotation(glm::vec2 mouse_input)
 	updateVectors();
 }
 
+std::string Camera::getType()
+{
+	return "Camera";
+}
+
 void Camera::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.contains("NULL"))
@@ -247,6 +253,11 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	current_player = this;
 }
 
+std::string GraphXPlayer::getType()
+{
+	return "GraphXPlayer";
+}
+
 void GraphXPlayer::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.contains("NULL"))
@@ -263,11 +274,19 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
+	collider.shape = ColliderShapes::CAPSULE;
+	collider.scale = scale;
+	collider.position = position_global;
+	collider.quaternion = quaternion;
+	collider.friction = friction;
+	collider.motion_type = JPH::EMotionType::Dynamic;
+	collider.createBody();
+
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	player_settings->mLayer = Layers::MOVING;
-	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(convertMath<JPH::Vec3>(position_global), convertMath<JPH::Quat>(quaternion), new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
-	player_settings->mFriction = 10.0f;
+	player_settings->mShape = jolt_physics_system.GetBodyInterface().GetShape(collider.getBodyID());
+	player_settings->mFriction = 1.0f;
 	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), -scale[0]);
 	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), convertMath<JPH::Quat>(quaternion), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
@@ -276,27 +295,38 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 void GraphXPlayer::tick(int current_tick)
 {
 	player_camera.tick(current_tick);
-
-	// PRINTLN("player position: " << glm::to_string(position_global) << "\nplayer collider position: " << jph_character->GetPosition() << "\nplayer collider center of mass position: " << jph_character->GetCenterOfMassPosition() << "\nplayer camera position: " << glm::to_string(player_camera.position_global))
+	jolt_physics_system.GetBodyInterface().SetRotation(collider.getBodyID(), JPH::Quat::sIdentity(), JPH::EActivation::Activate);
+	JPH::Vec3 collider_position = jolt_physics_system.GetBodyInterface().GetPosition(collider.getBodyID());
 	JPH::Vec3 jph_position = jph_character->GetPosition();
-	position_global = convertMath<glm::vec3>(jph_position);
+	glm::vec3 new_position = glm::vec3(jph_position[0], collider_position[1], jph_position[2]);
+
+	jph_character->SetPosition(convertMath<JPH::Vec3>(new_position));
+	// PRINTDEBUG("player position: " << glm::to_string(position_global) << "\nplayer collider position: " << jolt_physics_system.GetBodyInterface().GetPosition(collider.getBodyID()) << "\nplayer collider rotation: " << jolt_physics_system.GetBodyInterface().GetRotation(collider.getBodyID()))
 }
 
 void GraphXPlayer::doMovement(int direction[2])
 {
-	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
+	// glm::vec3 wish_velocity = glm::vec3(0.0f);
+	// wish_velocity += orientation_grounded_front * static_cast<float>(direction[0] * movement_speed);
+	// wish_velocity += orientation_right * static_cast<float>(direction[1] * movement_speed);
+	// JPH::Vec3 new_wish_velocity = convertMath<JPH::Vec3>(wish_velocity);
+	// JPH::Vec3 new_velocity = current_velocity + new_wish_velocity;
+
+	// new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
+	// new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
+
+	// jph_character->SetLinearVelocity(new_velocity);
+
+	JPH::Vec3 current_velocity = jolt_physics_system.GetBodyInterface().GetLinearVelocity(collider.getBodyID());
 	glm::vec3 wish_velocity = glm::vec3(0.0f);
 	wish_velocity += orientation_grounded_front * static_cast<float>(direction[0] * movement_speed);
 	wish_velocity += orientation_right * static_cast<float>(direction[1] * movement_speed);
-	JPH::Vec3 new_wish_velocity = convertMath<JPH::Vec3>(wish_velocity);
-	JPH::Vec3 new_velocity = current_velocity + new_wish_velocity;
+	wish_velocity = glm::clamp(wish_velocity, -max_velocity, max_velocity);
+	wish_velocity[1] = 0.0f;
 
-	// PRINTLN("wish_velocity: " << glm::to_string(wish_velocity) << "\ncurrent_velocity: " << current_velocity);
+	jolt_physics_system.GetBodyInterface().AddImpulse(collider.getBodyID(), convertMath<JPH::Vec3>(wish_velocity));
 
-	new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
-	new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
-
-	jph_character->SetLinearVelocity(new_velocity);
+	PRINTDEBUG("wish_velocity: " << glm::to_string(wish_velocity) << "\ncurrent_velocity: " << current_velocity)
 }
 
 void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
@@ -326,6 +356,11 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 	actor_type = ACTOR_LIGHT;
 	light_type = LIGHT_POINT;
 	debug_visible = true;
+}
+
+std::string Light::getType()
+{
+	return "Light";
 }
 
 void Light::youGotACallBack(gSettings new_settings)
@@ -359,6 +394,11 @@ void LightDirectional::youGotACallBack(gSettings new_settings)
 	setRawData(direction, new_settings["Direction"]);
 }
 
+std::string LightDirectional::getType()
+{
+	return "LightDirectional";
+}
+
 //
 // LightSpot
 //
@@ -366,6 +406,11 @@ LightSpot::LightSpot(std::string init_name, float init_intensity, float init_ran
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
 {
 	light_type = LIGHT_SPOT;
+}
+
+std::string LightSpot::getType()
+{
+	return "LightSpot";
 }
 
 void LightSpot::youGotACallBack(gSettings new_settings)
@@ -396,6 +441,11 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 {
 	light_type = LIGHT_SPOT;
 	debug_visible = false;
+}
+
+std::string LightFlashlight::getType()
+{
+	return "LightFlashlight";
 }
 
 void LightFlashlight::youGotACallBack(gSettings new_settings)
@@ -439,6 +489,11 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 	pivot_point.position_global = init_pivot_position;
 }
 
+std::string LightTesterMover::getType()
+{
+	return "LightTesterMover";
+}
+
 void LightTesterMover::youGotACallBack(gSettings new_settings)
 {
 	if(new_settings.contains("NULL"))
@@ -466,6 +521,7 @@ void LightTesterMover::tick(int current_tick)
 
 void LightTesterMover::callToStage(Theatre *parent_theatre)
 {
-	parent_theatre->actorEnter(&pivot_point);
+	// Manual UID created; check here if problems arise, just in case
+	parent_theatre->actorEnter(&pivot_point, 481516);
 	pivot_point.callToStage(parent_theatre); // Might be calling callToStage() twice here, will have to test
 }

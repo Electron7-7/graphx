@@ -2,21 +2,21 @@
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
 #include <algorithm>
 
-std::unordered_map<int, Theatre *> all_theatres = {};
+std::unordered_map<int, Theatre> all_theatres = {};
 
 int current_theatre_uid = -1;
 bool current_troupe_changed = false;
 
 Theatre *getCurrentTheatre()
 {
-	return all_theatres[current_theatre_uid];
+	return &all_theatres[current_theatre_uid];
 }
 
 Environment *getCurrentEnvironment()
 {
 	if(current_theatre_uid == -1 || getCurrentTheatre()->environment_uid == -1)
 		return new Environment();
-	return static_cast<Environment *>(getCurrentTheatre()->devices[getCurrentTheatre()->environment_uid]);
+	return static_cast<Environment *>(getCurrentTheatre()->getDevice(getCurrentTheatre()->environment_uid));
 }
 
 //
@@ -30,89 +30,247 @@ Theatre::Theatre(std::string init_name)
 
 void Theatre::startPreshow()
 {
-	for(auto &pair : objects)
-		troupe.insert(troupe.end(), pair.second);
-
-	sortTroupe();
-	countLights();
-
-	PRINTLN("Entering Theatre (" << name << ")\nActors Present:")
+	PRINTDEBUG("Entering Theatre (" << name << ")\nActors Present:")
 	for(auto &pair : devices)
 		pair.second->loadSettings();
 
-	for(Actor *actor : troupe)
+	for(auto &pair : objects)
 	{
-		actor->youGotACallBack();
-		actor->callToStage(this);
+		pair.second->youGotACallBack();
+		pair.second->callToStage(this);
 	}
+	PRINTDEBUG("Note:\n\tWhen a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
 
 	sortTroupe();
+	countLights();
 }
 
 void Theatre::dropCurtains()
 {
-	PRINTLN("Exiting Theatre (" << name << ")\nActors Present:")
+	PRINTDEBUG("Exiting Theatre (" << name << ")\nActors Present:")
 	for(auto &pair : objects)
 		pair.second->takeABow();
+
+	PRINTIMPORTANT("HEY! HEY! DON'T FORGET! DEVICES NEED TO BE TOLD TO EXIT, TOO!!")
 
 	// for(auto &pair : devices)
 		// EXIT DEVICES
 }
 
-void Theatre::addActor(Actor *new_actor)
+void Theatre::actorEnter(Actor *new_actor, long uid)
 {
-	int object_uid = objects.end()->first + 1;
-	objects[object_uid] = new_actor;
-	troupe.insert(troupe.end(), new_actor);
-}
-
-void Theatre::removeActor(Actor *old_actor)
-{
-	int i = 0;
-	for(auto it = troupe.begin() ; it != troupe.end() ; it++,i++)
+	if(objects.contains(uid))
 	{
-		if (troupe[i] == old_actor)
-		{
-			delete troupe[i];
-			troupe[i] = NULL;
-			troupe.erase(it);
-		}
+		PRINTERR("ERROR! Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+		return;
 	}
 
-	if(auto it = objects.find(old_actor->getUID()) ; it != objects.end())
-	{
-		delete it->second;
-		it->second = NULL;
-		objects.erase(it);
-	}
-}
+	objects[uid] = new_actor;
+	new_actor->setUID(uid);
+	troupe.insert(troupe.end(), objects.at(uid));
 
-void Theatre::actorEnter(Actor *new_actor)
-{
-	addActor(new_actor);
 	sortTroupe();
 	countLights();
-	new_actor->callToStage(this);
+
+	if(time_to_render)
+	{
+		new_actor->youGotACallBack();
+		new_actor->callToStage(this);
+	}
+
 	current_troupe_changed = time_to_render;
 }
 
-void Theatre::troupeEnter(std::vector<Actor *> new_troupe)
+void Theatre::actorEnter(Actor *(*new_actor_function)(), long uid)
 {
-	for(Actor *actor : new_troupe)
-		addActor(actor);
+	if(objects.contains(uid))
+	{
+		PRINTERR("ERROR! Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+		return;
+	}
+
+	objects[uid] = new_actor_function();
+	objects.at(uid)->setUID(uid);
+	troupe.insert(troupe.end(), objects.at(uid));
 
 	sortTroupe();
 	countLights();
-	for(Actor *actor : new_troupe)
-		actor->callToStage(this);
+
+	if(time_to_render)
+	{
+		objects.at(uid)->youGotACallBack();
+		objects.at(uid)->callToStage(this);
+	}
+
+	current_troupe_changed = time_to_render;
+}
+
+void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
+{
+	for(auto &pair : new_troupe)
+	{
+		if(objects.contains(pair.second))
+		{
+			PRINTERR("ERROR! Tried adding a new Actor with UID " << std::quoted(std::to_string(pair.second)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+			return;
+		}
+
+		objects[pair.second] = pair.first;
+		pair.first->setUID(pair.second);
+		troupe.insert(troupe.end(), objects.at(pair.second));
+
+		if(time_to_render)
+		{
+			pair.first->youGotACallBack();
+			pair.first->callToStage(this);
+		}
+	}
+
+	sortTroupe();
+	countLights();
 	current_troupe_changed = time_to_render;
 }
 
 void Theatre::actorLeave(Actor *old_actor)
 {
-	removeActor(old_actor);
-	countLights();
-	current_troupe_changed = time_to_render;
+	if(auto it = objects.find(old_actor->getUID()) ; it != objects.end())
+	{
+		// delete it->second;
+		it->second = NULL;
+		objects.erase(it);
+		int i = 0;
+		for(auto it = troupe.begin() ; it != troupe.end() ; it++,i++)
+		{
+			if (troupe[i] == old_actor)
+			{
+				// delete troupe[i];
+				troupe[i] = NULL;
+				troupe.erase(it);
+			}
+		}
+
+		countLights();
+		current_troupe_changed = time_to_render;
+		return;
+	}
+
+	PRINTERR("ERROR! Request to remove an Actor by pointer failed!\n\tUID of Actor given to function: " << std::quoted(std::to_string(old_actor->getUID())))
+}
+
+void Theatre::actorLeave(long uid)
+{
+	if(auto it = objects.find(uid) ; it != objects.end())
+	{
+		// delete it->second;
+		it->second = NULL;
+		objects.erase(it);
+		int i = 0;
+		for(auto iter = troupe.begin() ; iter != troupe.end() ; iter++,i++)
+		{
+			if(troupe[i]->getUID() == uid)
+			{
+				// delete troupe[i];
+				troupe[i] = NULL;
+				troupe.erase(iter);
+			}
+		}
+
+		countLights();
+		current_troupe_changed = time_to_render;
+		return;
+	}
+
+	PRINTERR("ERROR! Request to remove an Actor with UID " << std::quoted(std::to_string(uid)) << " failed!")
+}
+
+void Theatre::placeDevice(Device *new_device, long uid)
+{
+	if(devices.contains(uid))
+	{
+		PRINTERR("ERROR! Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
+		return;
+	}
+
+	devices[uid] = new_device;
+	new_device->initialize(this);
+}
+
+void Theatre::placeDevice(Device *(*new_device_function)(), long uid)
+{
+	if(devices.contains(uid))
+	{
+		PRINTERR("ERROR! Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
+		return;
+	}
+
+	devices[uid] = new_device_function();
+	devices.at(uid)->initialize(this);
+}
+
+void Theatre::removeDevice(Device *old_device)
+{
+	if(auto it = devices.find(old_device->getUID()) ; it != devices.end())
+	{
+		// delete it->second;
+		it->second = NULL;
+		devices.erase(it);
+		return;
+	}
+
+	PRINTERR("ERROR! Request to remove a Device by pointer failed!\n\tUID of Device given to function: " << std::quoted(std::to_string(old_device->getUID())))
+}
+
+void Theatre::removeDevice(long uid)
+{
+	if(auto it = devices.find(uid) ; it != devices.end())
+	{
+		// delete it->second;
+		it->second = NULL;
+		devices.erase(it);
+		return;
+	}
+	
+	PRINTERR("ERROR! Request to remove a Device with UID " << std::quoted(std::to_string(uid)) << " failed!")
+}
+
+Actor *Theatre::getActor(long actor_uid)
+{
+	if(objects.contains(actor_uid))
+		return objects.at(actor_uid);
+
+	PRINTERR("Hey! Someone asked for an Actor with the UID " << std::quoted(std::to_string(actor_uid)) << ", but none were found! The \"getActor\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")
+	return nullptr;
+}
+
+Actor *Theatre::getActor(std::string actor_name)
+{
+	for(auto &pair : objects)
+	{
+		if(pair.second->name.compare(actor_name) == 0)
+			return pair.second;
+	}
+
+	PRINTERR("Hey! Someone asked for an Actor named " << std::quoted(actor_name) << ", but none were found! The \"getActor\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")
+	return nullptr;
+}
+
+Device *Theatre::getDevice(long device_uid)
+{
+	if(devices.contains(device_uid))
+		return devices.at(device_uid);
+
+	PRINTERR("Hey! Someone asked for a Device with the UID " << std::quoted(std::to_string(device_uid)) << ", but none were found! The \"getDevice\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")
+	return nullptr;
+}
+
+Device *Theatre::getDevice(std::string device_name)
+{
+	for(auto &pair : devices)
+		if(pair.second->name.compare(device_name))
+			return pair.second;
+
+	PRINTERR("Hey! Someone asked for a Device named " << std::quoted(device_name) << ", but none were found! The \"getDevice\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")
+	return nullptr;
 }
 
 void Theatre::sortTroupe()

@@ -36,13 +36,6 @@ Collider (Floor_Collider)
 	Shape       [BoxShape]
 	Scale       (20.0, 1.0, 20.0)
 }
-RigidBodyActor (Test_Actor_1)
-{
-	Mesh:Material   <Cube>:<Doom_Shiny>
-	Collider		<Test_Actor_1_Collider>
-	Position        (0.0, 10.0, -6.0)
-	Scale           (1.2, 2.0, 1.0)
-}
 RigidBodyActor (Floor)
 {
 	Mesh:Material <Cube>:<Doom_Dull>
@@ -52,7 +45,7 @@ RigidBodyActor (Floor)
 GraphXPlayer (main_player)
 {
 	Position      (0.0, 6.0, 0.0)
-	MovementSpeed (1.0)
+	MovementSpeed (10.0)
 }
 LightDirectional (Sun)
 {

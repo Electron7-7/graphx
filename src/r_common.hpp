@@ -77,6 +77,7 @@ struct Device
 	int device_type;
 	gSettings settings;
 
+	virtual void initialize(Theatre *parent_theatre);
 	virtual void loadSettings(gSettings new_settings = null_settings);
 	virtual void prepForDestruction();
 	virtual long getUID();

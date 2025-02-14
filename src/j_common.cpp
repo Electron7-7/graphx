@@ -80,6 +80,7 @@ void Collider::createBody()
 
 	body_settings = JPH::BodyCreationSettings(createAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
 	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
+	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
 }
 
 void Collider::prepForDestruction()

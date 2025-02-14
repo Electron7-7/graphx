@@ -560,33 +560,38 @@ void createNewClass(std::string class_name, int object_uid, gSettings class_sett
 
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 	{
-		parent_theatre.objects[object_uid] = actor_map[class_hash]();
-		parent_theatre.objects[object_uid]->settings = class_settings;
-		parent_theatre.objects[object_uid]->setUID(object_uid);
+		parent_theatre.actorEnter(actor_map[class_hash], object_uid);
+		parent_theatre.getActor(object_uid)->settings = class_settings;
+		return;
 	}
 
+	// Leaving this if{} here for now (paranoia); remove it to use early return
 	if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
 	{
-		parent_theatre.devices[object_uid] = device_map[class_hash]();
-		parent_theatre.devices[object_uid]->settings = class_settings;
-		parent_theatre.devices[object_uid]->setUID(object_uid);
+		parent_theatre.placeDevice(device_map[class_hash], object_uid);
+		parent_theatre.getDevice(object_uid)->settings = class_settings;
 		if(class_name == "Environment")
 			parent_theatre.environment_uid = object_uid;
 	}
 }
 
-Theatre *loadTheatre(std::string embedded_theatre)
+Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 {
 	gTheatreStorage theatre_data = theatreParser(embedded_theatre);
-#ifdef GRAPHX_DEBUG
-	PRINTLN(getTheatreStructure(theatre_data));
-#endif
+	PRINTDEBUG(getTheatreStructure(theatre_data));
 
-	current_theatre_uid++;
-	all_theatres.insert(all_theatres.end(), std::make_pair(current_theatre_uid, new Theatre(std::get<0>(theatre_data))));
-	Theatre *new_theatre = all_theatres.at(current_theatre_uid);
+	current_theatre_uid = theatre_uid;
+	if(all_theatres.contains(theatre_uid))
+	{
+		PRINTERR("ERROR! A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded as that UID already exists! Returning a pointer to the Theatre with the greatest UID")
+		return &all_theatres.end()->second;
+	}
 
-	auto theatre_name = std::get<0>(theatre_data);
+	all_theatres[theatre_uid] = Theatre(std::get<0>(theatre_data));
+	// Theatre *new_theatre = all_theatres.at(current_theatre_uid);
+	Theatre &new_theatre = all_theatres.at(current_theatre_uid);
+
+	// auto theatre_name = std::get<0>(theatre_data); // not needed, but leaving here so u know what the first tuple element is, lol
 	auto objects_bucket = std::get<1>(theatre_data);
 	auto cpp_references = std::get<2>(theatre_data);
 	auto theatre_references = std::get<3>(theatre_data);
@@ -596,9 +601,7 @@ Theatre *loadTheatre(std::string embedded_theatre)
 	for(const auto &object : objects_bucket)
 	{
 		gSettings new_class_settings = getSettingsTemplate(object.second.first);
-
 		new_class_settings.at("Name") = gRawData{object.second.second};
-		PRINTLN("New " << object.second.first << " with name " << std::quoted(object.second.second))
 
 		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
 		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
@@ -617,12 +620,12 @@ Theatre *loadTheatre(std::string embedded_theatre)
 
 			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 			{
-				new_class_settings.at(it->second.first) = new_theatre->objects.at(it->second.second);
+				new_class_settings.at(it->second.first) = new_theatre.getActor(it->second.second);
 			}
 
 			if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
 			{
-				new_class_settings.at(it->second.first) = new_theatre->devices.at(it->second.second);
+				new_class_settings.at(it->second.first) = new_theatre.getDevice(it->second.second);
 			}
 		}
 
@@ -638,18 +641,18 @@ Theatre *loadTheatre(std::string embedded_theatre)
 			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 			{
 				new_class_settings.at(it->second.first.first) = actor_map[getClassHash(it->second.first.first)]();
-				settings_to_modify = new_theatre->objects.at(it->second.first.second)->settings;
+				settings_to_modify = new_theatre.getActor(it->second.first.second)->settings;
 				for(auto &pair : it->second.second)
 				{
 					if(settings_to_modify.contains(pair.first))
 					{
 						if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
 						{
-							settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
+							settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
 							continue;
 						}
 
-						settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
+						settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
 					}
 				}
 
@@ -658,25 +661,25 @@ Theatre *loadTheatre(std::string embedded_theatre)
 			}
 
 			new_class_settings.at(it->second.first.first) = device_map[getClassHash(it->second.first.first)]();
-			settings_to_modify = new_theatre->devices.at(it->second.first.second)->settings;
+			settings_to_modify = new_theatre.getDevice(it->second.first.second)->settings;
 			for(auto &pair : it->second.second)
 			{
 				if(settings_to_modify.contains(pair.first))
 				{
 					if(ACTORS[0] <= getClassHash(pair.first) && getClassHash(pair.first) <= ACTORS[1])
 					{
-						settings_to_modify.at(pair.first) = new_theatre->objects.at(pair.second);
+						settings_to_modify.at(pair.first) = new_theatre.getActor(pair.second);
 						continue;
 					}
 
-					settings_to_modify.at(pair.first) = new_theatre->devices.at(pair.second);
+					settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
 				}
 			}
 
 			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings(settings_to_modify);
 		}
 
-		createNewClass(object.second.first, object.first, new_class_settings, *new_theatre);
+		createNewClass(object.second.first, object.first, new_class_settings, new_theatre);
 	}
 
 	return getCurrentTheatre();

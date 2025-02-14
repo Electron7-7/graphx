@@ -199,23 +199,23 @@ class GraphXContactListener : public JPH::ContactListener
 {
 	virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override
 	{
-		// std::cout << "Contact validate callback" << std::endl;
+		// JOLTDEBUG("Contact validate callback")
 		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
 	}
 
 	virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
 	{
-		// std::cout << "A contact was added" << std::endl;
+		JOLTDEBUG("A contact was added")
 	}
 
 	virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
 	{
-		// std::cout << "A contact was persisted" << std::endl;
+		// JOLTDEBUG("A contact was persisted")
 	}
 
 	virtual void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
 	{
-		// std::cout << "A contact was removed" << std::endl;
+		JOLTDEBUG("A contact was removed")
 	}
 };
 
@@ -224,12 +224,12 @@ class GraphXBodyActivationListener : public JPH::BodyActivationListener
 public:
 	virtual void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
 	{
-		// std::cout << "A body got activated" << std::endl;
+		JOLTDEBUG("A body got activated")
 	}
 
 	virtual void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
 	{
-		// std::cout << "A body went to sleep" << std::endl;
+		JOLTDEBUG("A body went to sleep")
 	}
 };
 //--------------------------------
@@ -270,7 +270,7 @@ void testGameTick(GLFWwindow *main_window)
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 	// This will change to include loading external Theatres and to not just only load the first Theatre lmfao
-	loadTheatre(embedded_theatres[0]); // So, when I add UI, this will go behind a "start game"/"load level"/etc
+	loadTheatre(embedded_theatres[0], 0); // So, when I add UI, this will go behind a "start game"/"load level"/etc
 	getCurrentTheatre()->startPreshow();
 
 	time_to_store_buffers = true;
@@ -281,7 +281,8 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
 
-	LightFlashlight *player_flashlight = dynamic_cast<LightFlashlight *>(getCurrentTheatre()->objects.at(9));
+	// LightFlashlight *player_flashlight = static_cast<LightFlashlight *>(getCurrentTheatre()->getActor(std::string("Player_Flashlight")));
+	LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
 	while(!glfwWindowShouldClose(main_window))
 	{
@@ -321,9 +322,7 @@ void testGameTick(GLFWwindow *main_window)
 	
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 
-	// current_theatre_deprecated->dropCurtains();
 	getCurrentTheatre()->dropCurtains();
-
 
 	JPH::UnregisterTypes();
 
@@ -366,7 +365,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTLN("Resetting PhysicsActors to initial transformation!")
-		for(Actor *actor : 	getCurrentTheatre()->troupe)
+		for(Actor *actor: getCurrentTheatre()->troupe)
 			if(actor->actor_type == ACTOR_PHYSICS)
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}

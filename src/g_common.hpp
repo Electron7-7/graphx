@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "r_common.hpp"
+#include "g_jolt.hpp"
 #include <unordered_map>
 #include <any>
 
@@ -60,6 +61,7 @@ public:
 	virtual bool wantsToBeBuffered();
 	virtual long getUID();
 	virtual void setUID(long manual_uid = -1); // If manual_uid is -1, a new UID is generated instead
+	virtual std::string getType(); // Might remove this later
 
 protected:
 	long UID = -1; // A UID of -1 means it's not been set yet
@@ -72,8 +74,6 @@ struct Theatre
 	Mesh stage = Mesh();
 	long environment_uid = -1;
 	std::string name = "Untitled Theatre";
-	std::unordered_map<long, Actor *> objects = {};
-	std::unordered_map<long, Device *> devices = {};
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
@@ -82,22 +82,48 @@ struct Theatre
 
 	void startPreshow();
 	void dropCurtains();
-	void actorEnter(Actor *new_actor);
-	void troupeEnter(std::vector<Actor *> new_troupe);
+	void actorEnter(Actor *new_actor, long uid);
+	void actorEnter(Actor *(*new_actor_function)(), long uid);
+	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
 	void actorLeave(Actor *old_actor);
+	void actorLeave(long uid);
+	void placeDevice(Device *new_device, long uid);
+	void placeDevice(Device *(*new_device_function)(), long uid);
+	void removeDevice(Device *old_device);
+	void removeDevice(long uid);
+
+	// I abstracted getting Actor and Device pointers to functions, because directly grabbing them from their maps
+	// might return null (if using []) or crash the engine (if using .at()). This crash will appear to happen for no
+	// reason, so abstracting to these functions lets me put a PRINTERR in them that will print a detailed warning
+	// message if the function can't find the Actor/Device (before returning a nullptr). This means that getting
+	// Actor or Device pointers won't (directly) crash the engine, but will print a warning if it returns a nullptr.
+
+	Actor *getActor(long uid);
+	Actor *getActor(std::string actor_name);
+	Device *getDevice(long uid);
+	Device *getDevice(std::string device_name);
+
+	template<typename T> T iKnowWhatActorIWant(auto identifier)
+	{
+		return static_cast<T>(getActor(identifier));
+	}
+
+	template<typename T> T iKnowWhatDeviceIWant(auto identifier)
+	{
+		return static_cast<T>(getDevice(identifier));
+	}
 
 private:
-	void addActor(Actor *new_actor);
-	void removeActor(Actor *old_actor);
+	std::unordered_map<long, Actor *> objects = {};
+	std::unordered_map<long, Device *> devices = {};
+
 	void sortTroupe();
 	void countLights();
 };
 
-Theatre *getCurrentTheatre(); // Abstracts "&all_theatres[current_theatre_uid]"
+Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"
 
-extern std::unordered_map<int, Theatre *> all_theatres;
+extern std::unordered_map<int, Theatre> all_theatres;
 extern int current_theatre_uid;
-extern bool current_troupe_changed;
-
-// extern Theatre *current_theatre_deprecated;
+extern bool current_troupe_changed; // Convert this into a function/variable inside Theatre
 #endif

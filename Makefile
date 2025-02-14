@@ -25,11 +25,11 @@ O = build
 
 OBJS = 						\
 	$(O)/glad.o				\
+	$(O)/g_actors.opp		\
 	$(O)/j_common.opp		\
 	$(O)/r_common.opp		\
 	$(O)/r_renderer.opp		\
 	$(O)/g_math.opp			\
-	$(O)/g_actors.opp		\
 	$(O)/t_interpreter.opp	\
  	$(O)/g_theatres.opp
 

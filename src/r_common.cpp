@@ -167,27 +167,16 @@ void Device::loadSettings(gSettings new_settings)
 	setRawData(name, new_settings["Name"]);
 }
 
+void Device::initialize(Theatre *parent_theatre)
+{}
+
 void Device::prepForDestruction()
 {}
 
 void Device::setUID(long manual_uid)
 {
 	if(manual_uid != -1)
-	{
 		UID = manual_uid;
-		return;
-	}
-
-	// The UID set/get should only be called on objects where this is safe to do
-	// Also, the UID should be set manually by an external object; this is mainly just
-	// a fail-safe
-	for(auto &pair : getCurrentTheatre()->devices)
-	{
-		if(pair.second != this)
-			continue;
-
-		UID = (long)pair.first;
-	}
 }
 
 long Device::getUID()
