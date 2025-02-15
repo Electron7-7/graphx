@@ -323,6 +323,8 @@ void GraphXPlayer::doMovement(int direction[2])
 
 	JPH::Vec3 new_velocity = linearInterpolate(current_velocity, wish_velocity, movement_lerp);
 	new_velocity.SetY(current_velocity.GetY());
+	if(new_velocity == current_velocity)
+		return;
 	jph_character->SetLinearVelocity(new_velocity);
 }
 
@@ -518,7 +520,7 @@ void LightTesterMover::callToStage(Theatre *parent_theatre)
 	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.position_global = pivot_position;
-	parent_theatre->actorEnter(&pivot_point, 481516);
+	parent_theatre->actorEnter(&pivot_point, 481516 + UID);
 
 	pivot_point.callToStage(parent_theatre); // Might be calling callToStage() twice here, will have to test
 }

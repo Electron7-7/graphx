@@ -4,13 +4,13 @@ CC = clang
 WCXX = x86_64-w64-mingw32-g++
 WCC = x86_64-w64-mingw32-gcc
 
-CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS) #-fsanitize=address
+CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
 WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows $(JOLTFLAGS) $(GRAPHXFLAGS)
 WCCFLAGS = -g -Wall -static -mwindows
 
-GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG
+GRAPHXFLAGS = -D GRAPHX_COMPILING
 JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
 
 INCLUDES = -I src/include
@@ -66,7 +66,7 @@ FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped 
 all: build build_windows
 
 clean: clean_resources
-	rm -f build/*
+	rm -rf build/*
 	make -s embed_resources
 
 clean_resources:
@@ -82,7 +82,11 @@ compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
 debug: recompile_theatres
+	$(eval O = build/Debug)
 	$(eval LINUX = GraphXDebug)
+	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG -fsanitize=address)
+
+release: clean_resources embed_resources
 
 build: $(O)/$(LINUX)
 
@@ -134,7 +138,7 @@ $(O)/theatres.opp: $(THEATRES_C)
 $(O)/%.opp:	$(SRC)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-$(O)/%.o:	$(SRC)/%.c
+$(O)/%.o: $(SRC)/%.c
 	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
 
 

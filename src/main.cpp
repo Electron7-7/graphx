@@ -20,9 +20,6 @@
 #include <thread>
 #include <mutex>
 
-// Theatre *current_theatre_deprecated;
-// Environment default_environment(true);
-
 std::mutex actor_state_mutex;
 
 glm::vec2 main_window_size(1280, 720);
@@ -36,7 +33,6 @@ double last_tick_timestamp = 0;
 bool test_flashlight_bool = false;
 bool red_flashlight_color_bool = false;
 
-void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param);
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -54,15 +50,12 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
-	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(_debug_callback, nullptr);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
+	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
@@ -83,7 +76,6 @@ int main()
 		if(time_to_render)
 		{
 			// De-jank all of this shit below
-			// glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
 			R_Render(actor_state_mutex, interpolation_time, projection_matrix);
@@ -337,32 +329,32 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		getCurrentEnvironment()->ambient_lighting_enabled = !getCurrentEnvironment()->ambient_lighting_enabled;
 		if(!getCurrentEnvironment()->ambient_lighting_enabled)
-			PRINTLN("Ambient Lighting Disabled")
+			PRINTDEBUG("Ambient Lighting Disabled")
 		else
-			PRINTLN("Ambient Lighting Enabled")
+			PRINTDEBUG("Ambient Lighting Enabled")
 	}
 
 	if(key == GLFW_KEY_F && action == GLFW_PRESS)
 	{
 		test_flashlight_bool = !test_flashlight_bool;
 		if(test_flashlight_bool)
-			PRINTLN("Flashlight Off")
+			PRINTDEBUG("Flashlight Off")
 		else
-			PRINTLN("Flashlight On")
+			PRINTDEBUG("Flashlight On")
 	}
 
 	if(key == GLFW_KEY_Q && action == GLFW_PRESS)
 	{
 		red_flashlight_color_bool = !red_flashlight_color_bool;
 		if(red_flashlight_color_bool)
-			PRINTLN("Flashlight Red")
+			PRINTDEBUG("Flashlight Red")
 		else
-			PRINTLN("Flashlight Not Red")
+			PRINTDEBUG("Flashlight Not Red")
 	}
 
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
-		PRINTLN("Resetting PhysicsActors to initial transformation!")
+		PRINTDEBUG("Resetting PhysicsActors to initial transformation!")
 		for(Actor *actor: getCurrentTheatre()->troupe)
 			if(actor->actor_type == ACTOR_PHYSICS)
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
@@ -372,12 +364,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		{
-			PRINTLN("Cursor Mode: Disabled (hidden + locked at center)")
+			PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			return;
 		}
 
-		PRINTLN("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
+		PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 }
@@ -404,52 +396,6 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 		return;
 	
 	current_player->doMouseMovement(mouse_offset);
-}
-
-void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param)
-{
-	auto const src_str = [source]()
-	{
-		switch (source)
-		{
-			case GL_DEBUG_SOURCE_API: return "API";
-			case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW SYSTEM";
-			case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER COMPILER";
-			case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD PARTY";
-			case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
-			case GL_DEBUG_SOURCE_OTHER: return "OTHER";
-		}
-		return "N/A";
-	}();
-
-	auto const type_str = [type]()
-	{
-		switch (type)
-		{
-			case GL_DEBUG_TYPE_ERROR: return "ERROR";
-			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
-			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
-			case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
-			case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
-			case GL_DEBUG_TYPE_MARKER: return "MARKER";
-			case GL_DEBUG_TYPE_OTHER: return "OTHER";
-		}
-		return "N/A";
-	}();
-
-	auto const severity_str = [severity]()
-	{
-		switch (severity)
-		{
-			case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
-			case GL_DEBUG_SEVERITY_LOW: return "LOW";
-			case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
-			case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
-		}
-		return "N/A";
-	}();
-
-	std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
 }
 
 int WinMain() // Fuck off, Windows

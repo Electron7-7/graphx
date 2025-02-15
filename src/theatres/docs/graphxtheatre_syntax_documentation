@@ -92,6 +92,20 @@ RigidBodyActor (Floor)
 	Collider	  <Floor_Collider>
 	Scale		  (50.0, 1.0, 50.0)
 }
+Collider (Wall_Collider)
+{
+	MotionType  [Static]
+	ObjectLayer [NonMoving]
+	Activation  [DontActivate]
+	Shape       [BoxShape]
+}
+RigidBodyActor (Wall)
+{
+	Mesh:Material <Cube>:<Doom_Dull>
+	Collider	  <Wall_Collider>
+	Scale		  (50.0, 50.0, 1.0)
+	Position      (0.0, 25.0, -51.0)
+}
 GraphXPlayer (main_player)
 {
 	Position             (0.0, 3.0, 6.0)

@@ -62,7 +62,7 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 {
 	if(objects.contains(uid))
 	{
-		PRINTERR("ERROR! Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+		PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
 		return;
 	}
 
@@ -89,7 +89,7 @@ void Theatre::createActor(Actor *new_actor_function(), long uid, gSettings new_s
 {
 	if(objects.contains(uid))
 	{
-		PRINTERR("ERROR! Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+		PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
 		return;
 	}
 
@@ -118,7 +118,7 @@ void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
 	{
 		if(objects.contains(pair.second))
 		{
-			PRINTERR("ERROR! Tried adding a new Actor with UID " << std::quoted(std::to_string(pair.second)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+			PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(pair.second)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
 			return;
 		}
 
@@ -161,7 +161,7 @@ void Theatre::actorLeave(Actor *old_actor)
 		return;
 	}
 
-	PRINTERR("ERROR! Request to remove an Actor by pointer failed!\n\tUID of Actor given to function: " << std::quoted(std::to_string(old_actor->getUID())))
+	PRINTERR("Request to remove an Actor by pointer failed!\n\tUID of Actor given to function: " << std::quoted(std::to_string(old_actor->getUID())))
 }
 
 void Theatre::actorLeave(long uid)
@@ -187,14 +187,14 @@ void Theatre::actorLeave(long uid)
 		return;
 	}
 
-	PRINTERR("ERROR! Request to remove an Actor with UID " << std::quoted(std::to_string(uid)) << " failed!")
+	PRINTERR("Request to remove an Actor with UID " << std::quoted(std::to_string(uid)) << " failed!")
 }
 
 void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)
 {
 	if(devices.contains(uid))
 	{
-		PRINTERR("ERROR! Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
+		PRINTERR("Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
 		return;
 	}
 
@@ -213,7 +213,7 @@ void Theatre::createDevice(Device *new_device_function(), long uid, gSettings ne
 {
 	if(devices.contains(uid))
 	{
-		PRINTERR("ERROR! Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
+		PRINTERR("Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
 		return;
 	}
 
@@ -234,7 +234,7 @@ void Theatre::removeDevice(Device *old_device)
 		return;
 	}
 
-	PRINTERR("ERROR! Request to remove a Device by pointer failed!\n\tUID of Device given to function: " << std::quoted(std::to_string(old_device->getUID())))
+	PRINTERR("Request to remove a Device by pointer failed!\n\tUID of Device given to function: " << std::quoted(std::to_string(old_device->getUID())))
 }
 
 void Theatre::removeDevice(long uid)
@@ -247,7 +247,7 @@ void Theatre::removeDevice(long uid)
 		return;
 	}
 	
-	PRINTERR("ERROR! Request to remove a Device with UID " << std::quoted(std::to_string(uid)) << " failed!")
+	PRINTERR("Request to remove a Device with UID " << std::quoted(std::to_string(uid)) << " failed!")
 }
 
 Actor *Theatre::getActor(long actor_uid)

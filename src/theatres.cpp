@@ -15,7 +15,7 @@ Material (Doom_Dull)
 	SpecularSharpness (16)
 	SpecularStrength  (0.5)
 }
-Mesh     (Cube)
+Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
 }
@@ -31,6 +31,20 @@ RigidBodyActor (Floor)
 	Mesh:Material <Cube>:<Doom_Dull>
 	Collider	  <Floor_Collider>
 	Scale		  (50.0, 1.0, 50.0)
+}
+Collider (Wall_Collider)
+{
+	MotionType  [Static]
+	ObjectLayer [NonMoving]
+	Activation  [DontActivate]
+	Shape       [BoxShape]
+}
+RigidBodyActor (Wall)
+{
+	Mesh:Material <Cube>:<Doom_Dull>
+	Collider	  <Wall_Collider>
+	Scale		  (50.0, 50.0, 1.0)
+	Position      (0.0, 25.0, -51.0)
 }
 GraphXPlayer (main_player)
 {
