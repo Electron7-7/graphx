@@ -148,8 +148,8 @@ windows_test: build_windows
 # 	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(WINDOWS)
 	wine64 $(O)/$(WINDOWS)
 
-$(O)/$(WINDOWS): $(O)/images.wo $(O)/shaders.wopp $(WOBJS) $(O)/main.wopp
-	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(O)/images.wo $(O)/shaders.wopp $(WOBJS) $(O)/main.wopp \
+$(O)/$(WINDOWS): $(O)/images.wo $(O)/shaders.wopp $(O)/theatres.wopp $(WOBJS) $(O)/main.wopp
+	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(O)/images.wo $(O)/shaders.wopp $(O)/theatres.wopp $(WOBJS) $(O)/main.wopp \
 	-o $(O)/$(WINDOWS) $(WLIBS)
 
 $(O)/%.wopp: $(SRC)/%.cpp
@@ -163,3 +163,6 @@ $(O)/images.wo: $(IMAGES_C)
 
 $(O)/shaders.wopp: $(SHADERS_C)
 	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
+
+$(O)/theatres.opp: $(THEATRES_C)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
