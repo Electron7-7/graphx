@@ -1,15 +1,15 @@
 #include "sanity.hpp"
 #include "t_common.hpp"
+#include "g_actors.hpp"
+#include "g_jolt.hpp"
 #include "cube.graphxmodel"
 // #include "ERROR.graphxmodel"
 // #include "pyramid.graphxmodel"
 // #include "quad.graphxmodel"
-#include "g_actors.hpp"
-#include "r_common.hpp"
-#include "g_jolt.hpp"
 #include <set>
-#include <any>
-#include <unordered_map>
+
+using namespace graphx;
+using namespace graphx::classes;
 
 gTheatreStorage theatreParser(std::string theatre_data)
 {
@@ -342,8 +342,7 @@ gRawData extractData(std::string data_in_here)
 	return gRawData{data_in_here};
 }
 
-using namespace graphx_classes;
-gActorMap actor_map =
+std::map<int, Actor*(*)()> actor_map =
 {
 	{ACTOR, &createNewObject<Actor, Actor>},
 	{PHYSICSACTOR, &createNewObject<PhysicsActor, Actor>},
@@ -357,7 +356,7 @@ gActorMap actor_map =
 	{LIGHTTESTERMOVER, &createNewObject<LightTesterMover, Actor>},
 };
 
-gDeviceMap device_map =
+std::map<int, Device*(*)()> device_map =
 {
 	{ENVIRONMENT, &createNewObject<Environment, Device>},
 	{MATERIAL, &createNewObject<Material, Device>},
@@ -395,181 +394,20 @@ int getClassHash(std::string class_name)
 	return -1;
 }
 
-gSettings null_settings =
-{
-	{"NULL", nullptr}
-};
-
-gSettings actor_settings =
-{
-	{"Name", nullptr},
-	{"Visible", nullptr},
-	{"Mesh", nullptr},
-	{"Position", nullptr},
-	{"RotationDegrees", nullptr},
-	{"Scale", nullptr},
-};
-
-gSettings physics_actor_settings =
-{
-	{"Mass", nullptr},
-	{"Collider", nullptr},
-};
-
-gSettings rigidbody_actor_settings =
-{
-};
-
-gSettings camera_settings =
-{
-	{"Parent", nullptr},
-	{"LocalPosition", nullptr},
-	{"LocalRotationDegrees", nullptr}
-};
-
-gSettings graphxplayer_settings =
-{
-	{"PlayerMesh", nullptr},
-	{"PlayerCamera", nullptr},
-	{"MouseSensitivity", nullptr},
-	{"MovementSpeed", nullptr},
-	{"MaxVelocity", nullptr}
-};
-
-gSettings light_settings =
-{
-	{"Color", nullptr},
-	{"Strength", nullptr},
-	{"Range", nullptr},
-	{"Intensity", nullptr},
-	{"Falloff", nullptr}
-};
-
-gSettings light_directional_settings =
-{
-	{"Direction", nullptr}
-};
-
-gSettings light_spot_settings =
-{
-	{"InnerCutoffAngle", nullptr},
-	{"OuterCutoffAngle", nullptr}
-};
-
-gSettings light_flashlight_settings =
-{
-	{"Parent", nullptr},
-	{"PositionOffset", nullptr},
-	{"RotationOffset", nullptr}
-};
-
-gSettings light_tester_mover_settings =
-{
-	{"PivotPosition", nullptr},
-	{"PivotRadius", nullptr},
-	{"PivotSpeed", nullptr}
-};
-
-gSettings device_settings =
-{
-	{"Name", nullptr}
-};
-
-gSettings environment_settings =
-{
-	{"AmbientLightingEnabled", nullptr},
-	{"AmbientLightingColor", nullptr},
-	{"AmbientLightingStrength", nullptr}
-};
-
-gSettings material_settings =
-{
-	{"DiffuseTexture", nullptr},
-	{"SpecularTexture", nullptr},
-	{"Color", nullptr},
-	{"SpecularSharpness", nullptr},
-	{"SpecularStrength", nullptr},
-	{"mat_fullbright", nullptr}
-};
-
-gSettings mesh_settings =
-{
-	{"Name", nullptr},
-	{"Material", nullptr},
-	{"MeshData", nullptr}
-};
-
-gSettings sprite_settings =
-{};
-
-gSettings collider_settings =
-{
-	{"Position", nullptr},
-	{"Scale", nullptr},
-	{"Quaternion", nullptr},
-	{"MotionType", nullptr},
-	{"ObjectLayer", nullptr},
-	{"Activation", nullptr},
-	{"Shape", nullptr}
-};
-
-std::unordered_map<int, std::pair<int, gSettings>> settings_map =
-{
-	{ACTOR, {-1, actor_settings}},
-	{PHYSICSACTOR, {ACTOR, physics_actor_settings}},
-	{RIGIDBODYACTOR, {PHYSICSACTOR, rigidbody_actor_settings}},
-	{CAMERA, {ACTOR, camera_settings}},
-	{GRAPHXPLAYER, {ACTOR, graphxplayer_settings}},
-	{LIGHT, {ACTOR, light_settings}},
-	{LIGHTDIRECTIONAL, {LIGHT, light_directional_settings}},
-	{LIGHTSPOT, {LIGHT, light_spot_settings}},
-	{LIGHTFLASHLIGHT, {LIGHT, light_flashlight_settings}},
-	{LIGHTTESTERMOVER, {LIGHT, light_tester_mover_settings}},
-	{DEVICE, {-1, device_settings}},
-	{ENVIRONMENT, {DEVICE, environment_settings}},
-	{MATERIAL, {DEVICE, material_settings}},
-	{MESH, {DEVICE, mesh_settings}},
-	{SPRITE, {MESH, sprite_settings}},
-	{COLLIDER, {DEVICE, collider_settings}},
-};
-
-gSettings getSettingsTemplate(std::string class_name)
-{
-	int class_hash = getClassHash(class_name);
-	std::pair<int, gSettings> settings_pair = settings_map.at(class_hash);
-	gSettings all_settings = {};
-	int abort = 0;
-	while(settings_pair.first != -1 && abort != 50) // abort != 50 is a fail-safe
-	{
-		// Find out how to insert an unordered map into an unordered map (without a for loop, duh)
-		for(auto &pair : settings_pair.second)
-			all_settings[pair.first] = pair.second;
-		settings_pair = settings_map.at(settings_pair.first);
-		abort++;
-	}
-
-	for(auto &pair : settings_pair.second)
-		all_settings[pair.first] = pair.second;
-
-	return all_settings;
-}
-
 void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre &parent_theatre)
 {
 	int class_hash = getClassHash(class_name);
 
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 	{
-		parent_theatre.actorEnter(actor_map[class_hash], object_uid);
-		parent_theatre.getActor(object_uid)->settings = class_settings;
+		parent_theatre.createActor(actor_map[class_hash], object_uid, class_settings);
 		return;
 	}
 
 	// Leaving this if{} here for now (paranoia); remove it to use early return
 	if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
 	{
-		parent_theatre.placeDevice(device_map[class_hash], object_uid);
-		parent_theatre.getDevice(object_uid)->settings = class_settings;
+		parent_theatre.createDevice(device_map[class_hash], object_uid, class_settings);
 		if(class_name == "Environment")
 			parent_theatre.environment_uid = object_uid;
 	}
@@ -588,10 +426,8 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 	}
 
 	all_theatres[theatre_uid] = Theatre(std::get<0>(theatre_data));
-	// Theatre *new_theatre = all_theatres.at(current_theatre_uid);
 	Theatre &new_theatre = all_theatres.at(current_theatre_uid);
 
-	// auto theatre_name = std::get<0>(theatre_data); // not needed, but leaving here so u know what the first tuple element is, lol
 	auto objects_bucket = std::get<1>(theatre_data);
 	auto cpp_references = std::get<2>(theatre_data);
 	auto theatre_references = std::get<3>(theatre_data);
@@ -600,8 +436,10 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 
 	for(const auto &object : objects_bucket)
 	{
-		gSettings new_class_settings = getSettingsTemplate(object.second.first);
-		new_class_settings.at("Name") = gRawData{object.second.second};
+		gSettings new_class_settings = 
+		{
+			{"Name", gRawData{object.second.second}},
+		};
 
 		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
 		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
@@ -610,43 +448,42 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 
 		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
 		{
-			new_class_settings.at(it->second.first) = cpp_definitions[it->second.second];
+			new_class_settings[it->second.first] = cpp_definitions[it->second.second];
 		}
 
 		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
 		{
-			std::string reference_name = objects_bucket.at(it->second.second).first;
-			gSettings referenced_settings;
+			int reference_class_hash = getClassHash(it->second.first);
 
-			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 			{
-				new_class_settings.at(it->second.first) = new_theatre.getActor(it->second.second);
+				new_class_settings[it->second.first] = new_theatre.getActor(it->second.second);
 			}
 
-			if(DEVICES[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= DEVICES[1])
+			if(DEVICES[0] <= reference_class_hash && reference_class_hash <= DEVICES[1])
 			{
-				new_class_settings.at(it->second.first) = new_theatre.getDevice(it->second.second);
+				new_class_settings[it->second.first] = new_theatre.getDevice(it->second.second);
 			}
 		}
 
 		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
 		{
-			new_class_settings.at(it->second.first) = extractData(it->second.second);
+			new_class_settings[it->second.first] = extractData(it->second.second);
 		}
 
 		for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
 		{
-			gSettings settings_to_modify = null_settings;
-			std::string reference_name = objects_bucket.at(it->second.first.second).first;
-			if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+			gSettings settings_to_modify;
+			int reference_class_hash = getClassHash(it->second.first.first);
+			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 			{
-				new_class_settings.at(it->second.first.first) = actor_map[getClassHash(it->second.first.first)]();
+				new_class_settings[it->second.first.first] = actor_map[reference_class_hash]();
 				settings_to_modify = new_theatre.getActor(it->second.first.second)->settings;
 				for(auto &pair : it->second.second)
 				{
 					if(settings_to_modify.contains(pair.first))
 					{
-						if(ACTORS[0] <= getClassHash(reference_name) && getClassHash(reference_name) <= ACTORS[1])
+						if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 						{
 							settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
 							continue;
@@ -656,27 +493,27 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 					}
 				}
 
-				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->youGotACallBack(settings_to_modify);
+				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
+				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->youGotACallBack();
 				continue;
 			}
 
-			new_class_settings.at(it->second.first.first) = device_map[getClassHash(it->second.first.first)]();
+			new_class_settings[it->second.first.first] = device_map[reference_class_hash]();
 			settings_to_modify = new_theatre.getDevice(it->second.first.second)->settings;
 			for(auto &pair : it->second.second)
 			{
-				if(settings_to_modify.contains(pair.first))
+				if(ACTORS[0] <= getClassHash(pair.first) && getClassHash(pair.first) <= ACTORS[1])
 				{
-					if(ACTORS[0] <= getClassHash(pair.first) && getClassHash(pair.first) <= ACTORS[1])
-					{
-						settings_to_modify.at(pair.first) = new_theatre.getActor(pair.second);
-						continue;
-					}
-
-					settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
+					settings_to_modify[pair.first] = new_theatre.getActor(pair.second);
+					continue;
 				}
+
+				settings_to_modify[pair.first] = new_theatre.getDevice(pair.second);
 			}
 
-			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings(settings_to_modify);
+			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
+			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings();
+			// std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->initialize(&new_theatre);
 		}
 
 		createNewClass(object.second.first, object.first, new_class_settings, new_theatre);

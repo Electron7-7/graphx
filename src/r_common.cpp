@@ -5,6 +5,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+using namespace graphx;
+
 //
 // GLShader
 //
@@ -159,9 +162,9 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 //
 // Device
 //
-void Device::loadSettings(gSettings new_settings)
+void Device::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
 
 	setRawData(name, new_settings["Name"]);
@@ -201,12 +204,11 @@ Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_co
 	device_type = DEVICE_ENVIRONMENT;
 }
 
-void Environment::loadSettings(gSettings new_settings)
+void Environment::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Device::loadSettings();
+	Device::loadSettings(new_settings);
 
 	setRawData(ambient_lighting_enabled, new_settings["AmbientLightingEnabled"]);
 	setRawData(ambient_light_color, new_settings["AmbientLightingColor"]);
@@ -234,12 +236,11 @@ Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned 
 	device_type = DEVICE_MATERIAL;
 }
 
-void Material::loadSettings(gSettings new_settings)
+void Material::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Device::loadSettings();
+	Device::loadSettings(new_settings);
 
 	setVariable(embedded_texture_diffuse, new_settings["DiffuseTexture"]);
 	setVariable(embedded_texture_specular, new_settings["SpecularTexture"]);
@@ -287,12 +288,11 @@ Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vec
 	device_type = DEVICE_MESH;
 }
 
-void Mesh::loadSettings(gSettings new_settings)
+void Mesh::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Device::loadSettings();
+	Device::loadSettings(new_settings);
 
 	gMeshData mesh_data;
 
@@ -314,10 +314,9 @@ Sprite::Sprite(Material *init_material, int init_vao_index)
 	device_type = DEVICE_SPRITE;
 }
 
-void Sprite::loadSettings(gSettings new_settings)
+void Sprite::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Mesh::loadSettings();
+	Mesh::loadSettings(new_settings);
 }

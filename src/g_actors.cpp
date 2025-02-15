@@ -6,6 +6,8 @@
 #include <vector>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
+using namespace graphx;
+
 GraphXPlayer *current_player = NULL;
 glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -38,11 +40,10 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
-void Actor::youGotACallBack(gSettings new_settings)
+void Actor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
 	glm::vec3 rotation_degrees = glm::eulerAngles(quaternion);
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(mesh, new_settings["Mesh"]);
@@ -131,12 +132,12 @@ std::string PhysicsActor::getType()
 	return "PhysicsActor";
 }
 
-void PhysicsActor::youGotACallBack(gSettings new_settings)
+void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Actor::youGotACallBack();
+	
+	Actor::youGotACallBack(new_settings);
 
 	setRawData(mass, new_settings["Mass"]);
 	setDevicePointer(collider, new_settings["Collider"]);
@@ -160,12 +161,11 @@ void PhysicsActor::tick(int current_tick)
 //
 // RigidBodyActor
 //
-void RigidBodyActor::youGotACallBack(gSettings new_settings)
+void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	PhysicsActor::youGotACallBack();
+	PhysicsActor::youGotACallBack(new_settings);
 }
 
 std::string RigidBodyActor::getType()
@@ -222,12 +222,11 @@ std::string Camera::getType()
 	return "Camera";
 }
 
-void Camera::youGotACallBack(gSettings new_settings)
+void Camera::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Actor::youGotACallBack();
+	Actor::youGotACallBack(new_settings);
 
 	setActorPointer(parent, new_settings["Parent"]);
 	setRawData(position_local, new_settings["LocalPosition"]);
@@ -258,75 +257,76 @@ std::string GraphXPlayer::getType()
 	return "GraphXPlayer";
 }
 
-void GraphXPlayer::youGotACallBack(gSettings new_settings)
+void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
 
-	Actor::youGotACallBack();
+	Actor::youGotACallBack(new_settings);
 
 	setRawData(mouse_sensitivity, new_settings["MouseSensitivity"]);
 	setRawData(movement_speed, new_settings["MovementSpeed"]);
-	setRawData(max_velocity, new_settings["MaxVelocity"]);
+	setRawData(lerp_speed, new_settings["MovementAcceleration"]);
 }
 
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
-	collider.shape = ColliderShapes::CAPSULE;
-	collider.scale = scale;
-	collider.position = position_global;
-	collider.quaternion = quaternion;
-	collider.friction = friction;
-	collider.motion_type = JPH::EMotionType::Dynamic;
-	collider.createBody();
+	// collider.shape = ColliderShapes::CYLINDER;
+	// collider.scale = scale;
+	// collider.position = position_global;
+	// collider.quaternion = quaternion;
+	// collider.friction = friction;
+	// collider.motion_type = JPH::EMotionType::Dynamic;
+	// collider.createBody();
 
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	player_settings->mLayer = Layers::MOVING;
-	player_settings->mShape = jolt_physics_system.GetBodyInterface().GetShape(collider.getBodyID());
+	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(convertMath<JPH::Vec3>(position_global), convertMath<JPH::Quat>(quaternion), new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
 	player_settings->mFriction = 1.0f;
-	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), -scale[0]);
-	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), convertMath<JPH::Quat>(quaternion), 0, &jolt_physics_system);
+	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisX(), scale[0]);
+	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
 }
 
 void GraphXPlayer::tick(int current_tick)
 {
 	player_camera.tick(current_tick);
-	jolt_physics_system.GetBodyInterface().SetRotation(collider.getBodyID(), JPH::Quat::sIdentity(), JPH::EActivation::Activate);
-	JPH::Vec3 collider_position = jolt_physics_system.GetBodyInterface().GetPosition(collider.getBodyID());
-	JPH::Vec3 jph_position = jph_character->GetPosition();
-	glm::vec3 new_position = glm::vec3(jph_position[0], collider_position[1], jph_position[2]);
-
-	jph_character->SetPosition(convertMath<JPH::Vec3>(new_position));
-	// PRINTDEBUG("player position: " << glm::to_string(position_global) << "\nplayer collider position: " << jolt_physics_system.GetBodyInterface().GetPosition(collider.getBodyID()) << "\nplayer collider rotation: " << jolt_physics_system.GetBodyInterface().GetRotation(collider.getBodyID()))
+	position_global = convertMath<glm::vec3>(jph_character->GetPosition());
 }
 
 void GraphXPlayer::doMovement(int direction[2])
 {
-	// glm::vec3 wish_velocity = glm::vec3(0.0f);
-	// wish_velocity += orientation_grounded_front * static_cast<float>(direction[0] * movement_speed);
-	// wish_velocity += orientation_right * static_cast<float>(direction[1] * movement_speed);
-	// JPH::Vec3 new_wish_velocity = convertMath<JPH::Vec3>(wish_velocity);
-	// JPH::Vec3 new_velocity = current_velocity + new_wish_velocity;
+	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
+	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
+	wish_velocity += convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += convertMath<JPH::Vec3>(orientation_right) * static_cast<float>(direction[1] * movement_speed);
 
-	// new_velocity.SetX(JPH::Clamp(new_velocity.GetX(), -max_velocity, max_velocity));
-	// new_velocity.SetZ(JPH::Clamp(new_velocity.GetZ(), -max_velocity, max_velocity));
+	if(direction[0] == 0 && direction[1] == 0)
+	{
+		if(is_moving_horizontally)
+			movement_lerp = 0.0f;	
+		is_moving_horizontally = false;
+	}
 
-	// jph_character->SetLinearVelocity(new_velocity);
+	else
+	{
+		if(!is_moving_horizontally)
+			movement_lerp = 0.0f;
+		is_moving_horizontally = true;
+	}
 
-	JPH::Vec3 current_velocity = jolt_physics_system.GetBodyInterface().GetLinearVelocity(collider.getBodyID());
-	glm::vec3 wish_velocity = glm::vec3(0.0f);
-	wish_velocity += orientation_grounded_front * static_cast<float>(direction[0] * movement_speed);
-	wish_velocity += orientation_right * static_cast<float>(direction[1] * movement_speed);
-	wish_velocity = glm::clamp(wish_velocity, -max_velocity, max_velocity);
-	wish_velocity[1] = 0.0f;
+	JPH::Vec3 new_velocity = linearInterpolate(current_velocity, wish_velocity, 0.5f);
 
-	jolt_physics_system.GetBodyInterface().AddImpulse(collider.getBodyID(), convertMath<JPH::Vec3>(wish_velocity));
+	PRINTDEBUG("position_global: " << glm::to_string(position_global))
+	PRINTDEBUG("jph_character position: " << jph_character->GetPosition())
+	PRINTDEBUG("current_velocity: " << current_velocity)
+	PRINTDEBUG("wish_velocity: " << wish_velocity)
+	PRINTDEBUG("new_velocity: " << new_velocity)
 
-	PRINTDEBUG("wish_velocity: " << glm::to_string(wish_velocity) << "\ncurrent_velocity: " << current_velocity)
+	jph_character->SetLinearVelocity(new_velocity);
 }
 
 void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
@@ -363,12 +363,11 @@ std::string Light::getType()
 	return "Light";
 }
 
-void Light::youGotACallBack(gSettings new_settings)
+void Light::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Actor::youGotACallBack();
+	Actor::youGotACallBack(new_settings);
 
 	setRawData(light_color, new_settings["Color"]);
 	setRawData(light_strength, new_settings["Strength"]);
@@ -384,12 +383,11 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 : Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color), direction(init_direction)
 { light_type = LIGHT_DIRECTIONAL; }
 
-void LightDirectional::youGotACallBack(gSettings new_settings)
+void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Light::youGotACallBack();
+	Light::youGotACallBack(new_settings);
 
 	setRawData(direction, new_settings["Direction"]);
 }
@@ -413,12 +411,11 @@ std::string LightSpot::getType()
 	return "LightSpot";
 }
 
-void LightSpot::youGotACallBack(gSettings new_settings)
+void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Light::youGotACallBack();
+	Light::youGotACallBack(new_settings);
 
 	setRawData(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
 	setRawData(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
@@ -448,12 +445,11 @@ std::string LightFlashlight::getType()
 	return "LightFlashlight";
 }
 
-void LightFlashlight::youGotACallBack(gSettings new_settings)
+void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Light::youGotACallBack();
+	Light::youGotACallBack(new_settings);
 
 	setActorPointer(parent, new_settings["Parent"]);
 	setRawData(position_offset, new_settings["PositionOffset"]);
@@ -494,12 +490,12 @@ std::string LightTesterMover::getType()
 	return "LightTesterMover";
 }
 
-void LightTesterMover::youGotACallBack(gSettings new_settings)
+void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
 
-	Light::youGotACallBack();
+	Light::youGotACallBack(new_settings);
 
 	setRawData(pivot_position, new_settings["PivotPosition"]);
 	setRawData(pivot_radius, new_settings["PivotRadius"]);
@@ -522,6 +518,10 @@ void LightTesterMover::tick(int current_tick)
 void LightTesterMover::callToStage(Theatre *parent_theatre)
 {
 	// Manual UID created; check here if problems arise, just in case
+	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+	pivot_point.position_global = pivot_position;
 	parent_theatre->actorEnter(&pivot_point, 481516);
+
 	pivot_point.callToStage(parent_theatre); // Might be calling callToStage() twice here, will have to test
 }

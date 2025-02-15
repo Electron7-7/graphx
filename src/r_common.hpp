@@ -2,14 +2,11 @@
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "sanity.hpp"
+#include "graphx_namespace.hpp"
 #include "ERROR.graphxmodel"
-#include <any>
 #include <array>
 #include <mutex>
-#include <vector>
-#include <string>
 #include <filesystem>
-#include <unordered_map>
 
 #define GLSHADER_TYPE_VERTEX	0
 #define GLSHADER_TYPE_FRAGMENT	1
@@ -55,9 +52,6 @@ class Actor;		// Forward-declare Actor
 class GraphXPlayer;	// Forward-declare GraphXPlayer
 struct Theatre;		// Forward-declare Theatre
 
-typedef std::unordered_map<std::string, std::any> gSettings;
-extern gSettings null_settings;
-
 struct GLShader
 {
 	unsigned int id;
@@ -75,13 +69,13 @@ struct Device
 {
 	std::string name = "Untitled Device";
 	int device_type;
-	gSettings settings;
+	graphx::gSettings settings;
 
 	virtual void initialize(Theatre *parent_theatre);
-	virtual void loadSettings(gSettings new_settings = null_settings);
+	virtual void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}});
 	virtual void prepForDestruction();
 	virtual long getUID();
-	virtual void setUID(long manual_uid = -1); // If manual_uid is -1, a new UID is generated instead
+	virtual void setUID(long manual_uid);
 
 protected:
 	long UID = -1; // A UID of -1 means it's not been set yet
@@ -96,7 +90,7 @@ struct Environment : public Device // Will be extended
 	Environment(bool enable_ambient_lighting = true, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f);
 
 	glm::vec3 getAmbientLight();
-	void loadSettings(gSettings new_settings = null_settings) override;
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 struct Material : public Device
@@ -121,7 +115,7 @@ struct Material : public Device
 	// unsigned int bufferTexture(std::filesystem::path path);
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
 
-	void loadSettings(gSettings new_settings = null_settings) override;
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 struct Mesh : public Device
@@ -137,7 +131,7 @@ struct Mesh : public Device
 
 	Mesh(Material *init_material = new Material(), std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
 
-	void loadSettings(gSettings new_settings = null_settings) override;
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
@@ -145,7 +139,7 @@ struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even th
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
 	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
 
-	void loadSettings(gSettings new_settings = null_settings) override;
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line

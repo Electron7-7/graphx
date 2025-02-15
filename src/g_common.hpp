@@ -1,12 +1,7 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
+#include "graphx_namespace.hpp"
 #include "r_common.hpp"
-#include "g_jolt.hpp"
-#include <unordered_map>
-#include <any>
-
-typedef std::unordered_map<std::string, std::any> gSettings;
-extern gSettings null_settings;
 
 struct RenderState
 {
@@ -48,11 +43,11 @@ public:
 
 	int state_index = 0;
 
-	gSettings settings;
+	graphx::gSettings settings;
 
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
-	virtual void youGotACallBack(gSettings new_settings = null_settings); // Loads settings
+	virtual void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}); // Loads settings
 	virtual void tick(int current_tick);
 	virtual void callToStage(Theatre *parent_theatre);
 	virtual void takeABow();
@@ -60,7 +55,7 @@ public:
 	virtual bool wantsToBeRendered();
 	virtual bool wantsToBeBuffered();
 	virtual long getUID();
-	virtual void setUID(long manual_uid = -1); // If manual_uid is -1, a new UID is generated instead
+	virtual void setUID(long manual_uid);
 	virtual std::string getType(); // Might remove this later
 
 protected:
@@ -82,13 +77,13 @@ struct Theatre
 
 	void startPreshow();
 	void dropCurtains();
-	void actorEnter(Actor *new_actor, long uid);
-	void actorEnter(Actor *(*new_actor_function)(), long uid);
+	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
+	void createActor(Actor *new_actor_function(), long uid, graphx::gSettings new_settings);
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
 	void actorLeave(Actor *old_actor);
 	void actorLeave(long uid);
-	void placeDevice(Device *new_device, long uid);
-	void placeDevice(Device *(*new_device_function)(), long uid);
+	void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
+	void createDevice(Device *new_device_function(), long uid, graphx::gSettings new_settings);
 	void removeDevice(Device *old_device);
 	void removeDevice(long uid);
 

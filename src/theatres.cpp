@@ -34,18 +34,19 @@ Collider (Floor_Collider)
 	ObjectLayer [NonMoving]
 	Activation  [DontActivate]
 	Shape       [BoxShape]
-	Scale       (20.0, 1.0, 20.0)
+	Scale       (50.0, 1.0, 50.0)
 }
 RigidBodyActor (Floor)
 {
 	Mesh:Material <Cube>:<Doom_Dull>
 	Collider	  <Floor_Collider>
-	Scale		  (20.0, 1.0, 20.0)
+	Scale		  (50.0, 1.0, 50.0)
 }
 GraphXPlayer (main_player)
 {
-	Position      (0.0, 6.0, 0.0)
-	MovementSpeed (10.0)
+	Position             (0.0, 6.0, 0.0)
+	MovementSpeed        (5.0)
+	MovementAcceleration (0.1)
 }
 LightDirectional (Sun)
 {
@@ -54,5 +55,11 @@ LightDirectional (Sun)
 }
 LightFlashlight (Player_Flashlight)
 {
+}
+LightTesterMover (spinny_light)
+{
+	PivotPosition (0.0, 1.5, -5.0)
+	PivotRadius   (1.4)
+	PivotSpeed    (2.0)
 })~"}}
 };

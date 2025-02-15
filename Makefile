@@ -74,10 +74,14 @@ clean_resources:
 
 embed_resources: $(IMAGES_C) $(SHADERS_C) $(THEATRES_C)
 
+recompile_theatres:
+	$(shell rm -f $(THEATRES_C) $(THEATRES_H))
+	make -s embed_resources
+
 compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
-debug:
+debug: recompile_theatres
 	$(eval LINUX = GraphXDebug)
 
 build: $(O)/$(LINUX)

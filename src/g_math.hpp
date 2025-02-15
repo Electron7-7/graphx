@@ -7,5 +7,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <Jolt/Jolt.h>
 
-template<typename T, typename A> T convertMath(A &convert_me);
+template<typename T, typename A> T convertMath(const A &convert_me);
+template<typename T> T linearInterpolate(T from, T to, float by);
 #endif

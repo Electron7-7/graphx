@@ -1,6 +1,5 @@
-#include "sanity.hpp"
-#include "g_math.hpp"
 #include "g_jolt.hpp"
+#include "g_math.hpp"
 #include "t_common.hpp"
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSettings.h>
@@ -12,6 +11,7 @@
 
 using namespace JPH;
 using namespace JPH::literals;
+using namespace graphx;
 
 const JPH::Shape *createAShape(int shape, jolt_shape_args shape_args)
 {
@@ -46,12 +46,11 @@ Collider::Collider()
 	device_type = DEVICE_COLLIDER;
 }
 
-void Collider::loadSettings(gSettings new_settings)
+void Collider::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("NULL"))
+	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
-
-	Device::loadSettings();
+	Device::loadSettings(new_settings);
 
 	setRawData(position, new_settings["Position"]);
 	setRawData(scale, new_settings["Scale"]);

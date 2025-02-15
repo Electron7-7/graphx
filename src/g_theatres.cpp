@@ -1,6 +1,7 @@
 #include "g_actors.hpp"
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
 #include <algorithm>
+using namespace graphx;
 
 std::unordered_map<int, Theatre> all_theatres = {};
 
@@ -57,7 +58,7 @@ void Theatre::dropCurtains()
 		// EXIT DEVICES
 }
 
-void Theatre::actorEnter(Actor *new_actor, long uid)
+void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 {
 	if(objects.contains(uid))
 	{
@@ -67,21 +68,24 @@ void Theatre::actorEnter(Actor *new_actor, long uid)
 
 	objects[uid] = new_actor;
 	new_actor->setUID(uid);
+	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
+		new_actor->settings = new_settings;
 	troupe.insert(troupe.end(), objects.at(uid));
 
 	sortTroupe();
 	countLights();
 
+	new_actor->youGotACallBack();
+
 	if(time_to_render)
 	{
-		new_actor->youGotACallBack();
 		new_actor->callToStage(this);
 	}
 
 	current_troupe_changed = time_to_render;
 }
 
-void Theatre::actorEnter(Actor *(*new_actor_function)(), long uid)
+void Theatre::createActor(Actor *new_actor_function(), long uid, gSettings new_settings)
 {
 	if(objects.contains(uid))
 	{
@@ -91,14 +95,17 @@ void Theatre::actorEnter(Actor *(*new_actor_function)(), long uid)
 
 	objects[uid] = new_actor_function();
 	objects.at(uid)->setUID(uid);
+	objects.at(uid)->settings = new_settings;
 	troupe.insert(troupe.end(), objects.at(uid));
+	PRINTDEBUG("New Actor " << objects.at(uid)->name << " with UID " << objects.at(uid)->getUID())
 
 	sortTroupe();
 	countLights();
 
+	objects.at(uid)->youGotACallBack(new_settings);
+
 	if(time_to_render)
 	{
-		objects.at(uid)->youGotACallBack();
 		objects.at(uid)->callToStage(this);
 	}
 
@@ -183,7 +190,7 @@ void Theatre::actorLeave(long uid)
 	PRINTERR("ERROR! Request to remove an Actor with UID " << std::quoted(std::to_string(uid)) << " failed!")
 }
 
-void Theatre::placeDevice(Device *new_device, long uid)
+void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)
 {
 	if(devices.contains(uid))
 	{
@@ -192,10 +199,17 @@ void Theatre::placeDevice(Device *new_device, long uid)
 	}
 
 	devices[uid] = new_device;
-	new_device->initialize(this);
+	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
+	{
+		new_device->settings = new_settings;
+		new_device->loadSettings();
+	}
+
+	if(time_to_render)
+		new_device->initialize(this);
 }
 
-void Theatre::placeDevice(Device *(*new_device_function)(), long uid)
+void Theatre::createDevice(Device *new_device_function(), long uid, gSettings new_settings)
 {
 	if(devices.contains(uid))
 	{
@@ -204,7 +218,10 @@ void Theatre::placeDevice(Device *(*new_device_function)(), long uid)
 	}
 
 	devices[uid] = new_device_function();
-	devices.at(uid)->initialize(this);
+	devices.at(uid)->settings = new_settings;
+	devices.at(uid)->loadSettings(new_settings);
+
+	PRINTDEBUG("New Device " << devices.at(uid)->name << " with UID " << devices.at(uid)->getUID())
 }
 
 void Theatre::removeDevice(Device *old_device)

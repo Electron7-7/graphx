@@ -236,8 +236,6 @@ public:
 // END OF JOLT PHYSICS BOILERPLATE
 //--------------------------------
 
-// #include "theatres/deprecated_header_format/collision_testing.oldtheatretemplate"
-
 void testGameTick(GLFWwindow *main_window)
 {
 	JPH::RegisterDefaultAllocator();
@@ -281,7 +279,6 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
 
-	// LightFlashlight *player_flashlight = static_cast<LightFlashlight *>(getCurrentTheatre()->getActor(std::string("Player_Flashlight")));
 	LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
 	while(!glfwWindowShouldClose(main_window))
