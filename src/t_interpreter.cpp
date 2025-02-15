@@ -513,7 +513,6 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 
 			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
 			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings();
-			// std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->initialize(&new_theatre);
 		}
 
 		createNewClass(object.second.first, object.first, new_class_settings, new_theatre);
