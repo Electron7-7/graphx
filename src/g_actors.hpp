@@ -71,7 +71,7 @@ public:
 	Actor *parent = NULL;
 	float view_pitch_clamp = 89.0f;
 	glm::vec3 position_global = glm::vec3(0.0f);
-	glm::vec3 position_local = glm::vec3(0.0f, 3.0f, 0.0f); // temporary default offset
+	glm::vec3 position_local = glm::vec3(0.0f, 0.0f, 0.0f); // temporary default offset
 	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
 	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
 
@@ -104,8 +104,8 @@ public:
 	Collider collider;
 
 	float mouse_sensitivity = 0.05f;
-	float movement_speed = 5.0f;
-	float lerp_speed = 0.1f;
+	float movement_speed = 10.0f;
+	double lerp_speed = 10.0f;
 	float friction = 0.7f;
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
@@ -123,8 +123,8 @@ public:
 
 private:
 	JPH::Ref<JPH::Character> jph_character;
-	float movement_lerp = 0.0f;
-	bool is_moving_horizontally = false;
+	double movement_lerp = 0.0f;
+	int last_direction[2] = {0, 0};
 };
 
 class Light: public Actor

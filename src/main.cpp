@@ -294,6 +294,7 @@ void testGameTick(GLFWwindow *main_window)
 
 			processInput(main_window);
 
+			// TICK(current_tick_since_second) // Prints current tick (looping from 0 to TICKRATE)
 			for(Actor *actor : getCurrentTheatre()->troupe)
 			{
 				actor->tick(current_tick_since_start);

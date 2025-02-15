@@ -44,13 +44,16 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
+
 	glm::vec3 rotation_degrees = glm::eulerAngles(quaternion);
+
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(mesh, new_settings["Mesh"]);
 	setRawData(position_global, new_settings["Position"]);
 	setRawData(rotation_degrees, new_settings["RotationDegrees"]);
-	quaternion = glm::quat(glm::radians(rotation_degrees));
 	setRawData(scale, new_settings["Scale"]);
+
+	quaternion = glm::quat(glm::radians(rotation_degrees));
 }
 
 std::string Actor::getType()
@@ -146,6 +149,9 @@ void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
 void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
+	collider->position = position_global;
+	collider->quaternion = quaternion;
+	collider->scale = scale;
 	collider->createBody();
 }
 
@@ -242,7 +248,7 @@ void Camera::tick(int current_tick)
 // GraphXPlayer
 //
 GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::vec3 init_rotation_euler)
-: Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.5f, 3.0f, 1.5f))
+: Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f))
 {
 	actor_type = ACTOR_PLAYER;
 	debug_visible = false;
@@ -267,26 +273,21 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 	setRawData(mouse_sensitivity, new_settings["MouseSensitivity"]);
 	setRawData(movement_speed, new_settings["MovementSpeed"]);
 	setRawData(lerp_speed, new_settings["MovementAcceleration"]);
+	setRawData(friction, new_settings["Friction"]);
+
+	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
 
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
-	// collider.shape = ColliderShapes::CYLINDER;
-	// collider.scale = scale;
-	// collider.position = position_global;
-	// collider.quaternion = quaternion;
-	// collider.friction = friction;
-	// collider.motion_type = JPH::EMotionType::Dynamic;
-	// collider.createBody();
-
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	player_settings->mLayer = Layers::MOVING;
-	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(convertMath<JPH::Vec3>(position_global), convertMath<JPH::Quat>(quaternion), new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
-	player_settings->mFriction = 1.0f;
-	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisX(), scale[0]);
+	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
+	player_settings->mFriction = friction;
+	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
 	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
 }
@@ -304,28 +305,24 @@ void GraphXPlayer::doMovement(int direction[2])
 	wish_velocity += convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
 	wish_velocity += convertMath<JPH::Vec3>(orientation_right) * static_cast<float>(direction[1] * movement_speed);
 
-	if(direction[0] == 0 && direction[1] == 0)
+	if(direction[0] == last_direction[0] && direction[1] == last_direction[1])
 	{
-		if(is_moving_horizontally)
-			movement_lerp = 0.0f;	
-		is_moving_horizontally = false;
+		if(movement_lerp < 1.0f)
+			movement_lerp += lerp_speed;
+		if(movement_lerp > 1.0f)
+			movement_lerp = 1.0f;
 	}
 
 	else
 	{
-		if(!is_moving_horizontally)
-			movement_lerp = 0.0f;
-		is_moving_horizontally = true;
+		movement_lerp = 0.0f;
 	}
 
-	JPH::Vec3 new_velocity = linearInterpolate(current_velocity, wish_velocity, 0.5f);
+	last_direction[0] = direction[0];
+	last_direction[1] = direction[1];
 
-	PRINTDEBUG("position_global: " << glm::to_string(position_global))
-	PRINTDEBUG("jph_character position: " << jph_character->GetPosition())
-	PRINTDEBUG("current_velocity: " << current_velocity)
-	PRINTDEBUG("wish_velocity: " << wish_velocity)
-	PRINTDEBUG("new_velocity: " << new_velocity)
-
+	JPH::Vec3 new_velocity = linearInterpolate(current_velocity, wish_velocity, movement_lerp);
+	new_velocity.SetY(current_velocity.GetY());
 	jph_character->SetLinearVelocity(new_velocity);
 }
 
@@ -344,7 +341,7 @@ glm::mat4 GraphXPlayer::getViewMatrix()
 
 bool GraphXPlayer::wantsToBeRendered()
 {
-	return true;
+	return false;
 }
 
 //

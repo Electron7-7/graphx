@@ -52,9 +52,6 @@ void Collider::loadSettings(graphx::gSettings new_settings)
 		new_settings = settings;
 	Device::loadSettings(new_settings);
 
-	setRawData(position, new_settings["Position"]);
-	setRawData(scale, new_settings["Scale"]);
-	setRawData(quaternion, new_settings["Quaternion"]);
 	setVariable(motion_type, new_settings["MotionType"]);
 	setVariable(object_layer, new_settings["ObjectLayer"]);
 	setVariable(activation, new_settings["Activation"]);

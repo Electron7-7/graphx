@@ -30,9 +30,11 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #define PRINTERR(thing) std::cerr << std::endl << "[ERROR]\t" << thing << std::endl;
 #define PRINTIMPORTANT(thing) for(int i = 0 ; i < 10 ; i++) { std::cout << std::endl << "[!]\t" << thing; }; std::cout << std::endl;
 #ifdef GRAPHX_DEBUG
+#define TICK(tick) std::cout << "[TICK #" << tick << "]" << std::endl;
 #define PRINTDEBUG(thing) std::cout << "[DEBUG]\t" << thing << std::endl;
 #define JOLTDEBUG(thing) std::cout << "[JOLT]\t" << thing << std::endl;
 #else
+#define TICK(tick);
 #define PRINTDEBUG(thing); // Might change this to print nothing, but I like having a little marker to remind/notify me that there are debug messages in the code somewhere
 #define JOLTDEBUG(thing);
 #endif

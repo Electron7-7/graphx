@@ -6,7 +6,7 @@ Material (Doom_Shiny)
 	DiffuseTexture    [DOOM_TEXTURE_DIFF]
 	SpecularTexture   [DOOM_TEXTURE_SPEC]
 	SpecularSharpness (256)
-	SpecularStrength  (1.0)
+	SpecularStrength  (0.8)
 }
 Material (Doom_Dull)
 {
@@ -19,22 +19,12 @@ Mesh     (Cube)
 {
 	MeshData [GRAPHX_CUBE]
 }
-Collider (Test_Actor_1_Collider)
-{
-	MotionType      [Dynamic]
-	ObjectLayer     [Moving]
-	Activation      [Activate]
-	Shape           [BoxShape]
-	Scale           (1.2, 2.0, 1.0)
-	Position        (0.0, 2.5, -6.0)
-}
 Collider (Floor_Collider)
 {
 	MotionType  [Static]
 	ObjectLayer [NonMoving]
 	Activation  [DontActivate]
 	Shape       [BoxShape]
-	Scale       (50.0, 1.0, 50.0)
 }
 RigidBodyActor (Floor)
 {
@@ -44,22 +34,91 @@ RigidBodyActor (Floor)
 }
 GraphXPlayer (main_player)
 {
-	Position             (0.0, 6.0, 0.0)
-	MovementSpeed        (5.0)
-	MovementAcceleration (0.1)
+	Position             (0.0, 3.0, 6.0)
+	MovementSpeed        (10.0)
+	MovementAcceleration (2.0)
+	Friction             (0.7)
+}
+LightFlashlight (Player_Flashlight)
+{
 }
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
 	Strength  (0.05)
-}
-LightFlashlight (Player_Flashlight)
-{
+	Color     (0.8, 0.9, 1.0)
 }
 LightTesterMover (spinny_light)
 {
-	PivotPosition (0.0, 1.5, -5.0)
-	PivotRadius   (1.4)
-	PivotSpeed    (2.0)
+	PivotPosition (5.3, 3.0, -3.8)
+	PivotRadius   (1.2)
+	PivotSpeed    (1.8)
+	Color         (1.0, 0.15, 0.3)
+}
+LightTesterMover (spinny_light_2)
+{
+	PivotPosition (-11.0, 1.7, -4.3)
+	PivotRadius   (2.4)
+	PivotSpeed    (0.87)
+	Color         (0.10, 1.0, 0.4)
+}
+Collider (Test_Collider_1)
+{
+	MotionType  [Dynamic]
+	ObjectLayer [Moving]
+	Activation  [Activate]
+	Shape       [BoxShape]
+}
+RigidBodyActor (Falling_Cube_1)
+{
+	Mesh:Material <Cube>:<Doom_Shiny>
+	Collider	  <Test_Collider_1>
+	Scale		  (1.0, 1.0, 1.0)
+	Position      (-2.0, 9.0, -6.0)
+}
+Collider (Test_Collider_2)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_2)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Collider	    <Test_Collider_2>
+	Scale		    (3.0, 0.8, 1.0)
+	Position        (-2.3, 11.5, -5.2)
+	RotationDegrees (5.0, -2.0, 37.0)
+}
+Collider (Test_Collider_3)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_3)
+{
+	Mesh:Material   <Cube>:<Doom_Dull>
+	Collider	    <Test_Collider_3>
+	Scale		    (4.2, 0.9, 2.7)
+	Position        (-3.5, 6.7, -4.0)
+	RotationDegrees (0.0, 60.0, 25.0)
+}
+Collider (Test_Collider_4)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_4)
+{
+	Mesh:Material   <Cube>:<Doom_Dull>
+	Collider	    <Test_Collider_4>
+	Scale		    (0.78, 0.5, 0.8)
+	Position        (-3.3, 7.2, -5.2)
+	RotationDegrees (5.0, -2.0, 37.0)
 })~"}}
 };

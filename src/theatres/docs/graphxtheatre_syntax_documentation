@@ -1,93 +1,188 @@
-// Below is the general syntax for GraphXTheatre files
+// The filename is pretty important and must follow this syntax:
+#.Name.graphxtheatre
+// The number at the start designates the Theatre's UID and load order (starting at 0 and going up).
+// After that, you should put your Theatre's name, but you can actually put whatever you want.
+// Finally, of course, the file extension.
+// As an example, the filename for my HelloWorld Theatre is:
+0.HelloWorld.graphxtheatre
 
-Theatre:SubClass [Name]
-Class:SubClass [Name]
+// Below is the general syntax for GraphXTheatre files:
+@NameOfThisTheatre
+Class (Name)
 {
-	StringVariable           "String"
-	DataVariable             (Data)/<Name>
-	DataVariable:SubVariable (Data)/<Name>:(Data)/<Name>
-	ReferenceVariable        [Reference]
+	RawDataVariable    (RawData)
+	ReferenceVariable  [Reference]
+	PointerVariable    <Name>
+	Sand:Wich:Variable <Name>:<Name>:<Name>
 }
 
-// Below is an example with lengthy descriptions
-//
-// The first line will name the Theatre and optionally give it a specific sub-class (currently, Theatres don't have subclasses)
-// Class & Theatre names can include whitespace, but that can complicate things and potentially introduce errors depending on how I write the syntax reader, so use whitespace at your own risk
-Theatre [HelloWorld_Theatre]
-
-// After the Theatre line, you can create resources and Actors in any order; although, depending on how I've written the parser, it may be faster to write them in order of appearance (e.g: make a Material above the Actor/Mesh that needs it instead of below it)
-// Since Material doesn't have a subclass (yet), I don't include a ":SubClass"
-// Class names are technically string variables, but use square brackets instead of quotes; the reason for this is that when copying the value of a data variable from one class to another, you write the class' name in angled brackets, so putting the name in quotes felt a bit wrong since they're being used like a reference
-Material [Doom_Shiny] // A Material named "Doom_Shiny"
+// Before I show you a full Theatre file with annotations, there are three important things to keep in mind:
+// 1. The first line will name the Theatre and must always be included.
+// 2. Class & Theatre names can include whitespace, but that can complicate things and potentially introduce errors depending on how I write the syntax reader, so use whitespace at your own risk. I recommend not using whitespace.
+// 3. After the Theatre line, you're free to start creating Devices and Actors; however, keep in mind that their order is important! If you need to reference an object, it has to have already been created first! Here's an example of what I mean:
+Material (Doom_Shiny)
 {
-	// A reference variable is simply a variable that references something in the actual C++ code; in this example, the variable "Diffuse" is referencing a preprocessor definition called "DOOM_TEXTURE_DIFF" (which you can find in the header file "r_common.hpp")
 	Diffuse           [DOOM_TEXTURE_DIFF]
 	Specular          [DOOM_TEXTURE_SPEC]
-	// A data variable takes numerical data; the syntax interpreter will (I assume) simply convert it using C++ conversion. Further below, you'll see an example of a data variable taking a name-reference instead which is one of the main reasons I created this custom syntax
+	SpecularSharpness (256)
+	SpecularStrength  (1.0)
+}
+Mesh (Cube)
+{
+	MeshData [GRAPHX_CUBE]
+	Material <Doom_Shiny> // This works because "Doom_Shiny" was already created before "Cube" was.
+}
+
+// Don't do this:
+Mesh (Cube)
+{
+	MeshData [GRAPHX_CUBE]
+	Material <Doom_Shiny> // This fails because "Doom_Shiny" doesn't exist yet!!
+}
+Material (Doom_Shiny)
+{
+	Diffuse           [DOOM_TEXTURE_DIFF]
+	Specular          [DOOM_TEXTURE_SPEC]
 	SpecularSharpness (256)
 	SpecularStrength  (1.0)
 }
 
-Material [Doom_Dull]
+// Why did I make it this way? Because I couldn't be fucked to write a more complex parser.
+
+// Below is a more detailed example with lengthy descriptions.
+// Be aware that comments don't exist for Theatre files, so don't try to write any!
+// You can find this Theatre in src/theatres/0.HelloWorld.graphxtheatre
+
+
+@HelloWorldTheatre
+Material (Doom_Shiny) // A Material named "Doom_Shiny"
+{
+	// A reference variable is simply a variable that references something in the actual C++ code; in this example, the variable "Diffuse" is referencing a preprocessor definition called "DOOM_TEXTURE_DIFF" (which you can find in the header file "r_common.hpp")
+	Diffuse           [DOOM_TEXTURE_DIFF]
+	Specular          [DOOM_TEXTURE_SPEC]
+	// A raw data variable can be a string, a number, or a series of numbers separated by commas. Currently, there's only support for up to three numbers at a time (since their main purpose is for filling GLM vectors). Yes, that means that the "Quaternion" variable would crash the engine if used. I intend on fixing that later but it's not a priority since the "RotationDegrees" variable gets turned into a quaternion almost immediately after being read.
+	SpecularSharpness (256)
+	SpecularStrength  (1.0)
+}
+Material (Doom_Dull)
 {
 	Diffuse           [DOOM_TEXTURE_DIFF]
 	Specular          [DOOM_TEXTURE_SPEC]
 	SpecularSharpness (16)
 	SpecularStrength  (0.5)
 }
-
-Mesh     [Cube]
+Mesh (Cube)
 {
-	VAO      [VAO_HANDMADE]
 	MeshData [GRAPHX_CUBE]
 }
-
-Collider [Test_Actor_1_Collider]
-{
-	// Reference variables may or may not be either pre-set or dynamic to your codebase. Currently, the idea is to keep it pre-set (i.e: the interpreter knows that "Dynamic" means "JPH::EMotionType::Dynamic"), but I do like the thought of making this file-format (and/or the interpreter) able to be tweaked by the user to add/change definitions or make it fully dynamic to a codebase (which would be very hard to do)
-	MotionType  [Dynamic]
-	ObjectLayer [Moving]
-	Activation  [Activate]
-	Shape       [Box]
-	// This is a data variable that is referencing another class instead of taking a numerical value. By writing the name of a class in angled brackets, the interpreter will copy the value of the same variable from the class in brackets to the class that called it
-	// In this example, Test_Actor_1's Scale, Position, and Quaternion values are copied into Test_Actor_1_Collider's Scale, Position, and Quaternion variables (the Quaternion variable isn't directly used in this example, but it does exist and is calculated from "RotationDegrees" if not directly set)
-	Scale       <Test_Actor_1>
-	Position    <Test_Actor_1>
-	Quaternion  <Test_Actor_1>
-}
-
-Collider [Floor_Collider]
+Collider (Floor_Collider)
 {
 	MotionType  [Static]
 	ObjectLayer [NonMoving]
 	Activation  [DontActivate]
-	Shape       [Box]
-	Scale       <Floor>
-	Position    <Floor>
-	Quaternion  <Floor>
+	Shape       [BoxShape]
 }
-
-// If you're not using a sub-class, you can just use the parent class; in this example it would be "Actor" instead of "Actor:RigidBodyActor"
-Actor:RigidBodyActor [Test_Actor_1]
+RigidBodyActor (Floor)
 {
 	// This is an example of setting/overriding a variable inside of a referenced variable. To do this, add a colon to the variable, followed by the name of the variable you want to override. Then, make sure you do the same with the values
 	// In this example, I set Test_Actor_1's Mesh variable to the "Cube" Mesh that I made earlier, but I override Cube's "Material" variable to the "Doom_Shiny" Material. I didn't set Cube's "Material" variable, but if I had, this would have overridden the value. Keep in mind that when referencing classes in variables that take that class, a copy of that class is used. This means that I can override Cube's "Material" variable here without it affecting other classes
-	// e.g: Mesh <Cube> sets the class' "Mesh" variable to a copy of the "Cube" Mesh, and Mesh:Material <Cube>:<Doom_Shiny> sets the class' "Mesh" variable to a copy of the "Cube" Mesh and changes that copy's "Material" variable to be the "Doom_Shiny" Material
-	Mesh:Material   <Cube>:<Doom_Shiny>
-	Position        (0.0, 2.5, -6.0)
-	RotationDegrees (0.0, -90.0, 0.0)
-	Scale           (1.2, 2.0, 1.0)
+	// e.g: Mesh <Cube> sets the class' "Mesh" variable to a copy of the "Cube" Mesh, and Mesh:Material <Cube>:<Doom_Shiny> sets the class' "Mesh" variable to a copy of the "Cube" Mesh and changes that copy's "Material" variable to be the "Doom_Shiny" Material.
+	// These are called "Sandwich Variables". You can only make sandwiches out of Pointer Variables (the angled brackets). This is because fuck you go make your own lexer+parser+interpreter and see how fun it is to try and account for that shit.
+	Mesh:Material <Cube>:<Doom_Dull>
+	Collider	  <Floor_Collider>
+	Scale		  (50.0, 1.0, 50.0)
 }
-Actor:RigidBodyActor [Floor]
+GraphXPlayer (main_player)
 {
-	Mesh:Material  <Cube>:<Doom_Dull>
-	Scale          (20.0, 1.0, 20.0)
+	Position             (0.0, 3.0, 6.0)
+	MovementSpeed        (10.0)
+	MovementAcceleration (2.0)
+	Friction             (0.7)
 }
-Actor:LightDirectional [Sun]
+LightFlashlight (Player_Flashlight)
+{
+}
+LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
 	Strength  (0.05)
+	Color     (0.8, 0.9, 1.0)
+}
+LightTesterMover (spinny_light)
+{
+	PivotPosition (5.3, 3.0, -3.8)
+	PivotRadius   (1.2)
+	PivotSpeed    (1.8)
+	Color         (1.0, 0.15, 0.3)
+}
+LightTesterMover (spinny_light_2)
+{
+	PivotPosition (-11.0, 1.7, -4.3)
+	PivotRadius   (2.4)
+	PivotSpeed    (0.87)
+	Color         (0.10, 1.0, 0.4)
+}
+Collider (Test_Collider_1)
+{
+	MotionType  [Dynamic]
+	ObjectLayer [Moving]
+	Activation  [Activate]
+	Shape       [BoxShape]
+}
+RigidBodyActor (Falling_Cube_1)
+{
+	Mesh:Material <Cube>:<Doom_Shiny>
+	Collider	  <Test_Collider_1>
+	Scale		  (1.0, 1.0, 1.0)
+	Position      (-2.0, 9.0, -6.0)
+}
+Collider (Test_Collider_2)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_2)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Collider	    <Test_Collider_2>
+	Scale		    (3.0, 0.8, 1.0)
+	Position        (-2.3, 11.5, -5.2)
+	RotationDegrees (5.0, -2.0, 37.0)
+}
+Collider (Test_Collider_3)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_3)
+{
+	Mesh:Material   <Cube>:<Doom_Dull>
+	Collider	    <Test_Collider_3>
+	Scale		    (4.2, 0.9, 2.7)
+	Position        (-3.5, 6.7, -4.0)
+	RotationDegrees (0.0, 60.0, 25.0)
+}
+Collider (Test_Collider_4)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_4)
+{
+	Mesh:Material   <Cube>:<Doom_Dull>
+	Collider	    <Test_Collider_4>
+	Scale		    (0.78, 0.5, 0.8)
+	Position        (-3.3, 7.2, -5.2)
+	RotationDegrees (5.0, -2.0, 37.0)
 }
 
-// All variables have default values that will be used if you don't set them. For instance, LightDirectional has a "LightColor" variable that defaults to "(1.0, 1.0, 1.0)" which is the color white in RGB. I want a white colored sun, so I just don't set this variable
-// Keep in mind that I could still have set "LightColor" to "(1.0, 1.0, 1.0)" with no problems, even though that's redundant.
+// If you don't set any variables, they will use their default C++ values. If you misspell a variable name, (theoretically) nothing will happen and that variable will use its default value.
+// This file format was written by me with no tutorials or guides on how to create a lexer, parser, interpreter, or anything else like that.
+// That means that if you follow the syntax exactly, you'll have (hopefully) no problems, but if you miss a bracket, or use <> when you should've used [], or misspell a reference... the program will probably crash.
+// I'll try to write as many error messages as I can remember to, but if the engine crashes and you don't know why, check your Theatre file first.
