@@ -31,16 +31,34 @@ Theatre::Theatre(std::string init_name)
 
 void Theatre::startPreshow()
 {
-	PRINTDEBUG("Entering Theatre (" << name << ")\nActors Present:")
-	for(auto &pair : devices)
-		pair.second->loadSettings();
+	PRINTLN("OBEJCTS")
+	for(auto &pair : objects)
+	{
+		PRINTDEBUG("Actor " << pair.second->name)
+	}
+	PRINTLN("TROUPE")
+	for(Actor *actor : troupe)
+	{
+		PRINTDEBUG("Actor " << actor->name)
+	}
 
+	PRINTDEBUG("Entering Theatre (" << name << ")")
+	PRINTLN("Devices Present:")
+	for(auto &pair : devices)
+	{
+		pair.second->loadSettings();
+		pair.second->initialize(this);
+	}
+
+	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
 	{
 		pair.second->youGotACallBack();
 		pair.second->callToStage(this);
+		troupe.insert(troupe.end(), pair.second);
 	}
-	PRINTDEBUG("Note:\n\tWhen a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
+
+	PRINTNOTE("When a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
 
 	sortTroupe();
 	countLights();
@@ -48,18 +66,22 @@ void Theatre::startPreshow()
 
 void Theatre::dropCurtains()
 {
-	PRINTDEBUG("Exiting Theatre (" << name << ")\nActors Present:")
+	PRINTDEBUG("Exiting Theatre (" << name << ")")
+	PRINTLN("Devices Present:")
+	for(auto &pair : devices)
+		pair.second->prepForDestruction();
+
+	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
 		pair.second->takeABow();
 
 	PRINTIMPORTANT("HEY! HEY! DON'T FORGET! DEVICES NEED TO BE TOLD TO EXIT, TOO!!")
-
-	// for(auto &pair : devices)
-		// EXIT DEVICES
 }
 
 void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 {
+	PRINTDEBUG("ACTOR ENTER")
+	PRINTDEBUG(new_actor->name)
 	if(objects.contains(uid))
 	{
 		PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
@@ -70,7 +92,6 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 	new_actor->setUID(uid);
 	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
 		new_actor->settings = new_settings;
-	troupe.insert(troupe.end(), objects.at(uid));
 
 	sortTroupe();
 	countLights();
@@ -87,6 +108,8 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 
 void Theatre::createActor(Actor *new_actor_function(), long uid, gSettings new_settings)
 {
+	PRINTDEBUG("ACTOR CREATE")
+	PRINTDEBUG(uid)
 	if(objects.contains(uid))
 	{
 		PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
@@ -96,7 +119,6 @@ void Theatre::createActor(Actor *new_actor_function(), long uid, gSettings new_s
 	objects[uid] = new_actor_function();
 	objects.at(uid)->setUID(uid);
 	objects.at(uid)->settings = new_settings;
-	troupe.insert(troupe.end(), objects.at(uid));
 	PRINTDEBUG("New Actor " << objects.at(uid)->name << " with UID " << objects.at(uid)->getUID())
 
 	sortTroupe();
@@ -199,6 +221,7 @@ void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)
 	}
 
 	devices[uid] = new_device;
+	devices.at(uid)->setUID(uid);
 	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
 	{
 		new_device->settings = new_settings;
@@ -218,6 +241,7 @@ void Theatre::createDevice(Device *new_device_function(), long uid, gSettings ne
 	}
 
 	devices[uid] = new_device_function();
+	devices.at(uid)->setUID(uid);
 	devices.at(uid)->settings = new_settings;
 	devices.at(uid)->loadSettings(new_settings);
 

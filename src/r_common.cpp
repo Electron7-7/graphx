@@ -171,10 +171,14 @@ void Device::loadSettings(graphx::gSettings new_settings)
 }
 
 void Device::initialize(Theatre *parent_theatre)
-{}
+{
+	PRINTLN("\t- " << name << " UID #" << UID)
+}
 
 void Device::prepForDestruction()
-{}
+{
+	PRINTLN("\t- " << name << " UID #" << UID)
+}
 
 void Device::setUID(long manual_uid)
 {

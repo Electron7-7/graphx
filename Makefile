@@ -82,9 +82,8 @@ compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
 debug: recompile_theatres
-# 	$(eval O = build/Debug)
 	$(eval LINUX = GraphXDebug)
-	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG -fsanitize=address)
+	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG) #-fsanitize=address
 
 release: clean_resources embed_resources
 

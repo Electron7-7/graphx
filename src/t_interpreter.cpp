@@ -485,7 +485,7 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 					{
 						if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 						{
-							settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
+							settings_to_modify.at(pair.first) = new_theatre.getActor(pair.second);
 							continue;
 						}
 

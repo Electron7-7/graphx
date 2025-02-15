@@ -1,4 +1,14 @@
 @HelloWorldTheatre
+GraphXPlayer (main_player)
+{
+	Position             (0.0, 3.0, 6.0)
+	MovementSpeed        (10.0)
+	MovementAcceleration (2.0)
+	Friction             (0.7)
+}
+LightFlashlight (Player_Flashlight)
+{
+}
 Material (Doom_Shiny)
 {
 	DiffuseTexture    [DOOM_TEXTURE_DIFF]
@@ -43,16 +53,6 @@ RigidBodyActor (Wall)
 	Collider	  <Wall_Collider>
 	Scale		  (50.0, 50.0, 1.0)
 	Position      (0.0, 25.0, -51.0)
-}
-GraphXPlayer (main_player)
-{
-	Position             (0.0, 3.0, 6.0)
-	MovementSpeed        (10.0)
-	MovementAcceleration (2.0)
-	Friction             (0.7)
-}
-LightFlashlight (Player_Flashlight)
-{
 }
 LightDirectional (Sun)
 {
@@ -132,4 +132,34 @@ RigidBodyActor (Falling_Cube_4)
 	Scale		    (0.78, 0.5, 0.8)
 	Position        (-3.3, 7.2, -5.2)
 	RotationDegrees (5.0, -2.0, 37.0)
+}
+Collider (Test_Collider_5)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_5)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Collider	    <Test_Collider_5>
+	Scale		    (5.0, 3.5, 1.2)
+	Position        (-5.3, 12.2, -6.2)
+	RotationDegrees (15.0, -25.0, 37.0)
+}
+Collider (Test_Collider_6)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_6)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Collider	    <Test_Collider_6>
+	Scale		    (0.3, 0.5, 0.3)
+	Position        (-5.3, 9.2, -6.2)
+	RotationDegrees (-45.0, 25.0, 8.0)
 }

@@ -1050,3 +1050,6 @@ HUH? IT JUST WORKS NOW? It was totally fucked and I didn't know why and I just f
 Well, that one's a freebie.
 
 :3
+
+[02/15/25]
+LightMoverTester breaks the program. For some reason, either GraphXPlayer is duplicated and/or current_player is null or set to a duplicate player with no jph_character. It might be because the UID/index of the light's pivot point offsets the player's UID/index and current_player points to the wrong spce?

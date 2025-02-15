@@ -32,6 +32,7 @@ long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool test_flashlight_bool = false;
 bool red_flashlight_color_bool = false;
+bool do_jolt_assert = false;
 
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
@@ -50,7 +51,8 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
-	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
@@ -191,23 +193,27 @@ class GraphXContactListener : public JPH::ContactListener
 {
 	virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override
 	{
-		// JOLTDEBUG("Contact validate callback")
+		// if(do_jolt_assert)
+			// JOLTDEBUG("Contact validate callback")
 		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
 	}
 
 	virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
 	{
-		JOLTDEBUG("A contact was added")
+		if(do_jolt_assert)
+			JOLTDEBUG("A contact was added")
 	}
 
 	virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
 	{
-		// JOLTDEBUG("A contact was persisted")
+		// if(do_jolt_assert)
+			// JOLTDEBUG("A contact was persisted")
 	}
 
 	virtual void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
 	{
-		JOLTDEBUG("A contact was removed")
+		if(do_jolt_assert)
+			JOLTDEBUG("A contact was removed")
 	}
 };
 
@@ -216,12 +222,14 @@ class GraphXBodyActivationListener : public JPH::BodyActivationListener
 public:
 	virtual void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
 	{
-		JOLTDEBUG("A body got activated")
+		if(do_jolt_assert)
+			JOLTDEBUG("A body got activated")
 	}
 
 	virtual void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
 	{
-		JOLTDEBUG("A body went to sleep")
+		if(do_jolt_assert)
+			JOLTDEBUG("A body went to sleep")
 	}
 };
 //--------------------------------
@@ -372,6 +380,17 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
+
+#ifdef GRAPHX_DEBUG
+	if(key == GLFW_KEY_J && action == GLFW_PRESS)
+	{
+		do_jolt_assert = !do_jolt_assert;
+		if(do_jolt_assert)
+			PRINTDEBUG("Jolt assert printouts enabled")
+		else
+			PRINTDEBUG("Jolt assert printouts disabled")
+	}
+#endif
 }
 
 // This will be put in Actor once I abstract "glfwGetKey" and related functions

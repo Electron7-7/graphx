@@ -1,6 +1,16 @@
 #include "theatres.hpp"
 std::map<int, std::string> embedded_theatres =
 {{0, std::string{R"~(@HelloWorldTheatre
+GraphXPlayer (main_player)
+{
+	Position             (0.0, 3.0, 6.0)
+	MovementSpeed        (10.0)
+	MovementAcceleration (2.0)
+	Friction             (0.7)
+}
+LightFlashlight (Player_Flashlight)
+{
+}
 Material (Doom_Shiny)
 {
 	DiffuseTexture    [DOOM_TEXTURE_DIFF]
@@ -46,35 +56,11 @@ RigidBodyActor (Wall)
 	Scale		  (50.0, 50.0, 1.0)
 	Position      (0.0, 25.0, -51.0)
 }
-GraphXPlayer (main_player)
-{
-	Position             (0.0, 3.0, 6.0)
-	MovementSpeed        (10.0)
-	MovementAcceleration (2.0)
-	Friction             (0.7)
-}
-LightFlashlight (Player_Flashlight)
-{
-}
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
 	Strength  (0.05)
 	Color     (0.8, 0.9, 1.0)
-}
-LightTesterMover (spinny_light)
-{
-	PivotPosition (5.3, 3.0, -3.8)
-	PivotRadius   (1.2)
-	PivotSpeed    (1.8)
-	Color         (1.0, 0.15, 0.3)
-}
-LightTesterMover (spinny_light_2)
-{
-	PivotPosition (-11.0, 1.7, -4.3)
-	PivotRadius   (2.4)
-	PivotSpeed    (0.87)
-	Color         (0.10, 1.0, 0.4)
 }
 Collider (Test_Collider_1)
 {
@@ -134,5 +120,35 @@ RigidBodyActor (Falling_Cube_4)
 	Scale		    (0.78, 0.5, 0.8)
 	Position        (-3.3, 7.2, -5.2)
 	RotationDegrees (5.0, -2.0, 37.0)
+}
+Collider (Test_Collider_5)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_5)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Collider	    <Test_Collider_5>
+	Scale		    (5.0, 3.5, 1.2)
+	Position        (-5.3, 12.2, -6.2)
+	RotationDegrees (15.0, -25.0, 37.0)
+}
+Collider (Test_Collider_6)
+{
+	MotionType      [Dynamic]
+	ObjectLayer     [Moving]
+	Activation      [Activate]
+	Shape           [BoxShape]
+}
+RigidBodyActor (Falling_Cube_6)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Collider	    <Test_Collider_6>
+	Scale		    (0.3, 0.5, 0.3)
+	Position        (-5.3, 9.2, -6.2)
+	RotationDegrees (-45.0, 25.0, 8.0)
 })~"}}
 };

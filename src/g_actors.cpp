@@ -101,12 +101,12 @@ void Actor::tick(int current_tick)
 
 void Actor::callToStage(Theatre *parent_theatre)
 {
-	PRINTDEBUG("\t- " << name);
+	PRINTLN("\t- " << name << " UID #" << UID);
 }
 
 void Actor::takeABow()
 {
-	PRINTDEBUG("\t- " << name);
+	PRINTLN("\t- " << name << " UID #" << UID);
 }
 
 bool Actor::wantsToBeBuffered()
@@ -158,7 +158,6 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 void PhysicsActor::takeABow()
 {
 	Actor::takeABow();
-	collider->prepForDestruction();
 }
 
 void PhysicsActor::tick(int current_tick)
@@ -255,7 +254,6 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
 	player_camera.position_global = init_position;
 	player_camera.parent = this;
-	current_player = this;
 }
 
 std::string GraphXPlayer::getType()
@@ -290,6 +288,8 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
 	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
+
+	current_player = this;
 }
 
 void GraphXPlayer::tick(int current_tick)
@@ -522,5 +522,5 @@ void LightTesterMover::callToStage(Theatre *parent_theatre)
 	pivot_point.position_global = pivot_position;
 	parent_theatre->actorEnter(&pivot_point, 481516 + UID);
 
-	pivot_point.callToStage(parent_theatre); // Might be calling callToStage() twice here, will have to test
+	// pivot_point.callToStage(parent_theatre); // Might be calling callToStage() twice here, will have to test
 }
