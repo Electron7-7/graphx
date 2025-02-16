@@ -122,7 +122,7 @@ public:
 	std::string getType() override;
 
 private:
-	JPH::Ref<JPH::Character> jph_character;
+	JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
 };

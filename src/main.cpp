@@ -402,7 +402,7 @@ void processInput(GLFWwindow *window)
 		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
 	};
 
-	current_player->doMovement(input_vector);
+	getCurrentPlayer()->doMovement(input_vector);
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
@@ -414,7 +414,7 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		return;
 	
-	current_player->doMouseMovement(mouse_offset);
+	getCurrentPlayer()->doMouseMovement(mouse_offset);
 }
 
 int WinMain() // Fuck off, Windows

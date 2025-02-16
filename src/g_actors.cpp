@@ -8,11 +8,18 @@
 
 using namespace graphx;
 
-GraphXPlayer *current_player = NULL;
+// GraphXPlayer *current_player = NULL;
+long current_player_uid = -1;
 glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 std::unordered_map<double, Actor *> actor_uid_lookup;
+
+GraphXPlayer *getCurrentPlayer()
+{
+	// if(current_player_uid == -1)
+	return new GraphXPlayer();
+}
 
 //
 // RenderState
@@ -288,8 +295,6 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
 	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
-
-	current_player = this;
 }
 
 void GraphXPlayer::tick(int current_tick)
@@ -457,11 +462,11 @@ void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 
 void LightFlashlight::tick(int current_tick)
 {
-	if(current_player == NULL)
-		return;
+	// if(current_player == NULL)
+	// 	return;
 
-	if(parent == NULL)
-		parent = current_player;
+	// if(parent == NULL)
+	// 	parent = getCurrentPlayer();
 
 	position_global = parent->player_camera.position_global + position_offset;
 	quaternion = parent->player_camera.quaternion * glm::quat(glm::radians(rotation_offset));
@@ -479,8 +484,6 @@ void LightFlashlight::setLight(bool is_off)
 LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color)
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
 {
-	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
-	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.position_global = init_pivot_position;
 }
 
@@ -520,7 +523,7 @@ void LightTesterMover::callToStage(Theatre *parent_theatre)
 	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.position_global = pivot_position;
-	parent_theatre->actorEnter(&pivot_point, 481516 + UID);
+	parent_theatre->actorEnter(&pivot_point, 4815 + UID);
 
 	// pivot_point.callToStage(parent_theatre); // Might be calling callToStage() twice here, will have to test
 }

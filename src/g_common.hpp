@@ -117,6 +117,7 @@ private:
 };
 
 Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"
+GraphXPlayer *getCurrentPlayer();
 
 extern std::unordered_map<int, Theatre> all_theatres;
 extern int current_theatre_uid;

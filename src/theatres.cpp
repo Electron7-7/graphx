@@ -62,6 +62,20 @@ LightDirectional (Sun)
 	Strength  (0.05)
 	Color     (0.8, 0.9, 1.0)
 }
+LightTesterMover (spinny_light)
+{
+	PivotPosition (5.3, 3.0, -3.8)
+	PivotRadius   (1.2)
+	PivotSpeed    (1.8)
+	Color         (1.0, 0.15, 0.3)
+}
+LightTesterMover (spinny_light_2)
+{
+	PivotPosition (-11.0, 1.7, -4.3)
+	PivotRadius   (2.4)
+	PivotSpeed    (0.87)
+	Color         (0.10, 1.0, 0.4)
+}
 Collider (Test_Collider_1)
 {
 	MotionType  [Dynamic]

@@ -104,6 +104,14 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 	}
 
 	current_troupe_changed = time_to_render;
+	PRINTDEBUG("ALL ACTORS:")
+	for(auto &pair : objects)
+	{
+		PRINTDEBUG("\tName: " << pair.second->name)
+		PRINTDEBUG("\t\tType: " << pair.second->getType())
+		PRINTDEBUG("\t\tUID: " << pair.second->getUID())
+		PRINTDEBUG("\t\tMap Key: " << pair.first)
+	}
 }
 
 void Theatre::createActor(Actor *new_actor_function(), long uid, gSettings new_settings)
@@ -119,6 +127,18 @@ void Theatre::createActor(Actor *new_actor_function(), long uid, gSettings new_s
 	objects[uid] = new_actor_function();
 	objects.at(uid)->setUID(uid);
 	objects.at(uid)->settings = new_settings;
+	for(auto &pair : objects)
+		PRINTDEBUG(pair.second->getType())
+	if(objects.at(uid)->getType() == "GraphXPlayer")
+	{
+		for(auto &pair : objects)
+		{
+			if(pair.second->getType() == "GraphXPlayer" && pair.first != uid)
+			{
+				actorLeave(pair.first);
+			}
+		}
+	}
 	PRINTDEBUG("New Actor " << objects.at(uid)->name << " with UID " << objects.at(uid)->getUID())
 
 	sortTroupe();
