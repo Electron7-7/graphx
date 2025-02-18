@@ -48,6 +48,8 @@ IMGS = \
 	$(I)/LIGHT.jpg				\
 	$(I)/MISSING.jpg			\
 	$(I)/MISSING_SPECULAR.jpg	\
+	$(I)/SOURCE_ORANGE.png		\
+	$(I)/SOURCE_LIGHT_GREY.png	\
 	$(I)/NO_TEXTURE.jpg
 
 S = $(SRC)/shaders
@@ -78,6 +80,9 @@ recompile_theatres:
 	$(shell rm -f $(THEATRES_C) $(THEATRES_H))
 	make -s embed_resources
 
+remake_embedded_resources: clean_resources
+	make -s embed_resources
+
 compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
@@ -85,7 +90,7 @@ debug: recompile_theatres
 	$(eval LINUX = GraphXDebug)
 	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG) #-fsanitize=address
 
-release: clean_resources embed_resources
+release: clean_resources embed_resources recompile_theatres
 
 build: $(O)/$(LINUX)
 
@@ -163,5 +168,5 @@ $(O)/images.wo: $(IMAGES_C)
 $(O)/shaders.wopp: $(SHADERS_C)
 	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
 
-$(O)/theatres.opp: $(THEATRES_C)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+$(O)/theatres.wopp: $(THEATRES_C)
+	$(WCXX) $(WCXXFLAGS) $(WINCLUDES) -c $< -o $@

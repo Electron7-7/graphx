@@ -271,7 +271,7 @@ void testGameTick(GLFWwindow *main_window)
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 	// This will change to include loading external Theatres and to not just only load the first Theatre lmfao
-	loadTheatre(embedded_theatres.at(0), 0); // So, when I add UI, this will go behind a "start game"/"load level"/etc
+	loadTheatre(embedded_theatres.at(0), 0); // This is broken probably bc of my new math shit LMFAO
 	loadTheatre(embedded_theatres.at(1), 1);
 	getCurrentTheatre()->startPreshow();
 

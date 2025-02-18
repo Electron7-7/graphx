@@ -9,6 +9,14 @@ GraphXPlayer (main_player)
 LightFlashlight (Player_Flashlight)
 {
 }
+Material (FullBright_1)
+{
+	mat_fullbright (True)
+	Color (1.2, 1.0, 0.0)
+	DiffuseTexture [SOURCE_LIGHT_GREY]
+	SpecularSharpness (0)
+	SpecularStrength (0.0)
+}
 Material (Doom_Shiny)
 {
 	DiffuseTexture    [DOOM_TEXTURE_DIFF]
@@ -38,50 +46,113 @@ StaticBodyActor (Spire_1)
 	Mesh:Material   <Cube>:<Doom_Dull>
 	Scale		    (20.0, 100.0, 20.0)
 	Position        (-28.3, 100.0, -43.2)
-	RotationDegrees (0.0, 53.7, 0.0)
+	Rotation        (0.0, 53.7, 0.0)
 }
 StaticBodyActor (Platform_1)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Scale		    (10.0, 50.0, 10.0)
 	Position        (32.1, 75.0, -29.7)
-	RotationDegrees (0.0, 20.0, 0.0)
+	Rotation        (0.0, 20.0, 0.0)
 }
 StaticBodyActor (Platform_Floor_1)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Scale		    (10.0, 5.0, 10.0)
-	Position        (32.1, 5.0, -29.7)
-	RotationDegrees <Platform_1>
+	Position        <Platform_1>
+	LocalPosition   (0.0, -70.0, 0.0)
+	Rotation        <Platform_1>
 }
-StaticBodyActor (Platform_Floor_1)
+Actor (Platform_Stair_1)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
-	Scale		    (11.0, 0.5, 11.0)
-	Position        (32.1, 0.0, -29.7)
-	RotationDegrees <Platform_1>
+	Scale		    (11.0, 2.5, 11.0)
+	Position        <Platform_1>
+	LocalPosition   (0.0, -72.5, 0.0)
+	Rotation        <Platform_1>
 }
-Actor (Stairs_Visualizer)
+Actor (Platform_Stair_2)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
-	Scale           (10.0, 5.0, 1.0)
-	Position        (0.0, 0.0, -10.0)
-	RotationDegrees (80.0, 0.0, 0.0)
+	Scale		    (12.0, 2.0, 12.0)
+	Position        <Platform_1>
+	LocalPosition   (0.0, -73.0, 0.0)
+	Rotation        <Platform_1>
+}
+Actor (Platform_Stair_3)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Scale		    (13.0, 1.5, 13.0)
+	Position        <Platform_1>
+	LocalPosition   (0.0, -73.5, 0.0)
+	Rotation        <Platform_1>
+}
+Actor (Platform_Stair_4)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Scale		    (14.0, 1.0, 14.0)
+	Position        <Platform_1>
+	LocalPosition   (0.0, -74.0, 0.0)
+	Rotation        <Platform_1>
+}
+Actor (Platform_Stair_5)
+{
+	Mesh:Material   <Cube>:<Doom_Shiny>
+	Scale		    (15.0, 0.5, 15.0)
+	Position        <Platform_1>
+	LocalPosition   (0.0, -74.5, 0.0)
+	Rotation        <Platform_1>
+}
+Actor (Stairs_Parent)
+{
+	Mesh:Material   <Cube>:<FullBright_1>
+	Scale           (5.0, 1.0, 10.0)
+	Position        <Platform_1>
+	Rotation        (0.0, 20.0, 0.0)
+	LocalRotation   (0.0, 0.0, 50.0)
+	LocalPosition   (11.0, -74.5, 15.0)
 }
 Collider (Stairs_1)
 {
+	ForeverAlone    (True)
 	MotionType      [Static]
 	ObjectLayer     [NonMoving]
 	Activation      [Activate]
 	Shape           [BoxShape]
-	Scale           <Stairs_Visualizer>
-	Position        <Stairs_Visualizer>
-	RotationDegrees <Stairs_Visualizer>
-	ForeverAlone    (True)
+	Scale           <Stairs_Parent>
+	Position        (0.0, -100.0, 0.0)
+	LocalPosition   <Stairs_Parent>
+	Rotation        <Stairs_Parent>
+	LocalRotation   <Stairs_Parent>
+}
+Actor (Rotation_Tester_1)
+{
+	Mesh:Material   <Cube>:<Doom_Dull>
+	Scale           (1.0, 1.0, 1.0)
+	Position        (0.0, 2.2, -3.5)
+	Rotation        (0.0, 20.0, 0.0)
+	LocalPosition   (-2.0, 0.0, 0.0)
+	LocalRotation   (0.0, 0.0, 0.0)
+}
+Actor (Rotation_Tester_2)
+{
+	Mesh:Material   <Cube>:<Doom_Dull>
+	Scale           <Rotation_Tester_1>
+	Position        <Rotation_Tester_1>
+	Rotation        <Rotation_Tester_1>
+	LocalPosition   (2.0, 0.0, 0.0)
+	LocalRotation   (0.0, 0.0, 80.0)
 }
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
 	Strength  (0.05)
 	Color     (1.0, 1.0, 1.0)
+}
+LightTesterMover (test_light_1)
+{
+	Color (0.7, 0.2, 1.0)
+	PivotPosition (5.0, 1.8, -7.0)
+	PivotRadius (3.0)
+	PivotSpeed (2.2)
 }

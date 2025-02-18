@@ -2,6 +2,7 @@
 #include "t_common.hpp"
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
+#include "images.h"
 #include "cube.graphxmodel"
 #include "ERROR.graphxmodel"
 #include "pyramid.graphxmodel"
@@ -13,10 +14,13 @@ using namespace graphx::classes;
 
 std::map<std::string, std::any> cpp_definitions =
 {
-	{"DOOM_TEXTURE_DIFF", DOOM_TEXTURE_DIFF},
-	{"DOOM_TEXTURE_SPEC", DOOM_TEXTURE_SPEC},
-	{"MISSING_TEXTURE_DIFF", MISSING_TEXTURE_DIFF},
-	{"MISSING_TEXTURE_SPEC", MISSING_TEXTURE_SPEC},
+	{"DOOM_TEXTURE_DIFF", COMP04_5_png},
+	{"DOOM_TEXTURE_SPEC", COMP04_5_SPECULAR_jpg},
+	{"MISSING_TEXTURE_DIFF", MISSING_jpg},
+	{"MISSING_TEXTURE_SPEC", MISSING_SPECULAR_jpg},
+	{"NO_TEXTURE", NO_TEXTURE_jpg},
+	{"SOURCE_ORANGE", SOURCE_ORANGE_png},
+	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY_png},
 	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
 	{"GRAPHX_ERROR", gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE)},
 	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_VERTS, PYRAMID_INDICES, VAO_HANDMADE)},
@@ -418,11 +422,23 @@ void loadTheatre(std::string embedded_theatre, long theatre_uid)
 
 			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 			{
+				if(!new_theatre.getActor(objects_bucket.at(it->second.second).second)->settings.contains(it->second.first))
+				{
+					PRINTERR(std::quoted(object.second.second) << " (" << object.second.first << ") set variable " << std::quoted(it->second.first) << " to reference a variable that was not set! Skipping this variable!")
+					continue;
+				}
+
 				new_class_settings[it->second.first] = new_theatre.getActor(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
 			}
 
 			if(DEVICES[0] <= reference_class_hash && reference_class_hash <= DEVICES[1])
 			{
+				if(!new_theatre.getDevice(objects_bucket.at(it->second.second).second)->settings.contains(it->second.first))
+				{
+					PRINTERR(std::quoted(object.second.second) << " (" << object.second.first << ") set variable " << std::quoted(it->second.first) << " to reference a variable that was not set! Skipping this variable!")
+					continue;
+				}
+			
 				new_class_settings[it->second.first] = new_theatre.getDevice(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
 			}
 		}

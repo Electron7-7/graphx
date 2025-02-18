@@ -22,8 +22,6 @@ public:
 
 	Mesh *mesh = NULL; // replace with std::vector<Mesh *> meshes later(?)
 
-	glm::vec3 position_global = glm::vec3(0.0f);
-	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::vec3 scale = glm::vec3(1.0f);
 
 	glm::vec3 orientation_front = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -47,21 +45,35 @@ public:
 
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
+	template<typename T> T getPosition();
+	template<typename T> T getRotation();
+
+	template<typename T> void setGlobalPosition(T new_value);
+	template<typename T> void setGlobalRotation(T new_value);
+	template<typename T> void setLocalPosition(T new_value);
+	template<typename T> void setLocalRotation(T new_value);
+
+	long getUID();
+	void setUID(long manual_uid);
+	bool isType(int class_type);
+
 	virtual void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}); // Loads settings
-	virtual void tick(int current_tick);
 	virtual void callToStage(Theatre *parent_theatre);
 	virtual void takeABow();
+	virtual void tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
 	virtual bool wantsToBeRendered();
 	virtual bool wantsToBeBuffered();
-	virtual long getUID();
-	virtual void setUID(long manual_uid);
-	bool isType(int class_type);
 
 protected:
 	long UID = -1; // A UID of -1 means it's not been set yet
 	int my_type = graphx::classes::ACTOR;
 	bool debug_visible;
+	glm::vec3 position_global = glm::vec3(0.0f);
+	glm::vec3 position_local = glm::vec3(0.0f);
+	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
 	virtual void updateVectors();
 };
 

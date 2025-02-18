@@ -32,9 +32,11 @@ typedef std::tuple<glm::vec3, float, float> jolt_shape_args;
 
 struct Collider : public Device
 {
+	glm::vec3 			local_position = glm::vec3(0.0f);
 	glm::vec3			position = glm::vec3(0.0f);
+	glm::vec3			euler_angles = glm::vec3(0.0f);
+	glm::vec3 			local_euler_angles = glm::vec3(0.0f);
 	glm::vec3			scale = glm::vec3(1.0f);
-	glm::vec3			euler_angles = glm::vec3(0.0f, 0.0f, 0.0f);
 	JPH::EMotionType	motion_type = JPH::EMotionType::Dynamic;
 	JPH::ObjectLayer	object_layer = Layers::MOVING;
 	JPH::EActivation	activation = JPH::EActivation::Activate;

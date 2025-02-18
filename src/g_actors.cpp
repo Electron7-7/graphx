@@ -39,7 +39,7 @@ RenderState::RenderState(glm::vec3 init_position, glm::quat init_quaternion, glm
 // Actor
 //
 Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: mesh(init_mesh), position_global(init_position), scale(init_scale)
+: mesh(init_mesh), scale(init_scale), position_global(init_position)
 {
 	actor_type = ACTOR_ACTOR;
 	name = new_name;
@@ -53,20 +53,115 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
+template<> glm::vec3 Actor::getPosition()
+{
+	return position_global + position_local;
+}
+
+template<> JPH::Vec3 Actor::getPosition()
+{
+	return convertMath<JPH::Vec3>(position_global) + convertMath<JPH::Vec3>(position_local);
+}
+
+template<> glm::vec3 Actor::getRotation()
+{
+	return glm::eulerAngles(quaternion * local_quaternion);
+}
+
+template<> JPH::Vec3 Actor::getRotation()
+{
+	return convertMath<JPH::Vec3>(glm::eulerAngles(quaternion * local_quaternion));
+}
+
+template<> glm::quat Actor::getRotation()
+{
+	return quaternion * local_quaternion;
+}
+
+template<> JPH::Quat Actor::getRotation()
+{
+	return convertMath<JPH::Quat>(quaternion) * convertMath<JPH::Quat>(local_quaternion);
+}
+
+template<> void Actor::setGlobalPosition(glm::vec3 new_value)
+{
+	position_global = new_value;
+}
+
+template<> void Actor::setGlobalPosition(JPH::Vec3 new_value)
+{
+	position_global = convertMath<glm::vec3>(new_value);
+}
+
+template<> void Actor::setGlobalRotation(glm::quat new_value)
+{
+	quaternion = new_value;
+}
+
+template<> void Actor::setGlobalRotation(JPH::Quat new_value)
+{
+	quaternion = convertMath<glm::quat>(new_value);
+}
+
+template<> void Actor::setGlobalRotation(glm::vec3 new_value)
+{
+	quaternion = glm::quat(new_value);
+}
+
+template<> void Actor::setGlobalRotation(JPH::Vec3 new_value)
+{
+	quaternion = glm::quat(convertMath<glm::vec3>(new_value));
+}
+
+template<> void Actor::setLocalPosition(glm::vec3 new_value)
+{
+	position_local = new_value;
+}
+
+template<> void Actor::setLocalPosition(JPH::Vec3 new_value)
+{
+	position_local = convertMath<glm::vec3>(new_value);
+}
+
+template<> void Actor::setLocalRotation(glm::quat new_value)
+{
+	local_quaternion = new_value;
+}
+
+template<> void Actor::setLocalRotation(JPH::Quat new_value)
+{
+	local_quaternion = convertMath<glm::quat>(new_value);
+}
+
+template<> void Actor::setLocalRotation(glm::vec3 new_value)
+{
+	local_quaternion = glm::quat(new_value);
+}
+
+template<> void Actor::setLocalRotation(JPH::Vec3 new_value)
+{
+	local_quaternion = glm::quat(convertMath<glm::vec3>(new_value));
+}
+
+
 void Actor::youGotACallBack(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
 
-	glm::vec3 rotation_degrees = glm::eulerAngles(quaternion);
+	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
+	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
 
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(mesh, new_settings["Mesh"]);
 	setRawData(position_global, new_settings["Position"]);
-	setRawData(rotation_degrees, new_settings["RotationDegrees"]);
+	setRawData(position_local, new_settings["LocalPosition"]);
+	setRawData(global_euler_degrees, new_settings["Rotation"]);
+	setRawData(local_euler_degrees, new_settings["LocalRotation"]);
 	setRawData(scale, new_settings["Scale"]);
 
-	quaternion = glm::quat(glm::radians(rotation_degrees));
+	local_quaternion = glm::quat(glm::radians(local_euler_degrees));
+	quaternion = glm::quat(glm::radians(global_euler_degrees));
 
 	updateVectors();
 }
@@ -103,8 +198,8 @@ void Actor::updateStates(std::mutex &state_mutex)
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
 
 	// Update current state
-	current_state_buffer[state_index].render_position	=	position_global;
-	current_state_buffer[state_index].render_quaternion	=	quaternion;
+	current_state_buffer[state_index].render_position	=	getPosition<glm::vec3>();
+	current_state_buffer[state_index].render_quaternion	=	getRotation<glm::quat>();
 	current_state_buffer[state_index].render_scale		=	scale;
 
 	// Flip state buffer
@@ -162,12 +257,14 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 	Actor::callToStage(parent_theatre);
 
 	collider->position = position_global;
+	collider->local_position = position_local;
 	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
+	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
 	collider->scale = scale;
 	collider->createBody();
 
-	reset_position = convertMath<JPH::Vec3>(position_global);
-	reset_quaternion = convertMath<JPH::Quat>(quaternion);
+	reset_position = getPosition<JPH::Vec3>();
+	reset_quaternion = getRotation<JPH::Quat>();
 }
 
 void PhysicsActor::takeABow()
@@ -278,7 +375,7 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 
 void Camera::tick(int current_tick)
 {
-	position_global = parent->position_global + position_local;
+	position_global = parent->getPosition<glm::vec3>() + position_local;
 }
 
 //
@@ -320,7 +417,7 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
 	player_settings->mFriction = friction;
 	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
-	jph_character = new JPH::Character(player_settings, convertMath<JPH::Vec3>(position_global), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
+	jph_character = new JPH::Character(player_settings, getPosition<JPH::Vec3>(), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
 }
 
@@ -371,6 +468,11 @@ void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
 	return glm::lookAt(player_camera.position_global, player_camera.position_global + player_camera.orientation_front, player_camera.orientation_up);
+}
+
+glm::vec3 GraphXPlayer::getViewPosition()
+{
+	return player_camera.getPosition<glm::vec3>();
 }
 
 bool GraphXPlayer::wantsToBeRendered()
@@ -480,7 +582,7 @@ void LightFlashlight::tick(int current_tick)
 		return;
 
 	position_global = getCurrentTheatre()->getPlayer()->player_camera.position_global + position_offset;
-	quaternion = getCurrentTheatre()->getPlayer()->player_camera.quaternion * glm::quat(glm::radians(rotation_offset));
+	quaternion = getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset));
 	direction = quaternion * vector3_front;
 }
 
@@ -496,10 +598,9 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
 {
 	my_type = graphx::classes::LIGHTTESTERMOVER;
-	pivot_point.position_global = init_pivot_position;
+	pivot_point.setGlobalPosition(init_pivot_position);
 	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
 	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
-	pivot_point.position_global = pivot_position;
 	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID);
 }
 
@@ -517,7 +618,7 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 
 void LightTesterMover::tick(int current_tick)
 {
-	pivot_point.position_global = pivot_position;
+	pivot_point.setGlobalPosition(pivot_position);
 
 	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
 	position_global[1] = pivot_position[1];

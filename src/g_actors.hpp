@@ -123,6 +123,7 @@ public:
 	GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f));
 
 	glm::mat4 getViewMatrix();
+	glm::vec3 getViewPosition();
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
 	bool wantsToBeRendered() override;

@@ -1086,3 +1086,20 @@ I did that, and I'm also removing "graphx_class_names" and using graphx::classna
 Problem with that: cpp_definitions has (obviously) a lot of different references to various parts of the code. I could either forward-delare those, or just leave it be. Tempted to actually forward-declare, to save compile time bc of header file inclusions.
 
 Created a new StaticBodyActor; doing this made me realize that I could actually use these as a "wrapper" for Colliders and Actors. RigidBodyActors always use Colliders that are Active, Dynamic, and MOVING, while StaticBodyActors always use Colliders that are "DontActivate", Static, and NON_MOVING.
+
+[02/18/25]
+Doing some coding before therapy. Making a testing Theatre and adding/tweaking things as I go. For instance: I'm adding local coordinates to Actors and Devices as well as a new set of "final" coordinate variables which will be used for rendering. This will let me store local and global coordinates with the final coordinates being the two added together (so there's no destruction). However, global coordinates will still need to be updated properly but that should be easy to do. Instead of the final coordinates being variables, I might actually make them functions instead. That seems like a better idea.
+
+Holy shit big find!! In r_renderer.cpp, the view position is calculated from the player's global position! Not the camera position! Holy shit!
+
+Oh also, I don't have to update the global position, lmfao. Global and local positions can be altered at any time, and as long as position and rotation are read via the functions, it should be fine. I'll probably put the actual variables under protected to keep them from being read directly.
+
+Idea for convertMath:
+:::C++
+template<typename T, typename A> convertMath(T &convert_me, A convert_to)
+{
+	// Do conversion here
+}
+:::
+
+I need to make a map creator like UDB or Slade3. Doing it via text sucks.

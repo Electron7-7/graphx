@@ -269,6 +269,13 @@ void Material::loadSettings(graphx::gSettings new_settings)
 	setRawData(specular_sharpness, new_settings["SpecularSharpness"]);
 	setRawData(specular_strength, new_settings["SpecularStrength"]);
 	setRawData(mat_fullbright, new_settings["mat_fullbright"]);
+
+	if(mat_fullbright && embedded_texture_diffuse == MISSING_TEXTURE_DIFF)
+	{
+		PRINTDEBUG("MAT_FULLBRIGHT + NO TEXTURE")
+		embedded_texture_diffuse = NO_TEXTURE;
+		embedded_texture_specular = NO_TEXTURE;
+	}
 }
 
 unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
