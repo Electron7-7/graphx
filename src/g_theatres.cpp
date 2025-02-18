@@ -2,22 +2,32 @@
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
 #include <algorithm>
 using namespace graphx;
+using namespace graphx::classes;
 
-std::unordered_map<int, Theatre> all_theatres = {};
+std::map<long, Theatre> all_theatres = {};
 
-int current_theatre_uid = -1;
+long current_theatre_uid = -1;
 bool current_troupe_changed = false;
 
 Theatre *getCurrentTheatre()
 {
-	return &all_theatres[current_theatre_uid];
+	if(current_theatre_uid == -1 || !all_theatres.contains(current_theatre_uid))
+	{
+		PRINTERR("getCurrentTheatre() called, but current_theatre_uid is invalid (either -1 or non-existant)! Returning nullptr.")
+		return nullptr;
+	}
+
+	return &all_theatres.at(current_theatre_uid);
 }
 
 Environment *getCurrentEnvironment()
 {
-	if(current_theatre_uid == -1 || getCurrentTheatre()->environment_uid == -1)
+	if(current_theatre_uid == -1 || !all_theatres.contains(current_theatre_uid))
+	{
 		return new Environment();
-	return static_cast<Environment *>(getCurrentTheatre()->getDevice(getCurrentTheatre()->environment_uid));
+	}
+
+	return getCurrentTheatre()->getEnvironment();
 }
 
 //
@@ -26,26 +36,18 @@ Environment *getCurrentEnvironment()
 Theatre::Theatre(std::string init_name)
 : name(init_name)
 {
-	stage.name = "Stage Mesh for Theatre (" + name + ")";
+	stage->name = "Stage Mesh for Theatre (" + name + ")";
 }
 
 void Theatre::startPreshow()
 {
-	PRINTLN("OBEJCTS")
-	for(auto &pair : objects)
-	{
-		PRINTDEBUG("Actor " << pair.second->name)
-	}
-	PRINTLN("TROUPE")
-	for(Actor *actor : troupe)
-	{
-		PRINTDEBUG("Actor " << actor->name)
-	}
-
 	PRINTDEBUG("Entering Theatre (" << name << ")")
+
 	PRINTLN("Devices Present:")
 	for(auto &pair : devices)
 	{
+		if(pair.second->isType(ENVIRONMENT))
+			environment_uid = pair.first;
 		pair.second->loadSettings();
 		pair.second->initialize(this);
 	}
@@ -53,7 +55,8 @@ void Theatre::startPreshow()
 	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
 	{
-		pair.second->youGotACallBack();
+		if(pair.second->isType(GRAPHXPLAYER))
+			player_uid = pair.first;
 		pair.second->callToStage(this);
 		troupe.insert(troupe.end(), pair.second);
 	}
@@ -67,6 +70,7 @@ void Theatre::startPreshow()
 void Theatre::dropCurtains()
 {
 	PRINTDEBUG("Exiting Theatre (" << name << ")")
+
 	PRINTLN("Devices Present:")
 	for(auto &pair : devices)
 		pair.second->prepForDestruction();
@@ -74,8 +78,87 @@ void Theatre::dropCurtains()
 	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
 		pair.second->takeABow();
+}
 
-	PRINTIMPORTANT("HEY! HEY! DON'T FORGET! DEVICES NEED TO BE TOLD TO EXIT, TOO!!")
+void Theatre::createActor(int actor_type, long uid, gSettings new_settings)
+{
+	PRINTDEBUG("ACTOR CREATE")
+	PRINTDEBUG(uid)
+	if(objects.contains(uid))
+	{
+		PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+		return;
+	}
+
+	objects[uid] = actor_map[actor_type]();
+	objects.at(uid)->setUID(uid);
+	objects.at(uid)->settings = new_settings;
+
+	if(objects.at(uid)->isType(GRAPHXPLAYER))
+		player_uid = uid;
+
+	PRINTDEBUG("New Actor " << objects.at(uid)->name << " with UID " << objects.at(uid)->getUID())
+
+	sortTroupe();
+	countLights();
+
+	objects.at(uid)->youGotACallBack(new_settings);
+
+	if(time_to_render)
+	{
+		objects.at(uid)->callToStage(this);
+	}
+
+	current_troupe_changed = time_to_render;
+}
+
+void Theatre::createDevice(int device_type, long uid, gSettings new_settings)
+{
+	if(devices.contains(uid))
+	{
+		PRINTERR("Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
+		return;
+	}
+
+	devices[uid] = device_map[device_type]();
+	devices.at(uid)->setUID(uid);
+	devices.at(uid)->settings = new_settings;
+
+	if(devices.at(uid)->isType(ENVIRONMENT))
+		environment_uid = uid;
+
+	devices.at(uid)->loadSettings(new_settings);
+
+	PRINTDEBUG("New Device " << devices.at(uid)->name << " with UID " << devices.at(uid)->getUID())
+}
+
+void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
+{
+	for(auto &pair : new_troupe)
+	{
+		if(objects.contains(pair.second))
+		{
+			PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(pair.second)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+			return;
+		}
+
+		objects[pair.second] = pair.first;
+		pair.first->setUID(pair.second);
+		troupe.insert(troupe.end(), objects.at(pair.second));
+
+		if(pair.first->isType(GRAPHXPLAYER))
+			player_uid = pair.second;
+
+		if(time_to_render)
+		{
+			pair.first->youGotACallBack();
+			pair.first->callToStage(this);
+		}
+	}
+
+	sortTroupe();
+	countLights();
+	current_troupe_changed = time_to_render;
 }
 
 void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
@@ -90,6 +173,10 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 
 	objects[uid] = new_actor;
 	new_actor->setUID(uid);
+
+	if(new_actor->isType(GRAPHXPLAYER))
+		player_uid = uid;
+
 	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
 		new_actor->settings = new_settings;
 
@@ -108,80 +195,16 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 	for(auto &pair : objects)
 	{
 		PRINTDEBUG("\tName: " << pair.second->name)
-		PRINTDEBUG("\t\tType: " << pair.second->getType())
 		PRINTDEBUG("\t\tUID: " << pair.second->getUID())
 		PRINTDEBUG("\t\tMap Key: " << pair.first)
 	}
 }
 
-void Theatre::createActor(Actor *new_actor_function(), long uid, gSettings new_settings)
-{
-	PRINTDEBUG("ACTOR CREATE")
-	PRINTDEBUG(uid)
-	if(objects.contains(uid))
-	{
-		PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
-		return;
-	}
-
-	objects[uid] = new_actor_function();
-	objects.at(uid)->setUID(uid);
-	objects.at(uid)->settings = new_settings;
-	for(auto &pair : objects)
-		PRINTDEBUG(pair.second->getType())
-	if(objects.at(uid)->getType() == "GraphXPlayer")
-	{
-		for(auto &pair : objects)
-		{
-			if(pair.second->getType() == "GraphXPlayer" && pair.first != uid)
-			{
-				actorLeave(pair.first);
-			}
-		}
-	}
-	PRINTDEBUG("New Actor " << objects.at(uid)->name << " with UID " << objects.at(uid)->getUID())
-
-	sortTroupe();
-	countLights();
-
-	objects.at(uid)->youGotACallBack(new_settings);
-
-	if(time_to_render)
-	{
-		objects.at(uid)->callToStage(this);
-	}
-
-	current_troupe_changed = time_to_render;
-}
-
-void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
-{
-	for(auto &pair : new_troupe)
-	{
-		if(objects.contains(pair.second))
-		{
-			PRINTERR("Tried adding a new Actor with UID " << std::quoted(std::to_string(pair.second)) << " to Theatre " << std::quoted(name) << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
-			return;
-		}
-
-		objects[pair.second] = pair.first;
-		pair.first->setUID(pair.second);
-		troupe.insert(troupe.end(), objects.at(pair.second));
-
-		if(time_to_render)
-		{
-			pair.first->youGotACallBack();
-			pair.first->callToStage(this);
-		}
-	}
-
-	sortTroupe();
-	countLights();
-	current_troupe_changed = time_to_render;
-}
-
 void Theatre::actorLeave(Actor *old_actor)
 {
+	if(old_actor->isType(GRAPHXPLAYER))
+		player_uid = -1;
+
 	if(auto it = objects.find(old_actor->getUID()) ; it != objects.end())
 	{
 		// delete it->second;
@@ -208,6 +231,15 @@ void Theatre::actorLeave(Actor *old_actor)
 
 void Theatre::actorLeave(long uid)
 {
+	if(!objects.contains(uid))
+	{
+		PRINTERR("Theatre was requested to delete the Actor with UID " << std::quoted(std::to_string(uid)) << " but that UID does not exist!")
+		return;
+	}
+
+	if(objects.at(uid)->isType(GRAPHXPLAYER))
+		player_uid = -1;
+
 	if(auto it = objects.find(uid) ; it != objects.end())
 	{
 		// delete it->second;
@@ -242,6 +274,10 @@ void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)
 
 	devices[uid] = new_device;
 	devices.at(uid)->setUID(uid);
+
+	if(devices.at(uid)->isType(ENVIRONMENT))
+		environment_uid = uid;
+
 	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
 	{
 		new_device->settings = new_settings;
@@ -252,26 +288,13 @@ void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)
 		new_device->initialize(this);
 }
 
-void Theatre::createDevice(Device *new_device_function(), long uid, gSettings new_settings)
-{
-	if(devices.contains(uid))
-	{
-		PRINTERR("Tried adding a new Device with UID " << std::quoted(std::to_string(uid)) << " to Theatre " << std::quoted(name) << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
-		return;
-	}
-
-	devices[uid] = new_device_function();
-	devices.at(uid)->setUID(uid);
-	devices.at(uid)->settings = new_settings;
-	devices.at(uid)->loadSettings(new_settings);
-
-	PRINTDEBUG("New Device " << devices.at(uid)->name << " with UID " << devices.at(uid)->getUID())
-}
-
 void Theatre::removeDevice(Device *old_device)
 {
 	if(auto it = devices.find(old_device->getUID()) ; it != devices.end())
 	{
+		if(it->second->isType(ENVIRONMENT))
+			environment_uid = -1;
+
 		// delete it->second;
 		it->second = NULL;
 		devices.erase(it);
@@ -283,14 +306,23 @@ void Theatre::removeDevice(Device *old_device)
 
 void Theatre::removeDevice(long uid)
 {
+	if(!devices.contains(uid))
+	{
+		PRINTERR("Theatre was requested to delete the Device with UID " << std::quoted(std::to_string(uid)) << " but that UID does not exist!")
+		return;
+	}
+
 	if(auto it = devices.find(uid) ; it != devices.end())
 	{
+		if(it->second->isType(ENVIRONMENT))
+			environment_uid = -1;
+
 		// delete it->second;
 		it->second = NULL;
 		devices.erase(it);
 		return;
 	}
-	
+
 	PRINTERR("Request to remove a Device with UID " << std::quoted(std::to_string(uid)) << " failed!")
 }
 
@@ -332,6 +364,50 @@ Device *Theatre::getDevice(std::string device_name)
 
 	PRINTERR("Hey! Someone asked for a Device named " << std::quoted(device_name) << ", but none were found! The \"getDevice\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")
 	return nullptr;
+}
+
+GraphXPlayer *Theatre::getPlayer()
+{
+	if(player_uid == -1)
+	{
+		for(auto &pair : objects)
+		{
+			if(pair.second->isType(GRAPHXPLAYER))
+			{
+				player_uid = pair.first;
+				return static_cast<GraphXPlayer *>(pair.second);
+			}
+		}
+	}
+
+	if(objects.contains(player_uid))
+		return static_cast<GraphXPlayer *>(objects.at(player_uid));
+
+	PRINTERR("\"player_uid\" is -1 and no \"GraphXPlayer\" object was found! This could mean that a \"GraphXPlayer\" object doesn't exist in this Theatre, or that \"getPlayer()\" was called too early. \"getPlayer()\" will now return a nullptr, which will most certainly cause a crash.")
+	return nullptr;
+}
+
+Environment *Theatre::getEnvironment()
+{
+	if(environment_uid == -1)
+	{
+		for(auto &pair : devices)
+		{
+			if(pair.second->isType(ENVIRONMENT))
+			{
+				environment_uid = pair.first;
+				return static_cast<Environment *>(pair.second);
+			}
+		}
+
+		return new Environment();
+	}
+
+	if(devices.contains(environment_uid))
+		return static_cast<Environment *>(devices.at(environment_uid));
+
+	PRINTERR("No Environment found with UID #" << std::to_string(environment_uid) << ". \"getEnvironment()\" will now return a new, uninitialized Environment object pointer which shouldn't be an issue, but keep this in mind.")
+	return new Environment();
 }
 
 void Theatre::sortTroupe()

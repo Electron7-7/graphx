@@ -1,5 +1,6 @@
 #include "r_common.hpp"
 #include "g_common.hpp"
+#include "g_jolt.hpp"
 #include "t_common.hpp"
 #include "quad.graphxmodel"
 #include <iostream>
@@ -7,6 +8,16 @@
 #include <sstream>
 
 using namespace graphx;
+using namespace graphx::classes;
+
+std::map<int, Device*(*)()> device_map =
+{
+	{graphx::classes::ENVIRONMENT, &createNewDevice<Environment>},
+	{graphx::classes::MATERIAL, &createNewDevice<Material>},
+	{graphx::classes::MESH, &createNewDevice<Mesh>},
+	{graphx::classes::SPRITE, &createNewDevice<Sprite>},
+	{graphx::classes::COLLIDER, &createNewDevice<Collider>},
+};
 
 //
 // GLShader
@@ -162,6 +173,11 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 //
 // Device
 //
+bool Device::isType(int class_type)
+{
+	return class_type == my_type;
+}
+
 void Device::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
@@ -172,12 +188,12 @@ void Device::loadSettings(graphx::gSettings new_settings)
 
 void Device::initialize(Theatre *parent_theatre)
 {
-	PRINTLN("\t- " << name << " UID #" << UID)
+	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Device::prepForDestruction()
 {
-	PRINTLN("\t- " << name << " UID #" << UID)
+	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Device::setUID(long manual_uid)
@@ -212,6 +228,7 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
+
 	Device::loadSettings(new_settings);
 
 	setRawData(ambient_lighting_enabled, new_settings["AmbientLightingEnabled"]);
@@ -296,9 +313,10 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
+
 	Device::loadSettings(new_settings);
 
-	gMeshData mesh_data;
+	gMeshData mesh_data = gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE);
 
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(material, new_settings["Material"]);
@@ -322,5 +340,6 @@ void Sprite::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
+
 	Mesh::loadSettings(new_settings);
 }

@@ -26,11 +26,11 @@ public:
 	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::vec3 scale = glm::vec3(1.0f);
 
-	glm::vec3 orientation_front;
+	glm::vec3 orientation_front = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 orientation_grounded_front;
 	glm::vec3 orientation_up;
 	glm::vec3 orientation_right;
-	glm::vec3 world_orientation_up;
+	glm::vec3 world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	RenderState current_state;
 	RenderState current_state_copy;
@@ -56,18 +56,26 @@ public:
 	virtual bool wantsToBeBuffered();
 	virtual long getUID();
 	virtual void setUID(long manual_uid);
-	virtual std::string getType(); // Might remove this later
+	bool isType(int class_type);
 
 protected:
 	long UID = -1; // A UID of -1 means it's not been set yet
+	int my_type = graphx::classes::ACTOR;
 	bool debug_visible;
 	virtual void updateVectors();
 };
 
+// Note about Theatres:
+// I abstracted getting Actor and Device pointers to functions, because directly grabbing them from their maps
+// might return null (if using []) or crash the engine (if using .at()). This crash will appear to happen for no
+// reason, so abstracting to these functions lets me put a PRINTERR in them that will print a detailed warning
+// message if the function can't find the Actor/Device (before returning a nullptr). This means that getting
+// Actor or Device pointers won't (directly) crash the engine, but will print a warning if it returns a nullptr.
+
 struct Theatre
 {
-	Mesh stage = Mesh();
-	long environment_uid = -1;
+
+	Mesh *stage = new Mesh();
 	std::string name = "Untitled Theatre";
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
@@ -77,32 +85,36 @@ struct Theatre
 
 	void startPreshow();
 	void dropCurtains();
-	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
-	void createActor(Actor *new_actor_function(), long uid, graphx::gSettings new_settings);
+
+	void createActor(int actor_type, long uid, graphx::gSettings new_settings);
+	void createDevice(int device_type, long uid, graphx::gSettings new_settings);
+
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
+	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
 	void actorLeave(Actor *old_actor);
 	void actorLeave(long uid);
 	void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
-	void createDevice(Device *new_device_function(), long uid, graphx::gSettings new_settings);
 	void removeDevice(Device *old_device);
 	void removeDevice(long uid);
-
-	// I abstracted getting Actor and Device pointers to functions, because directly grabbing them from their maps
-	// might return null (if using []) or crash the engine (if using .at()). This crash will appear to happen for no
-	// reason, so abstracting to these functions lets me put a PRINTERR in them that will print a detailed warning
-	// message if the function can't find the Actor/Device (before returning a nullptr). This means that getting
-	// Actor or Device pointers won't (directly) crash the engine, but will print a warning if it returns a nullptr.
-
+	
 	Actor *getActor(long uid);
 	Actor *getActor(std::string actor_name);
 	Device *getDevice(long uid);
 	Device *getDevice(std::string device_name);
+	GraphXPlayer *getPlayer();
+	Environment *getEnvironment();
 
+	// Use with CAUTION!!
+	// Returns static_cast<T>(getActor(identifier)).
+	// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
 	template<typename T> T iKnowWhatActorIWant(auto identifier)
 	{
 		return static_cast<T>(getActor(identifier));
 	}
 
+	// Use with CAUTION!!
+	// Returns static_cast<T>(getDevice(identifier)).
+	// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
 	template<typename T> T iKnowWhatDeviceIWant(auto identifier)
 	{
 		return static_cast<T>(getDevice(identifier));
@@ -111,15 +123,17 @@ struct Theatre
 private:
 	std::unordered_map<long, Actor *> objects = {};
 	std::unordered_map<long, Device *> devices = {};
+	long environment_uid = -1;
+	long player_uid = -1;
 
 	void sortTroupe();
 	void countLights();
 };
 
-Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"
-GraphXPlayer *getCurrentPlayer();
-
-extern std::unordered_map<int, Theatre> all_theatres;
-extern int current_theatre_uid;
+extern std::map<long, Theatre> all_theatres;
+extern long current_theatre_uid;
 extern bool current_troupe_changed; // Convert this into a function/variable inside Theatre
+
+Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"
+Environment *getCurrentEnvironment();
 #endif

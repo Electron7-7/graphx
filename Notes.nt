@@ -1053,3 +1053,36 @@ Well, that one's a freebie.
 
 [02/15/25]
 LightMoverTester breaks the program. For some reason, either GraphXPlayer is duplicated and/or current_player is null or set to a duplicate player with no jph_character. It might be because the UID/index of the light's pivot point offsets the player's UID/index and current_player points to the wrong space?
+
+[02/17/25]
+So here's the big bug: when the LightMoverTester adds its pivot point Actor to the Theatre (in order for it to be rendered), it somehow results in current_player being assigned to an uninitialized GraphXPlayer object. Even weirder, it looks like somehow that uninitialized object is in the Theatre's objects map alongside the original player. I'm assuming this is due to how the Theatre adds Actors to the map along with how either current_player is set or references are grabbed from the Theatre in general. I think that adding a new Actor to the map moves the order of objects around in memory and results in old pointers now pointing to empty spaces in the map which returns either an empty/uninitialized object, or creates one in the map to be pointed to.
+
+Perhaps a solution would be to not store references/pointers to specific Actors/Devices, but instead to use getter functions any time I want to access one.
+
+Oh my fucking god I think I found it; when calling the function to create an Actor or Device via a function pointer, I think I accidentally set the return of the function to an Actor/Device, not an Actor/Device pointer.
+
+Ok, I think I have to move the Actor/Device function maps from the interpreter file to g_common.hpp (or inside Theatre).
+
+Trying to minimize the amount of times Actors/Devices get initialized; going to add a flag to them that gets set to true when they get initialized, and checks if that flag is true or false before initializing.
+
+Side-bug: there actually should be at least a global "getEnvironment" function, since W_SwapAndClear uses the environment light for the clear-color, and returning an uninitialized new Environment is totally fine to do.
+
+Okay I think I see where the fault is: the for loop that iterates over all the objects is exiting early (and I think it's right after LightTesterMover is created).
+
+I'm going to try removing Actor/Device initialization/settings-loading from that function and see if it works.
+
+Yup! That fixed it!
+
+Okay, so to re-state the problem and state the solution:
+	Problem:
+		Actors and Devices can add Actors/Devices to the current Theatre, but adding a new Actor/Device to a map while it's being iterated through will result in early breaks and potentially other errors.
+	Solution:
+		Make sure Actors/Devices do not create/add new Actors/Devices in their initialization function. Theatres no longer call that function during map iteration.
+
+I want to change how "getType()" works in Actors/Devices and I want to streamline the process of checking an Actor/Device's type. I'm thinking of something like "isType(type)" where the "type" argument would be one of graphx::classes, and it would return either true or false.
+
+I did that, and I'm also removing "graphx_class_names" and using graphx::classnames to keep things streamlined. I might also add "cpp_definitions" to the graphx namespace.
+
+Problem with that: cpp_definitions has (obviously) a lot of different references to various parts of the code. I could either forward-delare those, or just leave it be. Tempted to actually forward-declare, to save compile time bc of header file inclusions.
+
+Created a new StaticBodyActor; doing this made me realize that I could actually use these as a "wrapper" for Colliders and Actors. RigidBodyActors always use Colliders that are Active, Dynamic, and MOVING, while StaticBodyActors always use Colliders that are "DontActivate", Static, and NON_MOVING.

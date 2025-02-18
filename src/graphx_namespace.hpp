@@ -1,10 +1,11 @@
 #ifndef GRAPHX_NAMESPACE
 #define GRAPHX_NAMESPACE
 #include <map>
-#include <unordered_map>
 #include <any>
 #include <string>
 #include <vector>
+#include <unordered_map>
+
 namespace graphx
 {
 	namespace classes
@@ -13,6 +14,7 @@ namespace graphx
 		static constexpr int ACTOR				= 1;
 		static constexpr int PHYSICSACTOR		= 2;
 		static constexpr int RIGIDBODYACTOR		= 3;
+		static constexpr int STATICBODYACTOR	= 11;
 		static constexpr int CAMERA				= 4;
 		static constexpr int GRAPHXPLAYER		= 5;
 		static constexpr int LIGHT				= 6;
@@ -20,15 +22,16 @@ namespace graphx
 		static constexpr int LIGHTSPOT			= 8;
 		static constexpr int LIGHTFLASHLIGHT	= 9;
 		static constexpr int LIGHTTESTERMOVER	= 10;
-		static constexpr int DEVICE				= 11;
-		static constexpr int ENVIRONMENT		= 12;
-		static constexpr int MATERIAL			= 13;
-		static constexpr int MESH				= 14;
-		static constexpr int SPRITE				= 15;
-		static constexpr int COLLIDER			= 16;
 
-		static constexpr int ACTORS[2] = {ACTOR, LIGHTTESTERMOVER};
-		static constexpr int DEVICES[2] = {DEVICE, COLLIDER};
+		static constexpr int DEVICE				= 500;
+		static constexpr int ENVIRONMENT		= 501;
+		static constexpr int MATERIAL			= 502;
+		static constexpr int MESH				= 503;
+		static constexpr int SPRITE				= 504;
+		static constexpr int COLLIDER			= 505;
+
+		static constexpr int ACTORS[2] = {0, 499};
+		static constexpr int DEVICES[2] = {500, 999};
 	}
 
 	typedef std::map<int, std::pair<std::string, std::string>>														gObjectStore;
@@ -41,5 +44,27 @@ namespace graphx
 	typedef std::pair<int, std::string>																				gSandwichPair;
 	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int>											gMeshData;
 	typedef std::vector<std::string>																				gRawData;
+
+	static std::map<int, std::string> classnames =
+	{
+		{classes::THEATRE, "Theatre"},
+		{classes::ACTOR, "Actor"},
+		{classes::PHYSICSACTOR, "PhysicsActor"},
+		{classes::RIGIDBODYACTOR, "RigidBodyActor"},
+		{classes::STATICBODYACTOR, "StaticBodyActor"},
+		{classes::CAMERA, "Camera"},
+		{classes::GRAPHXPLAYER, "GraphXPlayer"},
+		{classes::LIGHT, "Light"},
+		{classes::LIGHTDIRECTIONAL, "LightDirectional"},
+		{classes::LIGHTSPOT, "LightSpot"},
+		{classes::LIGHTFLASHLIGHT, "LightFlashlight"},
+		{classes::LIGHTTESTERMOVER, "LightTesterMover"},
+		{classes::DEVICE, "Device"},
+		{classes::ENVIRONMENT, "Environment"},
+		{classes::MATERIAL, "Material"},
+		{classes::MESH, "Mesh"},
+		{classes::SPRITE, "Sprite"},
+		{classes::COLLIDER, "Collider"}
+	};
 }
 #endif

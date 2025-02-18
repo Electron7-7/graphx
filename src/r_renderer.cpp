@@ -54,7 +54,7 @@ void R_StoreBuffers()
 		R_GL_BufferMeshData(actor->mesh);
 	}
 
-	R_GL_BufferMeshData(&getCurrentTheatre()->stage);
+	R_GL_BufferMeshData(getCurrentTheatre()->stage);
 
 	time_to_store_buffers = false;
 	time_to_render = true;
@@ -165,10 +165,10 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		}
 
 		shaders[shader_index]->setUniform("model_matrix", model_matrix);
-		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+		shaders[shader_index]->setUniform("view_matrix", getCurrentTheatre()->getPlayer()->getViewMatrix());
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
-		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->position_global);
+		shaders[shader_index]->setUniform("view_position", getCurrentTheatre()->getPlayer()->position_global);
 		
 		/*
 			NOTE: This will change almost immediately. I need to decide if I'm sticking with going through a vector of Meshes, switching to a vector of Actors,
@@ -228,8 +228,8 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 
 void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, getCurrentTheatre()->stage.VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getCurrentTheatre()->stage.IBO);
+	glBindBuffer(GL_ARRAY_BUFFER, getCurrentTheatre()->stage->VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getCurrentTheatre()->stage->IBO);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -241,19 +241,19 @@ void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned
 	glEnableVertexAttribArray(2);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage.material->texture_diffuse);
+	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage->material->texture_diffuse);
 	
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage.material->texture_specular);
+	glBindTexture(GL_TEXTURE_2D, getCurrentTheatre()->stage->material->texture_specular);
 
 	shaders[shader_index]->setUniform("material.texture_color", 0);
 	shaders[shader_index]->setUniform("material.texture_specular", 1);
 
 	shaders[shader_index]->setUniform("model_matrix", model_matrix);
-	shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+	shaders[shader_index]->setUniform("view_matrix", getCurrentTheatre()->getPlayer()->getViewMatrix());
 	shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 	shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
-	shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->position_global);
+	shaders[shader_index]->setUniform("view_position", getCurrentTheatre()->getPlayer()->position_global);
 
-	glDrawElements(GL_TRIANGLES, getCurrentTheatre()->stage.indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, getCurrentTheatre()->stage->indices.size(), GL_UNSIGNED_INT, 0);
 }

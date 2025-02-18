@@ -39,6 +39,6 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #define PRINT(thing);
 #define PRINTLN(thing);
 #define PRINTDEBUG(thing); // Might change this to print nothing, but I like having a little marker to remind/notify me that there are debug messages in the code somewhere
-#define JOLTDEBUG(thing)
+#define JOLTDEBUG(thing);
 #endif
 #endif

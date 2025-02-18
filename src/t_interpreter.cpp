@@ -3,13 +3,36 @@
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "cube.graphxmodel"
-// #include "ERROR.graphxmodel"
-// #include "pyramid.graphxmodel"
-// #include "quad.graphxmodel"
+#include "ERROR.graphxmodel"
+#include "pyramid.graphxmodel"
+#include "quad.graphxmodel"
 #include <set>
 
 using namespace graphx;
 using namespace graphx::classes;
+
+std::map<std::string, std::any> cpp_definitions =
+{
+	{"DOOM_TEXTURE_DIFF", DOOM_TEXTURE_DIFF},
+	{"DOOM_TEXTURE_SPEC", DOOM_TEXTURE_SPEC},
+	{"MISSING_TEXTURE_DIFF", MISSING_TEXTURE_DIFF},
+	{"MISSING_TEXTURE_SPEC", MISSING_TEXTURE_SPEC},
+	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
+	{"GRAPHX_ERROR", gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE)},
+	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_VERTS, PYRAMID_INDICES, VAO_HANDMADE)},
+	{"GRAPHX_QUAD", gMeshData(QUAD_VERTS, QUAD_INDICES, VAO_HANDMADE)},
+	{"Dynamic", JPH::EMotionType::Dynamic},
+	{"Static", JPH::EMotionType::Static},
+	{"Kinematic", JPH::EMotionType::Kinematic},
+	{"Moving", Layers::MOVING},
+	{"NonMoving", Layers::NON_MOVING},
+	{"Activate", JPH::EActivation::Activate},
+	{"DontActivate", JPH::EActivation::DontActivate},
+	{"BoxShape", ColliderShapes::BOX},
+	{"SphereShape", ColliderShapes::SPHERE},
+	{"CapsuleShape", ColliderShapes::CAPSULE},
+	{"CylinderShape", ColliderShapes::CYLINDER},
+};
 
 gTheatreStorage theatreParser(std::string theatre_data)
 {
@@ -211,6 +234,7 @@ gTheatreStorage theatreParser(std::string theatre_data)
 	);
 }
 
+#ifdef GRAPHX_DEBUG
 std::string getTheatreStructure(gTheatreStorage theatre_storage)
 {
 	std::string structure_out = "Internal structure of Theatre \"" + std::get<0>(theatre_storage) + "\":\n-----------------------------------------------------------\n";
@@ -259,26 +283,12 @@ std::string getTheatreStructure(gTheatreStorage theatre_storage)
 
 	return structure_out;
 }
-
-std::unordered_map<std::string, std::any> cpp_definitions =
+#else
+std::string getTheatreStructure(gTheatreStorage theatre_storage)
 {
-	{"DOOM_TEXTURE_DIFF", DOOM_TEXTURE_DIFF},
-	{"DOOM_TEXTURE_SPEC", DOOM_TEXTURE_SPEC},
-	{"MISSING_TEXTURE_DIFF", MISSING_TEXTURE_DIFF},
-	{"MISSING_TEXTURE_SPEC", MISSING_TEXTURE_SPEC},
-	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
-	{"Dynamic", JPH::EMotionType::Dynamic},
-	{"Static", JPH::EMotionType::Static},
-	{"Kinematic", JPH::EMotionType::Kinematic},
-	{"Moving", Layers::MOVING},
-	{"NonMoving", Layers::NON_MOVING},
-	{"Activate", JPH::EActivation::Activate},
-	{"DontActivate", JPH::EActivation::DontActivate},
-	{"BoxShape", ColliderShapes::BOX},
-	{"SphereShape", ColliderShapes::SPHERE},
-	{"CapsuleShape", ColliderShapes::CAPSULE},
-	{"CylinderShape", ColliderShapes::CYLINDER},
-};
+	return "Parsed Theatre " + std::quoted(std::get<0>(theatre_storage));
+}
+#endif
 
 gRawData extractData(std::string data_in_here)
 {
@@ -342,78 +352,17 @@ gRawData extractData(std::string data_in_here)
 	return gRawData{data_in_here};
 }
 
-std::map<int, Actor*(*)()> actor_map =
+int getClassHash(std::string class_name, bool dont_print_error)
 {
-	{ACTOR, &createNewObject<Actor, Actor>},
-	{PHYSICSACTOR, &createNewObject<PhysicsActor, Actor>},
-	{RIGIDBODYACTOR, &createNewObject<RigidBodyActor, Actor>},
-	{CAMERA, &createNewObject<Camera, Actor>},
-	{GRAPHXPLAYER, &createNewObject<GraphXPlayer, Actor>},
-	{LIGHT, &createNewObject<Light, Actor>},
-	{LIGHTDIRECTIONAL, &createNewObject<LightDirectional, Actor>},
-	{LIGHTSPOT, &createNewObject<LightSpot, Actor>},
-	{LIGHTFLASHLIGHT, &createNewObject<LightFlashlight, Actor>},
-	{LIGHTTESTERMOVER, &createNewObject<LightTesterMover, Actor>},
-};
-
-std::map<int, Device*(*)()> device_map =
-{
-	{ENVIRONMENT, &createNewObject<Environment, Device>},
-	{MATERIAL, &createNewObject<Material, Device>},
-	{MESH, &createNewObject<Mesh, Device>},
-	{SPRITE, &createNewObject<Sprite, Device>},
-	{COLLIDER, &createNewObject<Collider, Device>},
-};
-
-std::unordered_map<std::string, int> graphx_class_names
-{
-	{"Theatre", THEATRE},
-	{"Actor", ACTOR},
-	{"PhysicsActor", PHYSICSACTOR},
-	{"RigidBodyActor", RIGIDBODYACTOR},
-	{"Camera", CAMERA},
-	{"GraphXPlayer", GRAPHXPLAYER},
-	{"Light", LIGHT},
-	{"LightDirectional", LIGHTDIRECTIONAL},
-	{"LightSpot", LIGHTSPOT},
-	{"LightFlashlight", LIGHTFLASHLIGHT},
-	{"LightTesterMover", LIGHTTESTERMOVER},
-	{"Device", DEVICE},
-	{"Environment", ENVIRONMENT},
-	{"Material", MATERIAL},
-	{"Mesh", MESH},
-	{"Sprite", SPRITE},
-	{"Collider", COLLIDER},
-};
-
-int getClassHash(std::string class_name)
-{
-	if(graphx_class_names.contains(class_name))
-		return graphx_class_names.at(class_name);
-	PRINTERR("[ERROR] Class name " << std::quoted(class_name) << " not found in \"graphx_class_names\"!\n\tSolution 1: Add it!\n\tSolution 2: Fix typo!\n\tSolution 3: Uhoh...")
+	for(auto &pair : graphx::classnames)
+		if(!pair.second.compare(class_name)) // true if equal
+			return pair.first;
+	if(!dont_print_error)
+		PRINTERR("Class name " << std::quoted(class_name) << " not found in \"graphx::classnames\"!\n\tSolution 1: Add it!\n\tSolution 2: Fix typo!\n\tSolution 3: Uhoh...")
 	return -1;
 }
 
-void createNewClass(std::string class_name, int object_uid, gSettings class_settings, Theatre &parent_theatre)
-{
-	int class_hash = getClassHash(class_name);
-
-	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-	{
-		parent_theatre.createActor(actor_map[class_hash], object_uid, class_settings);
-		return;
-	}
-
-	// Leaving this if{} here for now (paranoia); remove it to use early return
-	if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
-	{
-		parent_theatre.createDevice(device_map[class_hash], object_uid, class_settings);
-		if(class_name == "Environment")
-			parent_theatre.environment_uid = object_uid;
-	}
-}
-
-Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
+void loadTheatre(std::string embedded_theatre, long theatre_uid)
 {
 	gTheatreStorage theatre_data = theatreParser(embedded_theatre);
 	PRINTDEBUG(getTheatreStructure(theatre_data));
@@ -421,8 +370,8 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 	current_theatre_uid = theatre_uid;
 	if(all_theatres.contains(theatre_uid))
 	{
-		PRINTERR("ERROR! A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded as that UID already exists! Returning a pointer to the Theatre with the greatest UID")
-		return &all_theatres.end()->second;
+		PRINTERR("ERROR! A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded as that UID already exists!")
+		return;
 	}
 
 	all_theatres[theatre_uid] = Theatre(std::get<0>(theatre_data));
@@ -448,21 +397,33 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 
 		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
 		{
-			new_class_settings[it->second.first] = cpp_definitions[it->second.second];
+			new_class_settings[it->second.first] = cpp_definitions.at(it->second.second);
 		}
 
 		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
 		{
-			int reference_class_hash = getClassHash(it->second.first);
+			if(getClassHash(it->second.first, true) != -1)
+			{
+				if(ACTORS[0] <= getClassHash(it->second.first) && getClassHash(it->second.first) <= ACTORS[1])
+				{
+					new_class_settings[it->second.first] = new_theatre.getActor(it->second.second);
+					continue;
+				}
+
+				new_class_settings[it->second.first] = new_theatre.getDevice(it->second.second);
+				continue;
+			}
+
+			int reference_class_hash = getClassHash(objects_bucket.at(it->second.second).first);
 
 			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 			{
-				new_class_settings[it->second.first] = new_theatre.getActor(it->second.second);
+				new_class_settings[it->second.first] = new_theatre.getActor(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
 			}
 
 			if(DEVICES[0] <= reference_class_hash && reference_class_hash <= DEVICES[1])
 			{
-				new_class_settings[it->second.first] = new_theatre.getDevice(it->second.second);
+				new_class_settings[it->second.first] = new_theatre.getDevice(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
 			}
 		}
 
@@ -515,8 +476,16 @@ Theatre *loadTheatre(std::string embedded_theatre, long theatre_uid)
 			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings();
 		}
 
-		createNewClass(object.second.first, object.first, new_class_settings, new_theatre);
-	}
+		int class_hash = getClassHash(object.second.first);
 
-	return getCurrentTheatre();
+		if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+		{
+			new_theatre.createActor(class_hash, object.first, new_class_settings);
+		}
+
+		else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
+		{
+			new_theatre.createDevice(class_hash, object.first, new_class_settings);
+		}
+	}
 }

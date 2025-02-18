@@ -50,12 +50,17 @@ void Collider::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
 		new_settings = settings;
+
 	Device::loadSettings(new_settings);
 
 	setVariable(motion_type, new_settings["MotionType"]);
 	setVariable(object_layer, new_settings["ObjectLayer"]);
 	setVariable(activation, new_settings["Activation"]);
 	setVariable(shape, new_settings["Shape"]);
+	setRawData(forever_alone, new_settings["ForeverAlone"]);
+	setRawData(position, new_settings["Position"]);
+	setRawData(euler_angles, new_settings["RotationDegrees"]);
+	setRawData(scale, new_settings["Scale"]);
 }
 
 JPH::BodyCreationSettings *Collider::getBodySettings()
@@ -72,16 +77,24 @@ void Collider::createBody()
 {
 	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
 	JPH::RVec3 body_position = convertMath<JPH::Vec3>(position);
-	JPH::Quat body_quaternion = convertMath<JPH::Quat>(quaternion);
+	glm::vec3 euler_radians = glm::radians(euler_angles);
+	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(euler_radians));
 
 	body_settings = JPH::BodyCreationSettings(createAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
 	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
 	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
 }
 
+void Collider::initialize(Theatre *parent_theare)
+{
+	if(forever_alone)
+		createBody();
+}
+
 void Collider::prepForDestruction()
 {
 	Device::prepForDestruction();
 
-	J_RemoveAndDestroyBody(body_id);
+	if(!body_id.IsInvalid())
+		J_RemoveAndDestroyBody(body_id);
 }

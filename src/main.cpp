@@ -34,6 +34,9 @@ bool test_flashlight_bool = false;
 bool red_flashlight_color_bool = false;
 bool do_jolt_assert = false;
 
+float camera_near = 0.1f;
+float camera_far = 1000.0f;
+
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -51,8 +54,8 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
-	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
@@ -78,7 +81,7 @@ int main()
 		if(time_to_render)
 		{
 			// De-jank all of this shit below
-			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
+			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], camera_near, camera_far);
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
 			R_Render(actor_state_mutex, interpolation_time, projection_matrix);
 		}
@@ -268,7 +271,8 @@ void testGameTick(GLFWwindow *main_window)
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 	// This will change to include loading external Theatres and to not just only load the first Theatre lmfao
-	loadTheatre(embedded_theatres[0], 0); // So, when I add UI, this will go behind a "start game"/"load level"/etc
+	loadTheatre(embedded_theatres.at(0), 0); // So, when I add UI, this will go behind a "start game"/"load level"/etc
+	loadTheatre(embedded_theatres.at(1), 1);
 	getCurrentTheatre()->startPreshow();
 
 	time_to_store_buffers = true;
@@ -402,7 +406,7 @@ void processInput(GLFWwindow *window)
 		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
 	};
 
-	getCurrentPlayer()->doMovement(input_vector);
+	getCurrentTheatre()->getPlayer()->doMovement(input_vector);
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
@@ -414,7 +418,7 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		return;
 	
-	getCurrentPlayer()->doMouseMovement(mouse_offset);
+	getCurrentTheatre()->getPlayer()->doMouseMovement(mouse_offset);
 }
 
 int WinMain() // Fuck off, Windows

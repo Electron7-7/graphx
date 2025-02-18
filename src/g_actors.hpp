@@ -19,6 +19,9 @@
 #define LIGHT_DIRECTIONAL	1
 #define LIGHT_SPOT			2
 
+template<typename T> Actor *createNewActor() { return new T; }
+extern std::map<int, Actor*(*)()> actor_map;
+
 class PhysicsActor: public Actor
 {
 public:
@@ -32,12 +35,13 @@ public:
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
-	std::string getType() override;
 
 	virtual void reset_to_initial_orientation_for_testing()
 	{};
 
 protected:
+	JPH::Vec3 reset_position;
+	JPH::Quat reset_quaternion;
 	std::vector<JPH::BodyCreationSettings> body_creation_settings;
 	std::vector<JPH::EActivation> body_activation;
 	JPH::Vec3 body_scale;
@@ -56,13 +60,17 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
-	std::string getType() override;
 
 	void reset_to_initial_orientation_for_testing() override;
+};
 
-protected:
-	JPH::Vec3 reset_position;
-	JPH::Quat reset_quaternion;
+class StaticBodyActor : public PhysicsActor
+{
+public:
+	using PhysicsActor::PhysicsActor;
+
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void callToStage(Theatre *parent_theatre) override;
 };
 
 class Camera : public Actor
@@ -75,10 +83,12 @@ public:
 	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
 	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
 
+	Camera();
+
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void doRotation(glm::vec2 mouse_input);
-	std::string getType() override;
+	
 };
 
 /*class PlayerCamera : public Camera
@@ -110,7 +120,7 @@ public:
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
 
-	GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, 0.0f, 0.0f));
+	GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f));
 
 	glm::mat4 getViewMatrix();
 	void doMouseMovement(glm::vec2 mouse_offset);
@@ -119,7 +129,7 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
-	std::string getType() override;
+	
 
 private:
 	JPH::Ref<JPH::Character> jph_character = nullptr;
@@ -144,7 +154,6 @@ public:
 	Light(std::string init_name = "UNTITLED LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f));
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-	std::string getType() override;
 };
 
 class LightDirectional: public Light
@@ -155,7 +164,6 @@ public:
 	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-	std::string getType() override;
 };
 
 class LightSpot: public Light
@@ -170,13 +178,12 @@ public:
 	glm::vec2 getCutoffAngles();
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-	std::string getType() override;
 };
 
 class LightFlashlight: public LightSpot
 {
 public:
-	GraphXPlayer *parent = NULL;
+	GraphXPlayer *parent = nullptr;
 	glm::vec3 position_offset = glm::vec3(0.0f);
 	glm::vec3 rotation_offset = glm::vec3(0.0f);
 
@@ -186,7 +193,6 @@ public:
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-	std::string getType() override;
 
 private:
 	float _intensity;
@@ -208,11 +214,8 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
-	std::string getType() override;
 };
 
-extern GraphXPlayer *current_player;
-extern std::unordered_map<double, Actor *> actor_uid_lookup;
 extern glm::vec3 vector3_up;
 extern glm::vec3 vector3_front;
 extern glm::vec3 vector3_right;

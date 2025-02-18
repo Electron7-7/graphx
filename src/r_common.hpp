@@ -71,6 +71,8 @@ struct Device
 	int device_type;
 	graphx::gSettings settings;
 
+	bool isType(int class_type);
+
 	virtual void initialize(Theatre *parent_theatre);
 	virtual void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}});
 	virtual void prepForDestruction();
@@ -79,6 +81,7 @@ struct Device
 
 protected:
 	long UID = -1; // A UID of -1 means it's not been set yet
+	int my_type = graphx::classes::DEVICE;
 };
 
 struct Environment : public Device // Will be extended
@@ -129,7 +132,7 @@ struct Mesh : public Device
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 
-	Mesh(Material *init_material = new Material(), std::vector<GLfloat> init_vertices = ERROR_VERTS, std::vector<GLuint> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
+	Mesh(Material *init_material = new Material(), std::vector<float> init_vertices = ERROR_VERTS, std::vector<unsigned int> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
@@ -147,6 +150,9 @@ extern std::vector<GLShader *> shaders; // Same for shaders
 extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern bool do_interpolation;
+extern std::map<int, Device*(*)()> device_map;
+
+template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow  *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void		 W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
@@ -155,5 +161,4 @@ void 		 R_StoreBuffers();
 void 		 R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
 void		 R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index);
 void		 R_TroupeChanged();
-Environment *getCurrentEnvironment();
 #endif

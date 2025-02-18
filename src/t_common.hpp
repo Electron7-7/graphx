@@ -2,7 +2,6 @@
 #define GRAPHX_THEATRE_FILE_FORMAT
 #include "r_common.hpp"
 #include "graphx_namespace.hpp"
-template<typename T, typename A> A *createNewObject() { return new T; }
 template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
 template<typename T> void setDevicePointer(T &variable, std::any set_value)
 {
@@ -47,7 +46,7 @@ template<typename T> void setRawData(T &variable, std::any set_value)
 		else
 		{
 			graphx::gRawData new_value = std::any_cast<graphx::gRawData>(set_value);
-			variable = (new_value[0] == "true");
+			variable = (new_value[0] == "true" || "True");
 		}
 	}
 
@@ -104,16 +103,12 @@ template<typename T> void setVariable(T &variable, std::any set_value)
 		variable = std::any_cast<T>(set_value);
 }
 
-extern int current_theatre_uid;
-extern std::unordered_map<std::string, int> graphx_class_names;
-extern std::unordered_map<std::string, std::any> cpp_definitions;
-extern std::map<int, Actor*(*)()> actor_map;
-extern std::map<int, Device*(*)()> device_map;
+extern long current_theatre_uid;
+extern std::map<std::string, std::any> cpp_definitions;
 
 graphx::gTheatreStorage theatreParser(std::string theatre_data);
 graphx::gRawData 		extractData(std::string data_in_here);
 std::string 			getTheatreStructure(graphx::gTheatreStorage theatre_storage);
-Theatre 			   *loadTheatre(std::string embedded_theatre, long theatre_uid);
-void 					createNewClass(std::string class_name, int object_uid, graphx::gSettings class_settings, Theatre &parent_theatre);
-int 					getClassHash(std::string class_name);
+void 					loadTheatre(std::string embedded_theatre, long theatre_uid);
+int 					getClassHash(std::string class_name, bool dont_print_error = false);
 #endif
