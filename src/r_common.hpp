@@ -101,21 +101,19 @@ struct Material : public Device
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
 
-	// std::filesystem::path texture_path_diffuse = MISSING_TEXTURE_DIFF;
-	// std::filesystem::path texture_path_specular = MISSING_TEXTURE_SPEC;
 	unsigned char* embedded_texture_diffuse = NO_TEXTURE;
 	unsigned char* embedded_texture_specular = NO_TEXTURE;
 
-	glm::vec3 color;
-	int specular_sharpness;
-	float specular_strength;
-	bool mat_fullbright;
+	glm::vec3 color = glm::vec3(1.0f);
+	int specular_sharpness = 16;
+	float specular_strength = 1.0f;
+	bool mat_fullbright = false;
 
-	Material(bool is_fullbright, glm::vec3 init_color);
-	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
+	Material();
+	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
+	Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
-	// unsigned int bufferTexture(std::filesystem::path path);
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;

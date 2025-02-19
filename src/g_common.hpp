@@ -87,7 +87,7 @@ protected:
 struct Theatre
 {
 
-	Mesh *stage = new Mesh();
+	Mesh *stage = new Mesh(new Material(false, glm::vec3(0.5, 0.1, 0.4)));
 	std::string name = "Untitled Theatre";
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;

@@ -79,9 +79,7 @@ void Collider::createBody()
 {
 	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
 	JPH::RVec3 body_position = convertMath<JPH::Vec3>(position) + convertMath<JPH::Vec3>(local_position);
-	glm::vec3 euler_radians = glm::radians(euler_angles);
-	glm::vec3 local_euler_radians = glm::radians(local_euler_angles);
-	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(euler_radians)) * JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(local_euler_radians));
+	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
 
 	body_settings = JPH::BodyCreationSettings(createAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
 	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);

@@ -239,20 +239,25 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 //
 // Material
 //
+Material::Material()
+{
+	device_type = DEVICE_MATERIAL;
+}
+
 Material::Material(bool is_fullbright, glm::vec3 init_color)
-: embedded_texture_diffuse(NO_TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+: color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {
 	device_type = DEVICE_MATERIAL;
 }
 
 Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {
 	device_type = DEVICE_MATERIAL;
 }
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
+: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {
 	device_type = DEVICE_MATERIAL;
 }
@@ -292,7 +297,7 @@ unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load_from_memory(texture_buffer, 64*64, &t_width, &t_height, &t_channels, STBI_rgb);
+	unsigned char *t_data = stbi_load_from_memory(texture_buffer, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
 
 	if(!t_data)
 	{

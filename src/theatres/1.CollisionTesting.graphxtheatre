@@ -17,6 +17,20 @@ Material (FullBright_1)
 	SpecularSharpness (0)
 	SpecularStrength (0.0)
 }
+Material (Source_Yellow)
+{
+	Color (1.2, 1.0, 0.0)
+	DiffuseTexture [SOURCE_LIGHT_GREY]
+	SpecularSharpness (0)
+	SpecularStrength (0.0)
+}
+Material (Source_Green)
+{
+	Color (0.0, 1.0, 0.3)
+	DiffuseTexture [SOURCE_LIGHT_GREY]
+	SpecularSharpness (0)
+	SpecularStrength (0.0)
+}
 Material (Doom_Shiny)
 {
 	DiffuseTexture    [DOOM_TEXTURE_DIFF]
@@ -63,7 +77,7 @@ StaticBodyActor (Platform_Floor_1)
 	LocalPosition   (0.0, -70.0, 0.0)
 	Rotation        <Platform_1>
 }
-Actor (Platform_Stair_1)
+StaticBodyActor (Platform_Stair_1)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Scale		    (11.0, 2.5, 11.0)
@@ -71,7 +85,7 @@ Actor (Platform_Stair_1)
 	LocalPosition   (0.0, -72.5, 0.0)
 	Rotation        <Platform_1>
 }
-Actor (Platform_Stair_2)
+StaticBodyActor (Platform_Stair_2)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Scale		    (12.0, 2.0, 12.0)
@@ -79,7 +93,7 @@ Actor (Platform_Stair_2)
 	LocalPosition   (0.0, -73.0, 0.0)
 	Rotation        <Platform_1>
 }
-Actor (Platform_Stair_3)
+StaticBodyActor (Platform_Stair_3)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Scale		    (13.0, 1.5, 13.0)
@@ -87,7 +101,7 @@ Actor (Platform_Stair_3)
 	LocalPosition   (0.0, -73.5, 0.0)
 	Rotation        <Platform_1>
 }
-Actor (Platform_Stair_4)
+StaticBodyActor (Platform_Stair_4)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Scale		    (14.0, 1.0, 14.0)
@@ -95,7 +109,7 @@ Actor (Platform_Stair_4)
 	LocalPosition   (0.0, -74.0, 0.0)
 	Rotation        <Platform_1>
 }
-Actor (Platform_Stair_5)
+StaticBodyActor (Platform_Stair_5)
 {
 	Mesh:Material   <Cube>:<Doom_Shiny>
 	Scale		    (15.0, 0.5, 15.0)
@@ -103,56 +117,57 @@ Actor (Platform_Stair_5)
 	LocalPosition   (0.0, -74.5, 0.0)
 	Rotation        <Platform_1>
 }
-Actor (Stairs_Parent)
+RigidBodyActor (Falling_Actor_1)
 {
-	Mesh:Material   <Cube>:<FullBright_1>
-	Scale           (5.0, 1.0, 10.0)
-	Position        <Platform_1>
-	Rotation        (0.0, 20.0, 0.0)
-	LocalRotation   (0.0, 0.0, 50.0)
-	LocalPosition   (11.0, -74.5, 15.0)
+	Mesh:Material <Cube>:<Doom_Shiny>
+	Scale (1.0, 1.0, 1.0)
+	Position (0.14, 3.12, -2.13)
 }
-Collider (Stairs_1)
+RigidBodyActor (Falling_Actor_2)
 {
-	ForeverAlone    (True)
-	MotionType      [Static]
-	ObjectLayer     [NonMoving]
-	Activation      [Activate]
-	Shape           [BoxShape]
-	Scale           <Stairs_Parent>
-	Position        (0.0, -100.0, 0.0)
-	LocalPosition   <Stairs_Parent>
-	Rotation        <Stairs_Parent>
-	LocalRotation   <Stairs_Parent>
+	Mesh:Material <Cube>:<Doom_Shiny>
+	Scale (2.34, 0.87, 1.2)
+	Position (0.14, 8.12, -2.13)
+	Rotation (4.3, 67.3, 0.0)
 }
-Actor (Rotation_Tester_1)
+RigidBodyActor (Falling_Actor_3)
 {
-	Mesh:Material   <Cube>:<Doom_Dull>
-	Scale           (1.0, 1.0, 1.0)
-	Position        (0.0, 2.2, -3.5)
-	Rotation        (0.0, 20.0, 0.0)
-	LocalPosition   (-2.0, 0.0, 0.0)
-	LocalRotation   (0.0, 0.0, 0.0)
+	Mesh:Material <Cube>:<Source_Yellow>
+	Scale (0.54, 0.37, 0.23)
+	Position (0.14, 5.12, -2.13)
+	Rotation (4.3, 67.3, -62.0)
 }
-Actor (Rotation_Tester_2)
+RigidBodyActor (Falling_Actor_4)
 {
-	Mesh:Material   <Cube>:<Doom_Dull>
-	Scale           <Rotation_Tester_1>
-	Position        <Rotation_Tester_1>
-	Rotation        <Rotation_Tester_1>
-	LocalPosition   (2.0, 0.0, 0.0)
-	LocalRotation   (0.0, 0.0, 80.0)
+	Mesh:Material <Cube>:<Source_Green>
+	Scale (2.54, 0.77, 1.23)
+	Position (-2.3, 12.0, -3.63)
+	Rotation (4.3, 67.3, -62.0)
+}
+RigidBodyActor (Falling_Actor_4)
+{
+	Mesh:Material <Cube>:<Doom_Dull>
+	Scale (2.54, 0.77, 2.23)
+	Position (-1.7, 16.0, -4.63)
+	Rotation (4.3, -43.3, 62.0)
 }
 LightDirectional (Sun)
 {
-	Direction (-0.2, -1.0, -0.3)
-	Strength  (0.05)
+	Direction (-0.1, -1.0, -0.3)
+	Strength  (0.1)
 	Color     (1.0, 1.0, 1.0)
 }
 LightTesterMover (test_light_1)
 {
 	Color (0.7, 0.2, 1.0)
-	PivotPosition (5.0, 1.8, -7.0)
+	PivotPosition (-2.2, 3.8, -7.5)
 	PivotRadius (3.0)
 	PivotSpeed (2.2)
+}
+LightTesterMover (test_light_2)
+{
+	Color (1.0, 0.42, 0.1)
+	PivotPosition (8.4, 1.8, -3.0)
+	PivotRadius (2.0)
+	PivotSpeed (1.2)
 }

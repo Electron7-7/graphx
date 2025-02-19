@@ -4,6 +4,7 @@
 #include "g_jolt.hpp"
 #include "g_math.hpp"
 #include <vector>
+#include <Jolt/Jolt.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
 using namespace graphx;
@@ -212,6 +213,10 @@ void Actor::tick(int current_tick)
 void Actor::callToStage(Theatre *parent_theatre)
 {
 	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
+	PRINTDEBUG("Global Position: " << position_global)
+	PRINTDEBUG("Local Position: " << position_local)
+	PRINTDEBUG("Global Rotation: " << glm::degrees(glm::eulerAngles(quaternion)))
+	PRINTDEBUG("Local Rotation: " << glm::degrees(glm::eulerAngles(local_quaternion)))
 }
 
 void Actor::takeABow()
@@ -513,6 +518,8 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 {
 	light_type = LIGHT_DIRECTIONAL;
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
+	debug_visible = false;
+	visible = false;
 }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
@@ -598,10 +605,6 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
 {
 	my_type = graphx::classes::LIGHTTESTERMOVER;
-	pivot_point.setGlobalPosition(init_pivot_position);
-	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
-	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
-	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID);
 }
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
@@ -614,6 +617,11 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	setRawData(pivot_position, new_settings["PivotPosition"]);
 	setRawData(pivot_radius, new_settings["PivotRadius"]);
 	setRawData(pivot_speed, new_settings["PivotSpeed"]);
+
+	pivot_point.setGlobalPosition(pivot_position);
+	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID);
 }
 
 void LightTesterMover::tick(int current_tick)

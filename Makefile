@@ -1,14 +1,14 @@
 CXX = clang++
 CC = clang
 
-WCXX = x86_64-w64-mingw32-g++
-WCC = x86_64-w64-mingw32-gcc
+WCXX = w64-clang++
+WCC = w64-clang
 
 CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
-WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows $(JOLTFLAGS) $(GRAPHXFLAGS)
-WCCFLAGS = -g -Wall -static -mwindows
+WCXXFLAGS = -v -g -Wall -std=c++20 -static -fuse-ld=lld $(JOLTFLAGS) $(GRAPHXFLAGS)
+WCCFLAGS = -g -Wall -static -fuse-ld=lld
 
 GRAPHXFLAGS = -D GRAPHX_COMPILING
 JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
@@ -17,7 +17,7 @@ INCLUDES = -I src/include
 WINCLUDES = -I src/include -I src/windows_dependencies/include
 
 LIBS = -l glfw -L src/lib -l:libJolt.a
-WLIBS = -L src/windows_dependencies/lib src/windows_dependencies/lib/libJolt.a src/windows_dependencies/lib/lib-mingw-w64/libglfw3.a -l gdi32
+WLIBS = -L src/windows_dependencies/lib -L src/windows_dependencies/lib/lib-mingw-w64 -l Jolt -l glfw3 -l gdi32
 
 SRC := src
 

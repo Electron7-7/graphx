@@ -1077,7 +1077,7 @@ Okay, so to re-state the problem and state the solution:
 	Problem:
 		Actors and Devices can add Actors/Devices to the current Theatre, but adding a new Actor/Device to a map while it's being iterated through will result in early breaks and potentially other errors.
 	Solution:
-		Make sure Actors/Devices do not create/add new Actors/Devices in their initialization function. Theatres no longer call that function during map iteration.
+		Make sure Actors/Devices do not create/add new Actors/Devices in their initialization function. Theatres call that function during map iteration.
 
 I want to change how "getType()" works in Actors/Devices and I want to streamline the process of checking an Actor/Device's type. I'm thinking of something like "isType(type)" where the "type" argument would be one of graphx::classes, and it would return either true or false.
 
@@ -1103,3 +1103,17 @@ template<typename T, typename A> convertMath(T &convert_me, A convert_to)
 :::
 
 I need to make a map creator like UDB or Slade3. Doing it via text sucks.
+
+Ooh, I think that the math conversion from glm quat to JPH quat was putting the w component on the wrong end!
+
+Oh and also I just realized that Theatre 0 isn't broken, the floor was a RigidBodyActor, which means that gravity wasn't reversed, everything is just falling.
+
+Theatre 0 is all fixed!
+
+Might work on external Theatre loading rn, tbh. Math conversion is done; I'm keeping the old function and overloading it with new versions that convert a variable by reference. I kinda wanna make a few that also convert between euler angles in degrees and quaternions. I'll do that real quickly. Ok, actually I want to make that later, but right now I do want to make a conversion function for converting JPH vectors between radians and degrees.
+
+You know what? It's time to introduce UI elements!
+
+In order to do that, I need to merge this with the trunk and create a new release. That also means I need to get a .exe out of this thing... oh boy.
+
+Doing black magic to try and get the .exe to compile. I'm going to give up for tonight and pick this back up tomorrow.

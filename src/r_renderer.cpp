@@ -223,7 +223,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		}
 	}
 
-	R_RenderFlats(projection_matrix, glm::mat4(1.0f), shader_index);
+	// R_RenderFlats(projection_matrix, glm::mat4(1.0f), shader_index); // Removing Stage rendering for now bc its just a red cube lol
 }
 
 void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index)
