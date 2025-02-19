@@ -1117,3 +1117,6 @@ You know what? It's time to introduce UI elements!
 In order to do that, I need to merge this with the trunk and create a new release. That also means I need to get a .exe out of this thing... oh boy.
 
 Doing black magic to try and get the .exe to compile. I'm going to give up for tonight and pick this back up tomorrow.
+
+[02/19/25]
+I think I'm going to bite the bullet and convert to CMake. With Jolt, it just makes things easier, I think. I'll make a new branch for that specifically.
