@@ -13,6 +13,10 @@
 <img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="400"/>
 <img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
 
+## Update 3: GT Files!
+
+No, not Gran Turismo, "GraphXTheatre" files are the newest addition to the GraphX game engine, and I am thoroughly proud of my horrible code. In a nutshell, I decided to create my own custom file format for creating Theatres and I wanted to do so without using any tutorials or guides (just StackOverflow and tenacity). It was very painful, but very informative! I created my own lexer, parser, and interpreter for a file format/syntax that I also invented, again, without any guides or even learning what the difference between a lexer and a parser is until after I had finished (i.e: right now as I'm writing this, lmfao). If you want an in-depth guide to this new file format, check out the [GraphX Theatre Syntax Documentation](https://github.com/Electron7-7/graphx/blob/trunk/src/theatres/docs/graphxtheatre_syntax_documentation.md).
+
 ## An Okay Game Engine
 
 When I started this journey, I had very little programming experience; a few basic Python programs (like, command-line output basic), some shell scripting, a bit of web-design, and some fun ventures in [Blitz3D](https://github.com/blitz-research/blitz3d) (which I highly recommend to anyone interested in the programming side of gamedev). Needless to say, I was in no position _whatsoever_ to think to myself, "hmm, you know what? I want to learn C++ _and_ OpenGL/Graphics Programming at the same exact time! Surely, nothing will go wrong". I am here to tell you I am lucky that I have autism and an autistic intrigue and passion for programming, because if I didn't, this project would have permanently died before a week's time.
@@ -24,7 +28,7 @@ Holy **fuck** is Windows just the worst for beginners; Visual Studio, the Window
 Rant over, you can all return to your desks.
 ## Building GraphX
 #### A Note About The Makefile
-I designed the Makefile to specifically avoid changing certain variables like `CXX` or `CFLAGS` when building for Windows or Linux; instead, I opted to use unique variables and build rules, isolating both architectures and duplicating some code in the process. When building for Linux, the Makefile will use the variables `CXX`, `CC`, `CXXFLAGS`, `CFLAGS`, `INCLUDES`, etc. When building for Windows, the Makefile uses the variables `WCXX`, `WCC`, `WCXXFLAGS`, `WCFLAGS`, `WINCLUDES`, etc.
+I designed the Makefile to use unique variables and build rules when targeting either Windows or Linux, in an effort to isolate both architectures. When building for Linux, the Makefile will use the variables `CXX`, `CC`, `CXXFLAGS`, `CFLAGS`, `INCLUDES`, etc. When building for Windows, however, the Makefile uses the variables `WCXX`, `WCC`, `WCXXFLAGS`, `WCFLAGS`, `WINCLUDES`, etc.
 My reasoning is that I wanted it to be easy for people to swap out compilers, linker flags, include locations, etc for either architecture while keeping them both separated. It feels neater and a little more modular like this (although it's probably less efficient). The way I handle embedding resources is less elegant and requires you to manually add each image/shader to an image/shader list, but I intend on changing that as soon as I've got resource embedding working on Windows, using `xxd.exe`.
 #### Building for Linux
 To compile GraphX for Linux, you'll need:
@@ -34,14 +38,18 @@ To compile GraphX for Linux, you'll need:
 
 If you don't want to use clang for whatever reason, you can change the `CXX` and `CC` variables in the Makefile. I've kept all the variables that people would most likely want/need to change at the top of the Makefile for ease of access. GraphX also relies on some headers that are only included in C++20, so don't remove the `-std=c++20` from `CXXFLAGS` or `WCXXFLAGS`. If you're getting compiler errors related to `std::lerp`, it's probably because you're not telling the compiler to enable C++20; the way I do it is by using the `-std=c++20` flag in the Makefile.
 
-To build GraphX, just run `make` or `make build` from the root directory (the folder with the Makefile in it). If everything finishes successfully, the program `graphx_linux` will be inside the pre-existing `build/` directory.
+To build GraphX, just run `make` or `make build` from the root directory (the folder with the Makefile in it). If everything finishes successfully, the program will be inside the pre-existing `build/` directory. Its name will be different depending on your distro, but it will always start with `GraphX_Linux`.
 #### Building for Windows (on Linux)
 To compile GraphX for Windows while on Linux, you'll need:
 - `mingw-w64-gcc`
+- `mingw-w64-g++`
 - `make`
 
-I've included all the libraries and header files needed to compile an executable on Linux using MinGW, and the Makefile is already configured to handle everything correctly, so all you need to do is run `make windows` from the root directory, and if it all finishes successfully, you'll find `graphx_windows_x86_64.exe` in the pre-existing `build/` directory.
+I've included all the libraries and header files needed to compile an executable on Linux using MinGW, and the Makefile is already configured to handle everything correctly, so all you need to do is run `make windows` from the root directory, and if it all finishes successfully, you'll find `Graphx_Windows_x86_64.exe` in the pre-existing `build/` directory.
 #### Building for Windows (on Windows)
+### Building GraphX on Windows is not currently supported! The reason: WINDOWS SUCKS!! The slightly longer reason: I refuse to be forced to use VisualStudio and all the things I've added to GraphX with this update have broken how I used to compile it on Windows.
+### I will keep working on getting native Windows compilation working, don't worry, but for now you'll have to settle with using MinGW or WSL (or do my work for me which would be super cool)
+### The methods described below will (most likely) not work, but I'm keeping them in the README because I'm too lazy to remove them and I do intend on getting native Windows compilation working again very soon.
 (temporary note: currently, I have just finished implementing embedded resources, using the Linux tool `xxd`. I've included a Windows version of the tool in `src/windows_dependencies/xxd.exe` but have yet to update the CMakeLists.txt to correctly embed resources. Once I do, this note will be removed)
 
 To compile GraphX for Windows on Windows you'll need:
