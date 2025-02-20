@@ -139,7 +139,7 @@ $(THEATRES_H):
 
 $(THEATRES_C): $(THEATRES_H)
 	$(shell printf "#include \"theatres.hpp\"\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
-	$(foreach theatre,$(shell find $(T) -name '*.graphxtheatre'),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
+	$(foreach theatre,$(shell find $(T) -name '*.gt'),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
 	$(shell sed 's/^{,{/{{/' -i $(THEATRES_C))
 	$(shell printf "\n};" >> $(THEATRES_C))
 
