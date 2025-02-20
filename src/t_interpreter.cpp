@@ -1,0 +1,507 @@
+#include "sanity.hpp"
+#include "t_common.hpp"
+#include "g_actors.hpp"
+#include "g_jolt.hpp"
+#include "images.h"
+#include "cube.graphxmodel"
+#include "ERROR.graphxmodel"
+#include "pyramid.graphxmodel"
+#include "quad.graphxmodel"
+#include <set>
+
+using namespace graphx;
+using namespace graphx::classes;
+
+std::map<std::string, std::any> cpp_definitions =
+{
+	{"DOOM_TEXTURE_DIFF", COMP04_5_png},
+	{"DOOM_TEXTURE_SPEC", COMP04_5_SPECULAR_jpg},
+	{"MISSING_TEXTURE_DIFF", MISSING_jpg},
+	{"MISSING_TEXTURE_SPEC", MISSING_SPECULAR_jpg},
+	{"NO_TEXTURE", NO_TEXTURE_jpg},
+	{"SOURCE_ORANGE", SOURCE_ORANGE_png},
+	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY_png},
+	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
+	{"GRAPHX_ERROR", gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE)},
+	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_VERTS, PYRAMID_INDICES, VAO_HANDMADE)},
+	{"GRAPHX_QUAD", gMeshData(QUAD_VERTS, QUAD_INDICES, VAO_HANDMADE)},
+	{"Dynamic", JPH::EMotionType::Dynamic},
+	{"Static", JPH::EMotionType::Static},
+	{"Kinematic", JPH::EMotionType::Kinematic},
+	{"Moving", Layers::MOVING},
+	{"NonMoving", Layers::NON_MOVING},
+	{"Activate", JPH::EActivation::Activate},
+	{"DontActivate", JPH::EActivation::DontActivate},
+	{"BoxShape", ColliderShapes::BOX},
+	{"SphereShape", ColliderShapes::SPHERE},
+	{"CapsuleShape", ColliderShapes::CAPSULE},
+	{"CylinderShape", ColliderShapes::CYLINDER},
+};
+
+gTheatreStorage theatreParser(std::string theatre_data)
+{
+	gObjectStore objects_bucket;
+	gSourceRefStore cpp_references;
+	gTheatreRefStore theatre_references;
+	gRawDataStore raw_data;
+	gSandwichStore layered_definitions;
+	std::string theatre_name;
+
+	std::set<char> whitespace =
+	{
+		' ',
+		'	',
+		'\n',
+		'\t'
+	};
+
+	std::set<char> begin_value =
+	{
+		'[',
+		'<',
+		'('
+	};
+
+	std::set<char> end_value =
+	{
+		']',
+		'>',
+		')'
+	};
+
+	bool in_curly_brackets = false;
+	bool reading_definition = false;
+	bool reading_value = false;
+	bool layered = false;
+
+	std::string buffer = "";
+	std::string pair_definition_buffer = "";
+	std::vector<std::string> layered_pairs_definitions_buffer = {};
+	std::pair<std::string, int> layered_pairs_first_definition = {};
+	std::vector<std::pair<std::string, int>> layered_pairs_buffer = {};
+
+	int object_uid = 0;
+	int layer_index = 0;
+	int start_index = 0;
+
+	for(int i = 1 ; i < theatre_data.size() ; i++)
+	{
+		if(theatre_data[0] != '@')
+		{
+			theatre_name = std::string("untitled_theatre");
+			break;
+		}
+
+		if(whitespace.contains(theatre_data[i]))
+		{
+			theatre_name = buffer;
+			buffer = "";
+			start_index = i;
+			break;
+		}
+
+		buffer += theatre_data[i];
+	}
+
+	for(int i = start_index ; i < theatre_data.size() ; i++)
+	{
+		char character = theatre_data[i];
+
+		if(character == '{' || character == '}')
+		{
+			object_uid += (character == '}');
+			in_curly_brackets = (character == '{');
+			buffer = "";
+			continue;
+		}
+
+		if(whitespace.contains(character) || character == ':')
+		{
+			if(character == ':' || layered)
+			{
+				layered = true;
+			}
+
+			if(reading_definition)
+			{
+				reading_definition = !whitespace.contains(character);				
+				if(layered)
+					layered_pairs_definitions_buffer.insert(layered_pairs_definitions_buffer.end(), buffer);
+				else
+					pair_definition_buffer = std::string(buffer);
+				buffer = "";
+				continue;
+			}
+
+			if(reading_value)
+			{
+				if(character == ':')
+				{
+					reading_value = true;
+					continue;
+				}
+
+				buffer += character; // Whitespace can show up in numerical values (might not want to keep it, though)
+				continue;
+			}
+
+			continue;
+		}
+
+		if(begin_value.contains(character))
+		{
+			reading_value = true;
+			buffer = "";
+			continue;
+		}
+
+		if(end_value.contains(character))
+		{
+			reading_value = (theatre_data[i+1] == ':');
+
+			if(!in_curly_brackets)
+			{
+				objects_bucket.insert(objects_bucket.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, buffer)));
+				buffer = "";
+				continue;
+			}
+
+			switch(character)
+			{
+			case ']':
+				cpp_references.insert(cpp_references.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, buffer)));
+				break;
+			case ')':
+				raw_data.insert(raw_data.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, buffer)));
+				break;
+			case '>':
+				int linked_object_uid;
+
+				for(auto it = objects_bucket.begin(); it != objects_bucket.end() ; ++it)
+				{
+					if(it->second.second == buffer)
+					{
+						linked_object_uid = it->first;
+					}
+				}
+
+				if(layered)
+				{
+
+					if(layer_index == 0)
+					{
+						layered_pairs_first_definition = std::make_pair(layered_pairs_definitions_buffer[0], linked_object_uid);
+						buffer = "";
+						layer_index++;
+						continue;
+					}
+
+					if(!reading_value)
+					{
+						layered_pairs_buffer.insert(layered_pairs_buffer.end(), std::make_pair(layered_pairs_definitions_buffer.back(), linked_object_uid));
+						layered_definitions.insert(layered_definitions.end(), std::make_pair(object_uid, std::make_pair(layered_pairs_first_definition, layered_pairs_buffer)));
+						layer_index = 0;
+						layered = false;
+						layered_pairs_definitions_buffer = {};
+						layered_pairs_buffer = {};
+						layered_pairs_first_definition = {};
+						buffer = "";
+						continue;
+					}
+
+					layered_pairs_buffer.insert(layered_pairs_buffer.end(), std::make_pair(layered_pairs_definitions_buffer[layer_index], linked_object_uid));
+					layer_index++;
+					buffer = "";
+					continue;
+				}
+
+				theatre_references.insert(theatre_references.end(), std::make_pair(object_uid, std::make_pair(pair_definition_buffer, linked_object_uid)));	
+				break;
+			}
+
+			buffer = "";
+			continue;
+		}
+
+		reading_definition = !reading_value;
+		buffer += character;
+	}
+
+	return std::make_tuple
+	(
+		theatre_name,
+		objects_bucket,
+		cpp_references,
+		theatre_references,
+		raw_data,
+		layered_definitions
+	);
+}
+
+#ifdef GRAPHX_DEBUG
+std::string getTheatreStructure(gTheatreStorage theatre_storage)
+{
+	std::string structure_out = "Internal structure of Theatre \"" + std::get<0>(theatre_storage) + "\":\n-----------------------------------------------------------\n";
+	structure_out += "std::map<int, std::pair<std::string, std::string>> objects_bucket =\n{\n";
+	for(const auto& elem : std::get<1>(theatre_storage))
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::pair<std::string, std::string>> cpp_references =\n{\n";
+	for(const auto& elem : std::get<2>(theatre_storage))
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::pair<std::string, int>> theatre_references =\n{\n";
+	for(const auto& elem : std::get<3>(theatre_storage))
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + std::to_string(elem.second.second) + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::pair<std::string, std::string>> raw_data =\n{\n";
+	for(const auto& elem : std::get<4>(theatre_storage))
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	structure_out += "std::multimap<int, std::vector<std::pair<std::string, int>>> layered_definitions =\n{\n";
+	for(const auto& elem : std::get<5>(theatre_storage)) // pair #1
+	{
+		structure_out += "\t{\n\t\t" + std::to_string(elem.first) /*int*/ + ",\n"; // int
+		structure_out += "\t\t{\n"; // pair #2
+		structure_out += "\t\t\t{\n\t\t\t\t" + elem.second.first.first + ", " + std::to_string(elem.second.first.second) + "\n\t\t\t},\n";
+		structure_out += "\t\t\t{\n"; // vector
+		for(auto &pair : elem.second.second)
+		{
+			structure_out += "\t\t\t\t{\n\t\t\t\t\t" + pair.first + ", " + std::to_string(pair.second) + "\n\t\t\t\t},\n";
+		}
+		structure_out += "\t\t\t},\n\t\t},\n\t},\n";
+	}
+	structure_out += "};\n";
+
+	return structure_out;
+}
+#else
+std::string getTheatreStructure(gTheatreStorage theatre_storage)
+{
+	return "Parsed Theatre \"" + std::get<0>(theatre_storage) + "\"";
+}
+#endif
+
+gRawData extractData(std::string data_in_here)
+{
+	std::set<char> forgiveness =
+	{
+		' ',
+		'	',
+		'\n',
+		'\t'
+	};
+
+	std::set<char> special =
+	{
+		'-',
+		'.',
+		','
+	};
+
+	if(data_in_here == "false" || data_in_here == "true")
+		return gRawData{data_in_here};
+
+	std::string buffer = "";
+	gRawData vector_buffer;
+	bool is_number = true;
+
+	for(char &character : data_in_here)
+	{
+		if(!std::isdigit(character))
+		{
+			if(special.contains(character))
+			{
+				if(character == ',')
+				{
+					vector_buffer.insert(vector_buffer.end(), buffer);
+					buffer = "";
+					continue;
+				}
+
+				buffer += character;
+				continue;
+			}
+
+			if(forgiveness.contains(character))
+			{
+				continue;
+			}
+
+			is_number = false;
+			break;
+		}
+
+		buffer += character;
+	}
+
+	if(is_number)
+	{
+		vector_buffer.insert(vector_buffer.end(), buffer);
+		return vector_buffer;
+	}
+
+	return gRawData{data_in_here};
+}
+
+int getClassHash(std::string class_name, bool dont_print_error)
+{
+	for(auto &pair : graphx::classnames)
+		if(!pair.second.compare(class_name)) // true if equal
+			return pair.first;
+	if(!dont_print_error)
+		PRINTERR("Class name " << std::quoted(class_name) << " not found in \"graphx::classnames\"!\n\tSolution 1: Add it!\n\tSolution 2: Fix typo!\n\tSolution 3: Uhoh...")
+	return -1;
+}
+
+void loadTheatre(std::string embedded_theatre, long theatre_uid)
+{
+	gTheatreStorage theatre_data = theatreParser(embedded_theatre);
+	PRINTDEBUG(getTheatreStructure(theatre_data));
+
+	current_theatre_uid = theatre_uid;
+	if(all_theatres.contains(theatre_uid))
+	{
+		PRINTERR("ERROR! A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded as that UID already exists!")
+		return;
+	}
+
+	all_theatres[theatre_uid] = Theatre(std::get<0>(theatre_data));
+	Theatre &new_theatre = all_theatres.at(current_theatre_uid);
+
+	auto objects_bucket = std::get<1>(theatre_data);
+	auto cpp_references = std::get<2>(theatre_data);
+	auto theatre_references = std::get<3>(theatre_data);
+	auto raw_data = std::get<4>(theatre_data);
+	auto layered_definitions = std::get<5>(theatre_data);
+
+	for(const auto &object : objects_bucket)
+	{
+		gSettings new_class_settings = 
+		{
+			{"Name", gRawData{object.second.second}},
+		};
+
+		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
+		auto theatre_refs_range = std::get<3>(theatre_data).equal_range(object.first);
+		auto raw_data_range = std::get<4>(theatre_data).equal_range(object.first);
+		auto sandwiches_range = std::get<5>(theatre_data).equal_range(object.first);
+
+		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
+		{
+			new_class_settings[it->second.first] = cpp_definitions.at(it->second.second);
+		}
+
+		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
+		{
+			if(getClassHash(it->second.first, true) != -1)
+			{
+				if(ACTORS[0] <= getClassHash(it->second.first) && getClassHash(it->second.first) <= ACTORS[1])
+				{
+					new_class_settings[it->second.first] = new_theatre.getActor(it->second.second);
+					continue;
+				}
+
+				new_class_settings[it->second.first] = new_theatre.getDevice(it->second.second);
+				continue;
+			}
+
+			int reference_class_hash = getClassHash(objects_bucket.at(it->second.second).first);
+
+			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
+			{
+				if(!new_theatre.getActor(objects_bucket.at(it->second.second).second)->settings.contains(it->second.first))
+				{
+					PRINTERR(std::quoted(object.second.second) << " (" << object.second.first << ") set variable " << std::quoted(it->second.first) << " to reference a variable that was not set! Skipping this variable!")
+					continue;
+				}
+
+				new_class_settings[it->second.first] = new_theatre.getActor(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
+			}
+
+			if(DEVICES[0] <= reference_class_hash && reference_class_hash <= DEVICES[1])
+			{
+				if(!new_theatre.getDevice(objects_bucket.at(it->second.second).second)->settings.contains(it->second.first))
+				{
+					PRINTERR(std::quoted(object.second.second) << " (" << object.second.first << ") set variable " << std::quoted(it->second.first) << " to reference a variable that was not set! Skipping this variable!")
+					continue;
+				}
+			
+				new_class_settings[it->second.first] = new_theatre.getDevice(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
+			}
+		}
+
+		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
+		{
+			new_class_settings[it->second.first] = extractData(it->second.second);
+		}
+
+		for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
+		{
+			gSettings settings_to_modify;
+			int reference_class_hash = getClassHash(it->second.first.first);
+			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
+			{
+				new_class_settings[it->second.first.first] = actor_map[reference_class_hash]();
+				settings_to_modify = new_theatre.getActor(it->second.first.second)->settings;
+				for(auto &pair : it->second.second)
+				{
+					if(settings_to_modify.contains(pair.first))
+					{
+						if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
+						{
+							settings_to_modify.at(pair.first) = new_theatre.getActor(pair.second);
+							continue;
+						}
+
+						settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
+					}
+				}
+
+				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
+				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->youGotACallBack();
+				continue;
+			}
+
+			new_class_settings[it->second.first.first] = device_map[reference_class_hash]();
+			settings_to_modify = new_theatre.getDevice(it->second.first.second)->settings;
+			for(auto &pair : it->second.second)
+			{
+				if(ACTORS[0] <= getClassHash(pair.first) && getClassHash(pair.first) <= ACTORS[1])
+				{
+					settings_to_modify[pair.first] = new_theatre.getActor(pair.second);
+					continue;
+				}
+
+				settings_to_modify[pair.first] = new_theatre.getDevice(pair.second);
+			}
+
+			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
+			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings();
+		}
+
+		int class_hash = getClassHash(object.second.first);
+
+		if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+		{
+			new_theatre.createActor(class_hash, object.first, new_class_settings);
+		}
+
+		else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
+		{
+			new_theatre.createDevice(class_hash, object.first, new_class_settings);
+		}
+	}
+}

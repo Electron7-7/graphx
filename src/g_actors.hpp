@@ -1,192 +1,199 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
-#include "sanity.hpp"
-#include "r_common.hpp"
-#include "g_theatre.hpp"
-#include <vector>
-#include <mutex>
+#include "g_common.hpp"
+#include "g_jolt.hpp"
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Physics/Body/Body.h>
+#include <Jolt/Physics/Character/Character.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/EmptyShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 
-#define EULER_CHANGE_QUATERNION 0
-#define QUATERNION_CHANGE_EULER 1
+#define ACTOR_ACTOR 		0
+#define ACTOR_LIGHT 		1
+#define ACTOR_PHYSICS		2
+#define ACTOR_PLAYER		3
 
-#define ACTOR_ACTOR 			0
-#define ACTOR_TOOL  			1
-#define ACTOR_LIGHT 			1
+#define LIGHT_POINT			0
+#define LIGHT_DIRECTIONAL	1
+#define LIGHT_SPOT			2
 
-#define LIGHT_POINT				0
-#define LIGHT_DIRECTIONAL		1
-#define LIGHT_SPOT				2
+template<typename T> Actor *createNewActor() { return new T; }
+extern std::map<int, Actor*(*)()> actor_map;
 
-struct RenderState
-{
-	glm::vec3 render_position;
-	glm::quat render_quaternion;
-	// glm::vec3 render_euler;
-	glm::vec3 render_scale;
-
-	RenderState(glm::vec3 init_position = glm::vec3(0.0f), glm::quat init_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: render_position(init_position), render_quaternion(init_quaternion), render_scale(init_scale)
-	{}
-};
-
-class Actor
+class PhysicsActor: public Actor
 {
 public:
-	Mesh mesh;
+	Collider *collider = nullptr;
 
-	RenderState current_state;
-	RenderState current_state_copy = current_state;
+	float mass = 1.0f; // in kg
 
-	RenderState previous_state = current_state;
-	RenderState previous_state_copy = current_state;
+	PhysicsActor(std::string init_name = "Untitled Physics Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 
-	std::vector<RenderState> current_state_buffer	=	{ current_state,	current_state_copy	};
-	std::vector<RenderState> previous_state_buffer	=	{ previous_state,	previous_state_copy	};
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
 
-	int state_index = 0;
-
-	unsigned int actor_type;
-	bool visible = true;
-	std::string name;
-	float movement_speed = 1.0f;
-
-	glm::vec3 position_global;
-	glm::quat rotation_quaternion;
-	glm::vec3 rotation_euler;
-	glm::vec3 scale = glm::vec3(1.0f);
-	glm::vec2 velocity_horizontal;
-
-	glm::vec3 orientation_front;
-	glm::vec3 orientation_up;
-	glm::vec3 orientation_right;
-
-	glm::vec3 world_orientation_up;
-
-	Actor(std::string new_name, Mesh init_mesh = Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: mesh(init_mesh), position_global(init_position), rotation_euler(init_rotation_euler), scale(init_scale), orientation_front(glm::vec3(0.0f, 0.0f, -1.0f))
-	{
-		actor_type = ACTOR_ACTOR;
-		name = new_name;
-		world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
-		rotation_euler = init_rotation_euler;
-		rotation_quaternion = glm::quat(init_rotation_euler);
-		current_state = RenderState(init_position, rotation_quaternion);
-		updateVectors();
-	}
-
-	virtual void Tick(int current_tick);
-	virtual void init(Theatre *parent_theatre);
-	virtual void updateStates(std::mutex &state_mutex);
-	virtual bool wantsToBeRendered();
-	virtual bool wantsToBeBuffered();
+	virtual void reset_to_initial_orientation_for_testing()
+	{};
 
 protected:
-	bool debug_visible;
-
-	void updateRotation(bool override_which);
-	void updateVectors();
+	JPH::Vec3 reset_position;
+	JPH::Quat reset_quaternion;
+	std::vector<JPH::BodyCreationSettings> body_creation_settings;
+	std::vector<JPH::EActivation> body_activation;
+	JPH::Vec3 body_scale;
+	JPH::Vec3 body_position;
+	JPH::Quat body_quat;
+	JPH::EActivation test_body_activation;
+	JPH::EMotionType test_motion_type;
+	JPH::ObjectLayer test_object_layer;
 };
 
-class GraphXPlayer: public Actor
+class RigidBodyActor : public PhysicsActor
 {
 public:
-	float mouse_sensitivity;
-	float movement_speed = 0.05f;
+	using PhysicsActor::PhysicsActor;
 
-	GraphXPlayer(std::string new_name, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f, -90.0f, 0.0f))
-	: Actor(new_name, Mesh(this), init_position, init_rotation_euler), mouse_sensitivity(INIT_SENSITIVITY)
-	{}
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void callToStage(Theatre *parent_theatre) override;
+
+	void reset_to_initial_orientation_for_testing() override;
+};
+
+class StaticBodyActor : public PhysicsActor
+{
+public:
+	using PhysicsActor::PhysicsActor;
+
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void callToStage(Theatre *parent_theatre) override;
+};
+
+class Camera : public Actor
+{
+public:
+	Actor *parent = NULL;
+	float view_pitch_clamp = 89.0f;
+	glm::vec3 position_global = glm::vec3(0.0f);
+	glm::vec3 position_local = glm::vec3(0.0f, 0.0f, 0.0f); // temporary default offset
+	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
+	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
+
+	Camera();
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void doRotation(glm::vec2 mouse_input);
+	
+};
+
+/*class PlayerCamera : public Camera
+{
+public:
+	PlayerCamera();
+
+	void tick(int current_tick) override;
+	void doRotation(glm::vec2 mouse_input);
+};*/
+
+/*class CharacterController: public Actor
+{
+public:
+
+};*/
+
+class GraphXPlayer: public Actor //public CharacterController(?)
+{
+public:
+	Mesh player_mesh = Mesh();
+	Camera player_camera;
+	Collider collider;
+
+	float mouse_sensitivity = 0.05f;
+	float movement_speed = 10.0f;
+	double lerp_speed = 10.0f;
+	float friction = 0.7f;
+
+	JPH::Ref<JPH::CharacterSettings> player_settings;
+
+	GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f));
 
 	glm::mat4 getViewMatrix();
-	void doMouseMovement(std::vector<float> offset, bool constrain_pitch = true);
+	glm::vec3 getViewPosition();
+	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
+	bool wantsToBeRendered() override;
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void callToStage(Theatre *parent_theatre) override;
+	
 
-protected:
-	constexpr static const float INIT_SENSITIVITY = 0.1f;
-};
-
-class MoverTester: public Actor
-{
-public:
-	float movement_speed = 0.025f;
-	int t_direction = 0;
-
-	MoverTester(std::string init_name, Mesh init_mesh, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(init_name, init_mesh, init_position, init_rotation, init_scale)
-	{}
-
-	void Tick(int current_tick) override;
-};
-
-class SpriteTester: public Actor
-{
-public:
-	SpriteTester(std::string init_name, Sprite init_sprite, glm::vec3 init_position = glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3 init_rotation = glm::vec3(0.0f, -90.0f, 0.0f), glm::vec3 init_scale = glm::vec3(1.0f))
-	: Actor(init_name, init_sprite, init_position, init_rotation, init_scale)
-	{}
+private:
+	JPH::Ref<JPH::Character> jph_character = nullptr;
+	double movement_lerp = 0.0f;
+	int last_direction[2] = {0, 0};
 };
 
 class Light: public Actor
 {
 public:
+	Mesh temporary_light_mesh = Mesh(new Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f));
+
 	unsigned int light_type;
-	glm::vec3 light_color;
-	float light_strength; // A more direct "brightness" value than just changing Attenuation values
+	glm::vec3 light_color = glm::vec3(1.0f);
+	float light_strength = 1.0f; // A more direct "brightness" value than just changing Attenuation values
 
 	// Attenuation values
-	float range;
-	float intensity;	// negative scale: 0.0 is brightest and it gets dimmer as it increases
-	float falloff;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
+	float range = 100.0f;
+	float intensity = 1.0f;		// negative scale: 0.0 is brightest and it gets dimmer as it increases
+	float falloff = 0.0f;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
 
-	Light(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f))
-	: Actor(init_name, Mesh(this, Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f)), init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
-	{
-		actor_type = ACTOR_TOOL;
-		light_type = LIGHT_POINT;
-		debug_visible = true;
-	}
+	Light(std::string init_name = "UNTITLED LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f));
+
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 class LightDirectional: public Light
 {
 public:
-	glm::vec3 direction;
+	glm::vec3 direction = glm::vec3(0.0f, -1.0f, 0.0f);
 
-	LightDirectional(std::string init_name, glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f))
-	: Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color, init_position, init_rotation, glm::vec3(0.0f)), direction(init_direction)
-	{ light_type = LIGHT_DIRECTIONAL; }
+	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
+
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 class LightSpot: public Light
 {
 public:
-	glm::vec3 direction;
-	float inner_cutoff_angle;
-	float outer_cutoff_angle;
+	glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	float inner_cutoff_angle = 12.5f;
+	float outer_cutoff_angle = 17.5f;
 
-	LightSpot(std::string init_name, float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_direction = glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f))
-	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
-	{ light_type = LIGHT_SPOT; }
+	LightSpot(std::string init_name = "UNTITLED SPOT LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_direction = glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f));
 
 	glm::vec2 getCutoffAngles();
+
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 class LightFlashlight: public LightSpot
 {
 public:
-	Actor *parent = NULL;
-	glm::vec3 position_offset;
-	glm::vec3 rotation_offset;
+	GraphXPlayer *parent = nullptr;
+	glm::vec3 position_offset = glm::vec3(0.0f);
+	glm::vec3 rotation_offset = glm::vec3(0.0f);
 
-	LightFlashlight(std::string init_name, float init_intensity = 0.5f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_position_offset = glm::vec3(0.0f), glm::vec3 init_rotation_offset = glm::vec3(0.0f))
-	: LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset), _intensity(init_intensity)
-	{
-		light_type = LIGHT_SPOT;
-		debug_visible = false;
-	}
+	LightFlashlight(std::string init_name = "UNTITLED FLASHLIGHT", float init_intensity = 0.5f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_position_offset = glm::vec3(0.0f), glm::vec3 init_rotation_offset = glm::vec3(0.0f));
 
 	void setLight(bool is_off);
-	void Tick(int current_tick) override;
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 
 private:
 	float _intensity;
@@ -195,21 +202,22 @@ private:
 class LightTesterMover : public Light
 {
 public:
-	glm::vec3 pivot_position;
-	float pivot_radius;
-	float pivot_speed;
+	glm::vec3 pivot_position = glm::vec3(0.0f);
+	float pivot_radius = 3.0f;
+	float pivot_speed = 1.0f;
 	float pivot_theta = 0.0f;
-	Actor pivot_point;
 
-	LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f))
-	: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed), pivot_point(Actor(std::string("pivot point for ") + init_name, Mesh(&pivot_point, Material(true, glm::vec3(1.0f, 0.0f, 0.0f))), init_pivot_position, glm::vec3(0.0f), glm::vec3(0.2f)))
-	{
-		pivot_point.mesh.name = "PIVOT";
-	}
+	Mesh temporary_pivot_mesh = Mesh(new Material(true, glm::vec3(1.0f, 0.0f, 0.0f)));
+	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
 
-	void Tick(int current_tick) override;
-	void init(Theatre *parent_theatre) override;
+	LightTesterMover(std::string init_name = "UNTITLED MOVING LIGHT TESTER", glm::vec3 init_pivot_position = glm::vec3(0.0f), float init_pivot_radius = 3.0f, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f));
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void callToStage(Theatre *parent_theatre) override;
 };
 
-extern GraphXPlayer *current_player;
+extern glm::vec3 vector3_up;
+extern glm::vec3 vector3_front;
+extern glm::vec3 vector3_right;
 #endif

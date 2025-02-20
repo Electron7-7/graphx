@@ -2,11 +2,9 @@
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "sanity.hpp"
-#include "quad.graphxmodel"
+#include "graphx_namespace.hpp"
 #include "ERROR.graphxmodel"
-#include <vector>
 #include <array>
-#include <string>
 #include <mutex>
 #include <filesystem>
 
@@ -42,6 +40,14 @@
 //---------------------------
 #define VAO_HANDMADE		0
 
+
+#define DEVICE_DEVICE		0
+#define DEVICE_ENVIRONMENT	1
+#define DEVICE_MATERIAL		2
+#define DEVICE_MESH			3
+#define DEVICE_SPRITE		3
+#define DEVICE_COLLIDER		4
+
 class Actor;		// Forward-declare Actor
 class GraphXPlayer;	// Forward-declare GraphXPlayer
 struct Theatre;		// Forward-declare Theatre
@@ -59,75 +65,82 @@ struct GLShader
 	void buildShader(std::string vertex_shader_code, std::string fragment_shader_code);
 };
 
-struct Environment // Will be extended
+struct Device
+{
+	std::string name = "Untitled Device";
+	int device_type;
+	graphx::gSettings settings;
+
+	bool isType(int class_type);
+
+	virtual void initialize(Theatre *parent_theatre);
+	virtual void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}});
+	virtual void prepForDestruction();
+	virtual long getUID();
+	virtual void setUID(long manual_uid);
+
+protected:
+	long UID = -1; // A UID of -1 means it's not been set yet
+	int my_type = graphx::classes::DEVICE;
+};
+
+struct Environment : public Device // Will be extended
 {
 	bool ambient_lighting_enabled;
 	glm::vec3 ambient_light_color;
 	float ambient_light_strength;
 
-	Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f)
-	: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
-	{}
+	Environment(bool enable_ambient_lighting = true, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f);
 
 	glm::vec3 getAmbientLight();
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
-struct Material
+struct Material : public Device
 {
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
 
-	// std::filesystem::path texture_path_diffuse = MISSING_TEXTURE_DIFF;
-	// std::filesystem::path texture_path_specular = MISSING_TEXTURE_SPEC;
 	unsigned char* embedded_texture_diffuse = NO_TEXTURE;
 	unsigned char* embedded_texture_specular = NO_TEXTURE;
 
-	glm::vec3 color;
-	int specular_sharpness;
-	float specular_strength;
-	bool mat_fullbright;
+	glm::vec3 color = glm::vec3(1.0f);
+	int specular_sharpness = 16;
+	float specular_strength = 1.0f;
+	bool mat_fullbright = false;
 
-	Material(bool is_fullbright, glm::vec3 init_color)
-	: embedded_texture_diffuse(NO_TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
-	{}
+	Material();
+	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
+	Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
+	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
-	Material(unsigned char *init_diffuse_texture = MISSING_TEXTURE_DIFF, unsigned char *init_specular_texture = MISSING_TEXTURE_SPEC, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f))
-	: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
-	{}
-
-	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32)
-	: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength), mat_fullbright(false)
-	{}
-
-	// unsigned int bufferTexture(std::filesystem::path path);
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
+
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
-struct Mesh
+struct Mesh : public Device
 {
-	Actor *owner;
-	Material material; // Change to vector of materials later(?)
-
-	std::string name = "MESH";
-
-	const unsigned int vao_index;
-	const std::vector<GLfloat> vertices;
-	const std::vector<GLuint> indices;
-	unsigned int VBO;
-	unsigned int IBO;
+	std::string name = "Untitled Mesh";
+	Material *material = new Material();
+	int vao_index = VAO_HANDMADE;
+	std::vector<GLfloat> vertices = ERROR_VERTS;
+	std::vector<GLuint> indices = ERROR_INDICES;
+	unsigned int VBO = 0;
+	unsigned int IBO = 0;
 	bool is_buffered = false;
-	
-	Mesh(Actor *init_owner = NULL, Material init_material = Material(), const std::vector<GLfloat> init_vertices = ERROR_VERTS, const std::vector<GLuint> init_indices = ERROR_INDICES, const unsigned int init_vao_index = VAO_HANDMADE)
-	: owner(init_owner), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
-	{}
+
+	Mesh(Material *init_material = new Material(), std::vector<float> init_vertices = ERROR_VERTS, std::vector<unsigned int> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
+
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
-struct Sprite : Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
+struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 {
 	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
-	Sprite(Actor *init_owner = NULL, Material init_material = Material(), const unsigned int init_vao_index = VAO_HANDMADE)
-	: Mesh(init_owner, init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
-	{}
+	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
+
+	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
@@ -135,12 +148,15 @@ extern std::vector<GLShader *> shaders; // Same for shaders
 extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern bool do_interpolation;
+extern std::map<int, Device*(*)()> device_map;
 
-GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void		W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void		R_GL_BufferMeshData(Mesh *mesh);
-void 		R_StoreBuffers();
-void 		R_Render(std::mutex &state_mutex, double interpolation_time, glm::mat4 projection_matrix, Environment *current_environment);
-void		R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, Environment *current_environment, unsigned int shader_index);
-void		R_TroupeChanged();
+template<typename T> Device *createNewDevice() { return new T; }
+
+GLFWwindow  *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
+void		 W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void		 R_GL_BufferMeshData(Mesh *mesh);
+void 		 R_StoreBuffers();
+void 		 R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
+void		 R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index);
+void		 R_TroupeChanged();
 #endif

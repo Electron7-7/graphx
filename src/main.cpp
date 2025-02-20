@@ -5,44 +5,45 @@
 #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_actors.hpp"
-#include "g_theatre.hpp"
-#include "theatres/lighting_testing.graphxtheatre"
+#include "g_common.hpp"
+#include "g_jolt.hpp"
+#include "t_common.hpp"
+#include "theatres.hpp"
+#include <Jolt/Jolt.h>
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/PhysicsSettings.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <iostream>
-#include <vector>
+#include <cstdarg>
 #include <thread>
 #include <mutex>
 
-GraphXPlayer player("Player", glm::vec3(0.0f, 3.0f, 0.0f));
-Environment default_environment(true);
-
 std::mutex actor_state_mutex;
 
-std::vector<int> main_window_size =
-{
-	1280,
-	720
-};
+glm::vec2 main_window_size(1280, 720);
+glm::vec2 mouse_last(main_window_size / 2.0f);
 
-std::vector<float> mouse_last =
-{
-	main_window_size[0] / 2.0f,
-	main_window_size[1] / 2.0f
-};
-
-static double TICKRATE = 120.0;
-static double tickrate_ms = 1.0 / TICKRATE;	// Maybe turn this into a function to make the tickrate more easily changeable?
+static int TICKRATE = 120;
 
 int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool test_flashlight_bool = false;
 bool red_flashlight_color_bool = false;
+bool do_jolt_assert = false;
 
-void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param);
+float camera_near = 0.1f;
+float camera_far = 1000.0f;
+
 void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
+
+#define TICKLENGTH (1.0f / TICKRATE)
+#define PER_SECOND(interval) (current_tick_since_second % (TICKRATE/interval) == 0)
 
 int main()
 {
@@ -54,12 +55,12 @@ int main()
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(_debug_callback, nullptr);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
+	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
@@ -67,13 +68,11 @@ int main()
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	shaders.insert(shaders.end(), {&phong_shader});
 
-	current_player = &player;
-
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		W_SwapAndClear(main_window, default_environment.getAmbientLight());
+		W_SwapAndClear(main_window, getCurrentEnvironment()->getAmbientLight());
 		glfwPollEvents();
 
 		if(time_to_store_buffers)
@@ -82,9 +81,9 @@ int main()
 		if(time_to_render)
 		{
 			// De-jank all of this shit below
-			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], 0.1f, 100.0f);
-			double interpolation_time = ((glfwGetTime() - last_tick_timestamp) / tickrate_ms);
-			R_Render(actor_state_mutex, interpolation_time, projection_matrix, &default_environment);
+			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], camera_near, camera_far);
+			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
+			R_Render(actor_state_mutex, interpolation_time, projection_matrix);
 		}
 	}
 
@@ -93,52 +92,244 @@ int main()
 	return 0;
 }
 
+//-------------------------------------------------------
+// JOLT PHYSICS ENGINE BOILERPLATE
+// (totally just copy-pasting the HelloWorld.cpp example)
+//-------------------------------------------------------
+JPH_SUPPRESS_WARNINGS
+
+static void GraphXJoltTrace(const char *inFMT, ...)
+{
+	va_list list;
+	va_start(list, inFMT);
+	char buffer[1024];
+	vsnprintf(buffer, sizeof(buffer), inFMT, list);
+	va_end(list);
+
+	std::cout << buffer << std::endl;
+}
+
+#ifdef JPH_ENABLE_ASSERTS
+static bool GraphXJoltAssertFailed(const char *inExpression, const char *inMessage, const char *inFile, JPH::uint inLine)
+{
+	std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage !=nullptr? inMessage: "") << std::endl;
+	return true;
+}
+#endif
+
+class GraphXObjectLayerPairFilter : public JPH::ObjectLayerPairFilter
+{
+public:
+	virtual bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override
+	{
+		switch(inObject1)
+		{
+			case Layers::NON_MOVING:
+				return inObject2 == Layers::MOVING;
+			case Layers::MOVING:
+				return true;
+			default:
+				JPH_ASSERT(false);
+				return false;
+		}
+	}
+};
+
+class GraphXBroadPhaseLayerInterface final : public JPH::BroadPhaseLayerInterface
+{
+public:
+	GraphXBroadPhaseLayerInterface()
+	{
+		mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
+		mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
+	}
+
+	virtual JPH::uint GetNumBroadPhaseLayers() const override
+	{
+		return BroadPhaseLayers::NUM_LAYERS;
+	}
+
+	virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override
+	{
+		JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
+		return mObjectToBroadPhase[inLayer];
+	}
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+	virtual const char *GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override
+	{
+		switch ((JPH::BroadPhaseLayer::Type)inLayer)
+		{
+			case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:
+				return "NON_MOVING";
+			case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::MOVING:
+				return "MOVING";
+			default:
+				JPH_ASSERT(false);
+				return "INVALID";
+		}
+	}
+#endif
+
+private:
+	JPH::BroadPhaseLayer mObjectToBroadPhase[Layers::NUM_LAYERS];
+};
+
+class GraphXObjectVsBroadPhaseLayerFilter : public JPH::ObjectVsBroadPhaseLayerFilter
+{
+public:
+	virtual bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override
+	{
+		switch(inLayer1)
+		{
+			case Layers::NON_MOVING:
+				return inLayer2 == BroadPhaseLayers::MOVING;
+			case Layers::MOVING:
+				return true;
+			default:
+				JPH_ASSERT(false);
+				return false;
+		}
+	}
+};
+
+class GraphXContactListener : public JPH::ContactListener
+{
+	virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override
+	{
+		// if(do_jolt_assert)
+			// JOLTDEBUG("Contact validate callback")
+		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
+	}
+
+	virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
+	{
+		if(do_jolt_assert)
+			JOLTDEBUG("A contact was added")
+	}
+
+	virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
+	{
+		// if(do_jolt_assert)
+			// JOLTDEBUG("A contact was persisted")
+	}
+
+	virtual void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
+	{
+		if(do_jolt_assert)
+			JOLTDEBUG("A contact was removed")
+	}
+};
+
+class GraphXBodyActivationListener : public JPH::BodyActivationListener
+{
+public:
+	virtual void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
+	{
+		if(do_jolt_assert)
+			JOLTDEBUG("A body got activated")
+	}
+
+	virtual void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
+	{
+		if(do_jolt_assert)
+			JOLTDEBUG("A body went to sleep")
+	}
+};
+//--------------------------------
+// END OF JOLT PHYSICS BOILERPLATE
+//--------------------------------
+
 void testGameTick(GLFWwindow *main_window)
 {
-	current_theatre = &lighting_testing_theatre;
+	JPH::RegisterDefaultAllocator();
+	JPH::Factory::sInstance = new JPH::Factory();
+	JPH::RegisterTypes();
+
+	JPH::Trace = GraphXJoltTrace;
+	JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed = GraphXJoltAssertFailed;)
+
+#ifdef GRAPHX_DEBUG
+	GraphXBodyActivationListener body_activation_listener;
+	jolt_physics_system.SetBodyActivationListener(&body_activation_listener);
+
+	GraphXContactListener contact_listener;
+	jolt_physics_system.SetContactListener(&contact_listener);
+#endif
+
+	JPH::TempAllocatorImpl jolt_temp_allocator(10 * 1024 * 1024);
+	JPH::JobSystemThreadPool jolt_job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
+
+	const JPH::uint cMaxBodies = 2048;
+	const JPH::uint cNumBodyMutexes = 0;
+	const JPH::uint cMaxBodyPairs = 2048;
+	const JPH::uint cMaxContactConstraints = 2048;
+
+	GraphXBroadPhaseLayerInterface broad_phase_layer_interface;
+	GraphXObjectVsBroadPhaseLayerFilter object_vs_broadphase_layer_filter;
+	GraphXObjectLayerPairFilter object_vs_object_layer_filter;
+
+	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
+
+	// This will change to include loading external Theatres
+	loadTheatre(embedded_theatres.at(0), 0);
+	loadTheatre(embedded_theatres.at(1), 1);
+	getCurrentTheatre()->startPreshow();
+
 	time_to_store_buffers = true;
 
 	double last_time = glfwGetTime();
-	double tick_length = 0;
+	double current_tick_length = 0;
 	double now_time = 0;
+
+	jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
+
+	LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
 	while(!glfwWindowShouldClose(main_window))
 	{
 		now_time = glfwGetTime();
-		tick_length += (now_time - last_time) / tickrate_ms;
+		current_tick_length += (now_time - last_time) / TICKLENGTH;
 		last_time = now_time;
 
-		while(tick_length >= 1.0f)
+		while(current_tick_length >= 1.0f)
 		{
 			current_tick_since_second++;
 			current_tick_since_start++;
 
 			processInput(main_window);
 
-			for(Actor *actor : current_theatre->troupe)
+			// TICK(current_tick_since_second) // Prints current tick (looping from 0 to TICKRATE)
+			for(Actor *actor : getCurrentTheatre()->troupe)
 			{
-				// Call the Tick() function of each Actor in std::vector<Actor> actors_in_current_theatre
-				// Should also handle the buffering and swapping of Actor states(? or should Actors handle this?)
-				actor->Tick(current_tick_since_start);
+				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
 
-			player_flashlight.setLight(test_flashlight_bool);
-			
+			player_flashlight->setLight(test_flashlight_bool);
+
 			if(red_flashlight_color_bool)
-				player_flashlight.light_color = glm::vec3(1.0f, 0.0f, 0.0f);
+				player_flashlight->light_color = glm::vec3(1.0f, 0.0f, 0.0f);
 			else
-				player_flashlight.light_color = glm::vec3(1.0f);
+				player_flashlight->light_color = glm::vec3(1.0f);
+
+			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
 			last_tick_timestamp = glfwGetTime();
-			tick_length--;
+			current_tick_length--;
 		}
 
 		if(current_tick_since_second >= TICKRATE)
 			current_tick_since_second = 0;
 	}
-
+	
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
+
+	getCurrentTheatre()->dropCurtains();
+
+	JPH::UnregisterTypes();
+
+	delete JPH::Factory::sInstance;
+	JPH::Factory::sInstance = NULL;
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -148,32 +339,65 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_G && action == GLFW_PRESS)
 	{
-		default_environment.ambient_lighting_enabled = !default_environment.ambient_lighting_enabled;
-		if(!default_environment.ambient_lighting_enabled)
-			PRINT("Ambient Lighting Disabled");
+		getCurrentEnvironment()->ambient_lighting_enabled = !getCurrentEnvironment()->ambient_lighting_enabled;
+		if(!getCurrentEnvironment()->ambient_lighting_enabled)
+			PRINTDEBUG("Ambient Lighting Disabled")
 		else
-			PRINT("Ambient Lighting Enabled");
+			PRINTDEBUG("Ambient Lighting Enabled")
 	}
 
 	if(key == GLFW_KEY_F && action == GLFW_PRESS)
 	{
 		test_flashlight_bool = !test_flashlight_bool;
 		if(test_flashlight_bool)
-			PRINT("Flashlight Off");
+			PRINTDEBUG("Flashlight Off")
 		else
-			PRINT("Flashlight On");
+			PRINTDEBUG("Flashlight On")
+	}
+
+	if(key == GLFW_KEY_Q && action == GLFW_PRESS)
+	{
+		red_flashlight_color_bool = !red_flashlight_color_bool;
+		if(red_flashlight_color_bool)
+			PRINTDEBUG("Flashlight Red")
+		else
+			PRINTDEBUG("Flashlight Not Red")
 	}
 
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
-		red_flashlight_color_bool = !red_flashlight_color_bool;
-		if(red_flashlight_color_bool)
-			PRINT("Flashlight Red");
-		else
-			PRINT("Flashlight Not Red");
+		PRINTDEBUG("Resetting PhysicsActors to initial transformation!")
+		for(Actor *actor: getCurrentTheatre()->troupe)
+			if(actor->actor_type == ACTOR_PHYSICS)
+				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}
+
+	if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
+	{
+		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
+		{
+			PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			return;
+		}
+
+		PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+
+#ifdef GRAPHX_DEBUG
+	if(key == GLFW_KEY_J && action == GLFW_PRESS)
+	{
+		do_jolt_assert = !do_jolt_assert;
+		if(do_jolt_assert)
+			PRINTDEBUG("Jolt assert printouts enabled")
+		else
+			PRINTDEBUG("Jolt assert printouts disabled")
+	}
+#endif
 }
 
+// This will be put in Actor once I abstract "glfwGetKey" and related functions
 void processInput(GLFWwindow *window)
 {
 	int input_vector[2] =
@@ -182,71 +406,19 @@ void processInput(GLFWwindow *window)
 		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
 	};
 
-	player.doMovement(input_vector);
+	getCurrentTheatre()->getPlayer()->doMovement(input_vector);
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
-	std::vector<float> m_position =
-	{
-		static_cast<float>(x_position_in),
-		static_cast<float>(y_position_in)
-	};
-	std::vector<float> mouse_offset =
-	{
-		m_position[0] - mouse_last[0],
-		mouse_last[1] - m_position[1]
-	};
-
-	mouse_last = m_position;
-
-	player.doMouseMovement(mouse_offset);
-}
-
-void GLAPIENTRY _debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param)
-{
-	auto const src_str = [source]()
-	{
-		switch (source)
-		{
-			case GL_DEBUG_SOURCE_API: return "API";
-			case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW SYSTEM";
-			case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER COMPILER";
-			case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD PARTY";
-			case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
-			case GL_DEBUG_SOURCE_OTHER: return "OTHER";
-		}
-		return "N/A";
-	}();
-
-	auto const type_str = [type]()
-	{
-		switch (type)
-		{
-			case GL_DEBUG_TYPE_ERROR: return "ERROR";
-			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
-			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
-			case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
-			case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
-			case GL_DEBUG_TYPE_MARKER: return "MARKER";
-			case GL_DEBUG_TYPE_OTHER: return "OTHER";
-		}
-		return "N/A";
-	}();
-
-	auto const severity_str = [severity]()
-	{
-		switch (severity)
-		{
-			case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
-			case GL_DEBUG_SEVERITY_LOW: return "LOW";
-			case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
-			case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
-		}
-		return "N/A";
-	}();
-
-	std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
+	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
+	glm::vec2 mouse_offset = mouse_position - mouse_last;
+	mouse_last = mouse_position;
+	
+	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
+		return;
+	
+	getCurrentTheatre()->getPlayer()->doMouseMovement(mouse_offset);
 }
 
 int WinMain() // Fuck off, Windows

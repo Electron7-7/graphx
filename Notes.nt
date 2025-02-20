@@ -181,7 +181,7 @@ For my first implementation, I might actually end up using my static list after 
 
 I'm also going to be choosing the official name for chunks of stuff in GraphX: "spaces". Basically what Godot and Unity call "scenes".
 
-Final notes: as per the comments I left in main.cpp, the current gametick testing function (which is a surrogate for the eventual final gametick function) should call the Tick() function of every Actor in the current Space, then handle the state swapping and buffering logic for each respective Actor... unless I decide to have the Actors handle that themselves (in the Tick function or with another function that's called after Tick in the gametick function). If future me is confused by my thought process, I'm partially following this (https://gamedev.stackexchange.com/questions/12754/how-to-interpolate-between-two-game-states) but I'm also sticking to DOOM's structure a bit as well. The result is (hopefully) every actor having buffered state structs that either contain the variables like "global_position" and such, or get populated with the data from the Actor's relevant variables (I like that idea more). These state structs will be used to render the Actors with the relevant (and potentially interpolated) information. How the RenderCmd queue will work and implement with this is unknown; either I link Actors' states with their relevant RenderCmd, or store it in the RenderCmd, or have the RenderCmd be a struct containing the vao_id and vertex+index offsets AND the buffered states, or some other idea.
+Final notes: as per the comments I left in main.cpp, the current gametick testing function (which is a surrogate for the eventual final gametick function) should call the tick() function of every Actor in the current Space, then handle the state swapping and buffering logic for each respective Actor... unless I decide to have the Actors handle that themselves (in the Tick function or with another function that's called after Tick in the gametick function). If future me is confused by my thought process, I'm partially following this (https://gamedev.stackexchange.com/questions/12754/how-to-interpolate-between-two-game-states) but I'm also sticking to DOOM's structure a bit as well. The result is (hopefully) every actor having buffered state structs that either contain the variables like "global_position" and such, or get populated with the data from the Actor's relevant variables (I like that idea more). These state structs will be used to render the Actors with the relevant (and potentially interpolated) information. How the RenderCmd queue will work and implement with this is unknown; either I link Actors' states with their relevant RenderCmd, or store it in the RenderCmd, or have the RenderCmd be a struct containing the vao_id and vertex+index offsets AND the buffered states, or some other idea.
 
 Piece by piece, you can do this; just focus, learn, and always be open to failure. Failure is always an option. Failure is progress. Success is just a reward for your consistent failures and the information you learn from them. This is a positive affirmation. Failure is positive.
 
@@ -637,3 +637,490 @@ Compiling an executable on Linux using xxd works! This means that I can use xxd.
 I think I've figured out a style/direction to take GraphX into: a modern game engine designed to simulate nostalgic games from the fruitiger metro/aero era. all the charm and nostalgia of older games but with modern sensibilities, capabilities, and improvements.
 
 I've just learned something about reality. If you bathe your room in pure red color, red things appear to be white but that's actually not the case. They aren't "turning white", they're just bouncing more of the light so they appear brighter than everything else in the room but only because the whole room is bathed in that light, so everything is reflecting or absorbing that light. It's relative. That's cool.
+
+[01/23/25]
+Back to work on collisions! I'm going to ignore physics and work on just collision detection. Physics will be implemented with an external engine like Jolt or Bullet.
+
+Ooh, real quick I wanna add a new default "Stage" Mesh to Theatre that's a 3D axis with colored axes. I'll do this later.
+
+So I wasted all this time trying to bugfix the collision code... when the Colliders weren't even having their positions changed to match the Actors... man.
+
+Refactored code to remove all temporary Actor stuff (e.g: removed Actor->sleeping)
+
+[01/24/25]
+Back to collisions. I want to try and implement a simple gravity system. I might take inspiration from Godot and make Device much more like a Godot Node, letting Devices give Actors certain abilities/behaviours. Either way, I want to fully implement the Collider into Actor and try to keep it as a generic std::vector<Device *> or std::vector<Device>. Then I'll make a very simple gravity implementor (either Collider or a variant of Collider). Then learn how to use Jolt.
+
+Aight, to avoid a shit ton of for loops, I'm gonna use an unordered_map instead of a vector to hold Actor Device pointers; that way I can give them a unique identifier and search for certain Devices like a Collider much more quickly.
+
+Currently, the code will only support having one Collider at a time, but I could expand it by having all Colliders combine(?).
+
+Or I could use a multimap! I'll keep it simple for now, but a multimap sounds like it's best for expansion.
+
+Note: yes, change unordered_map to multi_map and make collision checks go through every Collider in each Actor when checking collisions.
+
+Collision is implemented and a rough draft of gravity is also implemented. I tried to get it to work on the player but it doesn't yet. Part of the problem is that the movement will override the gravity changes because of how it works with orientation_front; I've reverted movement back to normal which includes this problem, so be mindful of that when next working on this. However, it does work on a cube. It currently is in a very rough draft stage but it does work. Jolt implementation was started (i.e: copying the Jolt Hello World) but not finished. I'm very fucking excited!
+
+:3
+
+[01/26/25]
+Note on Actors and physics: currently, if a new Actor type inherits PhysicsActor, it always gets a box rigidbody that changes its position and rotation. This means that, for instance, the player can't derive PhysicsActor and has to have its own special code in g_theatre.cpp and custom init and Tick functions.
+
+[01/26/25] (at 12:26)
+Fucking finally! I have (poorly) implemented Jolt Physics into GraphX! All PhysicsActors now create box physics bodies for themselves and are affected by gravity. Note that the floor is currently hardcoded, because the current implementation of physics is very bare bones and I haven't created distinction between static and dynamic bodies in PhysicsActor. This took a while to fucking wrap my head around, but I am so happy that I have Jolt Physics in GraphX!!
+
+Shame that my custom Collider code will go unused but that's fine by me if it means I don't have to fucking create my own physics engine from scratch (that will be for a later project).
+
+Added in physics rotations at the last second!
+
+[01/26/25]
+Note: rotation is fucked up currently because (i think) in updateRotation, I convert from JPH euler angles to glm euler angles and they may be in a different order. Check that. Maybe not but for some reason, rotations are wack when updateRotation sets the euler angles to be the quaternion value (i think).
+
+Oh, also, don't forget to compile libJolt.a with mingw-cmake on Arch linux for executable compiling.
+
+Note: The next thing I want to do is make a dev console. I want to be able to, for instance, change properties of certain Actors on the fly. Using either their name and/or making a new id system.
+
+Hey also, the scale of Actor is the half-scale of, say JPH::CapsuleShape.
+
+Oh, also, the player movement is not correctly following the facing direction; fix that, lol.
+
+Aight, at work now; I'm gonna abstract the camera into its own class. I also want to abstract usage of Jolt so that way I can isolate all calls to and from Jolt into just a few functions/structs/classes.
+
+First, though, I want to clean up and refactor Actor and its subclasses. That'll make everything else easier. I think I might switch to a different branch for that, or just comment out all Jolt stuff while I refactor.
+
+I'm also going to delete g_state.hpp finally; it has an old comment that I'd like to keep a record of, so here it is:
+:::C++
+// g_state.hpp
+/*
+State
+-
+i know that i'm going to need to compare states to either check if it's changed or to confirm i'm using the same state (mainly for double buffering).
+
+the problem is how i'm going to do that. one idea was to implement a sort of "hash" creator function that would generate a unique number based on
+all of the state's variables. however, this won't work if literally any of my variables are floats (which many will be), since in order to not cause
+the hash generation to be gargantuan, I'd have to know a lot more about hash generation and I don't wanna spend all that time doing something barely
+useful in this situation.
+
+instead, i'm going to implement a simple check, like a flag that gets set when the state is created, for code that doesn't care too much about the
+inner details of that state (like exact location, rotation, etc), OR include an inner state machine that can be customized, like for enemy and player
+state regarding higher-level game mechanics (like, "crouching", "standing", "shooting", "chasing player", etc).
+
+but that won't be all; i'll also implement a way to check on certain details for code that really needs to (i.e: the gametick interpolation logic).
+this could just boil down to testing the inner variable "global_location" and I don't have to write any custom checker function. that sounds nice,
+but it also sounds too easy, so I may be misinterpreting how this kind of "state" is supposed to be used.
+
+I could also use pointers? like, can you make sure that an object's state hasn't changed by comparing the pointer to that state with the previous 
+value of the state's pointer? I'll have to check.
+
+this also means that I'm going to need to know for sure whether or not I want to make this "state" struct mutable or immutable.
+
+I could also try learning/using Templates.
+
+I could also make an abstract "State" struct, then make inherited structs for more specific cases (i.e: ActorState, RenderState, etc.).
+If I do this, I'd need to make sure the abstract "State" struct is where I keep all the generic functions, variables, and constructors; which means that
+the abstract "State" struct is where I'll need to write any generic state checking functions and also account for any number of variables. This is where
+Templates could come in handy.
+*/
+:::
+
+I might also add a simple implementation of an ID system for Actors.
+
+Okay, on refactoring:
+ - I want to move away from Theatres being header files so I can have better instantiation
+ 	- if it could work like imgui or Jolt, that'd be sweet
+ - I want to be able to create Actors/Meshes/Materials/etc, populate their specific variables, and initialize them before doing any sort of buffering or rendering actions.
+
+I think refactoring is almost done, just the fucking player head rotation is fucked bc I'm trying to use Quaternions and I'm fucking shit at using Quaternions. Anyways, time to decomp.
+
+[01/28/25]
+I'm doing what I should've done yesterday. The camera Actor will use euler_angles, but will supply/use a quaternion for rendering/orientation.
+
+Also, huge note: uhhh I forgot that euler angles in GLM are supposed to be radians... they're degrees by default.
+
+Oh my fucking god... was I... was that the problem?
+
+Okay, finally... I'm a bit skeptical of it, but I've implemented a very basic PlayerCamera class that GraphXPlayer will have and use for all viewing-related things. It's decent but may need a little more refactoring. As for the rest, I'm pretty happy with everything so far and I think that tommorow I'll start integrating Jolt back into the codebase and refactor everything a bit more.
+
+:3
+
+[01/29/25]
+Okay, time to continue refactoring while slowly integrating Jolt. I think I can hopefully get this up to if not past the point it was before refactoring.
+
+I set up the Jolt boilerplate/setup code; Jolt source files will be prefixed with "j_", but the common header file for all Jolt code (for now) will be "g_jolt.hpp". I'm tempted to start work on my custom string-based JSON-like Theater setup file syntax, but I will hold off until I am fully done with Jolt integration. I'm going to split up my code for Jolt integration into at least two source files: j_boilerplate.cpp for the setup/boilerplate (duh) and then from there I'll put my custom and original source code into other files starting with "j_common.cpp" (or something like that). As much as it pains me, I want to keep all of the Jolt header code in one header file (or as few as possible), especially because of the header files that I'll need to include in every source file that uses Jolt (e.g: Jolt.h).
+
+Okay, small detour from Jolt integration to refactor some more; I'm taking all class constructor definitions out of the header files and putting them into the source files (at least for Actors).
+
+Note: for primitive shapes, you can just call constructors for them directly (i.e: JPH::BoxShape), but for custom shapes, you have to create a specific shape setting, but you don't have to save the shape setting, so no need to make a generic JPH::ShapeSetting pointer member in PhysicsActor. Just abstract the settings values. Although, it may be easier to actually go with a generic pointer member and just supply it before initializing the PhysicsActor.
+
+Actually, yeah, I'm gonna go with the generic pointer member since I shouldn't abstract just to abstract; instead of having a whole bunch of input variables that would just get put into a new specific shape settings object just for that to be trashed after the collider is made is dumb.
+
+Note: keep JPH::ShapeSettings::SetEmbedded() in mind as it might be used to keep static colliders like the world floor from being freed. Here's an excerpt from the Jolt HelloWorld.cpp:
+:::C++
+// Next we can create a rigid body to serve as the floor, we make a large box
+// Create the settings for the collision volume (the shape).
+// Note that for simple shapes (like boxes) you can also directly construct a BoxShape.
+BoxShapeSettings floor_shape_settings(Vec3(100.0f, 1.0f, 100.0f));
+floor_shape_settings.SetEmbedded(); // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
+:::
+
+Okay, I have abstracted collider creation a bit, but each PhysicsActor will have a vector of "colliders" (Jolt Bodies) that will be created from at least one jolt_collider_options struct; this is a custom struct I wrote that just holds a JPH::ShapeSettings pointer, a JPH::EMotionType value, a JPH::EActivation value, and a JPH::ObjectLayer value.
+
+[01/30/25]
+I'm getting burnt out; I need to take a break. When I come back, big takeaway should be: Don't waste time learning Jolt inside and out for GraphX; maybe for the next engine, but for this one just do the sloppy HelloWorld integration. Everything in the main.cpp file, JPH:: functions in random files, the whole nasty works. Just get this shit out the door. It won't be pretty, but that's okay. This isn't your magnum opus so stop treating it like one.
+
+[01/31/25]
+I just fucking put all the Jolt stuff in the main file... and it compiled, ran, and had correct active physics on the first try. Fuck my perfectionist life.
+
+Aight, I'm thinking that I still want to abstract Jolt functions and calls aside from the setup and shit in the main file. This means keeping J_AddAndCreate and J_RemoveAndDestroy.
+
+Ughhhh wasted time again. Watch yourself, man, you're getting pigeon-holed. I don't even need to make a specific type of shape settings object, I can skip over that to JPH::BodyCreationSettings.
+
+Yeah, the jolt_collider_recipe abstraction is unneeded. Just use JPH::BodyCreationSettings...
+
+I have lots of errors but I need a break. Tomorrow, here's what to do:
+ Decide whether I want to create a full JPH::BodyCreationSettings object in the Theatre or create a partial one and have the PhysicsActor decide whether or not to override its Shape (for default BoxShape colliders and such).
+
+:3
+
+[02/02/25]
+I want to do the first option: create a full JPH::BodyCreationSettings object in the Theatre.
+
+I'm also implementing a way for PhysicsActors to create a default BoxShape with user-supplied JPH::BodyCreationSettings arguments (see the floor and wall Actors in the collision testing Theatre).
+
+Okay, so, JPH::BodyCreationSettings objects can only be created after I've set up Jolt, which of course is done in the game logic thread function. This means I can't #include the Theatre header before the function but I obviously can't #include it in the middle of the function or after it. My current duck-tape solution is inside the Theatre header, I make a custom struct that has all the objects in it, then I create a variable called "new_theatre" from that struct and I set current_theatre to &new_theatre.collision_testing_theatre. This is pretty shit and it also causes the program to exit ungracefully (probably due to some scoping or destructor shit). I want to get rid of this and the only idea I have is to basically abstract the arguments in JPH::BodyCreationSettings to the PhysicsActor constructor and store them in vectors so I can grab them in PhysicsActor::callToStage.
+
+You know what? I might just have to make that custom file format...
+
+Oh my fucking god, I can use std::any to avoid using std::vector<Actor *> troupe. I think. I don't want to fucking convert all my fucking code, so I'll give Theatre a second vector of std::any (which would be for Actors). The main reason is that I need to make sure all the classes in a Theatre get kept alive.
+
+[02/03/25]
+I'm going to continue with the interpreter, however, making a note that I need Theatres to store ALL the data that they require (i.e: Materials, Meshes, etc.), and/or give GraphX the ability to store certain objects globally (i.e: for a Material that's used a lot). Either way, I can't use pointers for everything since I'll be changing Theatre instantiation from a header file to a function, which means it'll be scoped. I need all the objects in a Theater to stay alive, so I can either pre-allocate a maximum number of them (not a good idea), or figure out a way to keep them alive dynamically; std::any seems like the perfect solution... which is why I'm skeptical of it. It seems too good to be true, so keep an eye on it.
+BIG NOTE: a prediction on a possible failure point for std::any would be that under certain conditions it doesn't keep its objects alive (i.e: somewhere deep in std::any, it's using references/pointers or some shit). This is just a note of "hey I have a guess at what's going wrong IF anything goes wrong".
+
+The parser works! Mostly... the first line "Theatre [name_of_theatre]" throws it off because there are no curly brackets. The short term fix would be to just add empty curly brackets (or include all of the objects in the curly brackets? could be interesting), but I want to fix it for good.
+
+Tomorrow.
+
+:3
+
+[02/04/25]
+What I wrote yesterday is more accurately a "lexer" and a "parser" put together (or maybe just a parser). Either way, I need to fix that bug which shouldn't be too hard, and then I need to write the interpreter. Once this file format is done, I think I should be able to make a full on game with the pieces I have here. Sure, I'll need more derivations of Actor and maybe even Mesh or other classes, but I shouldn't need any new unique ones for a simple game. For the bug, I think I'll stick with the simple fix of just putting an open curly bracket after Theater and a closing one at the very end of the file.
+
+Oh, also, why not just make the Theatre's name the name of the fucking file? Duh. Fixes the whitespace problem, too (kind of).
+
+Oh my god I'm seeing the puzzle pieces as they're being put together: writing the embedding process for Theatres made me realize why using functions to access the current Theatre, switch Theatres, etc is REQUIRED! Because the Theatres will be embedded as string-data in source file format, and need to be parsed and (more importantly) actual objects need to be created from that parsed data! That means that the Theatre objects won't exist at compile time, but rather when they are requested to be loaded/instantiated!
+
+Okay, Theatres will be embedded as std::pair<int, std::string> with the integer being the order of importance/load. This number will be written in the filename like so:
+#.name.graphxtheatre
+Theatre names must also not include whitespace.
+
+Almost there! I have the Theatres correctly embedding, I have one map with pairs of integers and Theatre string data, and a second map with pairs of integers and Theatre names (as strings). The integers in both should match the same Theatre (and are taken directly from the filename). I have a printout test in the interpreter that works as well! It uses a switch statement to match vector indices in order to determine which typename a string is referring to! I'm super excited because once I finish this, I can start working on a game!!
+
+:3
+
+[02/05/25]
+It's 11:16. I want to see how far into the interpreter I can get before 12/12:30.
+
+I need to re-write the parser entirely. It's way too finniky. I started work on it but I need to stop and decomp.
+
+Here's my plan for the parser & interpreter:
+ - Store all object definitions in a map; the pairs will be of an integer uid, and a pair of strings, one for the class name and one for the actual name of the class object.
+ - There will be at least three maps for the three different types of data values (C++ references, Theatre references, and raw data). These maps will have a pair of an integer uid corresponding to an object's uid, and a vector/pair. The vector/pair will contain the definition/variable as a string, and the data/value as either a string or an integer uid corresponding to another object's uid. I won't need to use std::any, since linked values will be in the "linked values" multimap.
+ - I'm limiting the ':' to only allow layers of Theatre references
+ 	- e.g: Mesh:Material <Cube>:<Doom_Shiny> is allowed
+ 	- e.g: Mesh:MeshData <Cube>:[GRAPHX_PYRAMID] is not allowed, a new Mesh must be made
+
+I'm almost done!!! A few bugs with how I access the data after parsing, I don't think the parser has any bugs right now. It fucking works!!!! Tomorrow I should be able to write the interpreter portion very quickly. This is really fucking exciting!!!
+
+Note: Theatre files must include "@<theatre name>" at the top, and all layered expressions (e.g: Mesh:Material <Cube>:<Doom_Shiny>) must always be Theatre references (the angled brackets). Also, no whitespace at the beginning of the file (which also means the embedded data, too, so I removed the "\n" from "R"~(\n" in the makefile).
+
+[02/06/25]
+Gonna work on the parser a bit while at home.
+
+The parser is finally actually finished! Not only that, but it's added to the main file and doesn't cause crashes! It might cause crashes/memory leaks if I keep all of the maps in the global scope and start including JPH headers+objects and other things, so NOTE: gracefully move the map definitions into either functions or a struct that you can create when loading a new Theatre.
+
+At work; time to finish this thing! The interpreter is gonna be a glorified nested if/else (or, hopefully, switch/case) tree, so it shouldn't be difficult to get the main structure set up. I just want to try and keep the design modular enough that adding to it (i.e: new classes/subclasses) will only take a couple lines of "this = that" code (header file stuff, basically).
+
+Back in g_common.hpp to tweak Theatre... I don't want to use std::any. The solution is to use pointers but to instantiate them like this:
+:::C++
+Actor *test;
+
+in_scope
+{
+	test = new Actor();
+}
+:::
+
+Or with a pre-allocated array like this:
+:::C++
+Actor *actors[MAX_NUM_OF_ACTORS];
+
+in_scope
+{
+	actors[num] = new Actor();
+}
+:::
+
+I want to avoid the pre-allocated array as I'd like to keep this dynamic, but those are my two options. Actually, I wonder if I can use "new Actor" on the Actor pointer vector to the same effect?
+
+Yeah, I need to create the Theatre and it's objects on the heap, not the stack; however, this means I need to either manually clear the heap, or use a smart pointer class (look this up) instead. If the heap overflows, I'll probably see an std::bad_alloc.
+
+Okay, so I'm going to put all the default values for variables that you can set in a Theatre file in unordered maps for every class and sub-class. Yeah, it'll be a little bit annoying, but worst case scenario is I have to write out, like, 20 unordered maps. If I do this correctly, I'll only have to make these maps once. Then, I just make sure that the order of variables in the maps matches the order of variables in the class constructor or, a separate function that I can even overload a few times so the order could be mixed a little bit (but that wouldn't account for mixed variables of the same type so maybe don't do overloading, it's just a quick thought). I like the function idea because it means I don't have to re-write the maps every fucking time I change a constructor. I think that's what I'll do.
+
+Figured out why I changed troupe from a vector to an unordered map: theatre references. I won't know which object I'm referencing (not easily, at least) unless I store that object's uid.
+
+ALMOST DONE!!!! THE INTERPRETER CODE IS... untested, but more importantly ITS ALMOST DONE!! I just have to figure out how to do layered variables (I call 'em sandwiches). Once that's done, though, I'll be home free! I think... I still have to test it and finish writing up the actual Theatre setup, but that should be as easy as "new_actor.youGotACallBack(data...)".
+
+I'M SO FUCKING EXCITED!!
+
+:3
+
+[02/07/25]
+Dexter gets here tomorrow! Today I'm gonna try and get the interpreter finished!
+
+Holy shit. I've just discovered a way to instantiate objects based on an arbitrary input:
+(https://stackoverflow.com/questions/582331/is-there-a-way-to-instantiate-objects-from-a-string-holding-their-class-name)
+Example C++ code creating a class based on a string of their classname (i.e: "Actor")
+:::C++
+template<typename T> Base * createInstance() { return new T; }
+
+typedef std::map<std::string, Base*(*)()> map_type;
+
+map_type map;
+map["DerivedA"] = &createInstance<DerivedA>;
+map["DerivedB"] = &createInstance<DerivedB>;
+
+// In the example, they use "return map[some_string]();" to demonstrate how to get the
+// type, but I added this pseudo main function which I think should do the same thing,
+// just more directly.
+int main()
+{
+	auto new_instance = map[some_string]();
+}
+:::
+
+It's 12:40, here's a changelog (no testing has been done yet):
+	- New typedef called "gSettings" which defines the type:
+		- std::unordered_map<std::string, std::any>
+	- Theatre now has an unordered map of <int, Actor *>, so that the interpreter can properly interpret Theatre references.
+		- Theatre also has an unordered map of <int, Device *> that should actually be a vector (TODO: Change to vector)
+	- Created new Collider struct that will hold all the relevant data for creating a JPH::Body
+	- Created new Device struct that will provide a virtual function for loading settings
+	- Device is inherited by:
+		- Environment
+		- Material
+		- Mesh/Sprite
+		- Collider
+	- Interpreter now populates a Theatre with new Actors and Devices, as well as storing their relevant settings (both Actor and Device have a new gSettings member called "settings")
+
+Here's what I think should be up next:
+	- Create unique gSettings templates for each class
+		- or find a way to avoid having to do this
+			- one giant gSettings template for both Actor and Device with a range specifier for individual classes?
+	- Specify how each class handles loading settings
+	- Replace deprecated Theatre loading in main file with new Theatre loading
+
+:3
+
+I'm at work now; Dexter (my boyfriend) is very anxious today about his flight tomorrow, so I'm going to try and finish as much as I can as quickly as possible and call him earlier than usual. Hopefully I can get this finished in an hour but if not, I want to at least be in an improved state with little to no errors; basically, I'd rather be almost done with no errors than done with errors when I have to stop today.
+
+I've implemented a way for Actors and Devices to both set and get their UID using a virtual function. Using a function means that I can implement this without having to change every single class.
+
+HUGE NOTE: I should replace all raw pointers (*) with smart pointers (std::unique_ptr)
+
+Okay, I'm gonna try to build and run it for the first time. Expected problems: objects that aren't pointers (e.g: Mesh.material). Oh, and none of the Actors or Devices know what to do with their settings and the settings they're receiving are all for Actor LMFAO.
+
+I'm going to implement Collider, then start work on the unique settings, then write down ideas for how Actors and Devices should load settings.
+
+Aight, it's 6:02 and I've finished up Collider. Here's what's up next (tomorrow):
+	- Create unique gSettings for each sub-class
+	- Implement unique gSettings function override for each sub-class (i.e: youGotACallBack in Actor)
+		- Maybe try to avoid having to write a new function for every single class?
+		- That's not sarcastic, it might just be less headache to not bother
+
+:3
+
+[02/08/25]
+Dexter is arriving today! It's 10:50 and I'm gonna fiddle with the code some more. An idea for gSettings is to have them waterfall; i.e: RigidBodyActor settings would include Actor settings.
+
+[02/10/25]
+Chilling with Dex; it's 12:20. My throat is sore and my head stuffy so I'm a little sick but nothing too bad. Anyways, time to noodle with the code.
+
+Got to work late, but I'm here; it's 16:32 and I'm going to finish debugging GraphX. I'm assuming that most of the problems are going to either be me misusing something or not accounting for certain cases (specifically with pointers), or data transfer is being initiated with no data (i.e: Collider's loadSettings function is called but its an empty function that does nothing).
+
+Note: the compiler throws a lot of warnings about deleting pointers to class instances of a class that has virtual functions but no virtual destructor (at least I think that's what it's referring to).
+
+Problem: layered references can't exist (at least on my knowledge level) because it's far too much headache and they couldn't just be simple references/pointers to another object, they'd have to be new instantiations, and at that point just make a new object in the Theatre file.
+
+Wait a minute! I can load settings directly through the function! It's almost like I pre-planned for this although I know I didn't. This might save it!
+
+There's a problem with RigidBodyActor; "Mass" has no value in gSettings, which is a PhysicsActor setting. I need to figure out why.
+
+Fuck me, man, I don't have any Devices settings in settings_map.
+
+I HAVE NO SETTINGS FOR DEVICSE UGHHHHHHH!!
+
+Okay, settings can't be a vector of gSettings objects, they have to be one big gSettings object. Because of the way the function iterates and fills the map keys.
+
+I'm getting closer; the crashes are now when an object attempts to get a Material pointer from their settings. I think that this is a problem with how the pointer is stored; it's probably not stored at all (or the pointer is on the stack and disappears?).
+
+[02/11/25]
+Dexter is making music on my pc and I'm gonna keep on debugging.
+
+:3
+
+I'm at work now; it's snowing! Working on that std::bad_any_cast exception. Right now, it's in Collider and it's when trying to get any numerical value; a cast of std::any_cast<std::vector<float>>
+
+Alright, I've got a partially specialized template function that correctly uses if constexpr to figure out whether or not the input is a number, a glm::vec#, a glm::quat, or anything else. However, I'm still getting std::bad_any_cast exceptions for Collider's position value.
+
+I might want to change the way the interpreter gets raw data, because currently I have to write all default values in vectors of strings and parse through them as such; if I could find a way to properly put the values in directly (numerical, boolean, glm::vec#, glm::quat, etc.) that would be best. For now, this should work.
+
+I DID IT!! THE ONLY ERROR NOW IS A JOLT ERROR FROM THE BOX SHAPE!! GSETTINGS ARE LOADED PROPERLY!!!!!!! WAAAHOOOOOO!!!
+
+:3
+
+[02/12/25]
+At work; me and Dexter went shopping at Spencer's and Hot Topic. It was very fun. Time to (hopefully) finish this code!
+
+I also had an idea last night: instead of having default values for every variable in each class' gSettings, implement a way to detect and skip over settings that aren't filled out. That way, default settings are kept in C++ (and I avoid having to fucking use gRawData).
+
+Just learned the difference between "NULL" and "nullptr"; NULL is just 0, but nullptr is of type std::nullptr_t, so you can do type comparisons and stuff like that. This is exactly the usecase I need for gSettings, but I'm hesitant to convert every instance of NULL to nullptr, so keep this as a mental note.
+
+Ok, I couldn't do a typeid check in the template functions so I've done things a better way. Before the function createNewClass creates the new class, it goes through the settings and if any of them have nullptr for a value, their key is set to "NULL". This means that when the classes try to set their variables to settings that aren't set, they'll be trying to access a key that doesn't exist. This does mean that I'll have to make sure this doesn't cause a crash or an error.
+
+Okay, so if I'm sticking with the "if constexpr" in the template functions, I need to try to insert a constexpr if that forces an early return if the setting is the pair {"NULL", nullptr}.
+
+I've found a solution! std::any::has_value will return 0 even if unordered_map[key] is used (which creates a new empty pair if the key is not found)!
+
+None of these worked; abandoning plan. New plan: gSettings second value is now a pair of a bool and an std::any. If the bool is false, the std::any is a nullptr. If it's true, it's not. Simple as.
+
+Huge problem: ummmm I forgot to fill out graphx_class_names??? I should write an exception for that case.
+
+YES!! BACK TO JOLT ERRORS!! I THINK THIS MEANS I'VE FIXED IT AND GOTTEN IT BACK TO WHERE IT WAS BEFORE!!
+
+IT WORKS IT WORKS IT WORKS IT LOADS A THEATRE IT WORKS!!!!!!!!!!!!!!
+
+Bug: colliders are properly created with proper settings, but when passed as pointers to RigidBodyActors, they use the default new Collider instead?
+
+BIG NOTE: Player movement doesn't work well but it's because the application of orientation_grounded_front is making movement speed slower when the player is angled down.
+
+[02/13/25]
+Dexter is taking a shower, so I'm gonna noodle with the code some more.
+
+Hmm, it looks like either the player's collider or the falling cube's collider are not in the right place. Either the player's is in front of the camera view, or the cube's is behind its mesh.
+
+The theatre file crashes when removing objects, I think its because I'm not using smart pointers and the maps are not correctly clearing their memory.
+
+At work now; gonna try and fix this problem.
+
+It was because of the way I grabbed the flashlight for testing... man. Although, I do need a better way of getting references to Actors (and also Devices?) because currently, I don't know what the fuck their ID will be and that can change. I need a way of getting a type of Actor or maybe just making special cases for each reference perhaps. What I'm doing with the flashlight is testing and shouldn't cause a big change in the code, tbh.
+
+Lot of debugging and refactoring; found a few things like how Theatres were accidentally doubling the numbers of Actors in the Theatre troupe (yikes!). I made the Actor and Device maps in Theatre private and added a couple overloading funtions for adding, removing, and getting Actors/Devices. This lets me control how objects are created, destroyed, and passed, and lets me add error messages for each one, to help with debugging.
+
+Actor sub-classes don't seem to be setting their UIDs correctly?
+
+Ok, I fixed that (Theatres weren't setting them, lol), but I think I may just fully refactor all pointers to smart pointers.
+
+I want to see if the pointers in Theatre::troupe point to the same objects as the pointers in Theatre::objects.
+
+Before testing this, I realized that the interpreter wasn't passing "new Actor" or "new Device" to the Theatre, but it was passing the pointer to a newly created Actor/Device (I think, at least). I fixed this by adding a new overloaded enterActor & placeDevice that take function pointers.
+
+It was because .compare() doesn't return a boolean value, it returns the integer difference between two strings (which is 0 if they're equal). Fucking god damnit. However, this did let me notice and fix a few minor things; plus, now all Actors have a getType function that returns a string of their typename (i.e: "Actor", "GraphXPlayer", etc).
+
+I kinda wanna write a function template for getting Actor/Device pointers downcasted to their specific sub-class; this way, if I want a LightFlashlight pointer and I know the LightFlashlight object's UID/name, I can get a specific pointer without needing to write the long-ass "static_cast<LightFLashlight *>(getCurrentTheatre()->getActor(UID/Name));" line.
+
+Added it; getting a bit lost in the sauce of making different print preprocessor defines, lol. I have PRINT which is just an abstraction of std::cout (lol), PRINTLN which appends std::endl to the input, PRINTERR which outputs to std::cerr, PRINTIMPORTANT which makes the output annoying, and PRINTDEBUG which is the same as PRINTLN when GRAPHX_DEBUG is defined but doesn't print anything when GRAPHX_DEBUG isn't defined. I wanna figure out what's up with GraphXPlayer's collision now.
+
+[02/14/25]
+Time to make a fucking game! What will it be about? Will it be the gravity-shifting FPS? Probably not! :3
+
+Let's get a testing Theatre working and merge with the main branch, actually.
+
+I kinda wanna make custom syntax highlighting for the Theatre files, but not right now; that's a future project.
+
+Problem with movement: I want to cap the maximum speed, but the way I'm doing movement is by adding to the linear velocity, which means that if I cap it, eventually the speed at both X and Z will max out even if I'm not facing that direction, causing the player to move in a weird diagonal.
+
+Holy fuck I've just realized I might not need to make gSettings for each fucking class and their settings! When setting a variable to a setting, if the setting doesn't exist (or is a nullptr), the default action is to leave the variable alone (because it has a default value in the code!). This means that (in theory) I have no reason to require those gSettings! I can just make a new one and populate it with all the settings that were typed out! Holy fuck this makes so much sense because isolating "Name" to actor_settings makes no sense at all!
+
+It all works, except that textures aren't loaded if they're assigned via a sandwich; I think this is because textures aren't generated by "loadSettings", so try doing that.
+
+Nope, it's because in sandwiches, when I call the function to load settings for a sandwiched object, I use std::any_cast<Actor/Device *>. This means that specific settings like the texture data in a Material won't get fucking saved.
+
+HUH? IT JUST WORKS NOW? It was totally fucked and I didn't know why and I just fucking like did a bunch of rabbit hole shit and then uncommented a single line in t_interpreter.cpp and it WORKS NOW?!
+
+Well, that one's a freebie.
+
+:3
+
+[02/15/25]
+LightMoverTester breaks the program. For some reason, either GraphXPlayer is duplicated and/or current_player is null or set to a duplicate player with no jph_character. It might be because the UID/index of the light's pivot point offsets the player's UID/index and current_player points to the wrong space?
+
+[02/17/25]
+So here's the big bug: when the LightMoverTester adds its pivot point Actor to the Theatre (in order for it to be rendered), it somehow results in current_player being assigned to an uninitialized GraphXPlayer object. Even weirder, it looks like somehow that uninitialized object is in the Theatre's objects map alongside the original player. I'm assuming this is due to how the Theatre adds Actors to the map along with how either current_player is set or references are grabbed from the Theatre in general. I think that adding a new Actor to the map moves the order of objects around in memory and results in old pointers now pointing to empty spaces in the map which returns either an empty/uninitialized object, or creates one in the map to be pointed to.
+
+Perhaps a solution would be to not store references/pointers to specific Actors/Devices, but instead to use getter functions any time I want to access one.
+
+Oh my fucking god I think I found it; when calling the function to create an Actor or Device via a function pointer, I think I accidentally set the return of the function to an Actor/Device, not an Actor/Device pointer.
+
+Ok, I think I have to move the Actor/Device function maps from the interpreter file to g_common.hpp (or inside Theatre).
+
+Trying to minimize the amount of times Actors/Devices get initialized; going to add a flag to them that gets set to true when they get initialized, and checks if that flag is true or false before initializing.
+
+Side-bug: there actually should be at least a global "getEnvironment" function, since W_SwapAndClear uses the environment light for the clear-color, and returning an uninitialized new Environment is totally fine to do.
+
+Okay I think I see where the fault is: the for loop that iterates over all the objects is exiting early (and I think it's right after LightTesterMover is created).
+
+I'm going to try removing Actor/Device initialization/settings-loading from that function and see if it works.
+
+Yup! That fixed it!
+
+Okay, so to re-state the problem and state the solution:
+	Problem:
+		Actors and Devices can add Actors/Devices to the current Theatre, but adding a new Actor/Device to a map while it's being iterated through will result in early breaks and potentially other errors.
+	Solution:
+		Make sure Actors/Devices do not create/add new Actors/Devices in their initialization function. Theatres call that function during map iteration.
+
+I want to change how "getType()" works in Actors/Devices and I want to streamline the process of checking an Actor/Device's type. I'm thinking of something like "isType(type)" where the "type" argument would be one of graphx::classes, and it would return either true or false.
+
+I did that, and I'm also removing "graphx_class_names" and using graphx::classnames to keep things streamlined. I might also add "cpp_definitions" to the graphx namespace.
+
+Problem with that: cpp_definitions has (obviously) a lot of different references to various parts of the code. I could either forward-delare those, or just leave it be. Tempted to actually forward-declare, to save compile time bc of header file inclusions.
+
+Created a new StaticBodyActor; doing this made me realize that I could actually use these as a "wrapper" for Colliders and Actors. RigidBodyActors always use Colliders that are Active, Dynamic, and MOVING, while StaticBodyActors always use Colliders that are "DontActivate", Static, and NON_MOVING.
+
+[02/18/25]
+Doing some coding before therapy. Making a testing Theatre and adding/tweaking things as I go. For instance: I'm adding local coordinates to Actors and Devices as well as a new set of "final" coordinate variables which will be used for rendering. This will let me store local and global coordinates with the final coordinates being the two added together (so there's no destruction). However, global coordinates will still need to be updated properly but that should be easy to do. Instead of the final coordinates being variables, I might actually make them functions instead. That seems like a better idea.
+
+Holy shit big find!! In r_renderer.cpp, the view position is calculated from the player's global position! Not the camera position! Holy shit!
+
+Oh also, I don't have to update the global position, lmfao. Global and local positions can be altered at any time, and as long as position and rotation are read via the functions, it should be fine. I'll probably put the actual variables under protected to keep them from being read directly.
+
+Idea for convertMath:
+:::C++
+template<typename T, typename A> convertMath(T &convert_me, A convert_to)
+{
+	// Do conversion here
+}
+:::
+
+I need to make a map creator like UDB or Slade3. Doing it via text sucks.
+
+Ooh, I think that the math conversion from glm quat to JPH quat was putting the w component on the wrong end!
+
+Oh and also I just realized that Theatre 0 isn't broken, the floor was a RigidBodyActor, which means that gravity wasn't reversed, everything is just falling.
+
+Theatre 0 is all fixed!
+
+Might work on external Theatre loading rn, tbh. Math conversion is done; I'm keeping the old function and overloading it with new versions that convert a variable by reference. I kinda wanna make a few that also convert between euler angles in degrees and quaternions. I'll do that real quickly. Ok, actually I want to make that later, but right now I do want to make a conversion function for converting JPH vectors between radians and degrees.
+
+You know what? It's time to introduce UI elements!
+
+In order to do that, I need to merge this with the trunk and create a new release. That also means I need to get a .exe out of this thing... oh boy.
+
+Doing black magic to try and get the .exe to compile. I'm going to give up for tonight and pick this back up tomorrow.
+
+[02/19/25]
+I think I'm going to bite the bullet and convert to CMake. With Jolt, it just makes things easier, I think. I'll make a new branch for that specifically.
+
+Never mind, fucking hate CMake it's so fucking messy and blegh.
+
+I figured out why mingw LLVM was failing: LibJolt.a uses certain headers/things that clang finds repulsive for some reason and refuses to compile/link it.
