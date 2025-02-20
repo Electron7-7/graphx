@@ -32,6 +32,8 @@ const JPH::Shape *createAShape(int shape, jolt_shape_args shape_args)
 
 PhysicsSystem jolt_physics_system;
 
+bool keep_physics_alive = true;
+
 void J_RemoveAndDestroyBody(BodyID body_id)
 {
 	jolt_physics_system.GetBodyInterface().RemoveBody(body_id);

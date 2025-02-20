@@ -65,11 +65,16 @@ void Theatre::startPreshow()
 
 	sortTroupe();
 	countLights();
+
+	if(!keep_physics_alive)
+		keep_physics_alive = true;
 }
 
 void Theatre::dropCurtains()
 {
 	PRINTDEBUG("Exiting Theatre (" << name << ")")
+
+	keep_physics_alive = false;
 
 	PRINTLN("Devices Present:")
 	for(auto &pair : devices)

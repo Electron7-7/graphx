@@ -485,6 +485,14 @@ bool GraphXPlayer::wantsToBeRendered()
 	return false;
 }
 
+void GraphXPlayer::takeABow()
+{
+	jolt_physics_system.GetBodyInterface().RemoveBody(jph_character->GetBodyID());
+	// delete jph_character;
+	// jph_character->Release();
+	// jph_character->RemoveFromPhysicsSystem();
+}
+
 //
 // Light
 //

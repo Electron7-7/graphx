@@ -374,8 +374,10 @@ void loadTheatre(std::string embedded_theatre, long theatre_uid)
 	current_theatre_uid = theatre_uid;
 	if(all_theatres.contains(theatre_uid))
 	{
-		PRINTERR("ERROR! A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded as that UID already exists!")
+		current_theatre_uid = theatre_uid;
 		return;
+		// PRINTERR("ERROR! A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded as that UID already exists!")
+		// return;
 	}
 
 	all_theatres[theatre_uid] = Theatre(std::get<0>(theatre_data));

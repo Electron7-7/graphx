@@ -312,7 +312,8 @@ void testGameTick(GLFWwindow *main_window)
 			else
 				player_flashlight->light_color = glm::vec3(1.0f);
 
-			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
+			if(keep_physics_alive)
+				jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
 			last_tick_timestamp = glfwGetTime();
 			current_tick_length--;
@@ -321,7 +322,7 @@ void testGameTick(GLFWwindow *main_window)
 		if(current_tick_since_second >= TICKRATE)
 			current_tick_since_second = 0;
 	}
-	
+
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 
 	getCurrentTheatre()->dropCurtains();
@@ -329,13 +330,26 @@ void testGameTick(GLFWwindow *main_window)
 	JPH::UnregisterTypes();
 
 	delete JPH::Factory::sInstance;
-	JPH::Factory::sInstance = NULL;
+	JPH::Factory::sInstance = nullptr;
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+	{
+		time_to_render = false;
+		getCurrentTheatre()->dropCurtains();
+		if(current_theatre_uid == 0)
+			loadTheatre(embedded_theatres.at(1), 1);
+		else if(current_theatre_uid == 1)
+			loadTheatre(embedded_theatres.at(0), 0);
+		getCurrentTheatre()->startPreshow();
+		jolt_physics_system.OptimizeBroadPhase();
+		time_to_store_buffers = true;
+	}
 
 	if(key == GLFW_KEY_G && action == GLFW_PRESS)
 	{

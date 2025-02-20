@@ -1124,3 +1124,5 @@ I think I'm going to bite the bullet and convert to CMake. With Jolt, it just ma
 Never mind, fucking hate CMake it's so fucking messy and blegh.
 
 I figured out why mingw LLVM was failing: LibJolt.a uses certain headers/things that clang finds repulsive for some reason and refuses to compile/link it.
+
+Next up: figure out Theatre switching.
