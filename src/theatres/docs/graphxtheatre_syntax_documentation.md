@@ -18,6 +18,7 @@ Before I show you a full Theatre file with annotations, there are three importan
 1. The first line will name the Theatre and must always be included.
 2. Class & Theatre names can include whitespace, but that can complicate things and potentially introduce errors depending on how I write the syntax reader, so use whitespace at your own risk. I recommend not using whitespace.
 3. After the Theatre line, you're free to start creating Devices and Actors; however, keep in mind that their order is important! If you need to reference an object, it has to have already been created first! Here's an example of what I mean:
+This works because "Doom_Shiny" was already created before "Cube" was:
 ```
 Material (Doom_Shiny)
 {
@@ -29,14 +30,16 @@ Material (Doom_Shiny)
 Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
-	Material <Doom_Shiny> This works because "Doom_Shiny" was already created before "Cube" was.
+	Material <Doom_Shiny>
 }
-
+```
+This fails because "Doom_Shiny" doesn't exist yet:
+```
 Don't do this:
 Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
-	Material <Doom_Shiny> This fails because "Doom_Shiny" doesn't exist yet!!
+	Material <Doom_Shiny>
 }
 Material (Doom_Shiny)
 {
