@@ -1120,3 +1120,7 @@ Doing black magic to try and get the .exe to compile. I'm going to give up for t
 
 [02/19/25]
 I think I'm going to bite the bullet and convert to CMake. With Jolt, it just makes things easier, I think. I'll make a new branch for that specifically.
+
+Never mind, fucking hate CMake it's so fucking messy and blegh.
+
+I figured out why mingw LLVM was failing: LibJolt.a uses certain headers/things that clang finds repulsive for some reason and refuses to compile/link it.

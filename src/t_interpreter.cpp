@@ -290,7 +290,7 @@ std::string getTheatreStructure(gTheatreStorage theatre_storage)
 #else
 std::string getTheatreStructure(gTheatreStorage theatre_storage)
 {
-	return "Parsed Theatre " + std::quoted(std::get<0>(theatre_storage));
+	return "Parsed Theatre \"" + std::get<0>(theatre_storage) + "\"";
 }
 #endif
 

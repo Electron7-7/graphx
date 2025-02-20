@@ -1,23 +1,26 @@
 CXX = clang++
 CC = clang
 
-WCXX = x86_64-w64-mingw32-clang++
-WCC = x86_64-w64-mingw32-clang
-
 CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
-WCXXFLAGS = -v -g -Wall -std=c++20 -static -fuse-ld=lld -ffat-lto-objects $(JOLTFLAGS) $(GRAPHXFLAGS)
-WCCFLAGS = -g -Wall -static -fuse-ld=lld
-
-GRAPHXFLAGS = -D GRAPHX_COMPILING
-JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
-
 INCLUDES = -I src/include
+LIBS = -l glfw -L src/lib -l:libJolt.a
+
+WCXX = x86_64-w64-mingw32-g++
+WCC = x86_64-w64-mingw32-gcc
+
+WCXXFLAGS = -g -Wall -std=c++20 -static -ffat-lto-objects -fuse-ld=lld $(JOLTFLAGS) $(GRAPHXFLAGS)
+WCCFLAGS = -g -Wall -static -fuse-ld=lld
+WLIBS = -L src/windows_dependencies/lib -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
 WINCLUDES = -I src/include -I src/windows_dependencies/include
 
-LIBS = -l glfw -L src/lib -l:libJolt.a
-WLIBS = -L src/lib -l Jolt -L src/windows_dependencies/lib -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
+JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
+GRAPHXFLAGS = -D GRAPHX_COMPILING
+
+LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
+WINDOWS = GraphX_Windows_x86_64.exe
+NAME =
 
 SRC := src
 
@@ -25,6 +28,9 @@ O = build
 
 OBJS = 						\
 	$(O)/glad.o				\
+	$(O)/images.o			\
+	$(O)/shaders.opp		\
+	$(O)/theatres.opp		\
 	$(O)/g_actors.opp		\
 	$(O)/j_common.opp		\
 	$(O)/r_common.opp		\
@@ -33,11 +39,7 @@ OBJS = 						\
 	$(O)/t_interpreter.opp	\
  	$(O)/g_theatres.opp
 
-CWOBJS = $(OBJS:.o=.wo)
-WOBJS = $(CWOBJS:.opp=.wopp)
-
-LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
-WINDOWS = GraphX_Windows_x86_64.exe
+WOBJS = $(subst .o,.wo,$(OBJS))
 
 I = $(SRC)/images
 IMAGES_C = $(SRC)/images.c
@@ -65,37 +67,55 @@ THEATRES_H = $(SRC)/theatres.hpp
 
 FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
 
-all: build build_windows
+PHONY = all clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
 
-clean: clean_resources
-	rm -rf build/*
-	make -s embed_resources
+all: release linux windows
+
+clean: clean_resources embed_resources
+	-rm -rf build/*
+
+clean_linux:
+	-rm -rf build/*.o
+	-rm -rf build/*.opp
+	-rm -rf build/GraphXDebug
+	-rm -rf build/$(LINUX)
+
+clean_windows:
+	-rm -rf build/*.wo
+	-rm -rf build/*.wopp
+	-rm -rf build/GraphXDebug.exe
+	-rm -rf build/$(WINDOWS)
 
 clean_resources:
-	$(shell rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H))
+	-rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H)
 
 embed_resources: $(IMAGES_C) $(SHADERS_C) $(THEATRES_C)
 
-recompile_theatres:
-	$(shell rm -f $(THEATRES_C) $(THEATRES_H))
-	make -s embed_resources
-
-remake_embedded_resources: clean_resources
-	make -s embed_resources
+clean_theatres:
+	-rm -f $(THEATRES_C) $(THEATRES_H)
 
 compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
-debug: recompile_theatres
-	$(eval LINUX = GraphXDebug)
-	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG) #-fsanitize=address
+debug: clean_theatres embed_resources
+	$(info Version: Debug)
+	$(eval LINUX := GraphXDebug)
+	$(eval WINDOWS := GraphXDebug.exe)
+	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG)
 
-release: clean_resources embed_resources recompile_theatres
+release: clean_resources embed_resources
+	$(info Version: Release)
+	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING)
 
-build: $(O)/$(LINUX)
+linux: NAME = $(LINUX)
+linux: $(OBJS) $(O)/main.opp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp -o $(O)/$(NAME) $(LIBS)
+	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
 
-linux_test:	build
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(LINUX)
+windows: NAME = $(WINDOWS)
+windows: $(WOBJS) $(O)/main.wopp
+	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
+	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
 
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
@@ -114,9 +134,6 @@ $(SHADERS_H):
 	$(foreach file,$(SHDRS),$(shell printf "extern std::string $(subst .,_,$(file:$(S)/%=%));\n" >> $(SHADERS_H)))
 	$(shell printf "#endif" >> $(SHADERS_H))
 
-leftparen := (
-rightparen := )
-
 $(THEATRES_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_THEATRES\n#define GRAPHX_EMBEDDED_THEATRES\n#include <string>\n#include <map>\nextern std::map<int, std::string> embedded_theatres;\n#endif" >> $(THEATRES_H))
 
@@ -126,47 +143,14 @@ $(THEATRES_C): $(THEATRES_H)
 	$(shell sed 's/^{,{/{{/' -i $(THEATRES_C))
 	$(shell printf "\n};" >> $(THEATRES_C))
 
-$(O)/$(LINUX): $(O)/images.o $(O)/shaders.opp $(O)/theatres.opp $(OBJS) $(O)/main.opp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O)/images.o $(O)/shaders.opp $(O)/theatres.opp $(OBJS) $(O)/main.opp \
-	-o $(O)/$(LINUX) $(LIBS)
-
-$(O)/images.o: $(IMAGES_C)
-	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
-
-$(O)/shaders.opp: $(SHADERS_C)
-	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
-
-$(O)/theatres.opp: $(THEATRES_C)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
-
-$(O)/%.opp:	$(SRC)/%.cpp
+$(O)/%.opp: $(SRC)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(O)/%.o: $(SRC)/%.c
 	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
-
-
-build_windows: $(O)/$(WINDOWS)
-
-windows_test: build_windows
-# 	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(WINDOWS)
-	wine64 $(O)/$(WINDOWS)
-
-$(O)/$(WINDOWS): $(O)/images.wo $(O)/shaders.wopp $(O)/theatres.wopp $(WOBJS) $(O)/main.wopp
-	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(O)/images.wo $(O)/shaders.wopp $(O)/theatres.wopp $(WOBJS) $(O)/main.wopp \
-	-o $(O)/$(WINDOWS) $(WLIBS)
 
 $(O)/%.wopp: $(SRC)/%.cpp
 	$(WCXX) $(WCXXFLAGS) $(WINCLUDES) -c $< -o $@
 
 $(O)/%.wo: $(SRC)/%.c
 	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
-
-$(O)/images.wo: $(IMAGES_C)
-	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
-
-$(O)/shaders.wopp: $(SHADERS_C)
-	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
-
-$(O)/theatres.wopp: $(THEATRES_C)
-	$(WCXX) $(WCXXFLAGS) $(WINCLUDES) -c $< -o $@
