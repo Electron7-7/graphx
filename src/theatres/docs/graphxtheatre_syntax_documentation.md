@@ -1,23 +1,22 @@
-The filename is pretty important and must follow this syntax:
-	#.Name.gt
+The filename is pretty important and must follow this syntax: `#.Name.gt`
 The number at the start designates the Theatre's UID and load order (starting at 0 and going up), the name can be whatever you want as long as it doesn't contain any whitespace, and the filename ".gt" stands for "graphxtheatre".
 As an example, the filename for my HelloWorld Theatre is "0.HelloWorld.gt", and the filename for my CollisionTesting Theatre is "1.CollisionTesting.gt". Since the CollisionTesting Theatre's UID is greater than the HelloWorld Theatre's, it gets loaded last and is the one you actually see when the "game" launches.
 
 Below is the general syntax for GraphXTheatre files:
-```@NameOfThisTheatre
+`@NameOfThisTheatre
 Class (Name)
 {
 	RawDataVariable    (RawData)
 	ReferenceVariable  [Reference]
 	PointerVariable    <Name>
 	Sand:Wich:Variable <Name>:<Name>:<Name>
-}```
+}`
 
 Before I show you a full Theatre file with annotations, there are three important things to keep in mind:
 1. The first line will name the Theatre and must always be included.
 2. Class & Theatre names can include whitespace, but that can complicate things and potentially introduce errors depending on how I write the syntax reader, so use whitespace at your own risk. I recommend not using whitespace.
 3. After the Theatre line, you're free to start creating Devices and Actors; however, keep in mind that their order is important! If you need to reference an object, it has to have already been created first! Here's an example of what I mean:
-```Material (Doom_Shiny)
+`Material (Doom_Shiny)
 {
 	Diffuse           [DOOM_TEXTURE_DIFF]
 	Specular          [DOOM_TEXTURE_SPEC]
@@ -42,7 +41,7 @@ Material (Doom_Shiny)
 	Specular          [DOOM_TEXTURE_SPEC]
 	SpecularSharpness (256)
 	SpecularStrength  (1.0)
-}```
+}`
 
 Why did I make it this way? Because I couldn't be fucked to write a more complex parser.
 
