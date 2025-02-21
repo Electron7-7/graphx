@@ -361,7 +361,7 @@ void RigidBodyActor::reset_to_initial_orientation_for_testing()
 
 void RigidBodyActor::takeABow()
 {
-	PRINTLN("\tRemoving Device from RigidBodyActor:")
+	PRINTLN("Removing Device from RigidBodyActor (" << name << "):")
 	collider->prepForDestruction();
 	PRINTLN("Device Removed")
 	PhysicsActor::takeABow();
@@ -398,7 +398,7 @@ void StaticBodyActor::callToStage(Theatre *parent_theatre)
 
 void StaticBodyActor::takeABow()
 {
-	PRINTLN("\tRemoving Device from StaticBodyActor:")
+	PRINTLN("Removing Device from StaticBodyActor (" << name << "):")
 	collider->prepForDestruction();
 	PRINTLN("Device Removed")
 	PhysicsActor::takeABow();
