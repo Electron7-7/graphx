@@ -1143,3 +1143,7 @@ I THINK I FIGURED IT OUT! RIGIDBODYACTOR AND STATICBODYACTOR USE INTERNAL COLLID
 IT WORKS!! IT FUCKING WORKS!! (i think, at least).
 
 Oh, the flashlight variable doesn't get re-set when a new Theatre is loaded, so after one switch, it doesn't point to a valid flashlight anymore.
+
+[02/21/25]
+I've gotten GraphX compiling on Windows using MSYS2! Joyous day! No CMake! No VisualStudio! No bullshit!
+

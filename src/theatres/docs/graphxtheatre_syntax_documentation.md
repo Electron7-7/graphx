@@ -17,9 +17,9 @@ Class (Name)
 Before I show you a full Theatre file with annotations, there are three important things to keep in mind:
 1. The first line will name the Theatre and must always be included.
 2. Class & Theatre names can include whitespace, but that can complicate things and potentially introduce errors depending on how I write the syntax reader, so use whitespace at your own risk. I recommend not using whitespace.
-3. After the Theatre line, you're free to start creating Devices and Actors; however, keep in mind that their order is important! If you need to reference an object, it has to have already been created first! Here's an example of what I mean:
+3. After the Theatre line, you're free to start creating Devices and Actors; however, keep in mind that their order is important! If you need to reference an object, it has to have already been created first!
 
-### 0.HelloWorldTheatre.gt
+Here's an example of what I mean; this works because "Doom_Shiny" was already created before "Cube" was:
 ```
 Material (Doom_Shiny)
 {
@@ -31,14 +31,16 @@ Material (Doom_Shiny)
 Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
-	Material <Doom_Shiny> This works because "Doom_Shiny" was already created before "Cube" was.
+	Material <Doom_Shiny>
 }
-
+```
+This fails because "Doom_Shiny" doesn't exist yet:
+```
 Don't do this:
 Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
-	Material <Doom_Shiny> This fails because "Doom_Shiny" doesn't exist yet!!
+	Material <Doom_Shiny>
 }
 Material (Doom_Shiny)
 {
@@ -51,6 +53,7 @@ Material (Doom_Shiny)
 Why did I make it this way? Because I couldn't be fucked to write a more complex parser.
 
 Anyways, here's the [HelloWorldTheatre](https://github.com/Electron7-7/graphx/edit/trunk/src/theatres/0.HelloWorld.gt) file with some annotations to help explain the format. These annotations have been stylized to kinda look like C++ comments, but keep in mind that **comments don't exist in GraphXTheatre files**, so don't try to write any!
+### 0.HelloWorldTheatre.gt
 ```
 @HelloWorldTheatre
 Material (Doom_Shiny) // A Material named "Doom_Shiny"
