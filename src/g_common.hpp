@@ -15,8 +15,6 @@ struct RenderState
 class Actor
 {
 public:
-	unsigned int actor_type; // Slowly phase this out via visitor system
-
 	std::string name = "Untitled Actor";
 	bool visible = true;
 
@@ -57,7 +55,10 @@ public:
 	long getUID();
 	void setUID(long manual_uid);
 	bool isType(int class_type);
+	bool isType(std::initializer_list<int> const &class_types);
+	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types);
 
+	virtual bool isPhysicsActor();
 	virtual void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}); // Loads settings
 	virtual void callToStage(Theatre *parent_theatre);
 	virtual void takeABow();
@@ -67,8 +68,8 @@ public:
 	virtual bool wantsToBeBuffered();
 
 protected:
-	long UID = -1; // A UID of -1 means it's not been set yet
 	int my_type = graphx::classes::ACTOR;
+	long UID = -1; // A UID of -1 means it's not been set yet
 	bool debug_visible;
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);

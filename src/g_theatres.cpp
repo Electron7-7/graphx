@@ -448,21 +448,25 @@ void Theatre::sortTroupe()
 {
 	std::sort(troupe.begin(), troupe.end(), [](Actor *left, Actor *right)
 	{
-		return (left->actor_type > right->actor_type);
+		return (left->isType(LIGHTS) > right->isType(LIGHTS));
 	});
+	for(Actor *actor : troupe)
+		PRINTDEBUG(actor->name << " " << actor->isType(LIGHTS))
 }
 
 void Theatre::countLights()
 {
 	for(Actor *actor : troupe)
 	{
-		if(actor->actor_type != ACTOR_LIGHT)
+		if(!actor->isType(LIGHTS))
 			continue;
 
-		if(static_cast<Light *>(actor)->light_type == LIGHT_POINT)
-			point_lights_count++;
-
-		if(static_cast<Light *>(actor)->light_type == LIGHT_SPOT)
+		if(static_cast<Light *>(actor)->isLightType(LIGHTSPOT))
+		{
 			spot_lights_count++;
+			continue;
+		}
+
+		point_lights_count++;
 	}
 }

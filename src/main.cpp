@@ -55,7 +55,7 @@ int main()
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
@@ -271,14 +271,12 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
-	// This will change to include loading external Theatres
-	loadMainTheatre(0);
+	loadMainTheatre(0); // Hard-coded loading of first Theatre
 
 	double last_time = glfwGetTime();
 	double current_tick_length = 0;
 	double now_time = 0;
 
-	// jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
 	while(!glfwWindowShouldClose(main_window))
 	{
 		now_time = glfwGetTime();
@@ -324,7 +322,6 @@ void testGameTick(GLFWwindow *main_window)
 	getCurrentTheatre()->dropCurtains();
 
 	JPH::UnregisterTypes();
-
 	delete JPH::Factory::sInstance;
 	JPH::Factory::sInstance = nullptr;
 }
@@ -374,8 +371,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTDEBUG("Resetting PhysicsActors to initial transformation!")
-		for(Actor *actor: getCurrentTheatre()->troupe)
-			if(actor->actor_type == ACTOR_PHYSICS)
+		for(Actor *actor : getCurrentTheatre()->troupe)
+			if(actor->isPhysicsActor())
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}
 

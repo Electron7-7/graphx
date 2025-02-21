@@ -178,28 +178,31 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 			only hard-coded a little bit and still runs, so I'm okay with pushing it as an update with some temporary solutions that will get changed very soon.
 		*/
 
-		if(actor->actor_type == ACTOR_LIGHT)
+		if(actor->isType(graphx::classes::LIGHTS))
 		{
 			Light *current_light = static_cast<Light *>(actor);
 			shaders[shader_index]->setUniform("is_light", true);
 			std::string which_light;
 
-			switch(current_light->light_type)
+			if(current_light->isLightType(graphx::classes::LIGHT))
 			{
-				case(LIGHT_POINT):
-					which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
-					break;
-				case(LIGHT_DIRECTIONAL):
-					which_light = "directional_light.";
-					shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightDirectional *>(current_light)->direction);
-					break;
-				case(LIGHT_SPOT):
-					which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
-					shaders[shader_index]->setUniform(which_light + "inner_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[0]);
-					shaders[shader_index]->setUniform(which_light + "outer_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[1]);
-					shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightSpot *>(current_light)->direction);
-					break;
+				which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
 			}
+
+			else if(current_light->isLightType(graphx::classes::LIGHTDIRECTIONAL))
+			{
+				which_light = "directional_light.";
+				shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightDirectional *>(current_light)->direction);
+			}
+
+			else if(current_light->isLightType(graphx::classes::LIGHTSPOT))
+			{
+				which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
+				shaders[shader_index]->setUniform(which_light + "inner_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[0]);
+				shaders[shader_index]->setUniform(which_light + "outer_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[1]);
+				shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightSpot *>(current_light)->direction);
+			}
+
 
 			shaders[shader_index]->setUniform(which_light + "position", current_light->getPosition<glm::vec3>());
 			shaders[shader_index]->setUniform(which_light + "strength", current_light->light_strength);

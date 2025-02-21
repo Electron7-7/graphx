@@ -59,6 +59,7 @@ struct Collider : public Device
 	void prepForDestruction() override;
 
 protected:
+	int my_type = graphx::classes::COLLIDER;
 	JPH::BodyID body_id;
 	JPH::BodyCreationSettings body_settings;
 };

@@ -56,19 +56,16 @@ struct GLShader
 {
 	unsigned int id;
 
-	GLShader(std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path);
-	// GLShader(std::filesystem::path shader_path);
 	GLShader(std::string vertex_shader_code, std::string fragment_shader_code);
-	// GLShader(const char *shader_code);
 
 	template<typename T> void setUniform(const std::string &name, T value) const;
+
 	void buildShader(std::string vertex_shader_code, std::string fragment_shader_code);
 };
 
 struct Device
 {
 	std::string name = "Untitled Device";
-	int device_type;
 	graphx::gSettings settings;
 
 	virtual ~Device() = default;
@@ -96,9 +93,12 @@ struct Environment final : public Device // Will be extended
 
 	glm::vec3 getAmbientLight();
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+
+protected:
+	int my_type = graphx::classes::ENVIRONMENT;
 };
 
-struct Material : public Device
+struct Material final : public Device
 {
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
@@ -119,6 +119,9 @@ struct Material : public Device
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+
+protected:
+	int my_type = graphx::classes::MATERIAL;
 };
 
 struct Mesh : public Device
@@ -136,21 +139,20 @@ struct Mesh : public Device
 	~Mesh() override;
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+
+protected:
+	int my_type = graphx::classes::MESH;
 };
 
-struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
+// Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
+struct Sprite : public Mesh
 {
-	// All sprites (even missing ones) always use the default quad mesh, hence the unique constructor
 	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-};
 
-struct Line
-{
-	glm::vec3 start_position = glm::vec3(0.0f);
-	glm::vec3 end_position = glm::vec3(0.0f);
-	glm::vec3 color = glm::vec3(1.0f);
+protected:
+	int my_type = graphx::classes::SPRITE;
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
@@ -162,11 +164,11 @@ extern std::map<int, Device*(*)()> device_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 
-GLFWwindow  *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void		 W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void		 R_GL_BufferMeshData(Mesh *mesh);
-void 		 R_StoreBuffers();
-void 		 R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
-void		 R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index);
-void		 R_TroupeChanged();
+GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
+void		W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void		R_GL_BufferMeshData(Mesh *mesh);
+void 		R_StoreBuffers();
+void 		R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
+void		R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index);
+void		R_TroupeChanged(); // Bad way of buffering new Meshes when new Actors are added to a Theatre
 #endif

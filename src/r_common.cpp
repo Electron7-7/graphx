@@ -4,8 +4,6 @@
 #include "t_common.hpp"
 #include "quad.graphxmodel"
 #include <iostream>
-#include <fstream>
-#include <sstream>
 
 using namespace graphx;
 using namespace graphx::classes;
@@ -22,40 +20,6 @@ std::map<int, Device*(*)()> device_map =
 //
 // GLShader
 //
-GLShader::GLShader(std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path)
-{
-	std::string vertex_code;
-	std::string fragment_code;
-	std::ifstream v_shader_file;
-	std::ifstream f_shader_file;
-
-	v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-	try
-	{
-		v_shader_file.open(vertex_shader_path);
-		f_shader_file.open(fragment_shader_path);
-		std::stringstream v_shader_stream, f_shader_stream;
-
-		v_shader_stream << v_shader_file.rdbuf();
-		f_shader_stream << f_shader_file.rdbuf();
-
-		v_shader_file.close();
-		f_shader_file.close();
-
-		vertex_code = v_shader_stream.str();
-		fragment_code = f_shader_stream.str();
-	}
-
-	catch(std::ifstream::failure e)
-	{
-		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-	}
-
-	buildShader(vertex_code, fragment_code);
-};
-
 GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
 {
 	buildShader(vertex_shader_code, fragment_shader_code);
@@ -87,61 +51,41 @@ void GLShader::buildShader(std::string vertex_shader_string, std::string fragmen
 template<> void GLShader::setUniform<bool>(const std::string &name, bool value) const
 {
 	glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
-	// int new_value;
-	// glGetUniformiv(id, glGetUniformLocation(id, name.c_str()), &new_value);
-	// return (bool)new_value;
 }
 
 template<> void GLShader::setUniform<int>(const std::string &name, int value) const
 {
 	glUniform1i(glGetUniformLocation(id, name.c_str()), value);
-	// int new_value;
-	// glGetUniformiv(id, glGetUniformLocation(id, name.c_str()), &new_value);
-	// return new_value;
 }
 
 template<> void GLShader::setUniform<float>(const std::string &name, float value) const
 {
 	glUniform1f(glGetUniformLocation(id, name.c_str()), value);
-	// float new_value;
-	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), &new_value);
-	// return new_value;
 }
 
 template<> void GLShader::setUniform<glm::vec2>(const std::string &name, glm::vec2 value) const
 {
 	glUniform2fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
-	// float *new_value = NULL;
-	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), new_value);
-	// return glm::vec2(new_value[0], new_value[1]);
 }
 
 template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const
 {
 	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
-	// float *new_value = NULL;
-	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), new_value);
-	// return glm::vec3(new_value[0], new_value[1], new_value[2]);
 }
 
 template<> void GLShader::setUniform<glm::vec4>(const std::string &name, glm::vec4 value) const
 {
 	glUniform4fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
-	// float *new_value = NULL;
-	// glGetUniformfv(id, glGetUniformLocation(id, name.c_str()), new_value);
-	// return glm::vec4(new_value[0], new_value[1], new_value[2], new_value[3]);
 }
 
 template<> void GLShader::setUniform<glm::mat3>(const std::string &name, glm::mat3 value) const
 {
 	glUniformMatrix3fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
-	// return glm::mat3(0.0f); // I don't know how to get and return Matrices properly, but I don't want a non-void function to not return something
 }
 
 template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::mat4 value) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
-	// return glm::mat4(0.0f); // I don't know how to get and return Matrices properly, but I don't want a non-void function to not return something
 }
 
 //
@@ -212,9 +156,7 @@ long Device::getUID()
 //
 Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color, float init_ambient_strength)
 : ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
-{
-	device_type = DEVICE_ENVIRONMENT;
-}
+{}
 
 void Environment::loadSettings(graphx::gSettings new_settings)
 {
@@ -237,27 +179,19 @@ glm::vec3 Environment::getAmbientLight()
 // Material
 //
 Material::Material()
-{
-	device_type = DEVICE_MATERIAL;
-}
+{}
 
 Material::Material(bool is_fullbright, glm::vec3 init_color)
 : color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
-{
-	device_type = DEVICE_MATERIAL;
-}
+{}
 
 Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
 : embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
-{
-	device_type = DEVICE_MATERIAL;
-}
+{}
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
 : color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
-{
-	device_type = DEVICE_MATERIAL;
-}
+{}
 
 void Material::loadSettings(graphx::gSettings new_settings)
 {
@@ -314,9 +248,7 @@ unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 //
 Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vector<GLuint> init_indices, int init_vao_index, std::string init_name)
 : name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
-{
-	device_type = DEVICE_MESH;
-}
+{}
 
 Mesh::~Mesh()
 {
@@ -348,9 +280,7 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 //
 Sprite::Sprite(Material *init_material, int init_vao_index)
 : Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
-{
-	device_type = DEVICE_SPRITE;
-}
+{}
 
 void Sprite::loadSettings(graphx::gSettings new_settings)
 {
