@@ -124,6 +124,8 @@ struct Theatre
 	// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
 	template<typename T> T iKnowWhatActorIWant(auto identifier)
 	{
+		if(getActor(identifier) == nullptr)
+			return new std::remove_pointer_t<T>;
 		return static_cast<T>(getActor(identifier));
 	}
 
@@ -132,6 +134,8 @@ struct Theatre
 	// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
 	template<typename T> T iKnowWhatDeviceIWant(auto identifier)
 	{
+		if(getDevice(identifier) == nullptr)
+			return new std::remove_pointer_t<T>;
 		return static_cast<T>(getDevice(identifier));
 	}
 

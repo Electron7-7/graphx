@@ -1141,3 +1141,5 @@ OOH! What if there was one global Theatre that would flush out all of its object
 I THINK I FIGURED IT OUT! RIGIDBODYACTOR AND STATICBODYACTOR USE INTERNAL COLLIDERS THAT ARENT A PART OF THE THEATRE!! SO THEY NEED TO THROW THEM AWAY WHEN DONE!
 
 IT WORKS!! IT FUCKING WORKS!! (i think, at least).
+
+Oh, the flashlight variable doesn't get re-set when a new Theatre is loaded, so after one switch, it doesn't point to a valid flashlight anymore.

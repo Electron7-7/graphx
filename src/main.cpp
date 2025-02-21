@@ -279,9 +279,6 @@ void testGameTick(GLFWwindow *main_window)
 	double now_time = 0;
 
 	// jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
-
-	LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
-
 	while(!glfwWindowShouldClose(main_window))
 	{
 		now_time = glfwGetTime();
@@ -301,6 +298,8 @@ void testGameTick(GLFWwindow *main_window)
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
+
+			LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
 			player_flashlight->setLight(test_flashlight_bool);
 
