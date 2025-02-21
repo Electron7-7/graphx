@@ -13,7 +13,7 @@
 <img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="400"/>
 <img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
 
-## Update 3: GT Files!
+## Update: GT Files!
 
 No, not Gran Turismo, "GraphXTheatre" files are the newest addition to the GraphX game engine, and I am thoroughly proud of my horrible code. In a nutshell, I decided to create my own custom file format for creating Theatres and I wanted to do so without using any tutorials or guides (just StackOverflow and tenacity). It was very painful, but very informative! I created my own lexer, parser, and interpreter for a file format/syntax that I also invented, again, without any guides or even learning what the difference between a lexer and a parser is until after I had finished (i.e: right now as I'm writing this, lmfao). If you want an in-depth guide to this new file format, check out the [GraphX Theatre Syntax Documentation](https://github.com/Electron7-7/graphx/blob/trunk/src/theatres/docs/graphxtheatre_syntax_documentation.md).
 
@@ -30,8 +30,9 @@ Rant over, you can all return to your desks.
 #### A Note About The Makefile
 I designed the Makefile to use unique variables and build rules when targeting either Windows or Linux, in an effort to isolate both architectures. When building for Linux, the Makefile will use the variables `CXX`, `CC`, `CXXFLAGS`, `CFLAGS`, `INCLUDES`, etc. When building for Windows, however, the Makefile uses the variables `WCXX`, `WCC`, `WCXXFLAGS`, `WCFLAGS`, `WINCLUDES`, etc.
 My reasoning is that I wanted it to be easy for people to swap out compilers, linker flags, include locations, etc for either architecture while keeping them both separated. It feels neater and a little more modular like this (although it's probably less efficient). The way I handle embedding resources is less elegant and requires you to manually add each image/shader to an image/shader list, but I intend on changing that as soon as I've got resource embedding working on Windows, using `xxd.exe`.
-#### Building for Linux
-To compile GraphX for Linux, you'll need:
+### Building on Linux
+#### Compiling a Linux binary
+To compile a Linux binary, you'll need:
 - `GLFW`
 - `clang` & `clang++`
 - `make`
@@ -39,44 +40,33 @@ To compile GraphX for Linux, you'll need:
 If you don't want to use clang for whatever reason, you can change the `CXX` and `CC` variables in the Makefile. I've kept all the variables that people would most likely want/need to change at the top of the Makefile for ease of access. GraphX also relies on some headers that are only included in C++20, so don't remove the `-std=c++20` from `CXXFLAGS` or `WCXXFLAGS`. If you're getting compiler errors related to `std::lerp`, it's probably because you're not telling the compiler to enable C++20; the way I do it is by using the `-std=c++20` flag in the Makefile.
 
 To build GraphX, just run `make` or `make build` from the root directory (the folder with the Makefile in it). If everything finishes successfully, the program will be inside the pre-existing `build/` directory. Its name will be different depending on your distro, but it will always start with `GraphX_Linux`.
-#### Building for Windows (on Linux)
-To compile GraphX for Windows while on Linux, you'll need:
+
+#### Compiling a Windows executable
+To compile a Windows executable, you'll need:
 - `mingw-w64-gcc`
 - `mingw-w64-g++`
 - `make`
 
 I've included all the libraries and header files needed to compile an executable on Linux using MinGW, and the Makefile is already configured to handle everything correctly, so all you need to do is run `make windows` from the root directory, and if it all finishes successfully, you'll find `Graphx_Windows_x86_64.exe` in the pre-existing `build/` directory.
-#### Building for Windows (on Windows)
-### Building GraphX on Windows is not currently supported! The reason: WINDOWS SUCKS!! The slightly longer reason: I refuse to be forced to use VisualStudio and all the things I've added to GraphX with this update have broken how I used to compile it on Windows.
-### I will keep working on getting native Windows compilation working, don't worry, but for now you'll have to settle with using MinGW or WSL (or do my work for me which would be super cool)
-### The methods described below will (most likely) not work, but I'm keeping them in the README because I'm too lazy to remove them and I do intend on getting native Windows compilation working again very soon.
-(temporary note: currently, I have just finished implementing embedded resources, using the Linux tool `xxd`. I've included a Windows version of the tool in `src/windows_dependencies/xxd.exe` but have yet to update the CMakeLists.txt to correctly embed resources. Once I do, this note will be removed)
-
-To compile GraphX for Windows on Windows you'll need:
-- `the grace of God`
-- `an exorcist or Catholic priest`
-- `fifteen "Hail Marys"`
-- `Microsoft Build Tools`
-- `CMake` (this is what the exorcist/priest is for)
+### Building on Windows
+#### Compiling a Windows executable
+To compile a Windows executable, you'll need:
+- ~~`the grace of God`~~
+- ~~`an exorcist or Catholic priest`~~
+- ~~`fifteen "Hail Marys"`~~
+- ~~`Microsoft Build Tools`~~
+- ~~`CMake` (this is what the exorcist/priest is for)~~
 - ~~`Visual Studio`~~ HAHA! IN YOUR FACE, MICROSOFT!
+- MSYS2
 
-Previously, I was able to get GraphX compiling natively on Windows using CMake and some black magic. I have a personal vendetta against Visual Studio, so I chose to do everything I could to not let it sully my project.
+Previously, I was able to get GraphX compiling natively on Windows using CMake and some black magic, since I have a personal vendetta against Visual Studio. However, that came at a cost: Windows Jank<sup>tm</sup><br>
+Thankfully, there's a better way: MSYS2. MSYS2 is Cygwin's younger brother who just got his medical degree and is outshining his older brother in every way possible. MSYS2 isn't just one app, and installing it will give you a couple options that can be confusing at first. To help keep things simple, I'll make the explanation very anal.<br>
+Firstly, download and install [MSYS2](https://www.msys2.org). In the msys64 directory, you'll find a few executables; to compile GraphX, you'll be using mingw64.exe. However, in order to set everything up in a way Windows likes, you need to install a package using msys2.exe first.<br>
+Launch msys2.exe and run the command `pacman -S --needed mingw-w64-x86_64-toolchain`. Now, launch mingw64.exe, and run `pacman -S --needed mingw-w64-x86_64-gcc`.<br>
+Congratulations! You're ready to compile GraphX on Windows! Using MINGW64, navigate to the git repository (if you need help finding your C: drive in MINGW64, it's `/c/`), and run `make windows`. If all goes well, you should see `GraphX_Windows_x86_64.exe` in the `build/` directory.
 
-However, this has come at a cost: Windows Jank<sup>tm</sup><br>
-
-Here's the way I use `CMake` to compile GraphX:
-1. I install and choose `clang` and `clang++` as my native compilers.
-2. I set the output to "Unix Makefiles".
-3. I set `CMAKE_BUILD_TYPE` to `"Release"`, otherwise you'll get some debugging files that you probably don't care about.
-4. I press `configure`
-5. I pray
-6. If all goes well, I press `generate`
-7. I pray, again
-8. If all goes well, I open Windows Terminal (or Command Line) in the `build/` directory and run `make`
-9. If successfull, `graphx_windows_x86_64.exe` should now appear in the `build/` directory
-10. If any of these steps failed... that's what the exorcist/priest is for
-
-I really hate compiling C++ programs on Windows (I hate a lot about Windows, to be quite frank), but I'll keep trying to make it simpler and easier, so hopefully this part of the README becomes outdated.
+#### Compiling a Linux binary
+I haven't explicitly written in support for compiling a Linux binary on Windows, but theoretically it should be possible using MINGW64 and some tweaking (like you might need to change CXX and CC from `clang++` and `clang` to `g++` and `gcc`). However, I haven't tested this and reccomend just using Linux to compile for Linux (why would you use Windows to do that if you have Linux, anyways?)
 ## Special Thanks
 Big shout out to [LearnOpenGL](https://learnopengl.com), [StackOverflow](https://stackoverflow.com), and [Desmos](https://desmos.com) for teaching me everything I need to know.
 
