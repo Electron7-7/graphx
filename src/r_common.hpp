@@ -71,6 +71,8 @@ struct Device
 	int device_type;
 	graphx::gSettings settings;
 
+	virtual ~Device() = default;
+
 	bool isType(int class_type);
 
 	virtual void initialize(Theatre *parent_theatre);
@@ -84,7 +86,7 @@ protected:
 	int my_type = graphx::classes::DEVICE;
 };
 
-struct Environment : public Device // Will be extended
+struct Environment final : public Device // Will be extended
 {
 	bool ambient_lighting_enabled;
 	glm::vec3 ambient_light_color;
@@ -131,6 +133,7 @@ struct Mesh : public Device
 	bool is_buffered = false;
 
 	Mesh(Material *init_material = new Material(), std::vector<float> init_vertices = ERROR_VERTS, std::vector<unsigned int> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
+	~Mesh() override;
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 };
@@ -141,6 +144,13 @@ struct Sprite : public Mesh // Differentiating 3D meshes and 2D sprites, even th
 	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+};
+
+struct Line
+{
+	glm::vec3 start_position = glm::vec3(0.0f);
+	glm::vec3 end_position = glm::vec3(0.0f);
+	glm::vec3 color = glm::vec3(1.0f);
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line

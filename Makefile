@@ -89,7 +89,8 @@ clean_windows:
 clean_resources:
 	-rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H)
 
-embed_resources: $(IMAGES_C) $(SHADERS_C) $(THEATRES_C)
+embed_resources:
+	-make -s $(IMAGES_C) $(SHADERS_C) $(THEATRES_C)
 
 clean_theatres:
 	-rm -f $(THEATRES_C) $(THEATRES_H)

@@ -54,6 +54,13 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
+Actor::~Actor()
+{
+	mesh->prepForDestruction();
+	mesh = nullptr;
+	delete mesh;
+}
+
 template<> glm::vec3 Actor::getPosition()
 {
 	return position_global + position_local;
@@ -323,6 +330,13 @@ void RigidBodyActor::reset_to_initial_orientation_for_testing()
 	body_interface.SetLinearAndAngularVelocity(collider->getBodyID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
 }
 
+void RigidBodyActor::takeABow()
+{
+	collider->prepForDestruction();
+	collider = nullptr;
+	delete collider;
+}
+
 //
 // StaticBodyActor
 //
@@ -344,6 +358,13 @@ void StaticBodyActor::callToStage(Theatre *parent_theatre)
 	PhysicsActor::callToStage(parent_theatre);
 
 	my_type = graphx::classes::STATICBODYACTOR;
+}
+
+void StaticBodyActor::takeABow()
+{
+	collider->prepForDestruction();
+	collider = nullptr;
+	delete collider;
 }
 
 //
@@ -646,4 +667,7 @@ void LightTesterMover::tick(int current_tick)
 }
 
 void LightTesterMover::callToStage(Theatre *parent_theatre)
+{}
+
+void LightTesterMover::takeABow()
 {}

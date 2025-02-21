@@ -1,44 +1,75 @@
 #include "g_actors.hpp"
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
+#include "t_common.hpp"
 #include <algorithm>
 using namespace graphx;
 using namespace graphx::classes;
 
-std::map<long, Theatre> all_theatres = {};
-
-long current_theatre_uid = -1;
+// long current_theatre_uid = -1;
+Theatre current_theatre;
 bool current_troupe_changed = false;
 
 Theatre *getCurrentTheatre()
 {
-	if(current_theatre_uid == -1 || !all_theatres.contains(current_theatre_uid))
-	{
-		PRINTERR("getCurrentTheatre() called, but current_theatre_uid is invalid (either -1 or non-existant)! Returning nullptr.")
-		return nullptr;
-	}
+	if(current_theatre.getUID() == -1)
+		PRINTERR("getCurrentTheatre() called, but current_theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
 
-	return &all_theatres.at(current_theatre_uid);
+	return &current_theatre;
 }
 
 Environment *getCurrentEnvironment()
 {
-	if(current_theatre_uid == -1 || !all_theatres.contains(current_theatre_uid))
+	if(current_theatre.getEnvironment() == nullptr)
 	{
+		PRINTDEBUG("No Environment found. \"getEnvironment()\" will now return a new, uninitialized Environment object pointer which shouldn't be an issue, but keep this in mind.")
 		return new Environment();
 	}
 
-	return getCurrentTheatre()->getEnvironment();
+	return current_theatre.getEnvironment();
+}
+
+GraphXPlayer *getCurrentPlayer()
+{
+	if(current_theatre.getPlayer() == nullptr)
+	{
+		PRINTDEBUG("\"player_uid\" is -1 and no \"GraphXPlayer\" object was found! getCurrentPlayer will now return a new GraphXPlayer object")
+		return new GraphXPlayer();
+	}
+
+	return current_theatre.getPlayer();
 }
 
 //
 // Theatre
 //
-Theatre::Theatre(std::string init_name)
-: name(init_name)
+Theatre::Theatre(std::string init_name, long new_uid)
+: name(init_name), UID(new_uid)
 {
 	stage->name = "Stage Mesh for Theatre (" + name + ")";
 }
 
+Theatre::~Theatre()
+{
+	stage->prepForDestruction();
+	stage = nullptr;
+	delete stage;
+}
+
+long Theatre::getUID()
+{
+	return UID;
+}
+
+void Theatre::setUID(long new_uid)
+{
+	if(new_uid == -1)
+		PRINTERR("Attempting to set Theatre \"" << name << "\"'s UID to -1!")
+	UID = new_uid;
+}
+
+// Keep in mind, Theatre::startPreshow will fire when ANY Theatre is loaded, not just when the main Theatre is
+// This is why I make sure to put "keep_physics_alive" and similar things in if statements that only let them run
+// under certain conditions that only exist when loading a new main Theatre
 void Theatre::startPreshow()
 {
 	PRINTDEBUG("Entering Theatre (" << name << ")")
@@ -65,24 +96,24 @@ void Theatre::startPreshow()
 
 	sortTroupe();
 	countLights();
-
-	if(!keep_physics_alive)
-		keep_physics_alive = true;
 }
 
 void Theatre::dropCurtains()
 {
 	PRINTDEBUG("Exiting Theatre (" << name << ")")
-
-	keep_physics_alive = false;
+	time_to_render = false;
+	time_to_store_buffers = false;
 
 	PRINTLN("Devices Present:")
 	for(auto &pair : devices)
 		pair.second->prepForDestruction();
+	devices.clear();
 
 	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
 		pair.second->takeABow();
+	objects.clear();
+	troupe.clear();
 }
 
 void Theatre::createActor(int actor_type, long uid, gSettings new_settings)
@@ -388,7 +419,6 @@ GraphXPlayer *Theatre::getPlayer()
 	if(objects.contains(player_uid))
 		return static_cast<GraphXPlayer *>(objects.at(player_uid));
 
-	PRINTERR("\"player_uid\" is -1 and no \"GraphXPlayer\" object was found! This could mean that a \"GraphXPlayer\" object doesn't exist in this Theatre, or that \"getPlayer()\" was called too early. \"getPlayer()\" will now return a nullptr, which will most certainly cause a crash.")
 	return nullptr;
 }
 
@@ -411,8 +441,7 @@ Environment *Theatre::getEnvironment()
 	if(devices.contains(environment_uid))
 		return static_cast<Environment *>(devices.at(environment_uid));
 
-	PRINTERR("No Environment found with UID #" << std::to_string(environment_uid) << ". \"getEnvironment()\" will now return a new, uninitialized Environment object pointer which shouldn't be an issue, but keep this in mind.")
-	return new Environment();
+	return nullptr;
 }
 
 void Theatre::sortTroupe()

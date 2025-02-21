@@ -60,6 +60,7 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
 
 	void reset_to_initial_orientation_for_testing() override;
 };
@@ -71,6 +72,7 @@ public:
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
 };
 
 class Camera : public Actor
@@ -208,7 +210,8 @@ public:
 	float pivot_speed = 1.0f;
 	float pivot_theta = 0.0f;
 
-	Mesh temporary_pivot_mesh = Mesh(new Material(true, glm::vec3(1.0f, 0.0f, 0.0f)));
+	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
+	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
 
 	LightTesterMover(std::string init_name = "UNTITLED MOVING LIGHT TESTER", glm::vec3 init_pivot_position = glm::vec3(0.0f), float init_pivot_radius = 3.0f, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f));
@@ -216,6 +219,7 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
 };
 
 extern glm::vec3 vector3_up;

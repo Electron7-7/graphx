@@ -48,6 +48,7 @@ struct Collider : public Device
 	bool				forever_alone = false;
 
 	Collider();
+	~Collider() override;
 
 	void createBody();
 	const JPH::BodyID &getBodyID();
@@ -63,7 +64,6 @@ protected:
 };
 
 extern JPH::PhysicsSystem jolt_physics_system;
-extern bool keep_physics_alive;
 
 void J_RemoveAndDestroyBody(JPH::BodyID body_id);
 const JPH::Shape *createAShape(int shape, jolt_shape_args shape_args);

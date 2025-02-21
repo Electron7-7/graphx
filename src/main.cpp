@@ -15,6 +15,8 @@
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Renderer/DebugRendererSimple.h>
+#include <Jolt/Core/Core.h>
 #include <iostream>
 #include <cstdarg>
 #include <thread>
@@ -235,6 +237,7 @@ public:
 			JOLTDEBUG("A body went to sleep")
 	}
 };
+
 //--------------------------------
 // END OF JOLT PHYSICS BOILERPLATE
 //--------------------------------
@@ -271,17 +274,13 @@ void testGameTick(GLFWwindow *main_window)
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 	// This will change to include loading external Theatres
-	loadTheatre(embedded_theatres.at(0), 0);
-	loadTheatre(embedded_theatres.at(1), 1);
-	getCurrentTheatre()->startPreshow();
-
-	time_to_store_buffers = true;
+	loadMainTheatre(0);
 
 	double last_time = glfwGetTime();
 	double current_tick_length = 0;
 	double now_time = 0;
 
-	jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
+	// jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
 
 	LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
@@ -312,7 +311,7 @@ void testGameTick(GLFWwindow *main_window)
 			else
 				player_flashlight->light_color = glm::vec3(1.0f);
 
-			if(keep_physics_alive)
+			if(!loading_new_main_theatre)
 				jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
 			last_tick_timestamp = glfwGetTime();
@@ -340,15 +339,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
 	{
-		time_to_render = false;
-		getCurrentTheatre()->dropCurtains();
-		if(current_theatre_uid == 0)
-			loadTheatre(embedded_theatres.at(1), 1);
-		else if(current_theatre_uid == 1)
-			loadTheatre(embedded_theatres.at(0), 0);
-		getCurrentTheatre()->startPreshow();
-		jolt_physics_system.OptimizeBroadPhase();
-		time_to_store_buffers = true;
+		if(loading_new_main_theatre)
+			return;
+		long new_theatre = getCurrentTheatre()->getUID() + 1;
+		if(!embedded_theatres.count(new_theatre))
+			new_theatre = 0;
+		loadMainTheatre(new_theatre);
 	}
 
 	if(key == GLFW_KEY_G && action == GLFW_PRESS)
@@ -420,7 +416,8 @@ void processInput(GLFWwindow *window)
 		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
 	};
 
-	getCurrentTheatre()->getPlayer()->doMovement(input_vector);
+	if(!loading_new_main_theatre)
+		getCurrentPlayer()->doMovement(input_vector);
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
@@ -431,8 +428,9 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		return;
-	
-	getCurrentTheatre()->getPlayer()->doMouseMovement(mouse_offset);
+
+	if(!loading_new_main_theatre)
+		getCurrentPlayer()->doMouseMovement(mouse_offset);
 }
 
 int WinMain() // Fuck off, Windows

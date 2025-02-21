@@ -210,14 +210,6 @@ long Device::getUID()
 //
 // Environment
 //
-glm::vec3 Environment::getAmbientLight()
-{
-	return ambient_light_color * ambient_light_strength * (int)ambient_lighting_enabled;
-}
-
-//
-// Environment
-//
 Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color, float init_ambient_strength)
 : ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
 {
@@ -236,6 +228,11 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 	setRawData(ambient_light_strength, new_settings["AmbientLightingStrength"]);
 }
 
+
+glm::vec3 Environment::getAmbientLight()
+{
+	return ambient_light_color * ambient_light_strength * (int)ambient_lighting_enabled;
+}
 //
 // Material
 //
@@ -319,6 +316,13 @@ Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vec
 : name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
 {
 	device_type = DEVICE_MESH;
+}
+
+Mesh::~Mesh()
+{
+	material->prepForDestruction();
+	material = nullptr;
+	delete material;
 }
 
 void Mesh::loadSettings(graphx::gSettings new_settings)

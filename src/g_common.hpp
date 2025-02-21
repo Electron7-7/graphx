@@ -20,7 +20,7 @@ public:
 	std::string name = "Untitled Actor";
 	bool visible = true;
 
-	Mesh *mesh = NULL; // replace with std::vector<Mesh *> meshes later(?)
+	Mesh *mesh = nullptr; // replace with std::vector<Mesh *> meshes later(?)
 
 	glm::vec3 scale = glm::vec3(1.0f);
 
@@ -44,6 +44,7 @@ public:
 	graphx::gSettings settings;
 
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	virtual ~Actor();
 
 	template<typename T> T getPosition();
 	template<typename T> T getRotation();
@@ -86,20 +87,19 @@ protected:
 
 struct Theatre
 {
-
 	Mesh *stage = new Mesh(new Material(false, glm::vec3(0.5, 0.1, 0.4)));
 	std::string name = "Untitled Theatre";
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 
-	Theatre(std::string init_name = "Untitled Theatre");
+	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
+	~Theatre();
 
 	void startPreshow();
 	void dropCurtains();
-
-	void createActor(int actor_type, long uid, graphx::gSettings new_settings);
-	void createDevice(int device_type, long uid, graphx::gSettings new_settings);
+	long getUID();
+	void setUID(long new_uid);
 
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
 	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
@@ -108,6 +108,9 @@ struct Theatre
 	void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
 	void removeDevice(Device *old_device);
 	void removeDevice(long uid);
+
+	void createActor(int actor_type, long uid, graphx::gSettings new_settings);
+	void createDevice(int device_type, long uid, graphx::gSettings new_settings);
 	
 	Actor *getActor(long uid);
 	Actor *getActor(std::string actor_name);
@@ -135,6 +138,7 @@ struct Theatre
 private:
 	std::unordered_map<long, Actor *> objects = {};
 	std::unordered_map<long, Device *> devices = {};
+	long UID = -1;
 	long environment_uid = -1;
 	long player_uid = -1;
 
@@ -142,10 +146,12 @@ private:
 	void countLights();
 };
 
-extern std::map<long, Theatre> all_theatres;
-extern long current_theatre_uid;
+// extern std::map<long, Theatre> all_theatres;
+// extern long current_theatre_uid;
+extern Theatre current_theatre;
 extern bool current_troupe_changed; // Convert this into a function/variable inside Theatre
 
 Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"
 Environment *getCurrentEnvironment();
+GraphXPlayer *getCurrentPlayer();
 #endif
