@@ -4,6 +4,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include <array>
 #include <unordered_map>
 
 namespace graphx
@@ -32,6 +33,14 @@ namespace graphx
 
 		static constexpr int ACTORS[2] = {0, 499};
 		static constexpr int DEVICES[2] = {500, 999};
+		static constexpr std::array<int, 5> LIGHTS =
+		{
+			LIGHT,
+			LIGHTSPOT,
+			LIGHTFLASHLIGHT,
+			LIGHTDIRECTIONAL,
+			LIGHTTESTERMOVER,
+		};
 	}
 
 	typedef std::map<int, std::pair<std::string, std::string>>														gObjectStore;

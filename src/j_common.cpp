@@ -46,6 +46,11 @@ Collider::Collider()
 	device_type = DEVICE_COLLIDER;
 }
 
+Collider::~Collider()
+{
+	J_RemoveAndDestroyBody(body_id);
+}
+
 void Collider::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))

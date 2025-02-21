@@ -1125,5 +1125,25 @@ Never mind, fucking hate CMake it's so fucking messy and blegh.
 
 I figured out why mingw LLVM was failing: LibJolt.a uses certain headers/things that clang finds repulsive for some reason and refuses to compile/link it.
 
+Next up: figure out Theatre switching.
+
+[02/20/25]
+Okay, so to handle Theatre swapping I need to do at least two things:
+1. make a new function for switching Theatres, becuase loadTheatre should be limited to loading new Theatres.
+2. figure out how to correctly delete/remove Jolt objects.
+
+Hmm, I might want to change things like the Mesh pointer in Actor to not be pointers and for the interpreter to account for that.
+
+Oh, and I need to get rid of the Theatre map, it's causing problems and not needed. When swapping Theatres, I need to properly destroy the first one, so why keep it in a map?
+
+OOH! What if there was one global Theatre that would flush out all of its objects and variables when swapping Theatres and load the settings and objects and variables of the new Theatre? So I can avoid destroying and creating Theatres which might introduce some problems maybe? Idk tho.
+
+I THINK I FIGURED IT OUT! RIGIDBODYACTOR AND STATICBODYACTOR USE INTERNAL COLLIDERS THAT ARENT A PART OF THE THEATRE!! SO THEY NEED TO THROW THEM AWAY WHEN DONE!
+
+IT WORKS!! IT FUCKING WORKS!! (i think, at least).
+
+Oh, the flashlight variable doesn't get re-set when a new Theatre is loaded, so after one switch, it doesn't point to a valid flashlight anymore.
+
 [02/21/25]
 I've gotten GraphX compiling on Windows using MSYS2! Joyous day! No CMake! No VisualStudio! No bullshit!
+

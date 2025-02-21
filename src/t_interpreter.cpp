@@ -7,10 +7,13 @@
 #include "ERROR.graphxmodel"
 #include "pyramid.graphxmodel"
 #include "quad.graphxmodel"
+#include "theatres.hpp"
 #include <set>
 
 using namespace graphx;
 using namespace graphx::classes;
+
+bool loading_new_main_theatre = true;
 
 std::map<std::string, std::any> cpp_definitions =
 {
@@ -366,20 +369,19 @@ int getClassHash(std::string class_name, bool dont_print_error)
 	return -1;
 }
 
-void loadTheatre(std::string embedded_theatre, long theatre_uid)
+// loadTheatre should not be called directly, which is why it's not in the header file
+Theatre loadTheatre(long theatre_uid)
 {
-	gTheatreStorage theatre_data = theatreParser(embedded_theatre);
-	PRINTDEBUG(getTheatreStructure(theatre_data));
-
-	current_theatre_uid = theatre_uid;
-	if(all_theatres.contains(theatre_uid))
+	if(!embedded_theatres.count(theatre_uid))
 	{
-		PRINTERR("ERROR! A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded as that UID already exists!")
-		return;
+		PRINTERR("Tried to load a Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " but no Theatre with that UID exists!")
+		return Theatre("DEFAULT ERROR RETURN THEATRE RETURNED BY \"loadTheatre\"");
 	}
 
-	all_theatres[theatre_uid] = Theatre(std::get<0>(theatre_data));
-	Theatre &new_theatre = all_theatres.at(current_theatre_uid);
+	gTheatreStorage theatre_data = theatreParser(embedded_theatres.at(theatre_uid));
+	PRINTDEBUG(getTheatreStructure(theatre_data));
+
+	Theatre new_theatre = Theatre(std::get<0>(theatre_data), theatre_uid);
 
 	auto objects_bucket = std::get<1>(theatre_data);
 	auto cpp_references = std::get<2>(theatre_data);
@@ -504,4 +506,37 @@ void loadTheatre(std::string embedded_theatre, long theatre_uid)
 			new_theatre.createDevice(class_hash, object.first, new_class_settings);
 		}
 	}
+
+	return new_theatre;
+}
+
+void loadMainTheatre(long theatre_uid)
+{
+	if(getCurrentTheatre()->getUID() == theatre_uid)
+	{
+		PRINTERR("A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded because it's already the current Theatre (or the current Theatre has the same UID)!")
+		return;
+	}
+
+	loading_new_main_theatre = true;
+	time_to_render = false;
+	time_to_store_buffers = false;
+	current_theatre.dropCurtains();
+	current_theatre = loadTheatre(theatre_uid);
+	current_theatre.startPreshow();
+	jolt_physics_system.OptimizeBroadPhase();
+	time_to_store_buffers = true;
+	loading_new_main_theatre = false;
+}
+
+void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
+{
+	if(parent_theatre == nullptr || parent_theatre->getUID() == -1)
+	{
+		PRINTERR("Tried loading a child Theatre for an invalid parent Theatre (either nullptr or with a UID of -1)!")
+		return;
+	}
+
+	PRINTNOTE("loadChildTheatre called but this function is empty currently")
+	// NEEDS TO BE FILLED OUT
 }

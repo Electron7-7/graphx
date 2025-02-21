@@ -40,6 +40,7 @@ public:
 	{};
 
 protected:
+	int my_type = graphx::classes::PHYSICSACTOR;
 	JPH::Vec3 reset_position;
 	JPH::Quat reset_quaternion;
 	std::vector<JPH::BodyCreationSettings> body_creation_settings;
@@ -60,8 +61,12 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
 
 	void reset_to_initial_orientation_for_testing() override;
+
+protected:
+	int my_type = graphx::classes::RIGIDBODYACTOR;
 };
 
 class StaticBodyActor : public PhysicsActor
@@ -69,8 +74,13 @@ class StaticBodyActor : public PhysicsActor
 public:
 	using PhysicsActor::PhysicsActor;
 
+	bool isPhysicsActor() override final;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
+
+protected:
+	int my_type = graphx::classes::STATICBODYACTOR;
 };
 
 class Camera : public Actor
@@ -88,7 +98,9 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void doRotation(glm::vec2 mouse_input);
-	
+
+protected:
+	int my_type = graphx::classes::CAMERA;
 };
 
 /*class PlayerCamera : public Camera
@@ -130,12 +142,15 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
-	
+	void takeABow() override;
 
 private:
 	JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
+
+protected:
+	int my_type = graphx::classes::GRAPHXPLAYER;
 };
 
 class Light: public Actor
@@ -143,7 +158,6 @@ class Light: public Actor
 public:
 	Mesh temporary_light_mesh = Mesh(new Material(TOOL_TEXTURE_LIGHT, TOOL_TEXTURE_LIGHT, 0, 0.0f));
 
-	unsigned int light_type;
 	glm::vec3 light_color = glm::vec3(1.0f);
 	float light_strength = 1.0f; // A more direct "brightness" value than just changing Attenuation values
 
@@ -155,6 +169,11 @@ public:
 	Light(std::string init_name = "UNTITLED LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f));
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	bool isLightType(int light_type);
+
+protected:
+	int my_type = graphx::classes::LIGHT;
+	int my_light_type = graphx::classes::LIGHT;
 };
 
 class LightDirectional: public Light
@@ -165,6 +184,10 @@ public:
 	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+
+protected:
+	int my_type = graphx::classes::LIGHTDIRECTIONAL;
+	int my_light_type = graphx::classes::LIGHTDIRECTIONAL;
 };
 
 class LightSpot: public Light
@@ -179,6 +202,10 @@ public:
 	glm::vec2 getCutoffAngles();
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+
+protected:
+	int my_type = graphx::classes::LIGHTSPOT;
+	int my_light_type = graphx::classes::LIGHTSPOT;
 };
 
 class LightFlashlight: public LightSpot
@@ -197,6 +224,10 @@ public:
 
 private:
 	float _intensity;
+
+protected:
+	int my_type = graphx::classes::LIGHTFLASHLIGHT;
+	int my_light_type = graphx::classes::LIGHTSPOT;
 };
 
 class LightTesterMover : public Light
@@ -207,7 +238,8 @@ public:
 	float pivot_speed = 1.0f;
 	float pivot_theta = 0.0f;
 
-	Mesh temporary_pivot_mesh = Mesh(new Material(true, glm::vec3(1.0f, 0.0f, 0.0f)));
+	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
+	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
 
 	LightTesterMover(std::string init_name = "UNTITLED MOVING LIGHT TESTER", glm::vec3 init_pivot_position = glm::vec3(0.0f), float init_pivot_radius = 3.0f, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f));
@@ -215,6 +247,11 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
+
+protected:
+	int my_type = graphx::classes::LIGHTTESTERMOVER;
+	int my_light_type = graphx::classes::LIGHTSPOT;
 };
 
 extern glm::vec3 vector3_up;

@@ -55,7 +55,7 @@ int main()
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
@@ -235,6 +235,7 @@ public:
 			JOLTDEBUG("A body went to sleep")
 	}
 };
+
 //--------------------------------
 // END OF JOLT PHYSICS BOILERPLATE
 //--------------------------------
@@ -270,20 +271,11 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
-	// This will change to include loading external Theatres
-	loadTheatre(embedded_theatres.at(0), 0);
-	loadTheatre(embedded_theatres.at(1), 1);
-	getCurrentTheatre()->startPreshow();
-
-	time_to_store_buffers = true;
+	loadMainTheatre(0); // Hard-coded loading of first Theatre
 
 	double last_time = glfwGetTime();
 	double current_tick_length = 0;
 	double now_time = 0;
-
-	jolt_physics_system.OptimizeBroadPhase(); // Call this *after* adding bodies before calling Update for first time (e.g: loading a new/the first Theatre)
-
-	LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
 	while(!glfwWindowShouldClose(main_window))
 	{
@@ -305,6 +297,8 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
+			LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
+
 			player_flashlight->setLight(test_flashlight_bool);
 
 			if(red_flashlight_color_bool)
@@ -312,7 +306,8 @@ void testGameTick(GLFWwindow *main_window)
 			else
 				player_flashlight->light_color = glm::vec3(1.0f);
 
-			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
+			if(!loading_new_main_theatre)
+				jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
 			last_tick_timestamp = glfwGetTime();
 			current_tick_length--;
@@ -321,21 +316,30 @@ void testGameTick(GLFWwindow *main_window)
 		if(current_tick_since_second >= TICKRATE)
 			current_tick_since_second = 0;
 	}
-	
+
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
 
 	getCurrentTheatre()->dropCurtains();
 
 	JPH::UnregisterTypes();
-
 	delete JPH::Factory::sInstance;
-	JPH::Factory::sInstance = NULL;
+	JPH::Factory::sInstance = nullptr;
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+	{
+		if(loading_new_main_theatre)
+			return;
+		long new_theatre = getCurrentTheatre()->getUID() + 1;
+		if(!embedded_theatres.count(new_theatre))
+			new_theatre = 0;
+		loadMainTheatre(new_theatre);
+	}
 
 	if(key == GLFW_KEY_G && action == GLFW_PRESS)
 	{
@@ -367,8 +371,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTDEBUG("Resetting PhysicsActors to initial transformation!")
-		for(Actor *actor: getCurrentTheatre()->troupe)
-			if(actor->actor_type == ACTOR_PHYSICS)
+		for(Actor *actor : getCurrentTheatre()->troupe)
+			if(actor->isPhysicsActor())
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}
 
@@ -406,7 +410,8 @@ void processInput(GLFWwindow *window)
 		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
 	};
 
-	getCurrentTheatre()->getPlayer()->doMovement(input_vector);
+	if(!loading_new_main_theatre)
+		getCurrentPlayer()->doMovement(input_vector);
 }
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
@@ -417,8 +422,9 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		return;
-	
-	getCurrentTheatre()->getPlayer()->doMouseMovement(mouse_offset);
+
+	if(!loading_new_main_theatre)
+		getCurrentPlayer()->doMouseMovement(mouse_offset);
 }
 
 int WinMain() // Fuck off, Windows
