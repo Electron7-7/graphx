@@ -7,8 +7,13 @@ CCFLAGS = -g -Wall
 INCLUDES = -I src/include
 LIBS = -l glfw -L src/lib -l:libJolt.a
 
-WCXX = g++
-WCC = gcc
+ifeq ($(OS),Windows_NT) 
+	WCXX = g++
+	WCC = gcc
+else
+	WCXX = x86_64-w64-mingw32-g++
+	WCC = x86_64-w64-mingw32-gcc
+endif
 
 WCXXFLAGS = -g -Wall -std=c++20 -static -ffat-lto-objects -fuse-ld=lld $(JOLTFLAGS) $(GRAPHXFLAGS)
 WCCFLAGS = -g -Wall -static -fuse-ld=lld

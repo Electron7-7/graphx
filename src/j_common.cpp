@@ -42,9 +42,7 @@ void J_RemoveAndDestroyBody(BodyID body_id)
 // Collider
 //
 Collider::Collider()
-{
-	device_type = DEVICE_COLLIDER;
-}
+{}
 
 Collider::~Collider()
 {

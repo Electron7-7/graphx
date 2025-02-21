@@ -68,7 +68,7 @@ public:
 	virtual bool wantsToBeBuffered();
 
 protected:
-	int my_type = graphx::classes::ACTOR;
+	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	bool debug_visible;
 	glm::vec3 position_global = glm::vec3(0.0f);

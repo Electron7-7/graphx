@@ -6,7 +6,6 @@
 #include "ERROR.graphxmodel"
 #include <array>
 #include <mutex>
-#include <filesystem>
 
 #define GLSHADER_TYPE_VERTEX	0
 #define GLSHADER_TYPE_FRAGMENT	1

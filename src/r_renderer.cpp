@@ -203,7 +203,6 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 				shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightSpot *>(current_light)->direction);
 			}
 
-
 			shaders[shader_index]->setUniform(which_light + "position", current_light->getPosition<glm::vec3>());
 			shaders[shader_index]->setUniform(which_light + "strength", current_light->light_strength);
 			shaders[shader_index]->setUniform(which_light + "color", current_light->light_color);

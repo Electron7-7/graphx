@@ -36,11 +36,11 @@ public:
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
+	virtual bool isPhysicsActor() override final;
 	virtual void reset_to_initial_orientation_for_testing()
 	{};
 
 protected:
-	int my_type = graphx::classes::PHYSICSACTOR;
 	JPH::Vec3 reset_position;
 	JPH::Quat reset_quaternion;
 	std::vector<JPH::BodyCreationSettings> body_creation_settings;
@@ -56,7 +56,7 @@ protected:
 class RigidBodyActor : public PhysicsActor
 {
 public:
-	using PhysicsActor::PhysicsActor;
+	RigidBodyActor();
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
@@ -64,23 +64,16 @@ public:
 	void takeABow() override;
 
 	void reset_to_initial_orientation_for_testing() override;
-
-protected:
-	int my_type = graphx::classes::RIGIDBODYACTOR;
 };
 
 class StaticBodyActor : public PhysicsActor
 {
 public:
-	using PhysicsActor::PhysicsActor;
+	StaticBodyActor();
 
-	bool isPhysicsActor() override final;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
-
-protected:
-	int my_type = graphx::classes::STATICBODYACTOR;
 };
 
 class Camera : public Actor
@@ -98,9 +91,6 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void doRotation(glm::vec2 mouse_input);
-
-protected:
-	int my_type = graphx::classes::CAMERA;
 };
 
 /*class PlayerCamera : public Camera
@@ -148,9 +138,6 @@ private:
 	JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
-
-protected:
-	int my_type = graphx::classes::GRAPHXPLAYER;
 };
 
 class Light: public Actor
@@ -172,8 +159,7 @@ public:
 	bool isLightType(int light_type);
 
 protected:
-	int my_type = graphx::classes::LIGHT;
-	int my_light_type = graphx::classes::LIGHT;
+	int my_light_type;
 };
 
 class LightDirectional: public Light
@@ -184,10 +170,6 @@ public:
 	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-
-protected:
-	int my_type = graphx::classes::LIGHTDIRECTIONAL;
-	int my_light_type = graphx::classes::LIGHTDIRECTIONAL;
 };
 
 class LightSpot: public Light
@@ -202,10 +184,6 @@ public:
 	glm::vec2 getCutoffAngles();
 
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-
-protected:
-	int my_type = graphx::classes::LIGHTSPOT;
-	int my_light_type = graphx::classes::LIGHTSPOT;
 };
 
 class LightFlashlight: public LightSpot
@@ -224,10 +202,6 @@ public:
 
 private:
 	float _intensity;
-
-protected:
-	int my_type = graphx::classes::LIGHTFLASHLIGHT;
-	int my_light_type = graphx::classes::LIGHTSPOT;
 };
 
 class LightTesterMover : public Light
@@ -248,10 +222,6 @@ public:
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
-
-protected:
-	int my_type = graphx::classes::LIGHTTESTERMOVER;
-	int my_light_type = graphx::classes::LIGHTSPOT;
 };
 
 extern glm::vec3 vector3_up;

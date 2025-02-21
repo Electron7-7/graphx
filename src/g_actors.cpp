@@ -42,6 +42,7 @@ RenderState::RenderState(glm::vec3 init_position, glm::quat init_quaternion, glm
 Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : mesh(init_mesh), scale(init_scale), position_global(init_position)
 {
+	my_type = graphx::classes::ACTOR;
 	name = new_name;
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	current_state = RenderState(init_position, quaternion, init_scale);
@@ -239,10 +240,6 @@ void Actor::tick(int current_tick)
 void Actor::callToStage(Theatre *parent_theatre)
 {
 	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
-	PRINTDEBUG("Global Position: " << position_global)
-	PRINTDEBUG("Local Position: " << position_local)
-	PRINTDEBUG("Global Rotation: " << glm::degrees(glm::eulerAngles(quaternion)))
-	PRINTDEBUG("Local Rotation: " << glm::degrees(glm::eulerAngles(local_quaternion)))
 }
 
 void Actor::takeABow()
@@ -271,7 +268,7 @@ PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 ini
 	my_type = graphx::classes::PHYSICSACTOR;
 }
 
-bool isPhysicsActor()
+bool PhysicsActor::isPhysicsActor()
 {
 	return true;
 }
@@ -313,6 +310,12 @@ void PhysicsActor::tick(int current_tick)
 //
 // RigidBodyActor
 //
+RigidBodyActor::RigidBodyActor()
+: PhysicsActor()
+{
+	my_type = graphx::classes::RIGIDBODYACTOR;
+}
+
 void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
@@ -363,6 +366,12 @@ void RigidBodyActor::takeABow()
 //
 // StaticBodyActor
 //
+StaticBodyActor::StaticBodyActor()
+: PhysicsActor()
+{
+	my_type = graphx::classes::STATICBODYACTOR;
+}
+
 void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
@@ -477,6 +486,9 @@ void GraphXPlayer::tick(int current_tick)
 
 void GraphXPlayer::doMovement(int direction[2])
 {
+	if(jph_character == nullptr)
+		return;
+
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
 	wish_velocity += convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
@@ -543,6 +555,7 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 : Actor(init_name, &temporary_light_mesh, init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
 {
 	my_type = graphx::classes::LIGHT;
+	my_light_type = graphx::classes::LIGHT;
 	debug_visible = true;
 }
 
@@ -571,6 +584,7 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 : Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color), direction(init_direction)
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
+	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
 	debug_visible = false;
 	visible = false;
 }
@@ -591,6 +605,7 @@ LightSpot::LightSpot(std::string init_name, float init_intensity, float init_ran
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
 {
 	my_type = graphx::classes::LIGHTSPOT;
+	my_light_type = graphx::classes::LIGHTSPOT;
 }
 
 void LightSpot::youGotACallBack(graphx::gSettings new_settings)
@@ -619,6 +634,7 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 : LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset), _intensity(init_intensity)
 {
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
+	my_light_type = graphx::classes::LIGHTSPOT;
 	debug_visible = false;
 }
 
@@ -654,7 +670,10 @@ void LightFlashlight::setLight(bool is_off)
 //
 LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color)
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
-{}
+{
+	my_type = graphx::classes::LIGHTTESTERMOVER;
+	my_light_type = graphx::classes::LIGHTSPOT;
+}
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {

@@ -1,11 +1,9 @@
 #include "g_actors.hpp"
 #include "r_common.hpp" // Remove this once I have a system for loading theatres
-#include "t_common.hpp"
 #include <algorithm>
 using namespace graphx;
 using namespace graphx::classes;
 
-// long current_theatre_uid = -1;
 Theatre current_theatre;
 bool current_troupe_changed = false;
 

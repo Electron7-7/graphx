@@ -1147,3 +1147,8 @@ Oh, the flashlight variable doesn't get re-set when a new Theatre is loaded, so 
 [02/21/25]
 I've gotten GraphX compiling on Windows using MSYS2! Joyous day! No CMake! No VisualStudio! No bullshit!
 
+Ok, weird shit when compiling on Linux now... I gotta figure this out now.
+
+Aight, I fixed it LMFAO. It was just some minor stuff regarding the "isType" and "isLightType" functions.
+
+Hmm, problem: when loading a new Theatre, all the Device and Actor ids are just Device or Actor.
