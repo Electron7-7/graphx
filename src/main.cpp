@@ -15,8 +15,6 @@
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
-#include <Jolt/Renderer/DebugRendererSimple.h>
-#include <Jolt/Core/Core.h>
 #include <iostream>
 #include <cstdarg>
 #include <thread>
