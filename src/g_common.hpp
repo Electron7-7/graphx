@@ -112,7 +112,7 @@ struct Theatre
 
 	void createActor(int actor_type, long uid, graphx::gSettings new_settings);
 	void createDevice(int device_type, long uid, graphx::gSettings new_settings);
-	
+
 	Actor *getActor(long uid);
 	Actor *getActor(std::string actor_name);
 	Device *getDevice(long uid);

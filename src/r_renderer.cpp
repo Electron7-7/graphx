@@ -168,7 +168,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
-		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getPosition<glm::vec3>());
+		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
 		
 		/*
 			NOTE: This will change almost immediately. I need to decide if I'm sticking with going through a vector of Meshes, switching to a vector of Actors,

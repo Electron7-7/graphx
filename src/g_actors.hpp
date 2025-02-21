@@ -79,10 +79,7 @@ public:
 class Camera : public Actor
 {
 public:
-	Actor *parent = NULL;
 	float view_pitch_clamp = 89.0f;
-	glm::vec3 position_global = glm::vec3(0.0f);
-	glm::vec3 position_local = glm::vec3(0.0f, 0.0f, 0.0f); // temporary default offset
 	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
 	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
 
@@ -91,6 +88,10 @@ public:
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
 	void doRotation(glm::vec2 mouse_input);
+
+protected:
+	glm::vec3 position_global = glm::vec3(0.0f);
+	glm::vec3 position_local = glm::vec3(0.0f, 3.0f, 0.0f); // temporary default offset
 };
 
 /*class PlayerCamera : public Camera

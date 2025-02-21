@@ -42,7 +42,9 @@ void J_RemoveAndDestroyBody(BodyID body_id)
 // Collider
 //
 Collider::Collider()
-{}
+{
+	my_type = graphx::classes::COLLIDER;
+}
 
 Collider::~Collider()
 {

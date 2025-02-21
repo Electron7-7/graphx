@@ -521,8 +521,11 @@ void loadMainTheatre(long theatre_uid)
 	loading_new_main_theatre = true;
 	time_to_render = false;
 	time_to_store_buffers = false;
+	PRINTDEBUG("DROP CURTAINS")
 	current_theatre.dropCurtains();
+	PRINTDEBUG("LOAD THEATRE")
 	current_theatre = loadTheatre(theatre_uid);
+	PRINTDEBUG("START PRESHOW")
 	current_theatre.startPreshow();
 	jolt_physics_system.OptimizeBroadPhase();
 	time_to_store_buffers = true;

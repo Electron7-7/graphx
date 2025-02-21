@@ -302,6 +302,9 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 void PhysicsActor::takeABow()
 {
 	Actor::takeABow();
+
+	collider = nullptr;
+	delete collider;
 }
 
 void PhysicsActor::tick(int current_tick)
@@ -358,9 +361,10 @@ void RigidBodyActor::reset_to_initial_orientation_for_testing()
 
 void RigidBodyActor::takeABow()
 {
+	PRINTLN("\tRemoving Device from RigidBodyActor:")
 	collider->prepForDestruction();
-	collider = nullptr;
-	delete collider;
+	PRINTLN("Device Removed")
+	PhysicsActor::takeABow();
 }
 
 //
@@ -394,9 +398,10 @@ void StaticBodyActor::callToStage(Theatre *parent_theatre)
 
 void StaticBodyActor::takeABow()
 {
+	PRINTLN("\tRemoving Device from StaticBodyActor:")
 	collider->prepForDestruction();
-	collider = nullptr;
-	delete collider;
+	PRINTLN("Device Removed")
+	PhysicsActor::takeABow();
 }
 
 //
@@ -406,6 +411,9 @@ Camera::Camera()
 {
 	my_type = graphx::classes::CAMERA;
 }
+
+void Camera::tick(int current_tick)
+{}
 
 void Camera::doRotation(glm::vec2 mouse_input)
 {
@@ -426,14 +434,8 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 		new_settings = settings;
 	Actor::youGotACallBack(new_settings);
 
-	setActorPointer(parent, new_settings["Parent"]);
 	setRawData(position_local, new_settings["LocalPosition"]);
 	setRawData(euler_rotation_local, new_settings["LocalRotationDegrees"]);
-}
-
-void Camera::tick(int current_tick)
-{
-	position_global = parent->getPosition<glm::vec3>() + position_local;
 }
 
 //
@@ -445,8 +447,7 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	my_type = graphx::classes::GRAPHXPLAYER;
 	debug_visible = false;
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
-	player_camera.position_global = init_position;
-	player_camera.parent = this;
+	player_camera.setGlobalRotation(init_position);
 }
 
 void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
@@ -480,15 +481,15 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 
 void GraphXPlayer::tick(int current_tick)
 {
-	player_camera.tick(current_tick);
 	position_global = convertMath<glm::vec3>(jph_character->GetPosition());
+	player_camera.setGlobalPosition(position_global);
 }
 
 void GraphXPlayer::doMovement(int direction[2])
 {
 	if(jph_character == nullptr)
 		return;
-
+	PRINT_MARKER
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
 	wish_velocity += convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
@@ -515,6 +516,7 @@ void GraphXPlayer::doMovement(int direction[2])
 	if(new_velocity == current_velocity)
 		return;
 	jph_character->SetLinearVelocity(new_velocity);
+	PRINT_MARKER
 }
 
 void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
@@ -527,7 +529,7 @@ void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
 
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
-	return glm::lookAt(player_camera.position_global, player_camera.position_global + player_camera.orientation_front, player_camera.orientation_up);
+	return glm::lookAt(player_camera.getPosition<glm::vec3>(), player_camera.getPosition<glm::vec3>() + player_camera.orientation_front, player_camera.orientation_up);
 }
 
 glm::vec3 GraphXPlayer::getViewPosition()
@@ -542,6 +544,7 @@ bool GraphXPlayer::wantsToBeRendered()
 
 void GraphXPlayer::takeABow()
 {
+	Actor::takeABow();
 	jolt_physics_system.GetBodyInterface().RemoveBody(jph_character->GetBodyID());
 	// delete jph_character;
 	// jph_character->Release();
@@ -655,7 +658,7 @@ void LightFlashlight::tick(int current_tick)
 	if(getCurrentTheatre()->getPlayer() == nullptr)
 		return;
 
-	position_global = getCurrentTheatre()->getPlayer()->player_camera.position_global + position_offset;
+	position_global = getCurrentTheatre()->getPlayer()->player_camera.getPosition<glm::vec3>() + position_offset;
 	quaternion = getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset));
 	direction = quaternion * vector3_front;
 }

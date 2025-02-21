@@ -117,6 +117,11 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 //
 // Device
 //
+Device::Device()
+{
+	my_type = graphx::classes::DEVICE;
+}
+
 bool Device::isType(int class_type)
 {
 	return class_type == my_type;
@@ -156,7 +161,9 @@ long Device::getUID()
 //
 Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color, float init_ambient_strength)
 : ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
-{}
+{
+	my_type = graphx::classes::ENVIRONMENT;
+}
 
 void Environment::loadSettings(graphx::gSettings new_settings)
 {
@@ -179,7 +186,9 @@ glm::vec3 Environment::getAmbientLight()
 // Material
 //
 Material::Material()
-{}
+{
+	my_type = graphx::classes::MATERIAL;
+}
 
 Material::Material(bool is_fullbright, glm::vec3 init_color)
 : color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
@@ -248,7 +257,9 @@ unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 //
 Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vector<GLuint> init_indices, int init_vao_index, std::string init_name)
 : name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
-{}
+{
+	my_type = graphx::classes::MESH;
+}
 
 Mesh::~Mesh()
 {
@@ -280,7 +291,9 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 //
 Sprite::Sprite(Material *init_material, int init_vao_index)
 : Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
-{}
+{
+	my_type = graphx::classes::SPRITE;
+}
 
 void Sprite::loadSettings(graphx::gSettings new_settings)
 {

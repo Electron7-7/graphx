@@ -67,6 +67,7 @@ struct Device
 	std::string name = "Untitled Device";
 	graphx::gSettings settings;
 
+	Device();
 	virtual ~Device() = default;
 
 	bool isType(int class_type);
@@ -78,8 +79,8 @@ struct Device
 	virtual void setUID(long manual_uid);
 
 protected:
+	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
-	int my_type = graphx::classes::DEVICE;
 };
 
 struct Environment final : public Device // Will be extended
@@ -92,9 +93,6 @@ struct Environment final : public Device // Will be extended
 
 	glm::vec3 getAmbientLight();
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-
-protected:
-	int my_type = graphx::classes::ENVIRONMENT;
 };
 
 struct Material final : public Device
@@ -118,9 +116,6 @@ struct Material final : public Device
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-
-protected:
-	int my_type = graphx::classes::MATERIAL;
 };
 
 struct Mesh : public Device
@@ -138,9 +133,6 @@ struct Mesh : public Device
 	~Mesh() override;
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-
-protected:
-	int my_type = graphx::classes::MESH;
 };
 
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
@@ -149,9 +141,6 @@ struct Sprite : public Mesh
 	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-
-protected:
-	int my_type = graphx::classes::SPRITE;
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
