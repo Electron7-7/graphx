@@ -7,8 +7,8 @@ CCFLAGS = -g -Wall
 INCLUDES = -I src/include
 LIBS = -l glfw -L src/lib -l:libJolt.a
 
-WCXX = x86_64-w64-mingw32-g++
-WCC = x86_64-w64-mingw32-gcc
+WCXX = g++
+WCC = gcc
 
 WCXXFLAGS = -g -Wall -std=c++20 -static -ffat-lto-objects -fuse-ld=lld $(JOLTFLAGS) $(GRAPHXFLAGS)
 WCCFLAGS = -g -Wall -static -fuse-ld=lld
@@ -115,7 +115,6 @@ linux: $(OBJS) $(O)/main.opp
 windows: NAME = $(WINDOWS)
 windows: $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
 
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
