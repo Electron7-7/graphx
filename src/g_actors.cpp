@@ -489,7 +489,6 @@ void GraphXPlayer::doMovement(int direction[2])
 {
 	if(jph_character == nullptr)
 		return;
-	PRINT_MARKER
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
 	wish_velocity += convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
@@ -516,7 +515,6 @@ void GraphXPlayer::doMovement(int direction[2])
 	if(new_velocity == current_velocity)
 		return;
 	jph_character->SetLinearVelocity(new_velocity);
-	PRINT_MARKER
 }
 
 void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
