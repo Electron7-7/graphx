@@ -7,15 +7,19 @@
 #include "g_actors.hpp"
 #include "g_common.hpp"
 #include "g_jolt.hpp"
+#include "g_imgui.hpp"
 #include "t_common.hpp"
 #include "theatres.hpp"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
-#include <iostream>
+// #include <iostream>
 #include <cstdarg>
 #include <thread>
 #include <mutex>
@@ -33,6 +37,7 @@ double last_tick_timestamp = 0;
 bool test_flashlight_bool = false;
 bool red_flashlight_color_bool = false;
 bool do_jolt_assert = false;
+bool debug_console_open = false;
 
 float camera_near = 0.1f;
 float camera_far = 1000.0f;
@@ -54,8 +59,11 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
+#ifdef GRAPHX_DEBUG
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
+#else
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
+#endif
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
@@ -70,10 +78,44 @@ int main()
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
+	//------------------------
+	// Start ImGui Boilerplate
+	//------------------------
+
+	GraphXConsole graphx_debug_console;
+
+	graphx_debug_console.active = (glfwGetInputMode(main_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL);
+	graphx_debug_console.current_theatre = &current_theatre;
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+#ifdef WIN32
+	ImGui_ImplWin32_Init();
+#endif
+	ImGui_ImplGlfw_InitForOpenGL(main_window, true);
+	ImGui_ImplOpenGL3_Init();
+
+	//----------------------
+	// End ImGui Boilerplate
+	//----------------------
+
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window, getCurrentEnvironment()->getAmbientLight());
 		glfwPollEvents();
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		graphx_debug_console.updateFrame(main_window);
+
+		if(graphx_debug_console.justClosed())
+			toggleCursor(main_window, false);
 
 		if(time_to_store_buffers)
 			R_StoreBuffers();
@@ -85,160 +127,21 @@ int main()
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
 			R_Render(actor_state_mutex, interpolation_time, projection_matrix);
 		}
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	game_logic_main_thread.join();
 	glfwTerminate();
 	return 0;
 }
 
-//-------------------------------------------------------
-// JOLT PHYSICS ENGINE BOILERPLATE
-// (totally just copy-pasting the HelloWorld.cpp example)
-//-------------------------------------------------------
-JPH_SUPPRESS_WARNINGS
-
-static void GraphXJoltTrace(const char *inFMT, ...)
-{
-	va_list list;
-	va_start(list, inFMT);
-	char buffer[1024];
-	vsnprintf(buffer, sizeof(buffer), inFMT, list);
-	va_end(list);
-
-	std::cout << buffer << std::endl;
-}
-
-#ifdef JPH_ENABLE_ASSERTS
-static bool GraphXJoltAssertFailed(const char *inExpression, const char *inMessage, const char *inFile, JPH::uint inLine)
-{
-	std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage !=nullptr? inMessage: "") << std::endl;
-	return true;
-}
-#endif
-
-class GraphXObjectLayerPairFilter : public JPH::ObjectLayerPairFilter
-{
-public:
-	virtual bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override
-	{
-		switch(inObject1)
-		{
-			case Layers::NON_MOVING:
-				return inObject2 == Layers::MOVING;
-			case Layers::MOVING:
-				return true;
-			default:
-				JPH_ASSERT(false);
-				return false;
-		}
-	}
-};
-
-class GraphXBroadPhaseLayerInterface final : public JPH::BroadPhaseLayerInterface
-{
-public:
-	GraphXBroadPhaseLayerInterface()
-	{
-		mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
-		mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
-	}
-
-	virtual JPH::uint GetNumBroadPhaseLayers() const override
-	{
-		return BroadPhaseLayers::NUM_LAYERS;
-	}
-
-	virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override
-	{
-		JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
-		return mObjectToBroadPhase[inLayer];
-	}
-#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-	virtual const char *GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override
-	{
-		switch ((JPH::BroadPhaseLayer::Type)inLayer)
-		{
-			case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:
-				return "NON_MOVING";
-			case(JPH::BroadPhaseLayer::Type)BroadPhaseLayers::MOVING:
-				return "MOVING";
-			default:
-				JPH_ASSERT(false);
-				return "INVALID";
-		}
-	}
-#endif
-
-private:
-	JPH::BroadPhaseLayer mObjectToBroadPhase[Layers::NUM_LAYERS];
-};
-
-class GraphXObjectVsBroadPhaseLayerFilter : public JPH::ObjectVsBroadPhaseLayerFilter
-{
-public:
-	virtual bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override
-	{
-		switch(inLayer1)
-		{
-			case Layers::NON_MOVING:
-				return inLayer2 == BroadPhaseLayers::MOVING;
-			case Layers::MOVING:
-				return true;
-			default:
-				JPH_ASSERT(false);
-				return false;
-		}
-	}
-};
-
-class GraphXContactListener : public JPH::ContactListener
-{
-	virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override
-	{
-		// if(do_jolt_assert)
-			// JOLTDEBUG("Contact validate callback")
-		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
-	}
-
-	virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
-	{
-		if(do_jolt_assert)
-			JOLTDEBUG("A contact was added")
-	}
-
-	virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
-	{
-		// if(do_jolt_assert)
-			// JOLTDEBUG("A contact was persisted")
-	}
-
-	virtual void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
-	{
-		if(do_jolt_assert)
-			JOLTDEBUG("A contact was removed")
-	}
-};
-
-class GraphXBodyActivationListener : public JPH::BodyActivationListener
-{
-public:
-	virtual void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
-	{
-		if(do_jolt_assert)
-			JOLTDEBUG("A body got activated")
-	}
-
-	virtual void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
-	{
-		if(do_jolt_assert)
-			JOLTDEBUG("A body went to sleep")
-	}
-};
-
-//--------------------------------
-// END OF JOLT PHYSICS BOILERPLATE
-//--------------------------------
+// The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
+#include "jolt_boilerplate.hpp"
 
 void testGameTick(GLFWwindow *main_window)
 {
@@ -272,14 +175,7 @@ void testGameTick(GLFWwindow *main_window)
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
 	checkForAndLoadExternalTheatres();
-	for(auto &pair : embedded_theatres)
-	{
-		PRINTDEBUG(pair.first)
-		std::cout << std::endl;
-		for(int i = 0 ; i < 20 ; i++)
-			std::cout << (pair.second[i]);
-		std::cout << std::endl;
-	}
+
 	loadMainTheatre(0); // Hard-coded Theatre loading; later I want to make a "level list" of some sort
 
 	double last_time = glfwGetTime();
@@ -306,7 +202,7 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
-			LightFlashlight *player_flashlight = getCurrentTheatre()->iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
+			LightFlashlight *player_flashlight = iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
 			player_flashlight->setLight(test_flashlight_bool);
 
@@ -337,6 +233,9 @@ void testGameTick(GLFWwindow *main_window)
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+	if(ImGui::GetIO().WantCaptureKeyboard)
+		return;
+
 	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
@@ -355,6 +254,30 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 					loadMainTheatre(0);
 					return;
 				}
+				loadMainTheatre(it->first);
+				return;
+			}
+		}
+	}
+
+	if(key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+	{
+		if(loading_new_main_theatre)
+			return;
+		long current_theatre = getCurrentTheatre()->getUID();
+		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
+		{
+			if(it->first == current_theatre)
+			{
+				if(it == embedded_theatres.begin())
+				{
+					auto end_it = embedded_theatres.end();
+					--end_it;
+					loadMainTheatre(end_it->first);
+					return;
+				}
+
+				--it;
 				loadMainTheatre(it->first);
 				return;
 			}
@@ -421,9 +344,25 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 #endif
 }
 
+void toggleCursor(GLFWwindow *window, bool show_cursor)
+{
+	if(!show_cursor)
+	{
+		PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		return;
+	}
+
+	PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
 // This will be put in Actor once I abstract "glfwGetKey" and related functions
 void processInput(GLFWwindow *window)
 {
+	if(ImGui::GetIO().WantCaptureKeyboard)
+		return;
+
 	int input_vector[2] =
 	{
 		glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S),
@@ -436,13 +375,13 @@ void processInput(GLFWwindow *window)
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
+	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL || ImGui::GetIO().WantCaptureMouse)
+		return;
+
 	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
 	glm::vec2 mouse_offset = mouse_position - mouse_last;
 	mouse_last = mouse_position;
 	
-	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
-		return;
-
 	if(!loading_new_main_theatre)
 		getCurrentPlayer()->doMouseMovement(mouse_offset);
 }

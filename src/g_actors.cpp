@@ -62,6 +62,16 @@ Actor::~Actor()
 	delete mesh;
 }
 
+std::string Actor::getTypeName()
+{
+	return graphx::classnames.at(my_type);
+}
+
+long Actor::getType()
+{
+	return my_type;
+}
+
 template<> glm::vec3 Actor::getPosition()
 {
 	return position_global + position_local;

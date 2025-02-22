@@ -57,6 +57,8 @@ public:
 	bool isType(int class_type);
 	bool isType(std::initializer_list<int> const &class_types);
 	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types);
+	std::string getTypeName();
+	long getType();
 
 	virtual bool isPhysicsActor();
 	virtual void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}); // Loads settings
@@ -102,6 +104,8 @@ struct Theatre
 	long getUID();
 	void setUID(long new_uid);
 
+	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
+
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
 	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
 	void actorLeave(Actor *old_actor);
@@ -120,26 +124,6 @@ struct Theatre
 	GraphXPlayer *getPlayer();
 	Environment *getEnvironment();
 
-	// Use with CAUTION!!
-	// Returns static_cast<T>(getActor(identifier)).
-	// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-	template<typename T> T iKnowWhatActorIWant(auto identifier)
-	{
-		if(getActor(identifier) == nullptr)
-			return new std::remove_pointer_t<T>;
-		return static_cast<T>(getActor(identifier));
-	}
-
-	// Use with CAUTION!!
-	// Returns static_cast<T>(getDevice(identifier)).
-	// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-	template<typename T> T iKnowWhatDeviceIWant(auto identifier)
-	{
-		if(getDevice(identifier) == nullptr)
-			return new std::remove_pointer_t<T>;
-		return static_cast<T>(getDevice(identifier));
-	}
-
 private:
 	std::unordered_map<long, Actor *> objects = {};
 	std::unordered_map<long, Device *> devices = {};
@@ -151,10 +135,11 @@ private:
 	void countLights();
 };
 
-// extern std::map<long, Theatre> all_theatres;
-// extern long current_theatre_uid;
 extern Theatre current_theatre;
 extern bool current_troupe_changed; // Convert this into a function/variable inside Theatre
+
+template<typename T> T iKnowWhatActorIWant(auto identifier);
+template<typename T> T iKnowWhatDeviceIWant(auto identifier);
 
 Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"
 Environment *getCurrentEnvironment();

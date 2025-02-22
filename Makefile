@@ -31,17 +31,26 @@ SRC := src
 
 O = build
 
-OBJS = 						\
-	$(O)/glad.o				\
-	$(O)/images.o			\
-	$(O)/shaders.opp		\
-	$(O)/theatres.opp		\
-	$(O)/g_actors.opp		\
-	$(O)/j_common.opp		\
-	$(O)/r_common.opp		\
-	$(O)/r_renderer.opp		\
-	$(O)/g_math.opp			\
-	$(O)/t_interpreter.opp	\
+OBJS = 							\
+	$(O)/glad.o					\
+	$(O)/imgui.opp				\
+	$(O)/imgui_draw.opp			\
+	$(O)/imgui_impl_glfw.opp	\
+	$(O)/imgui_impl_opengl3.opp	\
+	$(O)/imgui_stdlib.opp		\
+	$(O)/imgui_tables.opp		\
+	$(O)/imgui_widgets.opp		\
+	$(O)/imgui_demo.opp			\
+	$(O)/images.o				\
+	$(O)/shaders.opp			\
+	$(O)/theatres.opp			\
+	$(O)/g_imgui.opp			\
+	$(O)/g_actors.opp			\
+	$(O)/j_common.opp			\
+	$(O)/r_common.opp			\
+	$(O)/r_renderer.opp			\
+	$(O)/g_math.opp				\
+	$(O)/t_interpreter.opp		\
  	$(O)/g_theatres.opp
 
 WOBJS = $(subst .o,.wo,$(OBJS))

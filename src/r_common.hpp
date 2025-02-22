@@ -71,6 +71,8 @@ struct Device
 	virtual ~Device() = default;
 
 	bool isType(int class_type);
+	long getType();
+	std::string getTypeName();
 
 	virtual void initialize(Theatre *parent_theatre);
 	virtual void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}});

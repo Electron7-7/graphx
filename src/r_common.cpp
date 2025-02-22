@@ -127,6 +127,16 @@ bool Device::isType(int class_type)
 	return class_type == my_type;
 }
 
+std::string Device::getTypeName()
+{
+	return graphx::classnames.at(my_type);
+}
+
+long Device::getType()
+{
+	return my_type;
+}
+
 void Device::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))

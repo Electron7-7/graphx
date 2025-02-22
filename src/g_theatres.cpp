@@ -37,6 +37,27 @@ GraphXPlayer *getCurrentPlayer()
 	return current_theatre.getPlayer();
 }
 
+// Use with CAUTION!!
+// Wants to return static_cast<T>(current_theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
+// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
+template<typename T> T iKnowWhatActorIWant(auto identifier)
+{
+	if(current_theatre.getUID() == -1 || current_theatre.getActor(identifier) == nullptr)
+		return new std::remove_pointer_t<T>;
+
+	return static_cast<T>(getActor(identifier));
+}
+
+// Use with CAUTION!!
+// Wants to return static_cast<T>(current_theatre.getDevice(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
+// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
+template<typename T> T iKnowWhatDeviceIWant(auto identifier)
+{
+	if(current_theatre.getUID() == -1 || getDevice(identifier) == nullptr)
+		return new std::remove_pointer_t<T>;
+	return static_cast<T>(getDevice(identifier));
+}
+
 //
 // Theatre
 //
@@ -51,6 +72,38 @@ Theatre::~Theatre()
 	stage->prepForDestruction();
 	stage = nullptr;
 	delete stage;
+}
+
+std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
+{
+	std::string buffer = "";
+	std::string name_string = "Name: ";
+	std::string typename_string = "\n\tTypename: ";
+	std::string uid_string = "\n\tUID: ";
+
+	if(show_actors)
+	{
+		for(auto &pair : objects)
+		{
+			buffer += name_string + pair.second->name;
+			buffer += typename_string + pair.second->getTypeName();
+			buffer += uid_string + std::to_string(pair.second->getUID());
+			buffer += "\n\n";
+		}
+	}
+
+	else
+	{
+		for(auto &pair : devices)
+		{
+			buffer += name_string + pair.second->name;
+			buffer += typename_string + pair.second->getTypeName();
+			buffer += uid_string + std::to_string(pair.second->getUID());
+			buffer += "\n\n";
+		}
+	}
+
+	return buffer;
 }
 
 long Theatre::getUID()
@@ -99,8 +152,6 @@ void Theatre::startPreshow()
 void Theatre::dropCurtains()
 {
 	PRINTDEBUG("Exiting Theatre (" << name << ")")
-	time_to_render = false;
-	time_to_store_buffers = false;
 
 	PRINTLN("Devices Present:")
 	for(auto &pair : devices)

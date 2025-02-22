@@ -1173,3 +1173,7 @@ I'm done!!
 
 [02/22/25]
 Picking up a shift today from 8-4; gonna choose between either imgui integration or making a game.
+
+I might also start work on an input abstraction; I'm thinking something like a map of variable names to GLFW_KEY_[KEYNAME] or something.
+
+I'm about to do something really fucking cool, but to do that, I'll need another branch.
