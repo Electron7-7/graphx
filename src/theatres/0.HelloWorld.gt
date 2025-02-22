@@ -128,7 +128,6 @@ GraphXPlayer (main_player)
 	Position             (0.0, 3.0, 6.0)
 	MovementSpeed        (10.0)
 	MovementAcceleration (2.0)
-	Friction             (0.7)
 }
 LightFlashlight (Player_Flashlight)
 {

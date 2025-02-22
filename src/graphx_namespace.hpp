@@ -2,10 +2,12 @@
 #define GRAPHX_NAMESPACE
 #include <map>
 #include <any>
+#include <array>
 #include <string>
 #include <vector>
-#include <array>
 #include <unordered_map>
+
+#define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 
 namespace graphx
 {

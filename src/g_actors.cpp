@@ -5,6 +5,7 @@
 #include "g_math.hpp"
 #include <vector>
 #include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
 using namespace graphx;
@@ -457,6 +458,7 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 	setRawData(movement_speed, new_settings["MovementSpeed"]);
 	setRawData(lerp_speed, new_settings["MovementAcceleration"]);
 	setRawData(friction, new_settings["Friction"]);
+	setRawData(mass, new_settings["Mass"]);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
@@ -468,8 +470,9 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	player_settings->mLayer = Layers::MOVING;
-	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CapsuleShape(scale[1], scale[0])).Create().Get();
+	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CylinderShape(scale[1], scale[0])).Create().Get();
 	player_settings->mFriction = friction;
+	player_settings->mMass = mass;
 	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
 	jph_character = new JPH::Character(player_settings, getPosition<JPH::Vec3>(), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);

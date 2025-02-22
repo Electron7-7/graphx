@@ -9,6 +9,9 @@
 #include "quad.graphxmodel"
 #include "theatres.hpp"
 #include <set>
+#include <filesystem> // Yes, the devil hath been invoked... I truly am sorry
+#include <fstream>
+#include <sstream>
 
 using namespace graphx;
 using namespace graphx::classes;
@@ -544,7 +547,119 @@ void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
 	// NEEDS TO BE FILLED OUT
 }
 
+#ifdef GRAPHX_WINDOWS
+#include <windows.h>
+#include <libloaderapi.h>
+std::string getBinaryPath()
+{
+	char out_path[MAX_PATH] = {0};
+	GetModuleFileNameA(NULL, out_path, MAX_PATH);
+	std::string buffer = "";
+	bool filename_removed = false;
+	for(int i = (sizeof(out_path)/sizeof(out_path[0])) ; i >= 0 ; i--)
+	{
+		if(out_path[i] == 0x00)
+			continue;
+		if(((out_path[i] == '\\' && !(out_path[i+1] == ' ')) || out_path[i] == '/') && !filename_removed)
+		{
+			buffer = "";
+			filename_removed = true;
+		}
+
+		buffer += out_path[i];
+	}
+
+	std::string new_buffer = "";
+
+	for(int i = buffer.length() - 1 ; i > 0 ; i--)
+		new_buffer += buffer[i];
+
+	return new_buffer;
+}
+#define BINARY_PATH getBinaryPath();
+#define EXTERNAL_THEATRES_DIRECTORY std::string("\\theatres")
+#else
+#define BINARY_PATH std::filesystem::read_symlink(std::filesystem::path("/proc/self/exe")).remove_filename().string()
+#define EXTERNAL_THEATRES_DIRECTORY std::string("/theatres")
+#endif
+
+std::string binary_path = BINARY_PATH;
+std::string theatres_directory = binary_path + EXTERNAL_THEATRES_DIRECTORY;
+
 bool checkForExternalTheatres()
 {
-	// Start implementing :3
+	std::string binary_path = BINARY_PATH;
+	std::cout << theatres_directory << std::endl;
+
+	if(std::filesystem::is_directory(std::filesystem::path(theatres_directory)))
+		for(const auto &entry : std::filesystem::directory_iterator(std::filesystem::path(theatres_directory)))
+			if(entry.path().extension().string().compare(GRAPHXTHEATRE_EXTENSION) == 0)
+				return true;
+
+	return false;
+}
+
+void embedExternalTheatre(std::filesystem::path theatre_file_path)
+{
+	if(!std::isdigit(theatre_file_path.filename().string()[0]))
+	{
+		PRINTERR("GraphXTheatre file was found, but the filename did not start with a valid load number! Skipping this file!")
+		return;
+	}
+
+	PRINTNOTE("Loading eternal GraphXTheatre file!")
+
+	std::ifstream theatre_file_stream;
+
+	theatre_file_stream.open(theatre_file_path);
+	std::stringstream theatre_file_data_stream;
+
+	theatre_file_data_stream << theatre_file_stream.rdbuf();
+
+	theatre_file_stream.close();
+
+	long theatre_uid;
+	std::string buffer = "";
+	// char test = '100';
+
+	for(char character : theatre_file_path.filename().string())
+	{
+		if(character == '.')
+		{
+			theatre_uid = std::stol(buffer);
+			break;
+		}
+
+		buffer += character;
+	}
+
+	if(embedded_theatres.contains(theatre_uid))
+		PRINTNOTE("Loaded external Theatre is overriding embedded Theatre #" << theatre_uid)
+
+	embedded_theatres[theatre_uid] = theatre_file_data_stream.str();
+}
+
+bool checkForAndLoadExternalTheatres()
+{
+	if(!checkForExternalTheatres())
+	{
+		PRINTNOTE("No external GraphXTheatre directory found.")
+		return false;
+	}
+
+	bool has_theatre_file = false;
+
+	for(const auto &entry : std::filesystem::directory_iterator(std::filesystem::path(theatres_directory)))
+	{
+		if(entry.path().extension().string().compare(GRAPHXTHEATRE_EXTENSION) == 0)
+		{
+			has_theatre_file = true;
+			embedExternalTheatre(entry.path());
+		}
+	}
+
+	if(!has_theatre_file)
+		PRINTNOTE("External GraphXTheatre directory exists, but no GraphXTheatre files were found.")
+
+	return has_theatre_file;
 }

@@ -4,9 +4,8 @@ std::map<int, std::string> embedded_theatres =
 GraphXPlayer (main_player)
 {
 	Position             (0.0, 3.0, 6.0)
-	MovementSpeed        (10.0)
-	MovementAcceleration (2.0)
-	Friction             (0.7)
+	MovementSpeed        (13.0)
+	MovementAcceleration (1.3)
 }
 LightFlashlight (Player_Flashlight)
 {
@@ -302,7 +301,6 @@ GraphXPlayer (main_player)
 	Position             (0.0, 3.0, 6.0)
 	MovementSpeed        (10.0)
 	MovementAcceleration (2.0)
-	Friction             (0.7)
 }
 LightFlashlight (Player_Flashlight)
 {

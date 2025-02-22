@@ -271,7 +271,16 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
-	loadMainTheatre(1); // Hard-coded Theatre loading; later I want to make a "level list" of some sort
+	checkForAndLoadExternalTheatres();
+	for(auto &pair : embedded_theatres)
+	{
+		PRINTDEBUG(pair.first)
+		std::cout << std::endl;
+		for(int i = 0 ; i < 20 ; i++)
+			std::cout << (pair.second[i]);
+		std::cout << std::endl;
+	}
+	loadMainTheatre(0); // Hard-coded Theatre loading; later I want to make a "level list" of some sort
 
 	double last_time = glfwGetTime();
 	double current_tick_length = 0;
@@ -335,10 +344,21 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		if(loading_new_main_theatre)
 			return;
-		long new_theatre = getCurrentTheatre()->getUID() + 1;
-		if(!embedded_theatres.count(new_theatre))
-			new_theatre = 0;
-		loadMainTheatre(new_theatre);
+		long current_theatre = getCurrentTheatre()->getUID();
+		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
+		{
+			if(it->first == current_theatre)
+			{
+				++it;
+				if(it == embedded_theatres.end())
+				{
+					loadMainTheatre(0);
+					return;
+				}
+				loadMainTheatre(it->first);
+				return;
+			}
+		}
 	}
 
 	if(key == GLFW_KEY_G && action == GLFW_PRESS)

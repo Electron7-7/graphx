@@ -119,6 +119,7 @@ linux: $(OBJS) $(O)/main.opp
 	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
 
 windows: NAME = $(WINDOWS)
+windows: GRAPHXFLAGS += -D GRAPHX_WINDOWS
 windows: $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
 	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)

@@ -117,9 +117,10 @@ public:
 	Collider collider;
 
 	float mouse_sensitivity = 0.05f;
-	float movement_speed = 10.0f;
-	double lerp_speed = 10.0f;
-	float friction = 0.7f;
+	float movement_speed = 13.0f;
+	double lerp_speed = 1.3f;
+	float friction = 0.85f;
+	float mass = 100.0f;
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
 
