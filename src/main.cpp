@@ -54,8 +54,8 @@ int main()
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
-	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);

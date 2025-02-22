@@ -121,6 +121,7 @@ linux: $(OBJS) $(O)/main.opp
 windows: NAME = $(WINDOWS)
 windows: $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
+	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
 
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
