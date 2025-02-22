@@ -1152,3 +1152,9 @@ Ok, weird shit when compiling on Linux now... I gotta figure this out now.
 Aight, I fixed it LMFAO. It was just some minor stuff regarding the "isType" and "isLightType" functions.
 
 Hmm, problem: when loading a new Theatre, all the Device and Actor ids are just Device or Actor.
+
+Okay, so the fucking exe only crashes if switching Theatres while using the Debug build... is it because of all the printouts?
+
+Oh my fucking god... I've wasted three hours...
+
+ITS THE FUCKING PRINTOUTS??!?!?!!? WHAT THE FUCK WINDOWS?!?!?!?

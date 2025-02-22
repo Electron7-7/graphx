@@ -15,8 +15,8 @@ else
 	WCC = x86_64-w64-mingw32-gcc
 endif
 
-WCXXFLAGS = -g -Wall -std=c++20 -static -ffat-lto-objects -fuse-ld=lld $(JOLTFLAGS) $(GRAPHXFLAGS)
-WCCFLAGS = -g -Wall -static -fuse-ld=lld
+WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows -ffat-lto-objects $(JOLTFLAGS) $(GRAPHXFLAGS)
+WCCFLAGS = -g -Wall -static -mwindows
 WLIBS = -L src/windows_dependencies/lib/jolt-mingw-w64 -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
 WINCLUDES = -I src/include -I src/windows_dependencies/include
 

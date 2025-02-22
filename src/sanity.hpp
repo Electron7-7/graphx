@@ -6,6 +6,9 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 */
 #ifndef GRAPHX_SANITY
 #define GRAPHX_SANITY
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <iostream>
 
 #include <images.h>
@@ -25,15 +28,15 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #include <glm/ext.hpp>
 
 #define PRINT_MARKER std::cout << std::endl << "[=======================================]" << std::endl;
-#define PRINTERR(thing) std::cerr << std::endl << "[ERROR]\t" << thing << std::endl;
-#define PRINTIMPORTANT(thing) for(int i = 0 ; i < 10 ; i++) { std::cout << std::endl << "[!]\t" << thing; }; std::cout << std::endl;
-#define PRINTNOTE(thing) std::cout << std::endl << "[NOTE]\t" << thing << std::endl;
+#define PRINTERR(thing) std::cerr << std::endl << "[ERROR]    " << thing << std::endl;
+#define PRINTIMPORTANT(thing) for(int i = 0 ; i < 10 ; i++) { std::cout << std::endl << "[!]    " << thing; }; std::cout << std::endl;
+#define PRINTNOTE(thing) std::cout << std::endl << "[NOTE]    " << thing << std::endl;
 #ifdef GRAPHX_DEBUG
 #define TICK(tick) std::cout << "[TICK #" << tick << "]" << std::endl;
 #define PRINT(thing) std::cout << thing;
 #define PRINTLN(thing) std::cout << std::endl << thing << std::endl;
-#define PRINTDEBUG(thing) std::cout << "[DEBUG]\t" << thing << std::endl;
-#define JOLTDEBUG(thing) std::cout << "[JOLT]\t" << thing << std::endl;
+#define PRINTDEBUG(thing) std::cout << "[DEBUG]    " << thing << std::endl;
+#define JOLTDEBUG(thing) std::cout << "[JOLT]    " << thing << std::endl;
 #else
 #define TICK(tick);
 #define PRINT(thing);
