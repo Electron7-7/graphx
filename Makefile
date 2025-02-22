@@ -76,8 +76,8 @@ PHONY = all clean clean_resources clean_theatres embed_resources compile_command
 
 all: release linux windows
 
-clean: clean_resources embed_resources
-	-rm -rf build/*
+clean: clean_linux clean_windows clean_resources embed_resources
+	$(info Cleaned!)
 
 clean_linux:
 	-rm -rf build/*.o

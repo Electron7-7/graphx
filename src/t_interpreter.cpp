@@ -543,3 +543,8 @@ void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
 	PRINTNOTE("loadChildTheatre called but this function is empty currently")
 	// NEEDS TO BE FILLED OUT
 }
+
+bool checkForExternalTheatres()
+{
+	// Start implementing :3
+}

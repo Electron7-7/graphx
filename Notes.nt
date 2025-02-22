@@ -1158,3 +1158,11 @@ Okay, so the fucking exe only crashes if switching Theatres while using the Debu
 Oh my fucking god... I've wasted three hours...
 
 ITS THE FUCKING PRINTOUTS??!?!?!!? WHAT THE FUCK WINDOWS?!?!?!?
+
+Ok, I release v0.0.0-a.4, now I wanna do external theatre loading.
+
+To do that, I need to automatically queue up all the Theatres in the "game", so I need an interface for that. Something small, like a function.
+
+And I'll do that tomorrow!
+
+:3
