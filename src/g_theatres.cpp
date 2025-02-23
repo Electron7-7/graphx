@@ -37,27 +37,6 @@ GraphXPlayer *getCurrentPlayer()
 	return current_theatre.getPlayer();
 }
 
-// Use with CAUTION!!
-// Wants to return static_cast<T>(current_theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
-// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-template<typename T> T iKnowWhatActorIWant(auto identifier)
-{
-	if(current_theatre.getUID() == -1 || current_theatre.getActor(identifier) == nullptr)
-		return new std::remove_pointer_t<T>;
-
-	return static_cast<T>(getActor(identifier));
-}
-
-// Use with CAUTION!!
-// Wants to return static_cast<T>(current_theatre.getDevice(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
-// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-template<typename T> T iKnowWhatDeviceIWant(auto identifier)
-{
-	if(current_theatre.getUID() == -1 || getDevice(identifier) == nullptr)
-		return new std::remove_pointer_t<T>;
-	return static_cast<T>(getDevice(identifier));
-}
-
 //
 // Theatre
 //
