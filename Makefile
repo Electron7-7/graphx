@@ -25,7 +25,12 @@ GRAPHXFLAGS = -D GRAPHX_COMPILING
 
 LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
 WINDOWS = GraphX_Windows_x86_64.exe
-NAME =
+NAME = ""
+	
+FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
+TESTRUN_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows
+
+TESTRUN_WINDOWS = # nothing here, yet
 
 SRC := src
 
@@ -79,8 +84,6 @@ T = $(SRC)/theatres
 THEATRES_C = $(SRC)/theatres.cpp
 THEATRES_H = $(SRC)/theatres.hpp
 
-FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
-
 PHONY = all clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
 
 all: release linux windows
@@ -125,13 +128,13 @@ release: clean_resources embed_resources
 linux: NAME = $(LINUX)
 linux: $(OBJS) $(O)/main.opp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp -o $(O)/$(NAME) $(LIBS)
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
+	$(TESTRUN_LINUX) $(O)/$(NAME)
 
 windows: NAME = $(WINDOWS)
 windows: GRAPHXFLAGS += -D GRAPHX_WINDOWS
 windows: $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
+	$(TESTRUN_WINDOWS) $(O)/$(NAME)
 
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
