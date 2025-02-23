@@ -1,6 +1,6 @@
 #include "g_jolt.hpp"
 #include "g_math.hpp"
-#include "t_common.hpp"
+#include "t_settings.hpp"
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -44,6 +44,7 @@ void J_RemoveAndDestroyBody(BodyID body_id)
 Collider::Collider()
 {
 	my_type = graphx::classes::COLLIDER;
+	name = "Untitled Collider";
 }
 
 Collider::~Collider()
@@ -91,7 +92,7 @@ void Collider::createBody()
 	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
 }
 
-void Collider::initialize(Theatre *parent_theare)
+void Collider::initialize()
 {
 	if(forever_alone)
 		createBody();

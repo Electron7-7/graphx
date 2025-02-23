@@ -4,6 +4,7 @@
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
 #include "ERROR.graphxmodel"
+#include <stb_image.h>
 #include <array>
 #include <mutex>
 
@@ -47,10 +48,6 @@
 #define DEVICE_SPRITE		3
 #define DEVICE_COLLIDER		4
 
-class Actor;		// Forward-declare Actor
-class GraphXPlayer;	// Forward-declare GraphXPlayer
-struct Theatre;		// Forward-declare Theatre
-
 struct GLShader
 {
 	unsigned int id;
@@ -64,7 +61,6 @@ struct GLShader
 
 struct Device
 {
-	std::string name = "Untitled Device";
 	graphx::gSettings settings;
 
 	Device();
@@ -73,8 +69,11 @@ struct Device
 	bool isType(int class_type);
 	long getType();
 	std::string getTypeName();
+	void setName(std::string new_name);
+	void setName(char *new_name);
+	std::string getName();
 
-	virtual void initialize(Theatre *parent_theatre);
+	virtual void initialize();
 	virtual void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}});
 	virtual void prepForDestruction();
 	virtual long getUID();
@@ -83,6 +82,7 @@ struct Device
 protected:
 	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
+	std::string name = "Untitled Device";
 };
 
 struct Environment final : public Device // Will be extended

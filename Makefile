@@ -49,14 +49,14 @@ OBJS = 							\
 	$(O)/images.o				\
 	$(O)/shaders.opp			\
 	$(O)/theatres.opp			\
-	$(O)/g_imgui.opp			\
-	$(O)/g_actors.opp			\
-	$(O)/j_common.opp			\
-	$(O)/r_common.opp			\
-	$(O)/r_renderer.opp			\
 	$(O)/g_math.opp				\
+	$(O)/r_common.opp			\
+	$(O)/j_common.opp			\
+	$(O)/g_actors.opp			\
+	$(O)/g_imgui.opp			\
 	$(O)/t_interpreter.opp		\
- 	$(O)/g_theatres.opp
+	$(O)/r_renderer.opp			\
+ 	$(O)/g_theatres.opp			\
 
 WOBJS = $(subst .o,.wo,$(OBJS))
 
@@ -82,7 +82,7 @@ SHDRS = \
 
 T = $(SRC)/theatres
 THEATRES_C = $(SRC)/theatres.cpp
-THEATRES_H = $(SRC)/theatres.hpp
+THEATRES_H = $(SRC)/include/theatres.hpp
 
 PHONY = all clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
 
@@ -157,7 +157,7 @@ $(THEATRES_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_THEATRES\n#define GRAPHX_EMBEDDED_THEATRES\n#include <string>\n#include <map>\nextern std::map<int, std::string> embedded_theatres;\n#endif" >> $(THEATRES_H))
 
 $(THEATRES_C): $(THEATRES_H)
-	$(shell printf "#include \"theatres.hpp\"\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
+	$(shell printf "#include <string>\n#include <map>\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
 	$(foreach theatre,$(shell find $(T) -name '*.gt'),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
 	$(shell sed 's/^{,{/{{/' -i $(THEATRES_C))
 	$(shell printf "\n};" >> $(THEATRES_C))

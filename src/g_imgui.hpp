@@ -1,8 +1,11 @@
 #ifndef GRAPHX_IMGUI
 #define GRAPHX_IMGUI
+#include "sanity.hpp" // Included for the GLM header files
 #include "imgui.h"
-#include "g_common.hpp"
 #include <string>
+
+// Forward Declarations
+struct Theatre;
 
 struct GraphXConsole
 {

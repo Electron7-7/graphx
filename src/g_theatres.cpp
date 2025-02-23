@@ -1,6 +1,7 @@
 #include "g_actors.hpp"
-#include "r_common.hpp" // Remove this once I have a system for loading theatres
+#include "r_common.hpp"
 #include <algorithm>
+
 using namespace graphx;
 using namespace graphx::classes;
 
@@ -43,7 +44,8 @@ GraphXPlayer *getCurrentPlayer()
 Theatre::Theatre(std::string init_name, long new_uid)
 : name(init_name), UID(new_uid)
 {
-	stage->name = "Stage Mesh for Theatre (" + name + ")";
+	stage = new Mesh(new Material(false, glm::vec3(0.5, 0.1, 0.4)));
+	stage->setName("Stage Mesh for Theatre (" + name + ")");
 }
 
 Theatre::~Theatre()
@@ -64,7 +66,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 	{
 		for(auto &pair : objects)
 		{
-			buffer += name_string + pair.second->name;
+			buffer += name_string + pair.second->getName();
 			buffer += typename_string + pair.second->getTypeName();
 			buffer += uid_string + std::to_string(pair.second->getUID());
 			buffer += "\n\n";
@@ -75,7 +77,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 	{
 		for(auto &pair : devices)
 		{
-			buffer += name_string + pair.second->name;
+			buffer += name_string + pair.second->getName();
 			buffer += typename_string + pair.second->getTypeName();
 			buffer += uid_string + std::to_string(pair.second->getUID());
 			buffer += "\n\n";
@@ -110,7 +112,7 @@ void Theatre::startPreshow()
 		if(pair.second->isType(ENVIRONMENT))
 			environment_uid = pair.first;
 		pair.second->loadSettings();
-		pair.second->initialize(this);
+		pair.second->initialize();
 	}
 
 	PRINTLN("Actors Present:")
@@ -161,7 +163,7 @@ void Theatre::createActor(int actor_type, long uid, gSettings new_settings)
 	if(objects.at(uid)->isType(GRAPHXPLAYER))
 		player_uid = uid;
 
-	PRINTDEBUG("New Actor " << objects.at(uid)->name << " with UID " << objects.at(uid)->getUID())
+	PRINTDEBUG("New Actor " << objects.at(uid)->getName() << " with UID " << objects.at(uid)->getUID())
 
 	sortTroupe();
 	countLights();
@@ -193,7 +195,7 @@ void Theatre::createDevice(int device_type, long uid, gSettings new_settings)
 
 	devices.at(uid)->loadSettings(new_settings);
 
-	PRINTDEBUG("New Device " << devices.at(uid)->name << " with UID " << devices.at(uid)->getUID())
+	PRINTDEBUG("New Device " << devices.at(uid)->getName() << " with UID " << devices.at(uid)->getUID())
 }
 
 void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
@@ -228,7 +230,7 @@ void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
 void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 {
 	PRINTDEBUG("ACTOR ENTER")
-	PRINTDEBUG(new_actor->name)
+	PRINTDEBUG(new_actor->getName())
 	if(objects.contains(uid))
 	{
 		PRINTERR("Tried adding a new Actor with UID " << std::to_string(uid) << " to Theatre " << name << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
@@ -258,7 +260,7 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 	PRINTDEBUG("ALL ACTORS:")
 	for(auto &pair : objects)
 	{
-		PRINTDEBUG("\tName: " << pair.second->name)
+		PRINTDEBUG("\tName: " << pair.second->getName())
 		PRINTDEBUG("\t\tUID: " << pair.second->getUID())
 		PRINTDEBUG("\t\tMap Key: " << pair.first)
 	}
@@ -349,7 +351,7 @@ void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)
 	}
 
 	if(time_to_render)
-		new_device->initialize(this);
+		new_device->initialize();
 }
 
 void Theatre::removeDevice(Device *old_device)
@@ -403,7 +405,7 @@ Actor *Theatre::getActor(std::string actor_name)
 {
 	for(auto &pair : objects)
 	{
-		if(pair.second->name.compare(actor_name) == 0)
+		if(pair.second->getName().compare(actor_name) == 0)
 			return pair.second;
 	}
 
@@ -423,7 +425,7 @@ Device *Theatre::getDevice(long device_uid)
 Device *Theatre::getDevice(std::string device_name)
 {
 	for(auto &pair : devices)
-		if(pair.second->name.compare(device_name))
+		if(pair.second->getName().compare(device_name))
 			return pair.second;
 
 	PRINTERR("Hey! Someone asked for a Device named " << device_name << ", but none were found! The \"getDevice\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")
@@ -479,7 +481,7 @@ void Theatre::sortTroupe()
 		return (left->isType(LIGHTS) > right->isType(LIGHTS));
 	});
 	for(Actor *actor : troupe)
-		PRINTDEBUG(actor->name << " " << actor->isType(LIGHTS))
+		PRINTDEBUG(actor->getName() << " " << actor->isType(LIGHTS))
 }
 
 void Theatre::countLights()

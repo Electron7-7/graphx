@@ -1,7 +1,16 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
+#include "sanity.hpp" // Included for the GLM headers
 #include "graphx_namespace.hpp"
-#include "r_common.hpp"
+#include <mutex>
+
+// Forward Declarations
+struct Theatre; // For Actor
+class GraphXPlayer;
+struct Device;
+struct Environment;
+struct Material;
+struct Mesh;
 
 struct RenderState
 {
@@ -15,7 +24,6 @@ struct RenderState
 class Actor
 {
 public:
-	std::string name = "Untitled Actor";
 	bool visible = true;
 
 	Mesh *mesh = nullptr; // replace with std::vector<Mesh *> meshes later(?)
@@ -41,7 +49,7 @@ public:
 
 	graphx::gSettings settings;
 
-	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = nullptr, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 	virtual ~Actor();
 
 	template<typename T> T getPosition();
@@ -59,6 +67,9 @@ public:
 	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types);
 	std::string getTypeName();
 	long getType();
+	void setName(std::string new_name);
+	void setName(char *new_name);
+	std::string getName();
 
 	virtual bool isPhysicsActor();
 	virtual void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}); // Loads settings
@@ -72,6 +83,7 @@ public:
 protected:
 	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
+	std::string name = "Untitled Actor";
 	bool debug_visible;
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);
@@ -90,7 +102,7 @@ protected:
 
 struct Theatre
 {
-	Mesh *stage = new Mesh(new Material(false, glm::vec3(0.5, 0.1, 0.4)));
+	Mesh *stage = nullptr;
 	std::string name = "Untitled Theatre";
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
@@ -137,6 +149,7 @@ private:
 
 extern Theatre current_theatre;
 extern bool current_troupe_changed; // Convert this into a function/variable inside Theatre
+extern std::map<int, Actor*(*)()> actor_map;
 
 // Use with CAUTION!!
 // Wants to return static_cast<T>(current_theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
@@ -157,6 +170,11 @@ template<typename T> T iKnowWhatDeviceIWant(auto identifier)
 	if(current_theatre.getUID() == -1 || current_theatre.getDevice(identifier) == nullptr)
 		return new std::remove_pointer_t<T>;
 	return static_cast<T>(current_theatre.getDevice(identifier));
+}
+
+template<typename T> Actor *createNewActor()
+{
+	return new T;
 }
 
 Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"

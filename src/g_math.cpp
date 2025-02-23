@@ -1,4 +1,9 @@
 #include "g_math.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <Jolt/Jolt.h>
 
 template<> JPH::Vec3 convertMath(const glm::vec3 &convert_me)
 {

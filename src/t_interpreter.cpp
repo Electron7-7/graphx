@@ -1,13 +1,13 @@
 #include "sanity.hpp"
 #include "t_common.hpp"
-#include "g_actors.hpp"
 #include "g_jolt.hpp"
+#include "g_common.hpp"
 #include "images.h"
 #include "cube.graphxmodel"
 #include "ERROR.graphxmodel"
 #include "pyramid.graphxmodel"
 #include "quad.graphxmodel"
-#include "theatres.hpp"
+#include <theatres.hpp>
 #include <set>
 #include <filesystem> // Yes, the devil hath been invoked... I truly am sorry
 #include <fstream>
@@ -634,7 +634,6 @@ void embedExternalTheatre(std::filesystem::path theatre_file_path)
 
 	long theatre_uid;
 	std::string buffer = "";
-	// char test = '100';
 
 	for(char character : theatre_file_path.filename().string())
 	{

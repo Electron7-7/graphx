@@ -1,5 +1,5 @@
 #include "g_imgui.hpp"
-#include "imgui_stdlib.h"
+#include "g_common.hpp"
 
 namespace IMGUI = ImGui;
 
@@ -42,10 +42,8 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 
 void GraphXConsole::displayTheatre()
 {
-	PRINT("DISPLAY THEATRE")
 	if(current_theatre == nullptr || current_theatre->name == std::string("Untitled Theatre"))
 		return;
-	PRINTLN("ACTUALLY DISPLAYING THEATRE")
 	IMGUI::Text("Currently Loaded Theatre: \"%s\"", current_theatre->name.c_str());
 	IMGUI::Separator();
 	IMGUI::Text("Actors:");

@@ -3,23 +3,23 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
+// #include "graphx_namespace.hpp"
 #include "r_common.hpp"
-#include "g_actors.hpp"
 #include "g_common.hpp"
+#include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
 #include "t_common.hpp"
-#include "theatres.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include <theatres.hpp>
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
-// #include <iostream>
 #include <cstdarg>
 #include <thread>
 #include <mutex>

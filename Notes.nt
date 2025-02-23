@@ -1177,3 +1177,112 @@ Picking up a shift today from 8-4; gonna choose between either imgui integration
 I might also start work on an input abstraction; I'm thinking something like a map of variable names to GLFW_KEY_[KEYNAME] or something.
 
 I'm about to do something really fucking cool, but to do that, I'll need another branch.
+
+[02/23/25]
+Okay, so this is A VERY BIG NOTE!!!!!
+		!!!!IMPORTANT!!!!
+		IF ACCESSING A DERIVED CLASS VIA A BASE CLASS POINTER (i.e: accessing a Light via Actor *)
+		IN ORDER TO CHANGE VARIABLES THAT ARE FROM THE DERIVED CLASS, THEY CAN'T BE SET IN THE CONSTRUCTOR INITIALIZER LIST OR IN THE CLASS DEFINITION.
+		THEY HAVE TO BE SET IN THE CONSTRUCTOR BODY!!!!
+		UNLESS YOU USE A VIRTUAL FUNCTION AND OVERRIDE IT!!!!
+		IF YOU DO THAT, THEN ALL CHANGES TO VARIABLES WILL BE RESPECTED!!
+		BUT IF YOU CALL BASE::VIRTUALFUNCTION(), THAT FUNCTION WILL USE THE BASE CLASS' VARIABLES AND WILL NOT
+		RESPECT THE DERIVED VARIABLES THAT WEREN'T SET IN THE CONSTRUCTOR BODY!!!!
+		!!!!IMPORTANT!!!!
+End of the very big note. Here's some reference code:
+:::C++
+#include <iostream>
+class Base
+{
+public:
+	virtual std::string getDefinitions()
+	{
+		return default_set_in_class_definition + "\n\t" + default_set_in_constructor + "\n\t" + default_set_in_constructor_body;
+	}
+
+	Base()
+	: default_set_in_constructor("Base_2")
+	{
+		default_set_in_constructor_body = "Base_3";
+	}
+
+	std::string default_set_in_class_definition = "Base";
+	std::string default_set_in_constructor;
+	std::string default_set_in_constructor_body = "Base_3"; // This will demonstrate that you can still set variable definitions in the class definition and override that in a derived class' constructor body.
+protected:
+};
+
+class Derived1 : public Base
+{
+public:
+
+	Derived1()
+	: default_set_in_constructor("FirstDerived_2")
+	{
+		default_set_in_constructor_body = "FirstDerived_3";
+	}
+
+	std::string default_set_in_class_definition = "FirstDerived";
+	std::string default_set_in_constructor;
+protected:
+};
+
+class Derived2 : public Base
+{
+public:
+	std::string getDefinitions() override
+	{
+		std::cout << "DERIVED2\n\t";
+		default_set_in_constructor = "SecondDerived_2";
+		return default_set_in_class_definition + "\n\t" + default_set_in_constructor + "\n\t" + default_set_in_constructor_body;
+	}
+
+	Derived2()
+	: Base(), default_set_in_constructor("SecondDerived_2")
+	{
+		default_set_in_constructor_body = "SecondDerived_3";
+	}
+
+	std::string default_set_in_class_definition = "SecondDerived";
+	std::string default_set_in_constructor;
+protected:
+};
+
+int main()
+{
+	Base base;
+	Derived1 derived_1;
+	Derived2 derived_2;
+
+	Base *base_p = &base;
+	Base *derived_1_p = &derived_1;
+	Base *derived_2_p = &derived_2;
+
+	std::cout << "Base\n\t" << base_p->getDefinitions() << "\n\n";
+	std::cout << "Derived_1\n\t" << derived_1_p->getDefinitions() << "\n\n";
+	std::cout << "Derived_2\n" << derived_2_p->getDefinitions() << "\n\n";
+
+	return 0;
+}
+:::
+
+Output:
+Base
+	Base
+	Base_2
+	Base_3
+
+Derived_1
+	Base
+	Base_2
+	FirstDerived_3
+
+Derived_2	
+DERIVED2
+	SecondDerived
+	SecondDerived_2
+	SecondDerived_3
+
+That's big to remember. Also, if I had instead just grabbed the variables directly, the output (should) have been the same, with the exception of the second derived class having the same output as the first derived class. Final note is that if you want to externally set one of these variables, you actually have to do it via the pointer and not directly. Basically, if you want to get/set a base class variable from a derived class via pointers, you have to do it from an upcast base pointer of that derived class.
+
+I also want to change how the header files are made, because currently some of them (i.e: r_common.hpp) are used in so many places that when I change it, I end up just saying "fuck it" and recompiling the whole damn program because I can't be assed to figure out which file is the first one to be compiled that includes it.

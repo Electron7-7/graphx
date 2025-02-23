@@ -10,11 +10,8 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #include <windows.h>
 #endif
 #include <iostream>
-
 #include <images.h>
 #include <shaders.hpp>
-
-#include <stb_image.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
