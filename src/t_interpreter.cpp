@@ -1,13 +1,13 @@
 #include "sanity.hpp"
 #include "t_common.hpp"
-#include "g_actors.hpp"
 #include "g_jolt.hpp"
+#include "g_common.hpp"
 #include "images.h"
 #include "cube.graphxmodel"
 #include "ERROR.graphxmodel"
 #include "pyramid.graphxmodel"
 #include "quad.graphxmodel"
-#include "theatres.hpp"
+#include <theatres.hpp>
 #include <set>
 #include <filesystem> // Yes, the devil hath been invoked... I truly am sorry
 #include <fstream>
@@ -524,8 +524,22 @@ void loadMainTheatre(long theatre_uid)
 	loading_new_main_theatre = true;
 	time_to_render = false;
 	time_to_store_buffers = false;
-	PRINTDEBUG("DROP CURTAINS")
-	current_theatre.dropCurtains();
+
+	// This fucking sucks, don't do this; I'm autistic and that's why I'm doing this
+	if(current_theatre.getUID() == -1)
+	{
+		current_theatre.stage->material = nullptr;
+		delete current_theatre.stage->material;
+		current_theatre.stage = nullptr;
+		delete current_theatre.stage;
+	}
+
+	else
+	{
+		PRINTDEBUG("DROP CURTAINS")
+		current_theatre.dropCurtains();
+	}
+
 	PRINTDEBUG("LOAD THEATRE")
 	current_theatre = loadTheatre(theatre_uid);
 	PRINTDEBUG("START PRESHOW")
@@ -620,7 +634,6 @@ void embedExternalTheatre(std::filesystem::path theatre_file_path)
 
 	long theatre_uid;
 	std::string buffer = "";
-	// char test = '100';
 
 	for(char character : theatre_file_path.filename().string())
 	{

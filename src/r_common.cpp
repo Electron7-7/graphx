@@ -1,9 +1,10 @@
 #include "r_common.hpp"
-#include "g_common.hpp"
+#include "t_settings.hpp"
 #include "g_jolt.hpp"
-#include "t_common.hpp"
 #include "quad.graphxmodel"
 #include <iostream>
+
+// Forward Declarations
 
 using namespace graphx;
 using namespace graphx::classes;
@@ -127,6 +128,31 @@ bool Device::isType(int class_type)
 	return class_type == my_type;
 }
 
+std::string Device::getTypeName()
+{
+	return graphx::classnames.at(my_type);
+}
+
+long Device::getType()
+{
+	return my_type;
+}
+
+void Device::setName(std::string new_name)
+{
+	name = new_name;
+}
+
+void Device::setName(char *new_name)
+{
+	name = new_name;
+}
+
+std::string Device::getName()
+{
+	return name;
+}
+
 void Device::loadSettings(graphx::gSettings new_settings)
 {
 	if(new_settings.contains("FUCKYOU"))
@@ -135,14 +161,14 @@ void Device::loadSettings(graphx::gSettings new_settings)
 	setRawData(name, new_settings["Name"]);
 }
 
-void Device::initialize(Theatre *parent_theatre)
+void Device::initialize()
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
+	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Device::prepForDestruction()
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
+	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Device::setUID(long manual_uid)
@@ -163,6 +189,7 @@ Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_co
 : ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
 {
 	my_type = graphx::classes::ENVIRONMENT;
+	name = "Untitled Environment";
 }
 
 void Environment::loadSettings(graphx::gSettings new_settings)
@@ -188,6 +215,7 @@ glm::vec3 Environment::getAmbientLight()
 Material::Material()
 {
 	my_type = graphx::classes::MATERIAL;
+	name = "Untitled Material";
 }
 
 Material::Material(bool is_fullbright, glm::vec3 init_color)
@@ -259,6 +287,7 @@ Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vec
 : name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
 {
 	my_type = graphx::classes::MESH;
+	name = "Untitled Mesh";
 }
 
 Mesh::~Mesh()
@@ -293,6 +322,7 @@ Sprite::Sprite(Material *init_material, int init_vao_index)
 : Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
 {
 	my_type = graphx::classes::SPRITE;
+	name = "Untitled Sprite";
 }
 
 void Sprite::loadSettings(graphx::gSettings new_settings)

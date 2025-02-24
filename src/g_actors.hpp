@@ -1,14 +1,14 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
 #include "g_common.hpp"
-#include "g_jolt.hpp"
+#include "r_common.hpp"
+#include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Character/Character.h>
-#include <Jolt/Physics/Collision/Shape/BoxShape.h>
-#include <Jolt/Physics/Collision/Shape/SphereShape.h>
-#include <Jolt/Physics/Collision/Shape/EmptyShape.h>
-#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+
+// Forward Declarations
+struct Collider;
 
 #define ACTOR_ACTOR 		0
 #define ACTOR_LIGHT 		1
@@ -18,9 +18,6 @@
 #define LIGHT_POINT			0
 #define LIGHT_DIRECTIONAL	1
 #define LIGHT_SPOT			2
-
-template<typename T> Actor *createNewActor() { return new T; }
-extern std::map<int, Actor*(*)()> actor_map;
 
 class PhysicsActor: public Actor
 {
@@ -114,7 +111,6 @@ class GraphXPlayer: public Actor //public CharacterController(?)
 public:
 	Mesh player_mesh = Mesh();
 	Camera player_camera;
-	Collider collider;
 
 	float mouse_sensitivity = 0.05f;
 	float movement_speed = 13.0f;

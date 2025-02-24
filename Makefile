@@ -25,24 +25,38 @@ GRAPHXFLAGS = -D GRAPHX_COMPILING
 
 LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
 WINDOWS = GraphX_Windows_x86_64.exe
-NAME =
+NAME = ""
+
+FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
+TESTRUN_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows
+
+TESTRUN_WINDOWS = # nothing here, yet
 
 SRC := src
 
 O = build
 
-OBJS = 						\
-	$(O)/glad.o				\
-	$(O)/images.o			\
-	$(O)/shaders.opp		\
-	$(O)/theatres.opp		\
-	$(O)/g_actors.opp		\
-	$(O)/j_common.opp		\
-	$(O)/r_common.opp		\
-	$(O)/r_renderer.opp		\
-	$(O)/g_math.opp			\
-	$(O)/t_interpreter.opp	\
- 	$(O)/g_theatres.opp
+OBJS = 							\
+	$(O)/glad.o					\
+	$(O)/imgui.opp				\
+	$(O)/imgui_draw.opp			\
+	$(O)/imgui_impl_glfw.opp	\
+	$(O)/imgui_impl_opengl3.opp	\
+	$(O)/imgui_stdlib.opp		\
+	$(O)/imgui_tables.opp		\
+	$(O)/imgui_widgets.opp		\
+	$(O)/imgui_demo.opp			\
+	$(O)/images.o				\
+	$(O)/shaders.opp			\
+	$(O)/theatres.opp			\
+	$(O)/g_math.opp				\
+	$(O)/r_common.opp			\
+	$(O)/j_common.opp			\
+	$(O)/g_actors.opp			\
+	$(O)/g_imgui.opp			\
+	$(O)/t_interpreter.opp		\
+	$(O)/r_renderer.opp			\
+ 	$(O)/g_theatres.opp			\
 
 WOBJS = $(subst .o,.wo,$(OBJS))
 
@@ -68,9 +82,7 @@ SHDRS = \
 
 T = $(SRC)/theatres
 THEATRES_C = $(SRC)/theatres.cpp
-THEATRES_H = $(SRC)/theatres.hpp
-
-FPS_LIMIT = 60		# FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
+THEATRES_H = $(SRC)/include/theatres.hpp
 
 PHONY = all clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
 
@@ -116,13 +128,13 @@ release: clean_resources embed_resources
 linux: NAME = $(LINUX)
 linux: $(OBJS) $(O)/main.opp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp -o $(O)/$(NAME) $(LIBS)
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
+	$(TESTRUN_LINUX) $(O)/$(NAME)
 
 windows: NAME = $(WINDOWS)
 windows: GRAPHXFLAGS += -D GRAPHX_WINDOWS
 windows: $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
-	~/bin/mangohudtest $(FPS_LIMIT) $(O)/$(NAME)
+	$(TESTRUN_WINDOWS) $(O)/$(NAME)
 
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
@@ -145,7 +157,7 @@ $(THEATRES_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_THEATRES\n#define GRAPHX_EMBEDDED_THEATRES\n#include <string>\n#include <map>\nextern std::map<int, std::string> embedded_theatres;\n#endif" >> $(THEATRES_H))
 
 $(THEATRES_C): $(THEATRES_H)
-	$(shell printf "#include \"theatres.hpp\"\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
+	$(shell printf "#include <string>\n#include <map>\nstd::map<int, std::string> embedded_theatres =\n{" >> $(THEATRES_C))
 	$(foreach theatre,$(shell find $(T) -name '*.gt'),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
 	$(shell sed 's/^{,{/{{/' -i $(THEATRES_C))
 	$(shell printf "\n};" >> $(THEATRES_C))

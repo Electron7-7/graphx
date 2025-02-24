@@ -1,4 +1,5 @@
-#include "theatres.hpp"
+#include <string>
+#include <map>
 std::map<int, std::string> embedded_theatres =
 {{1, std::string{R"~(@CollisionTesting
 GraphXPlayer (main_player)

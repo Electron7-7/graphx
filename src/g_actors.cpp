@@ -1,10 +1,7 @@
-#include "g_common.hpp"
-#include "t_common.hpp"
 #include "g_actors.hpp"
+#include "t_settings.hpp"
 #include "g_jolt.hpp"
 #include "g_math.hpp"
-#include <vector>
-#include <Jolt/Jolt.h>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
@@ -60,6 +57,31 @@ Actor::~Actor()
 	mesh->prepForDestruction();
 	mesh = nullptr;
 	delete mesh;
+}
+
+std::string Actor::getTypeName()
+{
+	return graphx::classnames.at(my_type);
+}
+
+long Actor::getType()
+{
+	return my_type;
+}
+
+void Actor::setName(std::string new_name)
+{
+	name = new_name;
+}
+
+void Actor::setName(char *new_name)
+{
+	name = new_name;
+}
+
+std::string Actor::getName()
+{
+	return name;
 }
 
 template<> glm::vec3 Actor::getPosition()
@@ -240,12 +262,12 @@ void Actor::tick(int current_tick)
 
 void Actor::callToStage(Theatre *parent_theatre)
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
+	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Actor::takeABow()
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID #" << UID << "\n\t- Type: " << std::to_string(my_type))
+	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 bool Actor::wantsToBeBuffered()
@@ -687,8 +709,8 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	setRawData(pivot_speed, new_settings["PivotSpeed"]);
 
 	pivot_point.setGlobalPosition(pivot_position);
-	pivot_point.name = "Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
-	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")";
+	pivot_point.setName("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
+	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
 	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID);
 }
 

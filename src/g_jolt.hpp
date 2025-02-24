@@ -55,7 +55,7 @@ struct Collider : public Device
 	JPH::BodyCreationSettings *getBodySettings();
 
 	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
-	void initialize(Theatre *parent_theatre) override;
+	void initialize() override;
 	void prepForDestruction() override;
 
 protected:
