@@ -14,6 +14,7 @@ template<typename T> void setDevicePointer(T &variable, std::any set_value)
 	{
 		return;
 	}
+
 	else
 	{
 		variable = static_cast<T>(std::any_cast<Device *>(set_value));
