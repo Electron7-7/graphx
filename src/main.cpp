@@ -264,6 +264,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		if(loading_new_main_theatre)
 			return;
+		checkForAndLoadExternalTheatres();
 		long current_theatre = getCurrentTheatre()->getUID();
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
 		{
