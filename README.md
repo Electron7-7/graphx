@@ -13,6 +13,9 @@
 <img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="400"/>
 <img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
 
+## Update: Custom Mapping!
+Creating a `theatres/` folder next to the game executable and putting custom `.gt` files in it will let GraphX find and load your custom Theatres! It even does so every time you switch Theatres with the arrow keys, so no restart needed and changes are updated almost instantly!
+
 ## Update: GT Files!
 
 No, not Gran Turismo, "GraphXTheatre" files are the newest addition to the GraphX game engine, and I am thoroughly proud of my horrible code. In a nutshell, I decided to create my own custom file format for creating Theatres and I wanted to do so without using any tutorials or guides (just StackOverflow and tenacity). It was very painful, but very informative! I created my own lexer, parser, and interpreter for a file format/syntax that I also invented, again, without any guides or even learning what the difference between a lexer and a parser is until after I had finished (i.e: right now as I'm writing this, lmfao). If you want an in-depth guide to this new file format, check out the [GraphX Theatre Syntax Documentation](https://github.com/Electron7-7/graphx/blob/trunk/src/theatres/docs/graphxtheatre_syntax_documentation.md).
