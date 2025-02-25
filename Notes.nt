@@ -1300,3 +1300,6 @@ I've written a decent amount of documentation; now, I have three ideas for what 
 3. Theatre stage mesh assignment via .gt file
 
 I'm thinking of doing this in order of 3 2 1, as the obj loading should come after I've implemented the ability to change a Theatre's stage mesh, as that's a real big use case for this.
+
+[02/25/25]
+Emergency branch; I need to fix the shader, there's something off about how I process specular maps and shit. Basically, if there isn't a specular texture being used, everything is wrong (plus the specular texture affects the color of the material, i.e: in darkness the material goes black and white). I'm gonna implement some shader debugging code to swap between black and white views of each pass, basically like alpha mattes but for the diffuse lighting, specular lighting, etc. First thing I'm gonna do is go back to color-value materials only so I can start setting up the debug testing.

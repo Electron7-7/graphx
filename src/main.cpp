@@ -60,7 +60,8 @@ int main()
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
 	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
 #ifdef GRAPHX_DEBUG
-	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
+	// glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
+	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 #else
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 #endif
@@ -74,7 +75,8 @@ int main()
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
-	shaders.insert(shaders.end(), {&phong_shader});
+	GLShader phong_shader_backup(phong_vertex_backup_glsl, phong_fragment_backup_glsl);
+	shaders.insert(shaders.end(), {&phong_shader, &phong_shader_backup});
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
@@ -237,6 +239,22 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 {
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
+
+	if(key == GLFW_KEY_E && action == GLFW_PRESS)
+	{
+		shader_debug_value++;
+		if(shader_debug_value > DEBUG_ALL)
+			shader_debug_value = DEBUG_DIFFUSE;
+		PRINTDEBUG("Shader Debug Value: " << shader_debug_value)
+	}
+
+	if(key == GLFW_KEY_T && action == GLFW_PRESS)
+	{
+		if(shader_index == 0)
+			shader_index = 1;
+		else if(shader_index == 1)
+			shader_index = 0;
+	}
 
 	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);

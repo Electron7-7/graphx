@@ -78,8 +78,10 @@ S = $(SRC)/shaders
 SHADERS_C = $(SRC)/shaders.cpp
 SHADERS_H = $(SRC)/include/shaders.hpp
 SHDRS = \
-	$(S)/phong_vertex.glsl		\
-	$(S)/phong_fragment.glsl
+	$(S)/phong_vertex.glsl			\
+	$(S)/phong_fragment.glsl		\
+	$(S)/phong_vertex_backup.glsl	\
+	$(S)/phong_fragment_backup.glsl
 
 T = $(SRC)/theatres
 THEATRES_C = $(SRC)/theatres.cpp

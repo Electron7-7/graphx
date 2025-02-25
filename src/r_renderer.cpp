@@ -82,13 +82,15 @@ void R_GL_BufferMeshData(Mesh *mesh)
 	mesh->is_buffered = true;
 }
 
+int shader_debug_value = DEBUG_ALL;
+unsigned int shader_index = SHADER_PHONG;
+
 void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix)
 {
 	if(current_troupe_changed)
 		R_TroupeChanged();
 
 	int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
-	unsigned int shader_index = SHADER_PHONG;
 	int point_light_index = 0;
 	int spot_light_index = 0;
 
@@ -169,7 +171,8 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
-		
+		// shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
+
 		/*
 			NOTE: This will change almost immediately. I need to decide if I'm sticking with going through a vector of Meshes, switching to a vector of Actors,
 			or something else entirely (JSON? RenderCmds?). I also need to make sure that R_Render doesn't crash if there are no lights, make a better system for
@@ -226,7 +229,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		}
 	}
 
-	R_RenderStage(projection_matrix, shader_index);
+	// R_RenderStage(projection_matrix, shader_index);
 }
 
 void R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index)
