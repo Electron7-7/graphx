@@ -219,7 +219,7 @@ Material::Material()
 }
 
 Material::Material(bool is_fullbright, glm::vec3 init_color)
-: color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+: embedded_texture_specular(NO_TEXTURE_jpg), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
 Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
@@ -227,7 +227,7 @@ Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_spec
 {}
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: embedded_texture_specular(FLAT_SPEC_jpg), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 void Material::loadSettings(graphx::gSettings new_settings)
@@ -242,13 +242,6 @@ void Material::loadSettings(graphx::gSettings new_settings)
 	setRawData(specular_sharpness, new_settings["SpecularSharpness"]);
 	setRawData(specular_strength, new_settings["SpecularStrength"]);
 	setRawData(mat_fullbright, new_settings["mat_fullbright"]);
-
-	if(mat_fullbright && embedded_texture_diffuse == MISSING_TEXTURE_DIFF)
-	{
-		PRINTDEBUG("MAT_FULLBRIGHT + NO TEXTURE")
-		embedded_texture_diffuse = NO_TEXTURE;
-		embedded_texture_specular = NO_TEXTURE;
-	}
 }
 
 unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)

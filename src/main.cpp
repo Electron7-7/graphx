@@ -105,7 +105,9 @@ int main()
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		W_SwapAndClear(main_window, getCurrentEnvironment()->getAmbientLight());
+		// glm::vec3 swap_color = getCurrentEnvironment()->getAmbientLight();
+		glm::vec3 swap_color = iKnowWhatActorIWant<LightDirectional *>("Sun")->light_color * iKnowWhatActorIWant<LightDirectional *>("Sun")->light_strength;
+		W_SwapAndClear(main_window, swap_color);
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();

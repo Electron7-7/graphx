@@ -156,7 +156,7 @@ RigidBodyActor (Falling_Actor_5)
 LightDirectional (Sun)
 {
 	Direction (-0.1, -1.0, -0.3)
-	Strength  (0.1)
+	Strength  (1.0)
 	Color     (1.0, 1.0, 1.0)
 }
 LightTesterMover (test_light_1)
@@ -203,10 +203,15 @@ StaticBodyActor (Wall)
 	Scale		  (50.0, 50.0, 1.0)
 	Position      (0.0, 50.0, -51.0)
 }
+Environment (environment)
+{
+	AmbientLightingColor (1.0, 1.0, 1.0)
+	AmbientLightingStrength (1.0)
+}
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
-	Strength  (0.2)
+	Strength  (0.5)
 	Color     (0.8, 0.9, 1.0)
 }
 LightTesterMover (spinny_light)

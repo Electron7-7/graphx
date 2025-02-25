@@ -1,5 +1,6 @@
 #include "g_actors.hpp"
 #include "r_common.hpp"
+#include "t_settings.hpp"
 #include <algorithm>
 
 using namespace graphx;
@@ -55,6 +56,15 @@ Theatre::~Theatre()
 	delete stage;
 }
 
+void Theatre::loadStageSettings(graphx::gSettings stage_settings)
+{
+	glm::vec3 stage_euler_degrees = glm::vec3(0.0f);
+	setRawData(stage_position, stage_settings["Position"]);
+	setRawData(stage_scale, stage_settings["Scale"]);
+	setRawData(stage_euler_degrees, stage_settings["Rotation"]);
+	stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
+}
+
 std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 {
 	std::string buffer = "";
@@ -99,9 +109,6 @@ void Theatre::setUID(long new_uid)
 	UID = new_uid;
 }
 
-// Keep in mind, Theatre::startPreshow will fire when ANY Theatre is loaded, not just when the main Theatre is
-// This is why I make sure to put "keep_physics_alive" and similar things in if statements that only let them run
-// under certain conditions that only exist when loading a new main Theatre
 void Theatre::startPreshow()
 {
 	PRINTDEBUG("Entering Theatre (" << name << ")")

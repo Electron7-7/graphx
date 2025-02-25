@@ -1293,3 +1293,10 @@ Lol, I got confused on which branch I was in, so the "testing-weird-save-data-id
 I kinda wanna work on widening the scope of the engine, so that first idea seems to be what I'll start on; although, I do want to add a markdown file to "theatres/docs/" with all the C++ definitions in it, as well as a mini guide on variables and how they work and a list of variable names.
 
 After writing this documentation, I want to work on saving settings and stuff. My idea/compromise is this: by default, GraphX will use a traditional save-file system, but will provide the option to change over to the weird surgery self embedding save option.
+
+I've written a decent amount of documentation; now, I have three ideas for what to work on:
+1. Drag-and-drop GraphXTheatre file handling
+2. obj file integration
+3. Theatre stage mesh assignment via .gt file
+
+I'm thinking of doing this in order of 3 2 1, as the obj loading should come after I've implemented the ability to change a Theatre's stage mesh, as that's a real big use case for this.

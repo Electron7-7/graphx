@@ -206,7 +206,8 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 			shaders[shader_index]->setUniform(which_light + "position", current_light->getPosition<glm::vec3>());
 			shaders[shader_index]->setUniform(which_light + "strength", current_light->light_strength);
 			shaders[shader_index]->setUniform(which_light + "color", current_light->light_color);
-			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_color);
+			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_specular);
+			shaders[shader_index]->setUniform(which_light + "ambient", current_light->light_ambient);
 			shaders[shader_index]->setUniform(which_light + "range", current_light->range);
 			shaders[shader_index]->setUniform(which_light + "intensity", current_light->intensity);
 			shaders[shader_index]->setUniform(which_light + "falloff", current_light->falloff);
@@ -225,11 +226,16 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		}
 	}
 
-	// R_RenderFlats(projection_matrix, glm::mat4(1.0f), shader_index); // Removing Stage rendering for now bc its just a red cube lol
+	R_RenderStage(projection_matrix, shader_index);
 }
 
-void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index)
+void R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index)
 {
+	glm::mat4 model_matrix = glm::mat4(1.0f);
+	model_matrix = glm::translate(model_matrix, getCurrentTheatre()->stage_position);
+	model_matrix *= glm::toMat4(getCurrentTheatre()->stage_quaternion);
+	model_matrix = glm::scale(model_matrix, getCurrentTheatre()->stage_scale);
+
 	glBindBuffer(GL_ARRAY_BUFFER, getCurrentTheatre()->stage->VBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getCurrentTheatre()->stage->IBO);
 

@@ -588,10 +588,15 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	Actor::youGotACallBack(new_settings);
 
 	setRawData(light_color, new_settings["Color"]);
+	setRawData(light_specular, new_settings["Specular"]);
 	setRawData(light_strength, new_settings["Strength"]);
+	setRawData(light_ambient, new_settings["Ambient"]);
 	setRawData(range, new_settings["Range"]);
 	setRawData(intensity, new_settings["Intensity"]);
 	setRawData(falloff, new_settings["Falloff"]);
+
+	if(light_specular == glm::vec3(1.0f))
+		light_specular = light_color;
 }
 
 bool Light::isLightType(int light_type)

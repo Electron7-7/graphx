@@ -23,8 +23,8 @@ std::map<std::string, std::any> cpp_definitions =
 	{"DOOM_TEXTURE_DIFF", COMP04_5_png},
 	{"DOOM_TEXTURE_SPEC", COMP04_5_SPECULAR_jpg},
 	{"MISSING_TEXTURE_DIFF", MISSING_jpg},
-	{"MISSING_TEXTURE_SPEC", MISSING_SPECULAR_jpg},
 	{"NO_TEXTURE", NO_TEXTURE_jpg},
+	{"FLAT_SPEC", FLAT_SPEC_jpg},
 	{"SOURCE_ORANGE", SOURCE_ORANGE_png},
 	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY_png},
 	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
@@ -502,12 +502,19 @@ Theatre loadTheatre(long theatre_uid)
 		if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 		{
 			new_theatre.createActor(class_hash, object.first, new_class_settings);
+			continue;
 		}
 
-		else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
+		if(!object.second.first.compare("Stage"))
 		{
-			new_theatre.createDevice(class_hash, object.first, new_class_settings);
+			new_theatre.stage->settings = new_class_settings;
+			new_theatre.stage->loadSettings();
+			new_theatre.loadStageSettings(new_class_settings);
+			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage->getName() << "\" given custom settings")
+			continue;
 		}
+
+		new_theatre.createDevice(class_hash, object.first, new_class_settings);
 	}
 
 	return new_theatre;
