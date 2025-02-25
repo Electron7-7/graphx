@@ -111,7 +111,6 @@ void Theatre::startPreshow()
 	{
 		if(pair.second->isType(ENVIRONMENT))
 			environment_uid = pair.first;
-		pair.second->loadSettings();
 		pair.second->initialize();
 	}
 

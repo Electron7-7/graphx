@@ -1286,3 +1286,10 @@ DERIVED2
 That's big to remember. Also, if I had instead just grabbed the variables directly, the output (should) have been the same, with the exception of the second derived class having the same output as the first derived class. Final note is that if you want to externally set one of these variables, you actually have to do it via the pointer and not directly. Basically, if you want to get/set a base class variable from a derived class via pointers, you have to do it from an upcast base pointer of that derived class.
 
 I also want to change how the header files are made, because currently some of them (i.e: r_common.hpp) are used in so many places that when I change it, I end up just saying "fuck it" and recompiling the whole damn program because I can't be assed to figure out which file is the first one to be compiled that includes it.
+
+[02/24/25]
+Lol, I got confused on which branch I was in, so the "testing-weird-save-data-idea" branch has a new note and "t_settings.hpp". Anyways, I want to think of something to do. I could start adding new Actors and Devices to help make a game, I could start building a main menu and gui interface with ImGui, I could work on debug interactions (i.e: clicking on an object to get information about it/tweak it), or I could work on making an editor with ImGui.
+
+I kinda wanna work on widening the scope of the engine, so that first idea seems to be what I'll start on; although, I do want to add a markdown file to "theatres/docs/" with all the C++ definitions in it, as well as a mini guide on variables and how they work and a list of variable names.
+
+After writing this documentation, I want to work on saving settings and stuff. My idea/compromise is this: by default, GraphX will use a traditional save-file system, but will provide the option to change over to the weird surgery self embedding save option.

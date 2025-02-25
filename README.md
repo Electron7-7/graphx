@@ -18,7 +18,7 @@ Creating a `theatres/` folder next to the game executable and putting custom `.g
 
 ## Update: GT Files!
 
-No, not Gran Turismo, "GraphXTheatre" files are the newest addition to the GraphX game engine, and I am thoroughly proud of my horrible code. In a nutshell, I decided to create my own custom file format for creating Theatres and I wanted to do so without using any tutorials or guides (just StackOverflow and tenacity). It was very painful, but very informative! I created my own lexer, parser, and interpreter for a file format/syntax that I also invented, again, without any guides or even learning what the difference between a lexer and a parser is until after I had finished (i.e: right now as I'm writing this, lmfao). If you want an in-depth guide to this new file format, check out the [GraphX Theatre Syntax Documentation](https://github.com/Electron7-7/graphx/blob/trunk/src/theatres/docs/graphxtheatre_syntax_documentation.md).
+No, not Gran Turismo, "GraphXTheatre" files are the newest addition to the GraphX game engine, and I am thoroughly proud of my horrible code. In a nutshell, I decided to create my own custom file format for creating Theatres and I wanted to do so without using any tutorials or guides (just StackOverflow and tenacity). It was very painful, but very informative! I created my own lexer, parser, and interpreter for a file format/syntax that I also invented, again, without any guides or even learning what the difference between a lexer and a parser is until after I had finished (i.e: right now as I'm writing this, lmfao). See the wiki for a guide to making these files, as well as syntax documentation and other helpful things.
 
 ## An Okay Game Engine
 
