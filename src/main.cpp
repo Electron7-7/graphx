@@ -205,17 +205,6 @@ void testGameTick(GLFWwindow *main_window)
 				actor->updateStates(actor_state_mutex);
 			}
 
-			Actor *actor_3 = iKnowWhatActorIWant<Actor *>("actor_3");
-			float test_rot = 0.005f;
-			glm::quat old_rot = actor_3->getRotation<glm::quat>();
-			glm::quat new_rot = glm::rotate(old_rot, test_rot,  glm::vec3(0.0f, 1.0f, 0.0f));
-			actor_3->setGlobalRotation(new_rot);
-
-			Actor *actor_4 = iKnowWhatActorIWant<Actor *>("actor_4");
-			old_rot = actor_4->getRotation<glm::quat>();
-			new_rot = glm::rotate(old_rot, test_rot,  glm::vec3(1.0f, 0.0f, 0.0f));
-			actor_4->setGlobalRotation(new_rot);
-
 			LightFlashlight *player_flashlight = iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
 
 			player_flashlight->setLight(test_flashlight_bool);

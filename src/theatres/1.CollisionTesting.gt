@@ -149,7 +149,7 @@ RigidBodyActor (Falling_Actor_5)
 LightDirectional (Sun)
 {
 	Direction (-0.1, -1.0, -0.3)
-	Strength  (0.5)
+	Strength  (0.05)
 	Color     (1.0, 1.0, 1.0)
 }
 LightTesterMover (test_light_1)
