@@ -73,8 +73,9 @@ int main()
 	
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 
+	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
-	shaders.insert(shaders.end(), {&phong_shader});
+	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader});
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
@@ -105,7 +106,9 @@ int main()
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		W_SwapAndClear(main_window, getCurrentEnvironment()->getAmbientLight());
+		// glm::vec3 swap_color = getCurrentEnvironment()->getAmbientLight();
+		glm::vec3 swap_color = iKnowWhatActorIWant<LightDirectional *>("Sun")->light_color * iKnowWhatActorIWant<LightDirectional *>("Sun")->light_strength;
+		W_SwapAndClear(main_window, swap_color);
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -235,6 +238,71 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 {
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
+
+	if(key == GLFW_KEY_1 && action == GLFW_PRESS)
+	{
+		shader_debug_value = 1;
+		PRINTDEBUG("Shader Debug Value: DEBUG_DIFFUSE")
+	}
+
+	if(key == GLFW_KEY_2 && action == GLFW_PRESS)
+	{
+		shader_debug_value = 2;
+		PRINTDEBUG("Shader Debug Value: DEBUG_SPECULAR")
+	}
+	if(key == GLFW_KEY_3 && action == GLFW_PRESS)
+	{
+		shader_debug_value = 3;
+		PRINTDEBUG("Shader Debug Value: DEBUG_AMBIENT")
+	}
+
+	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
+	{
+		shader_debug_value = 4;
+		PRINTDEBUG("Shader Debug Value: DEBUG_ALL")
+	}
+
+	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
+	{
+		shader_debug_value = 5;
+		PRINTDEBUG("Shader Debug Value: DEBUG_NORMALS")
+	}
+
+	if(key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)
+	{
+		if(shader_index >= (shaders.size() - 1))
+			shader_index = 0;
+		else
+			shader_index++;
+
+		switch(shader_index)
+		{
+		case SHADER_BLINN_PHONG:
+			PRINTDEBUG("Using Shader: Blinn-Phong")
+			break;
+		case SHADER_PHONG:
+			PRINTDEBUG("Using Shader: Phong")
+			break;
+		}
+	}
+
+	if(key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS)
+	{
+		if(shader_index <= 0)
+			shader_index = shaders.size() - 1;
+		else
+			shader_index--;
+
+		switch(shader_index)
+		{
+		case SHADER_BLINN_PHONG:
+			PRINTDEBUG("Using Shader: Blinn-Phong")
+			break;
+		case SHADER_PHONG:
+			PRINTDEBUG("Using Shader: Phong")
+			break;
+		}
+	}
 
 	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);

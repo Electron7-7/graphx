@@ -28,9 +28,10 @@ WINDOWS = GraphX_Windows_x86_64.exe
 NAME = ""
 
 FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
-TESTRUN_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows
-
-TESTRUN_WINDOWS = # nothing here, yet
+TESTRUN_LINUX = exit 0 &&
+TESTRUN_WINDOWS = exit 0 &&
+TEST_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows
+TEST_WINDOWS = # nothing here, yet
 
 SRC := src
 
@@ -68,40 +69,43 @@ IMGS = \
 	$(I)/COMP04_5_SPECULAR.jpg	\
 	$(I)/LIGHT.jpg				\
 	$(I)/MISSING.jpg			\
-	$(I)/MISSING_SPECULAR.jpg	\
 	$(I)/SOURCE_ORANGE.png		\
 	$(I)/SOURCE_LIGHT_GREY.png	\
-	$(I)/NO_TEXTURE.jpg
+	$(I)/NO_TEXTURE.jpg			\
+	$(I)/FLAT_SPEC.jpg
 
 S = $(SRC)/shaders
 SHADERS_C = $(SRC)/shaders.cpp
 SHADERS_H = $(SRC)/include/shaders.hpp
 SHDRS = \
-	$(S)/phong_vertex.glsl		\
+	$(S)/phong_vertex.glsl			\
 	$(S)/phong_fragment.glsl
 
 T = $(SRC)/theatres
 THEATRES_C = $(SRC)/theatres.cpp
 THEATRES_H = $(SRC)/include/theatres.hpp
 
-PHONY = all clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
+PHONY = all clean dirty_clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
 
 all: release linux windows
 
-clean: clean_linux clean_windows clean_resources embed_resources
-	$(info Cleaned!)
+clean: clean_resources embed_resources
+	-rm -f build/*
 
-clean_linux:
-	-rm -rf build/*.o
-	-rm -rf build/*.opp
-	-rm -rf build/GraphXDebug
-	-rm -rf build/$(LINUX)
-
-clean_windows:
-	-rm -rf build/*.wo
-	-rm -rf build/*.wopp
-	-rm -rf build/GraphXDebug.exe
-	-rm -rf build/$(WINDOWS)
+dirty_clean:
+	-mkdir build/backup/
+	-mv build/imgui* build/glad.o build/backup/
+	-rm -f build/*.o
+	-rm -f build/*.opp
+	-rm -f build/*.wo
+	-rm -f build/*.wopp
+	-rm -f build/*.tmp
+	-rm -f build/GraphXDebug
+	-rm -f build/GraphXDebug.exe
+	-rm -f build/$(LINUX)
+	-rm -f build/$(WINDOWS)
+	-mv build/backup/* build/
+	-rmdir build/backup/
 
 clean_resources:
 	-rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H)
@@ -136,6 +140,11 @@ windows: $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
 	$(TESTRUN_WINDOWS) $(O)/$(NAME)
 
+test:
+	$(info GraphX Will Test-Run After Compiling)
+	$(eval TESTRUN_LINUX := $(TEST_LINUX))
+	$(eval TESTRUN_WINDOWS := $(TEST_WINDOWS))
+
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
 
@@ -146,11 +155,11 @@ $(IMAGES_H):
 
 $(SHADERS_C): $(SHADERS_H)
 	$(shell printf "#include <string>\n" >> $(SHADERS_C))
-	$(foreach file,$(SHDRS),$(shell printf "std::string $(subst .,_,$(file:$(S)/%=%)) = R\"~(\n" >> $(SHADERS_C) && cat $(file) >> $(SHADERS_C) && printf "\n)~\";\n" >> $(SHADERS_C)))
+	$(foreach file,$(shell ls $(S)),$(shell printf "std::string $(subst .,_,$(file:$(S)/%=%)) = R\"~(\n" >> $(SHADERS_C) && cat $(S)/$(file) >> $(SHADERS_C) && printf "\n)~\";\n" >> $(SHADERS_C)))
 
 $(SHADERS_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_SHADERS\n#define GRAPHX_EMBEDDED_SHADERS\n#include <string>\n" >> $(SHADERS_H))
-	$(foreach file,$(SHDRS),$(shell printf "extern std::string $(subst .,_,$(file:$(S)/%=%));\n" >> $(SHADERS_H)))
+	$(foreach file,$(shell ls $(S)),$(shell printf "extern std::string $(subst .,_,$(file:$(S)/%=%));\n" >> $(SHADERS_H)))
 	$(shell printf "#endif" >> $(SHADERS_H))
 
 $(THEATRES_H):

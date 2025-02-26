@@ -103,6 +103,10 @@ protected:
 struct Theatre
 {
 	Mesh *stage = nullptr;
+	glm::vec3 stage_scale = glm::vec3(0.0f);
+	glm::vec3 stage_position = glm::vec3(0.0f);
+	glm::quat stage_quaternion = glm::quat();
+
 	std::string name = "Untitled Theatre";
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
@@ -111,6 +115,7 @@ struct Theatre
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 	~Theatre();
 
+	void loadStageSettings(graphx::gSettings stage_settings);
 	void startPreshow();
 	void dropCurtains();
 	long getUID();

@@ -13,28 +13,24 @@ Material (FullBright_1)
 	mat_fullbright (True)
 	Color (1.2, 1.0, 0.0)
 	DiffuseTexture [SOURCE_LIGHT_GREY]
-	SpecularSharpness (0)
-	SpecularStrength (0.0)
 }
 Material (Source_Yellow)
 {
 	Color (1.2, 1.0, 0.0)
 	DiffuseTexture [SOURCE_LIGHT_GREY]
-	SpecularSharpness (0)
 	SpecularStrength (0.0)
 }
 Material (Source_Green)
 {
 	Color (0.0, 1.0, 0.3)
 	DiffuseTexture [SOURCE_LIGHT_GREY]
-	SpecularSharpness (0)
 	SpecularStrength (0.0)
 }
 Material (Doom_Shiny)
 {
 	DiffuseTexture    [DOOM_TEXTURE_DIFF]
 	SpecularTexture   [DOOM_TEXTURE_SPEC]
-	SpecularSharpness (256)
+	SpecularSharpness (64)
 	SpecularStrength  (0.8)
 }
 Material (Doom_Dull)
@@ -42,7 +38,7 @@ Material (Doom_Dull)
 	DiffuseTexture    [DOOM_TEXTURE_DIFF]
 	SpecularTexture   [DOOM_TEXTURE_SPEC]
 	SpecularSharpness (16)
-	SpecularStrength  (0.5)
+	SpecularStrength  (0.4)
 }
 Mesh (Cube)
 {
@@ -153,7 +149,7 @@ RigidBodyActor (Falling_Actor_5)
 LightDirectional (Sun)
 {
 	Direction (-0.1, -1.0, -0.3)
-	Strength  (0.1)
+	Strength  (0.05)
 	Color     (1.0, 1.0, 1.0)
 }
 LightTesterMover (test_light_1)

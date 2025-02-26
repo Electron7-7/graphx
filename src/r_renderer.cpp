@@ -82,19 +82,22 @@ void R_GL_BufferMeshData(Mesh *mesh)
 	mesh->is_buffered = true;
 }
 
+int shader_debug_value = 4;
+unsigned int shader_index = SHADER_BLINN_PHONG;
+
 void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix)
 {
 	if(current_troupe_changed)
 		R_TroupeChanged();
 
 	int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
-	unsigned int shader_index = SHADER_PHONG;
 	int point_light_index = 0;
 	int spot_light_index = 0;
 
 	glUseProgram(shaders[shader_index]->id);
 	shaders[shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
+	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 
 	for(Actor *actor : getCurrentTheatre()->troupe)
 	{
@@ -169,7 +172,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
-		
+
 		/*
 			NOTE: This will change almost immediately. I need to decide if I'm sticking with going through a vector of Meshes, switching to a vector of Actors,
 			or something else entirely (JSON? RenderCmds?). I also need to make sure that R_Render doesn't crash if there are no lights, make a better system for
@@ -207,6 +210,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 			shaders[shader_index]->setUniform(which_light + "strength", current_light->light_strength);
 			shaders[shader_index]->setUniform(which_light + "color", current_light->light_color);
 			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_color);
+			shaders[shader_index]->setUniform(which_light + "ambient_strength", current_light->light_ambient_strength);
 			shaders[shader_index]->setUniform(which_light + "range", current_light->range);
 			shaders[shader_index]->setUniform(which_light + "intensity", current_light->intensity);
 			shaders[shader_index]->setUniform(which_light + "falloff", current_light->falloff);
@@ -225,11 +229,16 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		}
 	}
 
-	// R_RenderFlats(projection_matrix, glm::mat4(1.0f), shader_index); // Removing Stage rendering for now bc its just a red cube lol
+	R_RenderStage(projection_matrix, shader_index);
 }
 
-void R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index)
+void R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index)
 {
+	glm::mat4 model_matrix = glm::mat4(1.0f);
+	model_matrix = glm::translate(model_matrix, getCurrentTheatre()->stage_position);
+	model_matrix *= glm::toMat4(getCurrentTheatre()->stage_quaternion);
+	model_matrix = glm::scale(model_matrix, getCurrentTheatre()->stage_scale);
+
 	glBindBuffer(GL_ARRAY_BUFFER, getCurrentTheatre()->stage->VBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getCurrentTheatre()->stage->IBO);
 

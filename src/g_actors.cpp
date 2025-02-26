@@ -589,6 +589,7 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 
 	setRawData(light_color, new_settings["Color"]);
 	setRawData(light_strength, new_settings["Strength"]);
+	setRawData(light_ambient_strength, new_settings["Ambient Strength"]);
 	setRawData(range, new_settings["Range"]);
 	setRawData(intensity, new_settings["Intensity"]);
 	setRawData(falloff, new_settings["Falloff"]);
@@ -666,7 +667,6 @@ void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 		new_settings = settings;
 	Light::youGotACallBack(new_settings);
 
-	// setActorPointer(parent, new_settings["Parent"]); // this might be causing issues, since it's set during Theatre initialization, where the map might be getting affected(?)
 	setRawData(position_offset, new_settings["PositionOffset"]);
 	setRawData(rotation_offset, new_settings["RotationOffset"]);
 }

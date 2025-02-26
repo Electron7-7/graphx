@@ -187,9 +187,10 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 {
 	float light_distance = length(light.position - fragment_position);
 	vec3 reflect_direction = reflect(-light_direction, normalize(normal));
+	vec3 blinn_halfway_vector = normalize(light_direction + view_direction);
 
 	float diffuse = max(dot(normalize(normal), light_direction), 0.0f);
-	float specular = pow(max(dot(view_direction, reflect_direction), 0.0f), material.specular_sharpness);
+	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), 0.0f), material.specular_sharpness);
 
 	vec3 this_diffuse  = light.strength * light.color * material_diffuse * material.color * diffuse;
 	vec3 this_specular = light.color * material_specular * material.color * material.specular_strength * specular;

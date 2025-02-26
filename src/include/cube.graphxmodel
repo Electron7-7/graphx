@@ -4,35 +4,35 @@
 const std::vector<float> CUBE_VERTS =
 {
 	// positions			// normals				// texture coords
-	-1.0f, -1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 0.0f,			// Left		Down	Back		0
-	-1.0f, -1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 0.0f,			// Left		Down	Forward		1
-	-1.0f,  1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 1.0f,			// Left		Up		Back		2
-	-1.0f,  1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 1.0f,			// Left		Up		Forward		3
+	-1.0f, -1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 0.0f,			// Left		Down	Forward		0
+	-1.0f, -1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 0.0f,			// Left		Down	Back		1
+	-1.0f,  1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 1.0f,			// Left		Up		Forward		2
+	-1.0f,  1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 1.0f,			// Left		Up		Back		3
 
-	 1.0f, -1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	1.0f, 0.0f,			// Right	Down	Back		4
-	 1.0f, -1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	0.0f, 0.0f,			// Right	Down	Forward		5
-	 1.0f,  1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	1.0f, 1.0f,			// Right	Up		Back		6
-	 1.0f,  1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	0.0f, 1.0f,			// Right	Up		Forward		7
+	 1.0f, -1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	1.0f, 0.0f,			// Right	Down	Forward		4
+	 1.0f, -1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	0.0f, 0.0f,			// Right	Down	Back		5
+	 1.0f,  1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	1.0f, 1.0f,			// Right	Up		Forward		6
+	 1.0f,  1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	0.0f, 1.0f,			// Right	Up		Back		7
 
-	-1.0f, -1.0f, -1.0f,	 0.0f, -1.0f,  0.0f,	0.0f, 1.0f,			// Left		Down	Back		8
-	-1.0f, -1.0f,  1.0f,	 0.0f, -1.0f,  0.0f,	0.0f, 0.0f,			// Left		Down	Forward		9
-	 1.0f, -1.0f, -1.0f,	 0.0f, -1.0f,  0.0f,	1.0f, 1.0f,			// Right	Down	Back		10
-	 1.0f, -1.0f,  1.0f,	 0.0f, -1.0f,  0.0f,	1.0f, 0.0f,			// Right	Down	Forward		11
+	-1.0f, -1.0f, -1.0f,	 0.0f, -1.0f,  0.0f,	0.0f, 1.0f,			// Left		Down	Forward		8
+	-1.0f, -1.0f,  1.0f,	 0.0f, -1.0f,  0.0f,	0.0f, 0.0f,			// Left		Down	Back		9
+	 1.0f, -1.0f, -1.0f,	 0.0f, -1.0f,  0.0f,	1.0f, 1.0f,			// Right	Down	Forward		10
+	 1.0f, -1.0f,  1.0f,	 0.0f, -1.0f,  0.0f,	1.0f, 0.0f,			// Right	Down	Back		11
 
-	-1.0f,  1.0f, -1.0f,	 0.0f,  1.0f,  0.0f,	0.0f, 1.0f,			// Left		Up		Back		12
-	-1.0f,  1.0f,  1.0f,	 0.0f,  1.0f,  0.0f,	0.0f, 0.0f,			// Left		Up		Forward		13
-	 1.0f,  1.0f, -1.0f,	 0.0f,  1.0f,  0.0f,	1.0f, 1.0f,			// Right	Up		Back		14
-	 1.0f,  1.0f,  1.0f,	 0.0f,  1.0f,  0.0f,	1.0f, 0.0f,			// Right	Up		Forward		15
+	-1.0f,  1.0f, -1.0f,	 0.0f,  1.0f,  0.0f,	0.0f, 1.0f,			// Left		Up		Forward		12
+	-1.0f,  1.0f,  1.0f,	 0.0f,  1.0f,  0.0f,	0.0f, 0.0f,			// Left		Up		Back		13
+	 1.0f,  1.0f, -1.0f,	 0.0f,  1.0f,  0.0f,	1.0f, 1.0f,			// Right	Up		Forward		14
+	 1.0f,  1.0f,  1.0f,	 0.0f,  1.0f,  0.0f,	1.0f, 0.0f,			// Right	Up		Back		15
 
-	-1.0f, -1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	1.0f, 0.0f,			// Left		Down	Back		16
-	-1.0f,  1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	1.0f, 1.0f,			// Left		Up		Back		17
-	 1.0f, -1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	0.0f, 0.0f,			// Right	Down	Back		18
-	 1.0f,  1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	0.0f, 1.0f,			// Right	Up		Back		19
+	-1.0f, -1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	1.0f, 0.0f,			// Left		Down	Forward		16
+	-1.0f,  1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	1.0f, 1.0f,			// Left		Up		Forward		17
+	 1.0f, -1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	0.0f, 0.0f,			// Right	Down	Forward		18
+	 1.0f,  1.0f, -1.0f,	 0.0f,  0.0f, -1.0f,	0.0f, 1.0f,			// Right	Up		Forward		19
 
-	-1.0f, -1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	0.0f, 0.0f,			// Left		Down	Forward		20
-	-1.0f,  1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	0.0f, 1.0f,			// Left		Up		Forward		21
-	 1.0f, -1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	1.0f, 0.0f,			// Right	Down	Forward		22
-	 1.0f,  1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	1.0f, 1.0f			// Right	Up		Forward		23
+	-1.0f, -1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	0.0f, 0.0f,			// Left		Down	Back		20
+	-1.0f,  1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	0.0f, 1.0f,			// Left		Up		Back		21
+	 1.0f, -1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	1.0f, 0.0f,			// Right	Down	Back		22
+	 1.0f,  1.0f,  1.0f,	 0.0f,  0.0f,  1.0f,	1.0f, 1.0f			// Right	Up		Back		23
 };
 
 const std::vector<unsigned int> CUBE_INDICES =

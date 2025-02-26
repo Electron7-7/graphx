@@ -15,7 +15,8 @@
 
 #define SHADERS_AMOUNT		1
 //---------------------------
-#define SHADER_PHONG		0
+#define SHADER_BLINN_PHONG	0
+#define SHADER_PHONG		1
 
 
 #define BUFFERS_AMOUNT		5
@@ -27,10 +28,6 @@
 #define BUFFER_PROPS		4
 
 
-#define MISSING_TEXTURE_DIFF 			MISSING_jpg
-#define MISSING_TEXTURE_SPEC			MISSING_SPECULAR_jpg
-#define TOOL_TEXTURE_LIGHT				LIGHT_jpg
-#define NO_TEXTURE						NO_TEXTURE_jpg
 // Le secret dev texture
 #define DOOM_TEXTURE_DIFF				COMP04_5_png
 #define DOOM_TEXTURE_SPEC				COMP04_5_SPECULAR_jpg
@@ -47,6 +44,9 @@
 #define DEVICE_MESH			3
 #define DEVICE_SPRITE		3
 #define DEVICE_COLLIDER		4
+
+extern int shader_debug_value;
+extern unsigned int shader_index;
 
 struct GLShader
 {
@@ -102,8 +102,8 @@ struct Material final : public Device
 	unsigned int texture_diffuse;
 	unsigned int texture_specular;
 
-	unsigned char* embedded_texture_diffuse = NO_TEXTURE;
-	unsigned char* embedded_texture_specular = NO_TEXTURE;
+	unsigned char* embedded_texture_diffuse = MISSING_jpg;
+	unsigned char* embedded_texture_specular = FLAT_SPEC_jpg;
 
 	glm::vec3 color = glm::vec3(1.0f);
 	int specular_sharpness = 16;
@@ -112,7 +112,7 @@ struct Material final : public Device
 
 	Material();
 	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
-	Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
+	Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE_jpg, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
@@ -159,6 +159,6 @@ void		W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0
 void		R_GL_BufferMeshData(Mesh *mesh);
 void 		R_StoreBuffers();
 void 		R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
-void		R_RenderFlats(glm::mat4 projection_matrix, glm::mat4 model_matrix, unsigned int shader_index);
+void		R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void		R_TroupeChanged(); // Bad way of buffering new Meshes when new Actors are added to a Theatre
 #endif
