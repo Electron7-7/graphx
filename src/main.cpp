@@ -187,22 +187,19 @@ void testGameTick(GLFWwindow *main_window)
 		current_tick_length += (now_time - last_time) / TICKLENGTH;
 		last_time = now_time;
 
-		while(current_tick_length >= 1.0f)
+		while(current_tick_length >= 1.0f && !loading_new_main_theatre)
 		{
 			current_tick_since_second++;
 			current_tick_since_start++;
 
 			for(Actor *actor : getCurrentTheatre()->troupe)
 			{
-				if(loading_new_main_theatre)
-					continue;
 				actor->processInput(main_window);
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
 
-			if(!loading_new_main_theatre)
-				jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
+			jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
 
 			last_tick_timestamp = glfwGetTime();
 			current_tick_length--;
