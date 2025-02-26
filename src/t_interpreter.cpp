@@ -17,6 +17,8 @@ using namespace graphx;
 using namespace graphx::classes;
 
 bool loading_new_main_theatre = true;
+std::string empty_settings_identifier = "FUCKYOU";
+graphx::gSettings empty_settings = {{empty_settings_identifier, {}}};
 
 std::map<std::string, std::any> cpp_definitions =
 {
@@ -475,8 +477,8 @@ Theatre loadTheatre(long theatre_uid)
 					}
 				}
 
-				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
-				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->youGotACallBack();
+				// std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
+				std::any_cast<Actor *>(new_class_settings.at(it->second.first.first))->youGotACallBack(settings_to_modify);
 				continue;
 			}
 
@@ -493,8 +495,8 @@ Theatre loadTheatre(long theatre_uid)
 				settings_to_modify[pair.first] = new_theatre.getDevice(pair.second);
 			}
 
-			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
-			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings();
+			// std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
+			std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->loadSettings(settings_to_modify);
 		}
 
 		int class_hash = getClassHash(object.second.first);
@@ -507,8 +509,8 @@ Theatre loadTheatre(long theatre_uid)
 
 		if(!object.second.first.compare("Stage"))
 		{
-			new_theatre.stage->settings = new_class_settings;
-			new_theatre.stage->loadSettings();
+			// new_theatre.stage->settings = new_class_settings;
+			new_theatre.stage->loadSettings(new_class_settings);
 			new_theatre.loadStageSettings(new_class_settings);
 			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage->getName() << "\" given custom settings")
 			continue;

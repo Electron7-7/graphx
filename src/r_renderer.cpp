@@ -15,34 +15,13 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void R_TroupeChanged()
-{
-	for(Actor *actor : getCurrentTheatre()->troupe)
-	{
-		if(!actor->wantsToBeBuffered() || actor->mesh->is_buffered)
-			continue;
-
-		unsigned int current_vao_index = VAOS_AMOUNT + 1;
-
-		if(actor->mesh->vao_index != current_vao_index)
-		{
-			current_vao_index = actor->mesh->vao_index;
-			glBindVertexArray(VAOs[current_vao_index]);
-		}
-		
-		R_GL_BufferMeshData(actor->mesh);
-	}
-
-	current_troupe_changed = false;
-}
-
 void R_StoreBuffers()
 {
 	int current_vao_index = VAOS_AMOUNT + 1;
 
 	for(Actor *actor : getCurrentTheatre()->troupe)
 	{
-		if(!actor->wantsToBeBuffered())
+		if(!actor->wantsToBeBuffered() || actor->mesh->is_buffered)
 			continue;
 
 		if(actor->mesh->vao_index != current_vao_index)
@@ -87,8 +66,8 @@ unsigned int shader_index = SHADER_BLINN_PHONG;
 
 void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix)
 {
-	if(current_troupe_changed)
-		R_TroupeChanged();
+	if(time_to_store_buffers)
+		R_StoreBuffers();
 
 	int current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
 	int point_light_index = 0;

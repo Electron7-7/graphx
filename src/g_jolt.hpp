@@ -1,6 +1,7 @@
 #ifndef GRAPHX_JOLT
 #define GRAPHX_JOLT
 #include "graphx_namespace.hpp"
+#include "t_settings.hpp"
 #include "r_common.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -54,7 +55,7 @@ struct Collider : public Device
 	const JPH::BodyID &getBodyID();
 	JPH::BodyCreationSettings *getBodySettings();
 
-	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 	void initialize() override;
 	void prepForDestruction() override;
 

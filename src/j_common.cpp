@@ -54,8 +54,8 @@ Collider::~Collider()
 
 void Collider::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	Device::loadSettings(new_settings);
 

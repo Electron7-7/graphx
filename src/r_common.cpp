@@ -155,8 +155,8 @@ std::string Device::getName()
 
 void Device::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	setRawData(name, new_settings["Name"]);
 }
@@ -194,8 +194,8 @@ Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_co
 
 void Environment::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	Device::loadSettings(new_settings);
 
@@ -232,8 +232,8 @@ Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned 
 
 void Material::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 	Device::loadSettings(new_settings);
 
 	setVariable(embedded_texture_diffuse, new_settings["DiffuseTexture"]);
@@ -292,8 +292,8 @@ Mesh::~Mesh()
 
 void Mesh::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	Device::loadSettings(new_settings);
 
@@ -320,8 +320,8 @@ Sprite::Sprite(Material *init_material, int init_vao_index)
 
 void Sprite::loadSettings(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	Mesh::loadSettings(new_settings);
 }

@@ -27,22 +27,18 @@
 std::mutex actor_state_mutex;
 
 glm::vec2 main_window_size(1280, 720);
-glm::vec2 mouse_last(main_window_size / 2.0f);
 
 static int TICKRATE = 120;
 
 int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
-bool test_flashlight_bool = false;
-bool red_flashlight_color_bool = false;
 bool do_jolt_assert = false;
 bool debug_console_open = false;
 
 float camera_near = 0.1f;
 float camera_far = 1000.0f;
 
-void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
@@ -196,23 +192,12 @@ void testGameTick(GLFWwindow *main_window)
 			current_tick_since_second++;
 			current_tick_since_start++;
 
-			processInput(main_window);
-
-			// TICK(current_tick_since_second) // Prints current tick (looping from 0 to TICKRATE)
 			for(Actor *actor : getCurrentTheatre()->troupe)
 			{
+				actor->processInput(main_window);
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
-
-			LightFlashlight *player_flashlight = iKnowWhatActorIWant<LightFlashlight *>(std::string("Player_Flashlight"));
-
-			player_flashlight->setLight(test_flashlight_bool);
-
-			if(red_flashlight_color_bool)
-				player_flashlight->light_color = glm::vec3(1.0f, 0.0f, 0.0f);
-			else
-				player_flashlight->light_color = glm::vec3(1.0f);
 
 			if(!loading_new_main_theatre)
 				jolt_physics_system.Update(TICKLENGTH, 1, &jolt_temp_allocator, &jolt_job_system);
@@ -239,33 +224,35 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
 
+	getCurrentTheatre()->delegateKeyInput(window, key, scancode, action, mods);
+
 	if(key == GLFW_KEY_1 && action == GLFW_PRESS)
 	{
 		shader_debug_value = 1;
-		PRINTDEBUG("Shader Debug Value: DEBUG_DIFFUSE")
+		PRINTNOTE("Shader Debug Focus Lighting Component: Diffuse")
 	}
 
 	if(key == GLFW_KEY_2 && action == GLFW_PRESS)
 	{
 		shader_debug_value = 2;
-		PRINTDEBUG("Shader Debug Value: DEBUG_SPECULAR")
+		PRINTNOTE("Shader Debug Focus Lighting Component: Specular")
 	}
 	if(key == GLFW_KEY_3 && action == GLFW_PRESS)
 	{
 		shader_debug_value = 3;
-		PRINTDEBUG("Shader Debug Value: DEBUG_AMBIENT")
+		PRINTNOTE("Shader Debug Focus Lighting Component: Ambient")
 	}
 
 	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
 	{
 		shader_debug_value = 4;
-		PRINTDEBUG("Shader Debug Value: DEBUG_ALL")
+		PRINTNOTE("Shader Debug Focus Lighting Component: All (Diffuse + Specular + Ambient)")
 	}
 
 	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
 	{
 		shader_debug_value = 5;
-		PRINTDEBUG("Shader Debug Value: DEBUG_NORMALS")
+		PRINTNOTE("Shader Debug Focus Lighting Component: Normals")
 	}
 
 	if(key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)
@@ -362,24 +349,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			PRINTDEBUG("Ambient Lighting Enabled")
 	}
 
-	if(key == GLFW_KEY_F && action == GLFW_PRESS)
-	{
-		test_flashlight_bool = !test_flashlight_bool;
-		if(test_flashlight_bool)
-			PRINTDEBUG("Flashlight Off")
-		else
-			PRINTDEBUG("Flashlight On")
-	}
-
-	if(key == GLFW_KEY_Q && action == GLFW_PRESS)
-	{
-		red_flashlight_color_bool = !red_flashlight_color_bool;
-		if(red_flashlight_color_bool)
-			PRINTDEBUG("Flashlight Red")
-		else
-			PRINTDEBUG("Flashlight Not Red")
-	}
-
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTDEBUG("Resetting PhysicsActors to initial transformation!")
@@ -426,33 +395,12 @@ void toggleCursor(GLFWwindow *window, bool show_cursor)
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
-// This will be put in Actor once I abstract "glfwGetKey" and related functions
-void processInput(GLFWwindow *window)
-{
-	if(ImGui::GetIO().WantCaptureKeyboard)
-		return;
-
-	int input_vector[2] =
-	{
-		glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S),
-		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
-	};
-
-	if(!loading_new_main_theatre)
-		getCurrentPlayer()->doMovement(input_vector);
-}
-
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL || ImGui::GetIO().WantCaptureMouse)
 		return;
 
-	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
-	glm::vec2 mouse_offset = mouse_position - mouse_last;
-	mouse_last = mouse_position;
-	
-	if(!loading_new_main_theatre)
-		getCurrentPlayer()->doMouseMovement(mouse_offset);
+	getCurrentTheatre()->delegateMouseInput(window, x_position_in, y_position_in);
 }
 
 int WinMain() // Fuck off, Windows

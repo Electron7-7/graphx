@@ -57,7 +57,7 @@ OBJS = 							\
 	$(O)/g_imgui.opp			\
 	$(O)/t_interpreter.opp		\
 	$(O)/r_renderer.opp			\
- 	$(O)/g_theatres.opp			\
+ 	$(O)/g_theatres.opp
 
 WOBJS = $(subst .o,.wo,$(OBJS))
 

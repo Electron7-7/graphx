@@ -3,6 +3,7 @@
 #define GRAPHX_RENDERING
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
+#include "t_settings.hpp"
 #include "ERROR.graphxmodel"
 #include <stb_image.h>
 #include <array>
@@ -74,7 +75,7 @@ struct Device
 	std::string getName();
 
 	virtual void initialize();
-	virtual void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}});
+	virtual void loadSettings(graphx::gSettings new_settings = empty_settings);
 	virtual void prepForDestruction();
 	virtual long getUID();
 	virtual void setUID(long manual_uid);
@@ -94,7 +95,7 @@ struct Environment final : public Device // Will be extended
 	Environment(bool enable_ambient_lighting = true, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f);
 
 	glm::vec3 getAmbientLight();
-	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
 struct Material final : public Device
@@ -117,7 +118,7 @@ struct Material final : public Device
 
 	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
 
-	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
 struct Mesh : public Device
@@ -134,7 +135,7 @@ struct Mesh : public Device
 	Mesh(Material *init_material = new Material(), std::vector<float> init_vertices = ERROR_VERTS, std::vector<unsigned int> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
 	~Mesh() override;
 
-	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
@@ -142,7 +143,7 @@ struct Sprite : public Mesh
 {
 	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
 
-	void loadSettings(graphx::gSettings new_settings = {{"FUCKYOU", {}}}) override;
+	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
@@ -160,5 +161,4 @@ void		R_GL_BufferMeshData(Mesh *mesh);
 void 		R_StoreBuffers();
 void 		R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
 void		R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
-void		R_TroupeChanged(); // Bad way of buffering new Meshes when new Actors are added to a Theatre
 #endif

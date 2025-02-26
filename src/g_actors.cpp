@@ -5,9 +5,6 @@
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
-using namespace graphx;
-using namespace graphx::classes;
-
 glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -181,11 +178,13 @@ bool Actor::isPhysicsActor()
 
 void Actor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
 	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
+
+	checkSetting(name, new_settings["Name"]);
 
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(mesh, new_settings["Mesh"]);
@@ -233,6 +232,15 @@ long Actor::getUID()
 	return UID;
 }
 
+void Actor::processMouse(GLFWwindow *window, double x_position_in, double y_position_in)
+{}
+
+void Actor::processInput(GLFWwindow *window)
+{}
+
+void Actor::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
+{}
+
 void Actor::updateVectors()
 {
 	orientation_up = quaternion * vector3_up;
@@ -272,7 +280,7 @@ void Actor::takeABow()
 
 bool Actor::wantsToBeBuffered()
 {
-	if(isType(LIGHTS))
+	if(isType(graphx::classes::LIGHTS))
 		return (debug_visible);
 	return(mesh != NULL);
 }
@@ -298,8 +306,8 @@ bool PhysicsActor::isPhysicsActor()
 
 void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 	
 	Actor::youGotACallBack(new_settings);
 
@@ -344,8 +352,8 @@ RigidBodyActor::RigidBodyActor()
 
 void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	PhysicsActor::youGotACallBack(new_settings);
 }
@@ -399,8 +407,8 @@ StaticBodyActor::StaticBodyActor()
 
 void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	PhysicsActor::youGotACallBack(new_settings);
 }
@@ -449,8 +457,8 @@ void Camera::doRotation(glm::vec2 mouse_input)
 
 void Camera::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 	Actor::youGotACallBack(new_settings);
 
 	setRawData(position_local, new_settings["LocalPosition"]);
@@ -471,8 +479,8 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 
 void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	Actor::youGotACallBack(new_settings);
 
@@ -489,6 +497,8 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
+	player_flashlight = static_cast<LightFlashlight *>(getCurrentTheatre()->unsafeGetFirstActorOfType(graphx::classes::LIGHTFLASHLIGHT));
+
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	player_settings->mLayer = Layers::MOVING;
@@ -500,10 +510,53 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
 }
 
+void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double y_position_in)
+{
+	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
+	glm::vec2 mouse_offset = mouse_position - mouse_last;
+	mouse_last = mouse_position;
+
+	doMouseMovement(mouse_offset);
+}
+
+void GraphXPlayer::processInput(GLFWwindow *window)
+{
+	int input_vector[2] =
+	{
+		glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S),
+		glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)
+	};
+
+	doMovement(input_vector);
+}
+
 void GraphXPlayer::tick(int current_tick)
 {
 	position_global = convertMath<glm::vec3>(jph_character->GetPosition());
 	player_camera.setGlobalPosition(position_global);
+}
+
+void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+	if(key == GLFW_KEY_F && action == GLFW_PRESS && player_flashlight != nullptr)
+	{
+		flashlight_toggle = !flashlight_toggle;
+		player_flashlight->setLight(flashlight_toggle);
+		if(flashlight_toggle)
+			PRINTNOTE("Flashlight Off")
+		else
+			PRINTNOTE("Flashlight On")
+	}
+
+	if(key == GLFW_KEY_Q && action == GLFW_PRESS && player_flashlight != nullptr)
+	{
+		flashlight_color_toggle = !flashlight_color_toggle;
+		player_flashlight->setLightColor(flashlight_color_toggle);
+		if(flashlight_color_toggle)
+			PRINTNOTE("Flashlight Red")
+		else
+			PRINTNOTE("Flashlight Not Red")
+	}
 }
 
 void GraphXPlayer::doMovement(int direction[2])
@@ -583,8 +636,8 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 	Actor::youGotACallBack(new_settings);
 
 	setRawData(light_color, new_settings["Color"]);
@@ -614,8 +667,8 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 	Light::youGotACallBack(new_settings);
 
 	setRawData(direction, new_settings["Direction"]);
@@ -633,8 +686,8 @@ LightSpot::LightSpot(std::string init_name, float init_intensity, float init_ran
 
 void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 	Light::youGotACallBack(new_settings);
 
 	setRawData(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
@@ -659,16 +712,19 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
 	debug_visible = false;
+	_color = light_color;
 }
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 	Light::youGotACallBack(new_settings);
 
 	setRawData(position_offset, new_settings["PositionOffset"]);
 	setRawData(rotation_offset, new_settings["RotationOffset"]);
+
+	_color = light_color;
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -687,6 +743,22 @@ void LightFlashlight::setLight(bool is_off)
 	intensity = _intensity + (100.0f * is_off);
 }
 
+void LightFlashlight::setLightColor(glm::vec3 color)
+{
+	light_color = color;
+}
+
+void LightFlashlight::setLightColor(bool color_toggle)
+{
+	if(color_toggle)
+	{
+		light_color = glm::vec3(1.0f, 0.0f, 0.0f);
+		return;
+	}
+
+	light_color = _color;
+}
+
 //
 // LightTesterMover
 //
@@ -699,8 +771,8 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(new_settings.contains("FUCKYOU"))
-		new_settings = settings;
+	if(settings.contains(empty_settings_identifier))
+		settings = new_settings;
 
 	Light::youGotACallBack(new_settings);
 
@@ -711,7 +783,7 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	pivot_point.setGlobalPosition(pivot_position);
 	pivot_point.setName("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
 	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
-	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID);
+	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID, new_settings);
 }
 
 void LightTesterMover::tick(int current_tick)

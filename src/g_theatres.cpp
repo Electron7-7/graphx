@@ -7,36 +7,48 @@ using namespace graphx;
 using namespace graphx::classes;
 
 Theatre current_theatre;
-bool current_troupe_changed = false;
 
 Theatre *getCurrentTheatre()
 {
 	if(current_theatre.getUID() == -1)
-		PRINTERR("getCurrentTheatre() called, but current_theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
-
+		PRINTNOTE("getCurrentTheatre() called, but current_theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
 	return &current_theatre;
 }
 
 Environment *getCurrentEnvironment()
 {
-	if(current_theatre.getEnvironment() == nullptr)
+	if(loading_new_main_theatre)
 	{
-		PRINTDEBUG("No Environment found. \"getEnvironment()\" will now return a new, uninitialized Environment object pointer which shouldn't be an issue, but keep this in mind.")
+		PRINTNOTE("getCurrentEnvironment called while loading_new_main_theatre == true. Returning a new Environment in order to avoid a crash!")
 		return new Environment();
 	}
 
-	return current_theatre.getEnvironment();
+	if(current_theatre.unsafeGetFirstDeviceOfType(ENVIRONMENT) == nullptr)
+	{
+		PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment!")
+		PRINTNOTE("A new Environment will be created and given a UID of 17701342069")
+		current_theatre.createDevice(ENVIRONMENT, 17701342069);
+	}
+
+	return static_cast<Environment *>(current_theatre.getFirstDeviceOfType(ENVIRONMENT));
 }
 
 GraphXPlayer *getCurrentPlayer()
 {
-	if(current_theatre.getPlayer() == nullptr)
+	if(loading_new_main_theatre)
 	{
-		PRINTDEBUG("\"player_uid\" is -1 and no \"GraphXPlayer\" object was found! getCurrentPlayer will now return a new GraphXPlayer object")
+		PRINTNOTE("getCurrentPlayer called while loading_new_main_theatre == true. Returning a new GraphXPlayer in order to avoid a crash!")
 		return new GraphXPlayer();
 	}
 
-	return current_theatre.getPlayer();
+	if(current_theatre.unsafeGetFirstActorOfType(GRAPHXPLAYER) == nullptr)
+	{
+		PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer!")
+		PRINTNOTE("A new GraphXPlayer will be created and given a UID of 4815162342")
+		current_theatre.createActor(GRAPHXPLAYER, 4815162342);
+	}
+
+	return static_cast<GraphXPlayer *>(current_theatre.getFirstActorOfType(GRAPHXPLAYER));
 }
 
 //
@@ -65,12 +77,25 @@ void Theatre::loadStageSettings(graphx::gSettings stage_settings)
 	stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
 }
 
+void Theatre::delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+	for(auto &pair : objects)
+		pair.second->processKey(window, key, scancode, action, mods);
+}
+
+void Theatre::delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in)
+{
+	for(auto &pair : objects)
+		pair.second->processMouse(window, x_position_in, y_position_in);
+}
+
 std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 {
 	std::string buffer = "";
 	std::string name_string = "Name: ";
 	std::string typename_string = "\n\tTypename: ";
 	std::string uid_string = "\n\tUID: ";
+	std::string settings_string = "\n\tSettings:";
 
 	if(show_actors)
 	{
@@ -79,6 +104,11 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 			buffer += name_string + pair.second->getName();
 			buffer += typename_string + pair.second->getTypeName();
 			buffer += uid_string + std::to_string(pair.second->getUID());
+			buffer += settings_string;
+			for(auto &setting : pair.second->settings)
+			{
+				buffer += "\n\t\t" + setting.first + " = " + setting.second.type().name();
+			}
 			buffer += "\n\n";
 		}
 	}
@@ -90,6 +120,11 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 			buffer += name_string + pair.second->getName();
 			buffer += typename_string + pair.second->getTypeName();
 			buffer += uid_string + std::to_string(pair.second->getUID());
+			buffer += settings_string;
+			for(auto &setting : pair.second->settings)
+			{
+				buffer += "\n\t\t" + setting.first + " = " + setting.second.type().name();
+			}
 			buffer += "\n\n";
 		}
 	}
@@ -107,6 +142,68 @@ void Theatre::setUID(long new_uid)
 	if(new_uid == -1)
 		PRINTERR("Attempting to set Theatre \"" << name << "\"'s UID to -1!")
 	UID = new_uid;
+}
+
+Actor *Theatre::getFirstActorOfType(int type_name)
+{
+	if(!classnames.contains(type_name))
+	{
+		PRINTERR("Theatre::getFirstActorOfType(int type_name) type_name is not a valid type! Returning new Actor() to try and avoid a crash")
+		return new Actor();
+	}
+
+	for(auto &pair : objects)
+		if(pair.second->isType(type_name))
+			return pair.second;
+
+	PRINTERR("Theatre::getFirstActorOfType could not find an Actor of type \"" << classnames.at(type_name) << "\"! This function will return a new Actor() instead of a nullptr, to try and prevent a crash")
+	return new Actor();
+}
+
+Device *Theatre::getFirstDeviceOfType(int type_name)
+{
+	if(!classnames.contains(type_name))
+	{
+		PRINTERR("Theatre::getFirstDeviceOfType(int type_name) type_name is not a valid type! Returning new Device() to try and avoid a crash")
+		return new Device();
+	}
+
+	for(auto &pair : devices)
+		if(pair.second->isType(type_name))
+			return pair.second;
+	PRINTERR("Theatre::getFirstDeviceOfType could not find a Device of type \"" << classnames.at(type_name) << "\"! This function will return a new Device() instead of a nullptr, to try and prevent a crash")
+	return new Device();
+}
+
+Actor *Theatre::unsafeGetFirstActorOfType(int type_name)
+{
+	if(!classnames.contains(type_name))
+	{
+		PRINTDEBUG("Theatre::unsafeGetFirstActorOfType(int type_name) type_name is not a valid type! This function will return a nullptr")
+		return nullptr;
+	}
+
+	for(auto &pair : objects)
+		if(pair.second->isType(type_name))
+			return pair.second;
+
+	PRINTDEBUG("Theatre::unsafeGetFirstActorOfType could not find an Actor of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
+	return nullptr;
+}
+
+Device *Theatre::unsafeGetFirstDeviceOfType(int type_name)
+{
+	if(!classnames.contains(type_name))
+	{
+		PRINTDEBUG("Theatre::unsafeGetFirstDeviceOfType(int type_name) type_name is not a valid type! This function will return a nullptr")
+		return nullptr;
+	}
+
+	for(auto &pair : devices)
+		if(pair.second->isType(type_name))
+			return pair.second;
+	PRINTDEBUG("Theatre::unsafeGetFirstDeviceOfType could not find a Device of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
+	return nullptr;
 }
 
 void Theatre::startPreshow()
@@ -154,34 +251,29 @@ void Theatre::dropCurtains()
 
 void Theatre::createActor(int actor_type, long uid, gSettings new_settings)
 {
-	PRINTDEBUG("ACTOR CREATE")
-	PRINTDEBUG(uid)
 	if(objects.contains(uid))
 	{
 		PRINTERR("Tried adding a new Actor with UID " << std::to_string(uid) << " to Theatre " << name << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
 		return;
 	}
 
-	objects[uid] = actor_map[actor_type]();
-	objects.at(uid)->setUID(uid);
-	objects.at(uid)->settings = new_settings;
-
-	if(objects.at(uid)->isType(GRAPHXPLAYER))
+	if(actor_type == GRAPHXPLAYER)
 		player_uid = uid;
 
-	PRINTDEBUG("New Actor " << objects.at(uid)->getName() << " with UID " << objects.at(uid)->getUID())
+	objects[uid] = actor_map[actor_type]();
+	objects.at(uid)->setUID(uid);
+	// objects.at(uid)->settings = new_settings;
+	objects.at(uid)->youGotACallBack(new_settings);
 
 	sortTroupe();
 	countLights();
-
-	objects.at(uid)->youGotACallBack(new_settings);
 
 	if(time_to_render)
 	{
 		objects.at(uid)->callToStage(this);
 	}
 
-	current_troupe_changed = time_to_render;
+	time_to_store_buffers = time_to_render;
 }
 
 void Theatre::createDevice(int device_type, long uid, gSettings new_settings)
@@ -192,16 +284,13 @@ void Theatre::createDevice(int device_type, long uid, gSettings new_settings)
 		return;
 	}
 
-	devices[uid] = device_map[device_type]();
-	devices.at(uid)->setUID(uid);
-	devices.at(uid)->settings = new_settings;
-
-	if(devices.at(uid)->isType(ENVIRONMENT))
+	if(device_type ==ENVIRONMENT)
 		environment_uid = uid;
 
+	devices[uid] = device_map[device_type]();
+	devices.at(uid)->setUID(uid);
+	// devices.at(uid)->settings = new_settings;
 	devices.at(uid)->loadSettings(new_settings);
-
-	PRINTDEBUG("New Device " << devices.at(uid)->getName() << " with UID " << devices.at(uid)->getUID())
 }
 
 void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
@@ -230,13 +319,11 @@ void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
 
 	sortTroupe();
 	countLights();
-	current_troupe_changed = time_to_render;
+	time_to_store_buffers = time_to_render;
 }
 
 void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 {
-	PRINTDEBUG("ACTOR ENTER")
-	PRINTDEBUG(new_actor->getName())
 	if(objects.contains(uid))
 	{
 		PRINTERR("Tried adding a new Actor with UID " << std::to_string(uid) << " to Theatre " << name << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
@@ -244,32 +331,21 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 	}
 
 	objects[uid] = new_actor;
+	troupe.insert(troupe.end(), objects.at(uid));
 	new_actor->setUID(uid);
 
 	if(new_actor->isType(GRAPHXPLAYER))
 		player_uid = uid;
 
-	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
-		new_actor->settings = new_settings;
+	new_actor->youGotACallBack(new_settings);
 
 	sortTroupe();
 	countLights();
 
-	new_actor->youGotACallBack();
-
 	if(time_to_render)
-	{
 		new_actor->callToStage(this);
-	}
 
-	current_troupe_changed = time_to_render;
-	PRINTDEBUG("ALL ACTORS:")
-	for(auto &pair : objects)
-	{
-		PRINTDEBUG("\tName: " << pair.second->getName())
-		PRINTDEBUG("\t\tUID: " << pair.second->getUID())
-		PRINTDEBUG("\t\tMap Key: " << pair.first)
-	}
+	time_to_store_buffers = time_to_render;
 }
 
 void Theatre::actorLeave(Actor *old_actor)
@@ -279,7 +355,6 @@ void Theatre::actorLeave(Actor *old_actor)
 
 	if(auto it = objects.find(old_actor->getUID()) ; it != objects.end())
 	{
-		// delete it->second;
 		it->second = NULL;
 		objects.erase(it);
 		int i = 0;
@@ -287,14 +362,13 @@ void Theatre::actorLeave(Actor *old_actor)
 		{
 			if (troupe[i] == old_actor)
 			{
-				// delete troupe[i];
 				troupe[i] = NULL;
 				troupe.erase(it);
 			}
 		}
 
 		countLights();
-		current_troupe_changed = time_to_render;
+		time_to_store_buffers = time_to_render;
 		return;
 	}
 
@@ -314,7 +388,6 @@ void Theatre::actorLeave(long uid)
 
 	if(auto it = objects.find(uid) ; it != objects.end())
 	{
-		// delete it->second;
 		it->second = NULL;
 		objects.erase(it);
 		int i = 0;
@@ -322,14 +395,13 @@ void Theatre::actorLeave(long uid)
 		{
 			if(troupe[i]->getUID() == uid)
 			{
-				// delete troupe[i];
 				troupe[i] = NULL;
 				troupe.erase(iter);
 			}
 		}
 
 		countLights();
-		current_troupe_changed = time_to_render;
+		time_to_store_buffers = time_to_render;
 		return;
 	}
 
@@ -350,11 +422,7 @@ void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)
 	if(devices.at(uid)->isType(ENVIRONMENT))
 		environment_uid = uid;
 
-	if(!new_settings.contains("IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT"))
-	{
-		new_device->settings = new_settings;
-		new_device->loadSettings();
-	}
+	new_device->loadSettings(new_settings);
 
 	if(time_to_render)
 		new_device->initialize();
@@ -367,7 +435,6 @@ void Theatre::removeDevice(Device *old_device)
 		if(it->second->isType(ENVIRONMENT))
 			environment_uid = -1;
 
-		// delete it->second;
 		it->second = NULL;
 		devices.erase(it);
 		return;
@@ -389,7 +456,6 @@ void Theatre::removeDevice(long uid)
 		if(it->second->isType(ENVIRONMENT))
 			environment_uid = -1;
 
-		// delete it->second;
 		it->second = NULL;
 		devices.erase(it);
 		return;
@@ -486,8 +552,6 @@ void Theatre::sortTroupe()
 	{
 		return (left->isType(LIGHTS) > right->isType(LIGHTS));
 	});
-	for(Actor *actor : troupe)
-		PRINTDEBUG(actor->getName() << " " << actor->isType(LIGHTS))
 }
 
 void Theatre::countLights()

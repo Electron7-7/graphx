@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
 #include "sanity.hpp" // Included for the GLM headers
+#include "t_settings.hpp"
 #include "graphx_namespace.hpp"
 #include <mutex>
 
@@ -11,6 +12,8 @@ struct Device;
 struct Environment;
 struct Material;
 struct Mesh;
+
+extern bool loading_new_main_theatre;
 
 struct RenderState
 {
@@ -72,9 +75,12 @@ public:
 	std::string getName();
 
 	virtual bool isPhysicsActor();
-	virtual void youGotACallBack(graphx::gSettings new_settings = {{"FUCKYOU", {}}}); // Loads settings
+	virtual void youGotACallBack(graphx::gSettings new_settings = empty_settings); // Loads settings
 	virtual void callToStage(Theatre *parent_theatre);
 	virtual void takeABow();
+	virtual void processMouse(GLFWwindow *window, double x_position_in, double y_position_in);
+	virtual void processInput(GLFWwindow *window);
+	virtual void processKey(GLFWwindow *window, int key, int scancode, int action, int mods);
 	virtual void tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
 	virtual bool wantsToBeRendered();
@@ -120,19 +126,29 @@ struct Theatre
 	void dropCurtains();
 	long getUID();
 	void setUID(long new_uid);
+	void delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods);
+	void delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in);
 
 	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
 
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
-	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
+	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = empty_settings);
 	void actorLeave(Actor *old_actor);
 	void actorLeave(long uid);
-	void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = {{"IDONTUNDERSTANDTHEQUESTIONANDIWONTRESPONDTOIT", {}}});
+	void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = empty_settings);
 	void removeDevice(Device *old_device);
 	void removeDevice(long uid);
 
-	void createActor(int actor_type, long uid, graphx::gSettings new_settings);
-	void createDevice(int device_type, long uid, graphx::gSettings new_settings);
+	void createActor(int actor_type, long uid, graphx::gSettings new_settings = empty_settings);
+	void createDevice(int device_type, long uid, graphx::gSettings new_settings  = empty_settings);
+
+	Actor *getFirstActorOfType(int type_name);
+	Device *getFirstDeviceOfType(int type_name);
+
+	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
+	Actor *unsafeGetFirstActorOfType(int type_name);
+	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO DEVICE MATCHING type_name IS FOUND!!
+	Device *unsafeGetFirstDeviceOfType(int type_name);
 
 	Actor *getActor(long uid);
 	Actor *getActor(std::string actor_name);
@@ -153,7 +169,6 @@ private:
 };
 
 extern Theatre current_theatre;
-extern bool current_troupe_changed; // Convert this into a function/variable inside Theatre
 extern std::map<int, Actor*(*)()> actor_map;
 
 // Use with CAUTION!!
@@ -182,7 +197,7 @@ template<typename T> Actor *createNewActor()
 	return new T;
 }
 
-Theatre *getCurrentTheatre(); // Abstracts Theatre acquisition to avoid bad shit like "&all_theatres[int]"
+Theatre *getCurrentTheatre();
 Environment *getCurrentEnvironment();
 GraphXPlayer *getCurrentPlayer();
 #endif

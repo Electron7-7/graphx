@@ -7,6 +7,28 @@
 struct Device;
 class Actor;
 
+extern std::string empty_settings_identifier;
+extern graphx::gSettings empty_settings;
+
+template<typename T> void getSetting(T *variable, std::any set_value, const std::type_info &std_any_type) 
+{
+	if (std_any_type == typeid(void))
+	{
+		return;
+	}
+
+	else
+	{
+		PRINTDEBUG(typeid(*variable).name())
+		PRINTDEBUG(std_any_type.name())
+	}
+}
+
+template<typename T> void checkSetting(T &variable, std::any set_value)
+{
+	getSetting<T>(&variable, set_value, set_value.type());
+}
+
 template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
 template<typename T> void setDevicePointer(T &variable, std::any set_value)
 {
