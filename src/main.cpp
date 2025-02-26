@@ -175,7 +175,9 @@ void testGameTick(GLFWwindow *main_window)
 
 	checkForAndLoadExternalTheatres();
 
-	loadMainTheatre(0); // Hard-coded Theatre loading; later I want to make a "level list" of some sort
+	// Hard-coded first Theatre loading, for now
+	// Eventually, Theatre loading won't rely on this function and the arrow key callbacks
+	loadMainTheatre(0);
 
 	double last_time = glfwGetTime();
 	double current_tick_length = 0;

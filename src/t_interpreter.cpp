@@ -599,20 +599,19 @@ std::string getBinaryPath()
 
 	return new_buffer;
 }
-#define BINARY_PATH getBinaryPath();
+#define BINARY_PATH getBinaryPath()
 #define EXTERNAL_THEATRES_DIRECTORY std::string("\\theatres")
 #else
 #define BINARY_PATH std::filesystem::read_symlink(std::filesystem::path("/proc/self/exe")).remove_filename().string()
-#define EXTERNAL_THEATRES_DIRECTORY std::string("/theatres")
+#define EXTERNAL_THEATRES_DIRECTORY std::string("theatres")
 #endif
 
 std::string binary_path = BINARY_PATH;
-std::string theatres_directory = binary_path + EXTERNAL_THEATRES_DIRECTORY;
+std::string theatres_directory = std::string(BINARY_PATH) + EXTERNAL_THEATRES_DIRECTORY;
 
 bool checkForExternalTheatres()
 {
 	std::string binary_path = BINARY_PATH;
-	std::cout << theatres_directory << std::endl;
 
 	if(std::filesystem::is_directory(std::filesystem::path(theatres_directory)))
 		for(const auto &entry : std::filesystem::directory_iterator(std::filesystem::path(theatres_directory)))
