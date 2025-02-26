@@ -79,9 +79,7 @@ SHADERS_C = $(SRC)/shaders.cpp
 SHADERS_H = $(SRC)/include/shaders.hpp
 SHDRS = \
 	$(S)/phong_vertex.glsl			\
-	$(S)/phong_fragment.glsl		\
-	$(S)/phong_vertex_backup.glsl	\
-	$(S)/phong_fragment_backup.glsl
+	$(S)/phong_fragment.glsl
 
 T = $(SRC)/theatres
 THEATRES_C = $(SRC)/theatres.cpp
@@ -157,11 +155,11 @@ $(IMAGES_H):
 
 $(SHADERS_C): $(SHADERS_H)
 	$(shell printf "#include <string>\n" >> $(SHADERS_C))
-	$(foreach file,$(SHDRS),$(shell printf "std::string $(subst .,_,$(file:$(S)/%=%)) = R\"~(\n" >> $(SHADERS_C) && cat $(file) >> $(SHADERS_C) && printf "\n)~\";\n" >> $(SHADERS_C)))
+	$(foreach file,$(shell ls $(S)),$(shell printf "std::string $(subst .,_,$(file:$(S)/%=%)) = R\"~(\n" >> $(SHADERS_C) && cat $(S)/$(file) >> $(SHADERS_C) && printf "\n)~\";\n" >> $(SHADERS_C)))
 
 $(SHADERS_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_SHADERS\n#define GRAPHX_EMBEDDED_SHADERS\n#include <string>\n" >> $(SHADERS_H))
-	$(foreach file,$(SHDRS),$(shell printf "extern std::string $(subst .,_,$(file:$(S)/%=%));\n" >> $(SHADERS_H)))
+	$(foreach file,$(shell ls $(S)),$(shell printf "extern std::string $(subst .,_,$(file:$(S)/%=%));\n" >> $(SHADERS_H)))
 	$(shell printf "#endif" >> $(SHADERS_H))
 
 $(THEATRES_H):

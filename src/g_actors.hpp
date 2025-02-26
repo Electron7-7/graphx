@@ -144,9 +144,8 @@ public:
 	Mesh temporary_light_mesh = Mesh(new Material(LIGHT_jpg, FLAT_SPEC_jpg, 4, 1.0f));
 
 	glm::vec3 light_color = glm::vec3(1.0f);
-	glm::vec3 light_specular = glm::vec3(1.0f);
-	glm::vec3 light_ambient = glm::vec3(0.2f);
-	float light_strength = 1.0f; // A more direct "brightness" value than just changing Attenuation values
+	float light_strength = 0.5f; // A more direct "brightness" value than just changing Attenuation values
+	float light_ambient_strength = 0.2f;
 
 	// Attenuation values
 	float range = 100.0f;

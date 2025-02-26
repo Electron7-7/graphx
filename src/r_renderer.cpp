@@ -83,7 +83,7 @@ void R_GL_BufferMeshData(Mesh *mesh)
 }
 
 int shader_debug_value = 4;
-unsigned int shader_index = SHADER_PHONG;
+unsigned int shader_index = SHADER_BLINN_PHONG;
 
 void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix)
 {
@@ -209,8 +209,8 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 			shaders[shader_index]->setUniform(which_light + "position", current_light->getPosition<glm::vec3>());
 			shaders[shader_index]->setUniform(which_light + "strength", current_light->light_strength);
 			shaders[shader_index]->setUniform(which_light + "color", current_light->light_color);
-			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_specular);
-			shaders[shader_index]->setUniform(which_light + "ambient", current_light->light_ambient);
+			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_color);
+			shaders[shader_index]->setUniform(which_light + "ambient_strength", current_light->light_ambient_strength);
 			shaders[shader_index]->setUniform(which_light + "range", current_light->range);
 			shaders[shader_index]->setUniform(which_light + "intensity", current_light->intensity);
 			shaders[shader_index]->setUniform(which_light + "falloff", current_light->falloff);

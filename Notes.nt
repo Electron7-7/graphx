@@ -1303,3 +1303,5 @@ I'm thinking of doing this in order of 3 2 1, as the obj loading should come aft
 
 [02/25/25]
 Emergency branch; I need to fix the shader, there's something off about how I process specular maps and shit. Basically, if there isn't a specular texture being used, everything is wrong (plus the specular texture affects the color of the material, i.e: in darkness the material goes black and white). I'm gonna implement some shader debugging code to swap between black and white views of each pass, basically like alpha mattes but for the diffuse lighting, specular lighting, etc. First thing I'm gonna do is go back to color-value materials only so I can start setting up the debug testing.
+
+The shader is mostly fixed, but there are a few oddities; specifically, specular highlights broken for the Material "SourceGreyGreenNoSpecularWithNoSpecularTexture", because the SpecularSharpness was set to 0. I should make sure that SpecularSharpness never goes below 0.

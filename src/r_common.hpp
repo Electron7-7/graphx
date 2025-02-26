@@ -15,7 +15,8 @@
 
 #define SHADERS_AMOUNT		1
 //---------------------------
-#define SHADER_PHONG		0
+#define SHADER_BLINN_PHONG	0
+#define SHADER_PHONG		1
 
 
 #define BUFFERS_AMOUNT		5
