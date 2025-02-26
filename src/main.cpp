@@ -194,6 +194,8 @@ void testGameTick(GLFWwindow *main_window)
 
 			for(Actor *actor : getCurrentTheatre()->troupe)
 			{
+				if(loading_new_main_theatre)
+					continue;
 				actor->processInput(main_window);
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
@@ -398,6 +400,9 @@ void toggleCursor(GLFWwindow *window, bool show_cursor)
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL || ImGui::GetIO().WantCaptureMouse)
+		return;
+
+	if(loading_new_main_theatre)
 		return;
 
 	getCurrentTheatre()->delegateMouseInput(window, x_position_in, y_position_in);

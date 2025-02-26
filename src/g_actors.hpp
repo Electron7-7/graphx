@@ -226,7 +226,7 @@ public:
 	void takeABow() override;
 
 private:
-	glm::vec2 mouse_last;
+	glm::vec2 mouse_last = glm::vec2(0.0f);
 	bool flashlight_toggle = false;
 	bool flashlight_color_toggle = false;
 	JPH::Ref<JPH::Character> jph_character = nullptr;

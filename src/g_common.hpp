@@ -50,7 +50,7 @@ public:
 
 	int state_index = 0;
 
-	graphx::gSettings settings;
+	graphx::gSettings settings = empty_settings;
 
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = nullptr, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 	virtual ~Actor();
@@ -122,7 +122,7 @@ struct Theatre
 	~Theatre();
 
 	void loadStageSettings(graphx::gSettings stage_settings);
-	void startPreshow();
+	void raiseCurtains();
 	void dropCurtains();
 	long getUID();
 	void setUID(long new_uid);

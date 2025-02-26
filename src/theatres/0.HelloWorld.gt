@@ -42,10 +42,11 @@ LightDirectional (Sun)
 }
 LightTesterMover (spinny_light)
 {
-	PivotPosition (5.3, 3.0, -3.8)
+	PivotPosition (5.3, 1.0, -3.8)
 	PivotRadius   (1.2)
 	PivotSpeed    (1.8)
 	Color         (1.0, 0.15, 0.3)
+	Strength      (1.0)
 }
 LightTesterMover (spinny_light_2)
 {

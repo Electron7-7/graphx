@@ -1308,3 +1308,11 @@ The shader is mostly fixed, but there are a few oddities; specifically, specular
 
 [02/26/25]
 While refactoring and stuff, I tried to re-implement LightTesterMover's pivot point, and I think that me re-writing Theatre::addActor and Theatre::addDevice (or their equivalent names) is causing problems. I'm getting errors that Actors are referencing nonexistant objects, which probably means that the pivot points are affecting UIDs somehow, or that the way I'm using UIDs in one or more functions is causing this problem.
+
+I fixed the problem by removing all the "if(settings.contains(empty_settings_identifier)" checks in all the derived classes. Now, there's one more problem: when switching Theatres, the player's camera movement is wonky and can even lose an axis. I think this is related to how I've been passing around variables from mouseCallback().
+
+Oh, it's because mouse_last isn't being set properly/at the right time, so it "jumps" huge distances sometimes when Theatres are switched.
+
+All fixed after giving mouse_last a default value. However, there is a crash when switching Theatres too quickly...
+
+Fixed the crash by making sure Actor::tick doesn't get called if the main Theatre is changing.

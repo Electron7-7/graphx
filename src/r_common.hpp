@@ -62,7 +62,7 @@ struct GLShader
 
 struct Device
 {
-	graphx::gSettings settings;
+	graphx::gSettings settings = empty_settings;
 
 	Device();
 	virtual ~Device() = default;
@@ -80,10 +80,11 @@ struct Device
 	virtual long getUID();
 	virtual void setUID(long manual_uid);
 
+	std::string name = "Untitled Device";
+
 protected:
 	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
-	std::string name = "Untitled Device";
 };
 
 struct Environment final : public Device // Will be extended

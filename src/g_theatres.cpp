@@ -85,8 +85,37 @@ void Theatre::delegateKeyInput(GLFWwindow *window, int key, int scancode, int ac
 
 void Theatre::delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in)
 {
-	for(auto &pair : objects)
-		pair.second->processMouse(window, x_position_in, y_position_in);
+	for(Actor *actor : troupe)
+		actor->processMouse(window, x_position_in, y_position_in);
+}
+
+std::string getSettingName(std::any any_value)
+{
+	if(any_value.type() == typeid(Actor*))
+	{
+		return(std::any_cast<Actor *>(any_value)->getName());
+	}
+
+	if(any_value.type() == typeid(Device*))
+	{
+		return(std::any_cast<Device *>(any_value)->getName());
+	}
+
+	if(any_value.type() == typeid(graphx::gRawData))
+	{
+		std::string buffer = "";
+		graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(any_value);
+		for(int i = 0 ; i < raw_data.size() ; i++)
+		{
+			buffer += raw_data[i];
+			if(i != raw_data.size() - 1)
+				buffer += ", ";
+		}
+
+		return buffer;
+	}
+
+	return "C++ Reference (check the GraphXTheatre file)";
 }
 
 std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
@@ -95,7 +124,6 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 	std::string name_string = "Name: ";
 	std::string typename_string = "\n\tTypename: ";
 	std::string uid_string = "\n\tUID: ";
-	std::string settings_string = "\n\tSettings:";
 
 	if(show_actors)
 	{
@@ -104,10 +132,11 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 			buffer += name_string + pair.second->getName();
 			buffer += typename_string + pair.second->getTypeName();
 			buffer += uid_string + std::to_string(pair.second->getUID());
-			buffer += settings_string;
 			for(auto &setting : pair.second->settings)
 			{
-				buffer += "\n\t\t" + setting.first + " = " + setting.second.type().name();
+				if(!setting.first.compare("Name"))
+					continue;
+				buffer += std::string("\n\t") + setting.first + ": " + getSettingName(setting.second);
 			}
 			buffer += "\n\n";
 		}
@@ -120,10 +149,11 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 			buffer += name_string + pair.second->getName();
 			buffer += typename_string + pair.second->getTypeName();
 			buffer += uid_string + std::to_string(pair.second->getUID());
-			buffer += settings_string;
 			for(auto &setting : pair.second->settings)
 			{
-				buffer += "\n\t\t" + setting.first + " = " + setting.second.type().name();
+				if(!setting.first.compare("Name"))
+					continue;
+				buffer += std::string("\n\t") + setting.first + ": " + getSettingName(setting.second);
 			}
 			buffer += "\n\n";
 		}
@@ -206,7 +236,7 @@ Device *Theatre::unsafeGetFirstDeviceOfType(int type_name)
 	return nullptr;
 }
 
-void Theatre::startPreshow()
+void Theatre::raiseCurtains()
 {
 	PRINTDEBUG("Entering Theatre (" << name << ")")
 
@@ -262,7 +292,6 @@ void Theatre::createActor(int actor_type, long uid, gSettings new_settings)
 
 	objects[uid] = actor_map[actor_type]();
 	objects.at(uid)->setUID(uid);
-	// objects.at(uid)->settings = new_settings;
 	objects.at(uid)->youGotACallBack(new_settings);
 
 	sortTroupe();
@@ -289,7 +318,6 @@ void Theatre::createDevice(int device_type, long uid, gSettings new_settings)
 
 	devices[uid] = device_map[device_type]();
 	devices.at(uid)->setUID(uid);
-	// devices.at(uid)->settings = new_settings;
 	devices.at(uid)->loadSettings(new_settings);
 }
 

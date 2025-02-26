@@ -184,7 +184,7 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
 	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
 
-	checkSetting(name, new_settings["Name"]);
+	// checkSetting(name, new_settings["Name"]);
 
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(mesh, new_settings["Mesh"]);
@@ -306,9 +306,6 @@ bool PhysicsActor::isPhysicsActor()
 
 void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-	
 	Actor::youGotACallBack(new_settings);
 
 	setRawData(mass, new_settings["Mass"]);
@@ -352,9 +349,6 @@ RigidBodyActor::RigidBodyActor()
 
 void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-
 	PhysicsActor::youGotACallBack(new_settings);
 }
 
@@ -407,9 +401,6 @@ StaticBodyActor::StaticBodyActor()
 
 void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-
 	PhysicsActor::youGotACallBack(new_settings);
 }
 
@@ -457,8 +448,6 @@ void Camera::doRotation(glm::vec2 mouse_input)
 
 void Camera::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
 	Actor::youGotACallBack(new_settings);
 
 	setRawData(position_local, new_settings["LocalPosition"]);
@@ -479,9 +468,6 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 
 void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-
 	Actor::youGotACallBack(new_settings);
 
 	setRawData(mouse_sensitivity, new_settings["MouseSensitivity"]);
@@ -636,8 +622,6 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
 	Actor::youGotACallBack(new_settings);
 
 	setRawData(light_color, new_settings["Color"]);
@@ -667,8 +651,6 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
 	Light::youGotACallBack(new_settings);
 
 	setRawData(direction, new_settings["Direction"]);
@@ -686,8 +668,6 @@ LightSpot::LightSpot(std::string init_name, float init_intensity, float init_ran
 
 void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
 	Light::youGotACallBack(new_settings);
 
 	setRawData(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
@@ -717,8 +697,6 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
 	Light::youGotACallBack(new_settings);
 
 	setRawData(position_offset, new_settings["PositionOffset"]);
@@ -771,9 +749,6 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-
 	Light::youGotACallBack(new_settings);
 
 	setRawData(pivot_position, new_settings["PivotPosition"]);

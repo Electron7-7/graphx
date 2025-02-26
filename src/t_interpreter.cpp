@@ -534,7 +534,7 @@ void loadMainTheatre(long theatre_uid)
 	time_to_render = false;
 	time_to_store_buffers = false;
 
-	// This fucking sucks, don't do this; I'm autistic and that's why I'm doing this
+	// This fucking sucks, don't do this; I'm autistic and that's why I'm doing this (I don't want the printouts from calling stage.prepForDeletion() to show up)
 	if(current_theatre.getUID() == -1)
 	{
 		current_theatre.stage->material = nullptr;
@@ -552,7 +552,7 @@ void loadMainTheatre(long theatre_uid)
 	PRINTDEBUG("LOAD THEATRE")
 	current_theatre = loadTheatre(theatre_uid);
 	PRINTDEBUG("START PRESHOW")
-	current_theatre.startPreshow();
+	current_theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
 	time_to_store_buffers = true;
 	loading_new_main_theatre = false;
