@@ -82,7 +82,7 @@ void R_GL_BufferMeshData(Mesh *mesh)
 	mesh->is_buffered = true;
 }
 
-int shader_debug_value = DEBUG_ALL;
+int shader_debug_value = 4;
 unsigned int shader_index = SHADER_PHONG;
 
 void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix)
@@ -97,6 +97,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 	glUseProgram(shaders[shader_index]->id);
 	shaders[shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
+	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 
 	for(Actor *actor : getCurrentTheatre()->troupe)
 	{
@@ -171,7 +172,6 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
-		// shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 
 		/*
 			NOTE: This will change almost immediately. I need to decide if I'm sticking with going through a vector of Meshes, switching to a vector of Actors,
@@ -229,7 +229,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 proje
 		}
 	}
 
-	// R_RenderStage(projection_matrix, shader_index);
+	R_RenderStage(projection_matrix, shader_index);
 }
 
 void R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index)

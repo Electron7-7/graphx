@@ -44,11 +44,6 @@
 #define DEVICE_SPRITE		3
 #define DEVICE_COLLIDER		4
 
-#define DEBUG_DIFFUSE 0
-#define DEBUG_SPECULAR 1
-#define DEBUG_AMBIENT 2
-#define DEBUG_ALL 3
-
 extern int shader_debug_value;
 extern unsigned int shader_index;
 

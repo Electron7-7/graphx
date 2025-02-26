@@ -14,8 +14,8 @@ uniform mat3 normal_matrix;
 
 void main()
 {
-	normal = normalize(normal_matrix * _vertex_normal);
+	gl_Position = projection_matrix * view_matrix * model_matrix * vec4(_vertex_position, 1.0);
 	texture_coordinate = _vertex_texture_coordinate;
 	fragment_position = vec3(model_matrix * vec4(_vertex_position, 1.0f)); // Transforming vertex position from local to global coordinates
-	gl_Position = projection_matrix * view_matrix * model_matrix * vec4(_vertex_position, 1.0);
+	normal = normal_matrix * _vertex_normal;
 };
