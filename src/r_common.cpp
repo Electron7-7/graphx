@@ -157,6 +157,8 @@ void Device::loadSettings(graphx::gSettings new_settings)
 {
 	if(settings.contains(empty_settings_identifier))
 		settings = new_settings;
+	if(new_settings.contains(empty_settings_identifier))
+		new_settings = settings;
 
 	setRawData(name, new_settings["Name"]);
 }

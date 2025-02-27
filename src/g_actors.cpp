@@ -180,11 +180,11 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 {
 	if(settings.contains(empty_settings_identifier))
 		settings = new_settings;
+	if(new_settings.contains(empty_settings_identifier))
+		new_settings = settings;
 
 	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
 	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
-
-	// checkSetting(name, new_settings["Name"]);
 
 	setRawData(name, new_settings["Name"]);
 	setDevicePointer(mesh, new_settings["Mesh"]);
