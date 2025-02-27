@@ -263,7 +263,8 @@ unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 		return 20;
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(t_data);
 

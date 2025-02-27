@@ -672,6 +672,7 @@ void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 
 	setRawData(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
 	setRawData(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
+	setRawData(direction, new_settings["Direction"]);
 }
 
 glm::vec2 LightSpot::getCutoffAngles()

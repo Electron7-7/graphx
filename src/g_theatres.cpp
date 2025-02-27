@@ -26,8 +26,8 @@ Environment *getCurrentEnvironment()
 	if(current_theatre.unsafeGetFirstDeviceOfType(ENVIRONMENT) == nullptr)
 	{
 		PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment!")
-		PRINTNOTE("A new Environment will be created and given a UID of 17701342069")
-		current_theatre.createDevice(ENVIRONMENT, 17701342069);
+		PRINTNOTE("A new Environment will be created and given a UID of 177013")
+		current_theatre.createDevice(ENVIRONMENT, 177013);
 	}
 
 	return static_cast<Environment *>(current_theatre.getFirstDeviceOfType(ENVIRONMENT));
@@ -44,8 +44,9 @@ GraphXPlayer *getCurrentPlayer()
 	if(current_theatre.unsafeGetFirstActorOfType(GRAPHXPLAYER) == nullptr)
 	{
 		PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer!")
-		PRINTNOTE("A new GraphXPlayer will be created and given a UID of 4815162342")
-		current_theatre.createActor(GRAPHXPLAYER, 4815162342);
+		PRINTNOTE("A new GraphXPlayer will be created and given a UID of 42069")
+		current_theatre.createActor(GRAPHXPLAYER, 42069);
+		current_theatre.refreshTroupe();
 	}
 
 	return static_cast<GraphXPlayer *>(current_theatre.getFirstActorOfType(GRAPHXPLAYER));
@@ -66,6 +67,15 @@ Theatre::~Theatre()
 	stage->prepForDestruction();
 	stage = nullptr;
 	delete stage;
+}
+
+void Theatre::refreshTroupe()
+{
+	troupe.clear();
+	for(auto &pair : objects)
+		troupe.insert(troupe.end(), pair.second);
+	sortTroupe();
+	countLights();
 }
 
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)

@@ -131,6 +131,7 @@ struct Theatre
 
 	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
 
+	void refreshTroupe();
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
 	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = empty_settings);
 	void actorLeave(Actor *old_actor);

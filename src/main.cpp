@@ -64,6 +64,7 @@ int main()
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 	
