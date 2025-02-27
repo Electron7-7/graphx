@@ -1316,3 +1316,6 @@ Oh, it's because mouse_last isn't being set properly/at the right time, so it "j
 All fixed after giving mouse_last a default value. However, there is a crash when switching Theatres too quickly...
 
 Fixed the crash by making sure Actor::tick doesn't get called if the main Theatre is changing.
+
+[02/27/25]
+Reworked setVariable, setRawData, setActorPointer, and setDevicePointer all into one single template function called "getSetting" that is not only much easier to work with, but also is far more preformant (I think) and waaaaayyyyy fucking safer than the previous template functions. It also has verbose error messages and shouldn't crash if errors are detected.
