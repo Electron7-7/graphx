@@ -160,7 +160,7 @@ void Device::loadSettings(graphx::gSettings new_settings)
 	if(new_settings.contains(empty_settings_identifier))
 		new_settings = settings;
 
-	setRawData(name, new_settings["Name"]);
+	getSetting(name, new_settings["Name"]);
 }
 
 void Device::initialize()
@@ -198,9 +198,9 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	setRawData(ambient_lighting_enabled, new_settings["AmbientLightingEnabled"]);
-	setRawData(ambient_light_color, new_settings["AmbientLightingColor"]);
-	setRawData(ambient_light_strength, new_settings["AmbientLightingStrength"]);
+	getSetting(ambient_lighting_enabled, new_settings["AmbientLightingEnabled"]);
+	getSetting(ambient_light_color, new_settings["AmbientLightingColor"]);
+	getSetting(ambient_light_strength, new_settings["AmbientLightingStrength"]);
 }
 
 
@@ -233,12 +233,12 @@ void Material::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	setVariable(embedded_texture_diffuse, new_settings["DiffuseTexture"]);
-	setVariable(embedded_texture_specular, new_settings["SpecularTexture"]);
-	setRawData(color, new_settings["Color"]);
-	setRawData(specular_sharpness, new_settings["SpecularSharpness"]);
-	setRawData(specular_strength, new_settings["SpecularStrength"]);
-	setRawData(mat_fullbright, new_settings["mat_fullbright"]);
+	getSetting(embedded_texture_diffuse, new_settings["DiffuseTexture"]);
+	getSetting(embedded_texture_specular, new_settings["SpecularTexture"]);
+	getSetting(color, new_settings["Color"]);
+	getSetting(specular_sharpness, new_settings["SpecularSharpness"]);
+	getSetting(specular_strength, new_settings["SpecularStrength"]);
+	getSetting(mat_fullbright, new_settings["mat_fullbright"]);
 }
 
 unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
@@ -294,8 +294,8 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 
 	gMeshData mesh_data = gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE);
 
-	setDevicePointer(material, new_settings["Material"]);
-	setVariable(mesh_data, new_settings["MeshData"]);
+	getSetting(material, new_settings["Material"]);
+	getSetting(mesh_data, new_settings["MeshData"]);
 
 	vertices = std::get<0>(mesh_data);
 	indices = std::get<1>(mesh_data);

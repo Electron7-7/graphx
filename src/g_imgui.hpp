@@ -10,6 +10,7 @@ struct Theatre;
 struct GraphXConsole
 {
 	bool active;
+	bool secondary_active;
 	ImGuiKey toggle_activation_key;
 	std::string name;
 	Theatre *current_theatre = nullptr;

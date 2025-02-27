@@ -78,7 +78,7 @@ S = $(SRC)/shaders
 SHADERS_C = $(SRC)/shaders.cpp
 SHADERS_H = $(SRC)/include/shaders.hpp
 SHDRS = \
-	$(S)/phong_vertex.glsl			\
+	$(S)/phong_vertex.glsl		\
 	$(S)/phong_fragment.glsl
 
 T = $(SRC)/theatres
@@ -119,6 +119,13 @@ clean_theatres:
 compile_commands:
 	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
 
+test: eval_test
+	$(info GraphX Will Test-Run After Compiling)
+
+eval_test:
+	$(eval TESTRUN_LINUX = $(TEST_LINUX))
+	$(eval TESTRUN_WINDOWS = $(TEST_WINDOWS))
+
 debug: clean_theatres embed_resources
 	$(info Version: Debug)
 	$(eval LINUX := GraphXDebug)
@@ -139,11 +146,6 @@ windows: GRAPHXFLAGS += -D GRAPHX_WINDOWS
 windows: $(WOBJS) $(O)/main.wopp
 	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
 	$(TESTRUN_WINDOWS) $(O)/$(NAME)
-
-test:
-	$(info GraphX Will Test-Run After Compiling)
-	$(eval TESTRUN_LINUX := $(TEST_LINUX))
-	$(eval TESTRUN_WINDOWS := $(TEST_WINDOWS))
 
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
