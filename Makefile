@@ -5,7 +5,7 @@ CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
 INCLUDES = -I src/include
-LIBS = -l glfw -L src/lib -l:libJolt.a
+LIBS = -l glfw -L src/lib -l:libJolt.a -l:libassimp.so
 
 ifeq ($(OS),Windows_NT) 
 	WCXX = g++
