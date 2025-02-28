@@ -85,12 +85,32 @@ T = $(SRC)/theatres
 THEATRES_C = $(SRC)/theatres.cpp
 THEATRES_H = $(SRC)/include/theatres.hpp
 
-PHONY = all clean dirty_clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
+PHONY = obj_testing all clean dirty_clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
 
 all: release linux windows
 
+$(O)/obj_testing.opp:
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $(SRC)/r_loadobj.cpp -o $(O)/obj_testing.opp
+
+clean_obj_testing:
+	-rm -f $(O)/glad.o
+	-rm -f $(O)/obj_testing.opp
+	-rm -f $(O)/obj_testing
+
+obj_testing: clean_obj_testing $(O)/glad.o $(O)/obj_testing.opp
+obj_testing:
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDES) $(O)/glad.o $(O)/obj_testing.opp -o $(O)/obj_testing -l glfw
+	./$(O)/obj_testing
+
 clean: clean_resources embed_resources
 	-rm -f build/*
+
+clean_windows_files:
+	-rm -f build/*.wo
+	-rm -f build/*.wopp
+	-rm -f build/*.tmp
+	-rm -f build/GraphXDebug
+	-rm -f build/GraphXDebug.exe
 
 dirty_clean:
 	-mkdir build/backup/
@@ -124,10 +144,12 @@ debug: clean_theatres embed_resources
 	$(eval LINUX := GraphXDebug)
 	$(eval WINDOWS := GraphXDebug.exe)
 	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG)
+	-rm -f build/*.tmp
 
 release: clean_resources embed_resources
 	$(info Version: Release)
 	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING)
+	-rm -f build/*.tmp
 
 linux: NAME = $(LINUX)
 linux: $(OBJS) $(O)/main.opp

@@ -223,6 +223,9 @@ void testGameTick(GLFWwindow *main_window)
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
 
@@ -292,9 +295,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			break;
 		}
 	}
-
-	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
 
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
 	{

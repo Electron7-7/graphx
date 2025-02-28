@@ -202,7 +202,7 @@ StaticBodyActor (Wall)
 Environment (environment)
 {
 	AmbientLightingColor (1.0, 1.0, 1.0)
-	AmbientLightingStrength (1.0)
+	AmbientLightingStrength (0.3)
 }
 LightDirectional (Sun)
 {

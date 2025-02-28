@@ -1,5 +1,10 @@
 #include "r_common.hpp"
 #include "g_actors.hpp"
+#define TINYOBJLOADER_IMPLEMENTATION
+#define TINYOBJLOADER_USE_MAPBOX_EARCUT
+#define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT
+#include <earcut.hpp>
+#include <tiny_obj_loader.h>
 #include <cmath>
 
 std::array<GLuint, VAOS_AMOUNT> VAOs;
