@@ -89,19 +89,6 @@ PHONY = obj_testing all clean dirty_clean clean_resources clean_theatres embed_r
 
 all: release linux windows
 
-$(O)/obj_testing.opp:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $(SRC)/r_loadobj.cpp -o $(O)/obj_testing.opp
-
-clean_obj_testing:
-	-rm -f $(O)/glad.o
-	-rm -f $(O)/obj_testing.opp
-	-rm -f $(O)/obj_testing
-
-obj_testing: clean_obj_testing $(O)/glad.o $(O)/obj_testing.opp
-obj_testing:
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDES) $(O)/glad.o $(O)/obj_testing.opp -o $(O)/obj_testing -l glfw
-	./$(O)/obj_testing
-
 clean: clean_resources embed_resources
 	-rm -f build/*
 

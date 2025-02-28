@@ -1325,3 +1325,6 @@ Aight it took me an hour to create a testing OpenGL scene; fuckin aye. Anyways, 
 Ok, I have a very basic form of tinyobjloader integration in mind. It won't use indices, but that's okay because I can figure that out later. For now, I just want it working.
 
 Oh, that's what you're supposed to do, I guess. Anyways, time to integrate it into Mesh (and the renderer).
+
+[02/28/25]
+Today I'm going to work on integrating tinyobjloader into GraphX. I want to figure out the VAO situation, mainly if I need to use a different VAO if using different vertex attributes, or if I can just activate different vertex attributes. Also if that affects the shaders.

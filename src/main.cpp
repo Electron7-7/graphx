@@ -88,6 +88,7 @@ int main()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
+	ImGui::GetIO().IniFilename = nullptr;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
