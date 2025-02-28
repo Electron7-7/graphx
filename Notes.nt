@@ -1318,6 +1318,8 @@ All fixed after giving mouse_last a default value. However, there is a crash whe
 Fixed the crash by making sure Actor::tick doesn't get called if the main Theatre is changing.
 
 [02/27/25]
+(from trunk) Reworked setVariable, setRawData, setActorPointer, and setDevicePointer all into one single template function called "getSetting" that is not only much easier to work with, but also is far more preformant (I think) and waaaaayyyyy fucking safer than the previous template functions. It also has verbose error messages and shouldn't crash if errors are detected.
+
 I'm going to continue work on a fully custom integration of .obj files (without assimp). However, if I haven't made significant progress in the next hour and a half to two hours, I'll shift over to integrating assimp.
 
 Aight it took me an hour to create a testing OpenGL scene; fuckin aye. Anyways, I did a few google searches and I think I'm going to forgo making my own obj loader and use https://github.com/tinyobjloader/tinyobjloader instead, depending on how easy it is for me to integrate it (at a glance, it seems to be fairly simple).

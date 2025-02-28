@@ -7,7 +7,7 @@ namespace IMGUI = ImGui;
 // GraphXConsole
 //
 GraphXConsole::GraphXConsole()
-: active(false), toggle_activation_key(ImGuiKey_Tab), name("GraphX Debug Console"), was_active(false)
+: active(false), secondary_active(true), toggle_activation_key(ImGuiKey_Tab), name("GraphX Debug Console"), was_active(false)
 {
 
 }
@@ -35,8 +35,19 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 		return;
 
 	was_active = active;
+	IMGUI::SetNextWindowPos(ImVec2(540, 15), ImGuiCond_Once);
+	IMGUI::SetNextWindowSize(ImVec2(725, 695), ImGuiCond_Once);
 	IMGUI::Begin(name.c_str(), &active);
-	displayTheatre();
+	if(IMGUI::Button("Toggle Theatre Printout"))
+	{
+		secondary_active = !secondary_active;
+	}
+	if(secondary_active)
+	{
+		IMGUI::BeginChild(IMGUI::GetMainViewport()->ID);
+		displayTheatre();
+		IMGUI::EndChild();
+	}
 	IMGUI::End();
 }
 

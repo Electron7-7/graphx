@@ -87,6 +87,7 @@ int main()
 	ImGui::GetIO().IniFilename = nullptr;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	ImGui::GetIO().IniFilename = NULL; // Be rid of imgui.ini (for now)
 
 #ifdef WIN32
 	ImGui_ImplWin32_Init();

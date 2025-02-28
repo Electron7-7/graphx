@@ -109,9 +109,9 @@ void Theatre::dropCurtains()
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)
 {
 	glm::vec3 stage_euler_degrees = glm::vec3(0.0f);
-	setRawData(stage_position, stage_settings["Position"]);
-	setRawData(stage_scale, stage_settings["Scale"]);
-	setRawData(stage_euler_degrees, stage_settings["Rotation"]);
+	getSetting(stage_position, stage_settings["Position"]);
+	getSetting(stage_scale, stage_settings["Scale"]);
+	getSetting(stage_euler_degrees, stage_settings["Rotation"]);
 	stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
 }
 

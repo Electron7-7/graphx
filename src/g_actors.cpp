@@ -186,13 +186,13 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
 	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
 
-	setRawData(name, new_settings["Name"]);
-	setDevicePointer(mesh, new_settings["Mesh"]);
-	setRawData(position_global, new_settings["Position"]);
-	setRawData(position_local, new_settings["LocalPosition"]);
-	setRawData(global_euler_degrees, new_settings["Rotation"]);
-	setRawData(local_euler_degrees, new_settings["LocalRotation"]);
-	setRawData(scale, new_settings["Scale"]);
+	getSetting(name, new_settings["Name"]);
+	getSetting(mesh, new_settings["Mesh"]);
+	getSetting(position_global, new_settings["Position"]);
+	getSetting(position_local, new_settings["LocalPosition"]);
+	getSetting(global_euler_degrees, new_settings["Rotation"]);
+	getSetting(local_euler_degrees, new_settings["LocalRotation"]);
+	getSetting(scale, new_settings["Scale"]);
 
 	local_quaternion = glm::quat(glm::radians(local_euler_degrees));
 	quaternion = glm::quat(glm::radians(global_euler_degrees));
@@ -301,8 +301,8 @@ void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	setRawData(mass, new_settings["Mass"]);
-	setDevicePointer(collider, new_settings["Collider"]);
+	getSetting(mass, new_settings["Mass"]);
+	getSetting(collider, new_settings["Collider"]);
 }
 
 void PhysicsActor::callToStage(Theatre *parent_theatre)
@@ -443,8 +443,8 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	setRawData(position_local, new_settings["LocalPosition"]);
-	setRawData(euler_rotation_local, new_settings["LocalRotationDegrees"]);
+	getSetting(position_local, new_settings["LocalPosition"]);
+	getSetting(euler_rotation_local, new_settings["LocalRotationDegrees"]);
 }
 
 //
@@ -462,12 +462,12 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	setRawData(mouse_sensitivity, new_settings["MouseSensitivity"]);
-	setRawData(movement_speed, new_settings["MovementSpeed"]);
-	setRawData(lerp_speed, new_settings["MovementAcceleration"]);
-	setRawData(friction, new_settings["Friction"]);
-	setRawData(mass, new_settings["Mass"]);
-	setRawData(field_of_view, new_settings["FOV"]);
+	getSetting(mouse_sensitivity, new_settings["MouseSensitivity"]);
+	getSetting(movement_speed, new_settings["MovementSpeed"]);
+	getSetting(lerp_speed, new_settings["MovementAcceleration"]);
+	getSetting(friction, new_settings["Friction"]);
+	getSetting(mass, new_settings["Mass"]);
+	getSetting(field_of_view, new_settings["FOV"]);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
@@ -616,12 +616,12 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	setRawData(light_color, new_settings["Color"]);
-	setRawData(light_strength, new_settings["Strength"]);
-	setRawData(light_ambient_strength, new_settings["Ambient Strength"]);
-	setRawData(range, new_settings["Range"]);
-	setRawData(intensity, new_settings["Intensity"]);
-	setRawData(falloff, new_settings["Falloff"]);
+	getSetting(light_color, new_settings["Color"]);
+	getSetting(light_strength, new_settings["Strength"]);
+	getSetting(light_ambient_strength, new_settings["Ambient Strength"]);
+	getSetting(range, new_settings["Range"]);
+	getSetting(intensity, new_settings["Intensity"]);
+	getSetting(falloff, new_settings["Falloff"]);
 }
 
 bool Light::isLightType(int light_type)
@@ -644,7 +644,7 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	setRawData(direction, new_settings["Direction"]);
+	getSetting(direction, new_settings["Direction"]);
 }
 
 //
@@ -661,9 +661,9 @@ void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	setRawData(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
-	setRawData(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
-	setRawData(direction, new_settings["Direction"]);
+	getSetting(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
+	getSetting(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
+	getSetting(direction, new_settings["Direction"]);
 }
 
 glm::vec2 LightSpot::getCutoffAngles()
@@ -690,8 +690,8 @@ void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	setRawData(position_offset, new_settings["PositionOffset"]);
-	setRawData(rotation_offset, new_settings["RotationOffset"]);
+	getSetting(position_offset, new_settings["PositionOffset"]);
+	getSetting(rotation_offset, new_settings["RotationOffset"]);
 
 	_color = light_color;
 }
@@ -742,9 +742,9 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	setRawData(pivot_position, new_settings["PivotPosition"]);
-	setRawData(pivot_radius, new_settings["PivotRadius"]);
-	setRawData(pivot_speed, new_settings["PivotSpeed"]);
+	getSetting(pivot_position, new_settings["PivotPosition"]);
+	getSetting(pivot_radius, new_settings["PivotRadius"]);
+	getSetting(pivot_speed, new_settings["PivotSpeed"]);
 
 	pivot_point.setGlobalPosition(pivot_position);
 	pivot_point.setName("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
