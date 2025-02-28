@@ -34,9 +34,11 @@
 #define DOOM_TEXTURE_SPEC				COMP04_5_SPECULAR_jpg
 
 
-#define VAOS_AMOUNT			1
+#define VAOS_AMOUNT			3
 //---------------------------
 #define VAO_HANDMADE		0
+#define VAO_OBJ_FULL		1
+#define VAO_OBJ_SEMI		2
 
 
 #define DEVICE_DEVICE		0
@@ -132,34 +134,47 @@ struct Mesh : public Device
 	unsigned int VBO = 0;
 	unsigned int IBO = 0;
 	bool is_buffered = false;
+	bool is_handmade = true;
 
-	Mesh(Material *init_material = new Material(), std::vector<float> init_vertices = ERROR_VERTS, std::vector<unsigned int> init_indices = ERROR_INDICES, int init_vao_index = VAO_HANDMADE, std::string init_name = "Untitled Mesh");
+	Mesh();
 	~Mesh() override;
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+
 };
 
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 struct Sprite : public Mesh
 {
-	Sprite(Material *init_material = new Material(), int init_vao_index = VAO_HANDMADE);
+	Sprite();
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
+
+#define GRAPHX_OPENGL 917 // When I support other APIs, more of these will be added
+// Found in r_renderer.cpp
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::vector<GLShader *> shaders; // Same for shaders
+extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern bool do_interpolation;
+extern int shader_debug_value;
+extern unsigned int shader_index;
+extern glm::vec2 main_window_size;
+extern float camera_near;
+extern float camera_far;
+// Found in r_common.cpp
 extern std::map<int, Device*(*)()> device_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void		W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void		R_GL_BufferMeshData(Mesh *mesh);
-void 		R_StoreBuffers();
-void 		R_Render(std::mutex &state_mutex, float interpolation_time, glm::mat4 projection_matrix);
-void		R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void        R_StoreBuffers();
+void        R_GL_BufferMeshes();
+void        R_Render(std::mutex &state_mutex, float interpolation_time);
+void        R_GL_Render(std::mutex &mutex, float interpolation_time);
+void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 #endif

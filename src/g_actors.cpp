@@ -278,16 +278,9 @@ void Actor::takeABow()
 	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
-bool Actor::wantsToBeBuffered()
-{
-	if(isType(graphx::classes::LIGHTS))
-		return (debug_visible);
-	return(mesh != NULL);
-}
-
 bool Actor::wantsToBeRendered()
 {
-	return (Actor::wantsToBeBuffered() && visible);
+	return (mesh != nullptr && mesh->is_buffered && visible);
 }
 
 //
@@ -461,7 +454,6 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 : Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f, 2.0f, 1.0f))
 {
 	my_type = graphx::classes::GRAPHXPLAYER;
-	debug_visible = false;
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
 	player_camera.setGlobalRotation(init_position);
 }
@@ -475,6 +467,7 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 	setRawData(lerp_speed, new_settings["MovementAcceleration"]);
 	setRawData(friction, new_settings["Friction"]);
 	setRawData(mass, new_settings["Mass"]);
+	setRawData(field_of_view, new_settings["FOV"]);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
@@ -617,7 +610,6 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 {
 	my_type = graphx::classes::LIGHT;
 	my_light_type = graphx::classes::LIGHT;
-	debug_visible = true;
 }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
@@ -645,7 +637,6 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
 	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
-	debug_visible = false;
 	visible = false;
 }
 
@@ -692,7 +683,6 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 {
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
-	debug_visible = false;
 	_color = light_color;
 }
 

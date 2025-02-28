@@ -34,11 +34,13 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #define PRINTLN(thing) std::cout << std::endl << thing << std::endl;
 #define PRINTDEBUG(thing) std::cout << "[DEBUG]    " << thing << std::endl;
 #define JOLTDEBUG(thing) std::cout << "[JOLT]    " << thing << std::endl;
+#define IS_DEBUG true
 #else
 #define TICK(tick);
 #define PRINT(thing);
 #define PRINTLN(thing);
 #define PRINTDEBUG(thing); // Might change this to print nothing, but I like having a little marker to remind/notify me that there are debug messages in the code somewhere
 #define JOLTDEBUG(thing);
+#define IS_DEBUG false
 #endif
 #endif

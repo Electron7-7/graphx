@@ -274,8 +274,7 @@ unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 //
 // Mesh
 //
-Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vector<GLuint> init_indices, int init_vao_index, std::string init_name)
-: name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
+Mesh::Mesh()
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
@@ -305,11 +304,14 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 //
 // Sprite
 //
-Sprite::Sprite(Material *init_material, int init_vao_index)
-: Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
+Sprite::Sprite()
+: Mesh()
 {
 	my_type = graphx::classes::SPRITE;
 	name = "Untitled Sprite";
+	vertices = QUAD_VERTS;
+	indices = QUAD_INDICES;
+	vao_index = VAO_HANDMADE;
 }
 
 void Sprite::loadSettings(graphx::gSettings new_settings)

@@ -84,13 +84,11 @@ public:
 	virtual void tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
 	virtual bool wantsToBeRendered();
-	virtual bool wantsToBeBuffered();
 
 protected:
 	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	std::string name = "Untitled Actor";
-	bool debug_visible;
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);
 	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -108,7 +106,9 @@ protected:
 
 struct Theatre
 {
-	Mesh *stage = nullptr;
+	Mesh *stage_mesh = nullptr;
+	Material *stage_material = nullptr;
+	Actor stage;
 	glm::vec3 stage_scale = glm::vec3(0.0f);
 	glm::vec3 stage_position = glm::vec3(0.0f);
 	glm::quat stage_quaternion = glm::quat();
@@ -119,7 +119,6 @@ struct Theatre
 	int spot_lights_count = 0;
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
-	~Theatre();
 
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();

@@ -3,7 +3,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
-// #include "graphx_namespace.hpp"
 #include "r_common.hpp"
 #include "g_common.hpp"
 #include "g_actors.hpp"
@@ -26,8 +25,6 @@
 
 std::mutex actor_state_mutex;
 
-glm::vec2 main_window_size(1280, 720);
-
 static int TICKRATE = 120;
 
 int current_tick_since_second = 0;
@@ -35,9 +32,6 @@ long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool do_jolt_assert = false;
 bool debug_console_open = false;
-
-float camera_near = 0.1f;
-float camera_far = 1000.0f;
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -48,6 +42,8 @@ void testGameTick(GLFWwindow *window);
 
 int main()
 {
+	graphx_api = GRAPHX_OPENGL;
+
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -123,10 +119,8 @@ int main()
 
 		if(time_to_render)
 		{
-			// De-jank all of this shit below
-			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], camera_near, camera_far);
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
-			R_Render(actor_state_mutex, interpolation_time, projection_matrix);
+			R_Render(actor_state_mutex, interpolation_time);
 		}
 
 		ImGui::Render();

@@ -58,24 +58,52 @@ GraphXPlayer *getCurrentPlayer()
 Theatre::Theatre(std::string init_name, long new_uid)
 : name(init_name), UID(new_uid)
 {
-	stage = new Mesh(new Material(false, glm::vec3(0.5, 0.1, 0.4)));
-	stage->setName("Stage Mesh for Theatre (" + name + ")");
+	stage_material = new Material(false, glm::vec3(0.5, 0.1, 0.4));
+	stage_mesh = new Mesh(stage_material);
+	stage_mesh->setName("Stage Mesh for Theatre (" + name + ")");
 }
 
-Theatre::~Theatre()
+void Theatre::raiseCurtains()
 {
-	stage->prepForDestruction();
-	stage = nullptr;
-	delete stage;
-}
+	PRINTDEBUG("Entering Theatre (" << name << ")")
 
-void Theatre::refreshTroupe()
-{
-	troupe.clear();
+	PRINTLN("Devices Present:")
+	for(auto &pair : devices)
+	{
+		if(pair.second->isType(ENVIRONMENT))
+			environment_uid = pair.first;
+		pair.second->initialize();
+	}
+
+	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
+	{
+		if(pair.second->isType(GRAPHXPLAYER))
+			player_uid = pair.first;
+		pair.second->callToStage(this);
 		troupe.insert(troupe.end(), pair.second);
+	}
+
+	PRINTNOTE("When a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
+
 	sortTroupe();
 	countLights();
+}
+
+void Theatre::dropCurtains()
+{
+	PRINTDEBUG("Exiting Theatre (" << name << ")")
+
+	PRINTLN("Devices Present:")
+	for(auto &pair : devices)
+		pair.second->prepForDestruction();
+	devices.clear();
+
+	PRINTLN("Actors Present:")
+	for(auto &pair : objects)
+		pair.second->takeABow();
+	objects.clear();
+	troupe.clear();
 }
 
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)
@@ -246,47 +274,13 @@ Device *Theatre::unsafeGetFirstDeviceOfType(int type_name)
 	return nullptr;
 }
 
-void Theatre::raiseCurtains()
+void Theatre::refreshTroupe()
 {
-	PRINTDEBUG("Entering Theatre (" << name << ")")
-
-	PRINTLN("Devices Present:")
-	for(auto &pair : devices)
-	{
-		if(pair.second->isType(ENVIRONMENT))
-			environment_uid = pair.first;
-		pair.second->initialize();
-	}
-
-	PRINTLN("Actors Present:")
+	troupe.clear();
 	for(auto &pair : objects)
-	{
-		if(pair.second->isType(GRAPHXPLAYER))
-			player_uid = pair.first;
-		pair.second->callToStage(this);
 		troupe.insert(troupe.end(), pair.second);
-	}
-
-	PRINTNOTE("When a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
-
 	sortTroupe();
 	countLights();
-}
-
-void Theatre::dropCurtains()
-{
-	PRINTDEBUG("Exiting Theatre (" << name << ")")
-
-	PRINTLN("Devices Present:")
-	for(auto &pair : devices)
-		pair.second->prepForDestruction();
-	devices.clear();
-
-	PRINTLN("Actors Present:")
-	for(auto &pair : objects)
-		pair.second->takeABow();
-	objects.clear();
-	troupe.clear();
 }
 
 void Theatre::createActor(int actor_type, long uid, gSettings new_settings)

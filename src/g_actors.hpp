@@ -207,6 +207,7 @@ public:
 	double lerp_speed = 1.3f;
 	float friction = 0.85f;
 	float mass = 100.0f;
+	float field_of_view = 45.0f; // Make sure to convert to radians when making the perspective matrix 
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
 
