@@ -1334,3 +1334,11 @@ Today I'm going to work on integrating tinyobjloader into GraphX. I want to figu
 Also note to self: need to de-tangle OpenGL from R_Render and put it in a "R_GL_Render" function.
 
 I'm going to test adding the Theatre's stage Mesh to the troupe via a dummy Actor. To be honest, it might prove to be useful for enabling dynamic map qualities.
+
+I've been refactoring the rendering functions, as well as editing the Makefile to now automatically search for and find image, shader, and Theatre files for embedding. I might make it do the same for the compiler output files (OBJS), but I do like keeping that static for the sake of compile order and stuff like that.
+
+Also just caught a bug where when getting a setting, it's converted to a long instead of a double and thus truncates all decimal values (I caught this because specular strength was always being set to 0).
+
+I've set up the Makefile to embed .obj files into "src/models.cpp" and "src/include/models.hpp", as well as put #include directives to all ".graphxmodel" header files in "src/include/models.hpp". Now once I finally write .obj integration, I can use embedded models.
+
+It works! Note, though, that there might be a "malloc" or "free" problem when I exit the application somewhere.

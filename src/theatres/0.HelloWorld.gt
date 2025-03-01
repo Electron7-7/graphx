@@ -13,9 +13,33 @@ Material (Doom_Dull)
 	SpecularSharpness (8)
 	SpecularStrength  (0.4)
 }
+Material (ERROR_Test_Mat)
+{
+	DiffuseTexture [MISSING_TEXTURE_DIFF]
+	SpecularTexture [NO_TEXTURE]
+	SpecularStrength (0.0)
+}
 Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
+}
+Mesh (ERROR_Test)
+{
+	MeshData [OBJ_ERROR]
+}
+Collider (ERROR_Collider)
+{
+	MotionType  [Dynamic]
+	ObjectLayer [Moving]
+	Activation  [Activate]
+	Shape       [BoxShape]
+}
+RigidBodyActor (ERROR_TESTER)
+{
+	Mesh:Material <ERROR_Test>:<ERROR_Test_Mat>
+	Collider <ERROR_Collider>
+	Scale (1.0, 1.0, 1.0)
+	Position (10.0, 1.5, 0.0)
 }
 StaticBodyActor (Floor)
 {

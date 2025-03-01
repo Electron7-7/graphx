@@ -67,7 +67,14 @@ public:
 	void setUID(long manual_uid);
 	bool isType(int class_type);
 	bool isType(std::initializer_list<int> const &class_types);
-	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types);
+	// I have to define this in the header file, unfortunately
+	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types)
+	{
+		for(int type : class_types)
+			if(my_type == type)
+				return true;
+		return false;
+	}
 	std::string getTypeName();
 	long getType();
 	void setName(std::string new_name);

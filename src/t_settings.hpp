@@ -49,7 +49,7 @@ template<typename T> int getSetting(T &variable, std::any set_value)
 
 			else if constexpr(std::is_arithmetic_v<T>) // Should only fire if T is number, since the previous if will fire when T is a bool
 			{
-				variable = std::stol(raw_data[0]);
+				variable = std::stod(raw_data[0]);
 				return 0;
 			}
 

@@ -1,9 +1,6 @@
 #ifndef THEATRE_INCLUDES
 #define THEATRE_INCLUDES
-#include "cube.graphxmodel"
-#include "ERROR.graphxmodel"
-#include "pyramid.graphxmodel"
-#include "quad.graphxmodel"
+#include <models.hpp>
 #include "g_math.hpp"
 #ifndef GRAPHX_COMPILING
 #include "r_common.hpp"

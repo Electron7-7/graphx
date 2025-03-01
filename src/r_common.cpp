@@ -1,7 +1,7 @@
 #include "r_common.hpp"
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
-#include "quad.graphxmodel"
+#include <models.hpp>
 #include <iostream>
 
 // Forward Declarations
@@ -87,32 +87,6 @@ template<> void GLShader::setUniform<glm::mat3>(const std::string &name, glm::ma
 template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::mat4 value) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
-}
-
-//
-// Window Functions
-//
-GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
-{
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow *new_window = glfwCreateWindow(width, height, title, NULL, NULL);
-	
-	if(new_window == NULL)
-	{
-		std::cerr << "[ERROR] Failed to create GLFW window!" << std::endl;
-		glfwTerminate();
-	}
-
-	if(make_context_current)
-		glfwMakeContextCurrent(new_window);
-
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-		std::cerr << "[ERROR] Failed to initialize GLAD!" << std::endl;
-
-	return new_window;
 }
 
 //
@@ -280,18 +254,31 @@ Mesh::Mesh()
 	name = "Untitled Mesh";
 }
 
+Mesh::Mesh(Material *new_material)
+{
+	my_type = graphx::classes::MESH;
+	name = "Untitled Mesh";
+	material = new_material;
+}
+
 Mesh::~Mesh()
 {
-	material->prepForDestruction();
+	// material->prepForDestruction();
 	material = nullptr;
 	delete material;
+}
+
+void Mesh::prepForDestruction()
+{
+	Device::prepForDestruction();
+	material->prepForDestruction();
 }
 
 void Mesh::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	gMeshData mesh_data = gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE);
+	gMeshData mesh_data = M_LoadOBJ(ERROR_obj);
 
 	getSetting(material, new_settings["Material"]);
 	getSetting(mesh_data, new_settings["MeshData"]);
@@ -299,6 +286,9 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 	vertices = std::get<0>(mesh_data);
 	indices = std::get<1>(mesh_data);
 	vao_index = std::get<2>(mesh_data);
+
+	if(vao_index == VAO_OBJ)
+		mesh_scale *= PREEMPTIVE_OBJ_SCALE;
 }
 
 //

@@ -1,10 +1,11 @@
 // r_common.hpp - rendering declarations
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
+#include "graphx_namespace.hpp"
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
 #include "t_settings.hpp"
-#include "ERROR.graphxmodel"
+#include <models.hpp>
 #include <stb_image.h>
 #include <array>
 #include <mutex>
@@ -13,6 +14,8 @@
 #define GLSHADER_TYPE_FRAGMENT	1
 #define GLSHADER_TYPE_PROGRAM	2
 
+#define PREEMPTIVE_OBJ_SCALE 10.0f // In case the vertices of an imported OBJ file aren't between -1 and 1, dividing every vertex in the file by 10 (and multiplying the scale by 10) should fix most cases (I think)
+
 
 #define SHADERS_AMOUNT		1
 //---------------------------
@@ -20,6 +23,7 @@
 #define SHADER_PHONG		1
 
 
+// BUFFERS ARENT IMPLEMENTED YET, SO THESE ARENT USED!
 #define BUFFERS_AMOUNT		5
 //---------------------------
 #define BUFFER_ERR			0
@@ -37,8 +41,7 @@
 #define VAOS_AMOUNT			3
 //---------------------------
 #define VAO_HANDMADE		0
-#define VAO_OBJ_FULL		1
-#define VAO_OBJ_SEMI		2
+#define VAO_OBJ				1
 
 
 #define DEVICE_DEVICE		0
@@ -129,18 +132,19 @@ struct Mesh : public Device
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
 	int vao_index = VAO_HANDMADE;
-	std::vector<GLfloat> vertices = ERROR_VERTS;
-	std::vector<GLuint> indices = ERROR_INDICES;
+	std::vector<float> vertices = CUBE_VERTS;
+	std::vector<unsigned int> indices = CUBE_INDICES;
 	unsigned int VBO = 0;
 	unsigned int IBO = 0;
 	bool is_buffered = false;
-	bool is_handmade = true;
+	glm::vec3 mesh_scale = glm::vec3(1.0f);
 
 	Mesh();
+	Mesh(Material *new_material);
 	~Mesh() override;
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
-
+	void prepForDestruction() override;
 };
 
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
@@ -165,16 +169,18 @@ extern unsigned int shader_index;
 extern glm::vec2 main_window_size;
 extern float camera_near;
 extern float camera_far;
+extern int current_vao_index;
 // Found in r_common.cpp
 extern std::map<int, Device*(*)()> device_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 
-GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void        R_StoreBuffers();
-void        R_GL_BufferMeshes();
-void        R_Render(std::mutex &state_mutex, float interpolation_time);
-void        R_GL_Render(std::mutex &mutex, float interpolation_time);
-void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+GLFWwindow       *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
+void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void              R_StoreBuffers();
+void              R_GL_BufferMeshes();
+void              R_Render(std::mutex &state_mutex, float interpolation_time);
+void              R_GL_Render(std::mutex &mutex, float interpolation_time);
+void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
 #endif

@@ -77,7 +77,7 @@ public:
 class Light: public Actor
 {
 public:
-	Mesh temporary_light_mesh = Mesh(new Material(LIGHT_jpg, FLAT_SPEC_jpg, 4, 1.0f));
+	Mesh temporary_light_mesh = Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f));
 
 	glm::vec3 light_color = glm::vec3(1.0f);
 	float light_strength = 0.5f; // A more direct "brightness" value than just changing Attenuation values

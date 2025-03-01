@@ -51,7 +51,8 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 
 Actor::~Actor()
 {
-	mesh->prepForDestruction();
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
 	mesh = nullptr;
 	delete mesh;
 }
@@ -203,14 +204,6 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 bool Actor::isType(int class_type)
 {
 	return class_type == my_type;
-}
-
-template<std::size_t array_size> bool Actor::isType(std::array<int, array_size> class_types)
-{
-	for(auto type : class_types)
-		if(my_type == type)
-			return true;
-	return false;
 }
 
 bool Actor::isType(std::initializer_list<int> const &class_types)
@@ -637,7 +630,6 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
 	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
-	visible = false;
 }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
@@ -684,6 +676,8 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
 	_color = light_color;
+	mesh->prepForDestruction();
+	mesh = nullptr;
 }
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)

@@ -2,11 +2,9 @@
 #include "t_common.hpp"
 #include "g_jolt.hpp"
 #include "g_common.hpp"
+#include "r_common.hpp"
 #include "images.h"
-#include "cube.graphxmodel"
-#include "ERROR.graphxmodel"
-#include "pyramid.graphxmodel"
-#include "quad.graphxmodel"
+#include <models.hpp>
 #include <theatres.hpp>
 #include <set>
 #include <filesystem> // Yes, the devil hath been invoked... I truly am sorry
@@ -30,9 +28,9 @@ std::map<std::string, std::any> cpp_definitions =
 	{"SOURCE_ORANGE", SOURCE_ORANGE_png},
 	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY_png},
 	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
-	{"GRAPHX_ERROR", gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE)},
 	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_VERTS, PYRAMID_INDICES, VAO_HANDMADE)},
 	{"GRAPHX_QUAD", gMeshData(QUAD_VERTS, QUAD_INDICES, VAO_HANDMADE)},
+	{"OBJ_ERROR", M_LoadOBJ(ERROR_obj)},
 	{"Dynamic", JPH::EMotionType::Dynamic},
 	{"Static", JPH::EMotionType::Static},
 	{"Kinematic", JPH::EMotionType::Kinematic},
@@ -509,10 +507,10 @@ Theatre loadTheatre(long theatre_uid)
 
 		if(!object.second.first.compare("Stage"))
 		{
-			// new_theatre.stage->settings = new_class_settings;
-			new_theatre.stage->loadSettings(new_class_settings);
+			new_theatre.stage.youGotACallBack(new_class_settings);
+			new_theatre.stage_mesh->loadSettings(new_class_settings);
 			new_theatre.loadStageSettings(new_class_settings);
-			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage->getName() << "\" given custom settings")
+			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.getName() << "\" given custom settings")
 			continue;
 		}
 
@@ -534,20 +532,8 @@ void loadMainTheatre(long theatre_uid)
 	time_to_render = false;
 	time_to_store_buffers = false;
 
-	// This fucking sucks, don't do this; I'm autistic and that's why I'm doing this (I don't want the printouts from calling stage.prepForDeletion() to show up)
-	if(current_theatre.getUID() == -1)
-	{
-		current_theatre.stage->material = nullptr;
-		delete current_theatre.stage->material;
-		current_theatre.stage = nullptr;
-		delete current_theatre.stage;
-	}
-
-	else
-	{
-		PRINTDEBUG("DROP CURTAINS")
-		current_theatre.dropCurtains();
-	}
+	PRINTDEBUG("DROP CURTAINS")
+	current_theatre.dropCurtains();
 
 	PRINTDEBUG("LOAD THEATRE")
 	current_theatre = loadTheatre(theatre_uid);

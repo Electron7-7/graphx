@@ -1,5 +1,5 @@
 #include "sanity.hpp"
-#include "cube.graphxmodel"
+#include <models.hpp>
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT
