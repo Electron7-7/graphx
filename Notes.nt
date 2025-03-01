@@ -1347,3 +1347,10 @@ It works! Note, though, that there might be a "malloc" or "free" problem when I 
 I want to include the ability to load and use external resources (like models, textures, etc) via Theatre file; this means adding a new variable type to the interpreter. Honestly, I might just rewrite the interpreter and make the file format more solid. Maybe save that for another branch.
 
 I also want to try and rewrite the way rendering is handeled to make it more like Jolt (i.e: the return of RenderCmds).
+
+Oh also holy shit this is a dream for debugging, it prints out the variable name as a string (https://cplusplus.com/forum/beginner/11252):
+:::C++
+#define TO_STREAM(stream,variable) (stream) <<#variable": "<<(variable)
+:::
+
+I'm definitely thinking of re-writing the interpreter. I think I might start another branch for that.
