@@ -382,9 +382,12 @@ Theatre loadTheatre(long theatre_uid)
 	}
 
 	gTheatreStorage theatre_data = theatreParser(embedded_theatres.at(theatre_uid));
-	PRINTDEBUG(getTheatreStructure(theatre_data));
 
 	Theatre new_theatre = Theatre(std::get<0>(theatre_data), theatre_uid);
+	new_theatre.theatre_file_data = theatre_data;
+	new_theatre.theatre_file_data_printout = getTheatreStructure(theatre_data);
+
+	// PRINTDEBUG(new_theatre.theatre_file_data_printout);
 
 	auto objects_bucket = std::get<1>(theatre_data);
 	auto cpp_references = std::get<2>(theatre_data);

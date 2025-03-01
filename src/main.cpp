@@ -34,6 +34,9 @@ bool do_jolt_assert = false;
 bool debug_console_open = false;
 bool is_wireframe = false;
 
+double cursor_last_x = 0.0;
+double cursor_last_y = 0.0;
+
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
@@ -355,17 +358,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}
 
-	if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
+	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))
 	{
-		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
-		{
-			PRINTNOTE("Cursor Mode: Disabled (hidden + locked at center)")
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			return;
-		}
-
-		PRINTNOTE("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		toggleCursor(window, true);
 	}
 
 	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
@@ -398,10 +393,12 @@ void toggleCursor(GLFWwindow *window, bool show_cursor)
 	{
 		PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetCursorPos(window, cursor_last_x, cursor_last_y);
 		return;
 	}
 
 	PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
+	glfwGetCursorPos(window, &cursor_last_x, &cursor_last_y);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 

@@ -27,7 +27,7 @@ LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
 WINDOWS = GraphX_Windows_x86_64.exe
 NAME = ""
 
-FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
+FPS_LIMIT = -1 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
 TESTRUN_LINUX = exit 0 &&
 TESTRUN_WINDOWS = exit 0 &&
 TEST_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows

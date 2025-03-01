@@ -638,6 +638,8 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
 	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
+	mesh->prepForDestruction();
+	mesh = nullptr;
 }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)

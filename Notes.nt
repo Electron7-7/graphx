@@ -1354,3 +1354,12 @@ Oh also holy shit this is a dream for debugging, it prints out the variable name
 :::
 
 I'm definitely thinking of re-writing the interpreter. I think I might start another branch for that.
+
+Ok, I'm going to re-write the interpreter. Here are the things I want to keep from the current implementation:
+ - getSetting and how it handles getting variables, defining valid variables, and ignoring unused/empty variables all at once
+
+Here's what I want to add/change:
+ - I want parsing to be much more programmatic and not just a single loop
+ - I want to try and store data in pre-defined types (not std::any)
+
+I ended up fiddling with ImGui and fixing the cursor jump when toggling between GLFW_CURSOR_NORMAL and GLFW_CURSOR_DISABLED.

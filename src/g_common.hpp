@@ -125,6 +125,9 @@ struct Theatre
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 
+	graphx::gTheatreStorage theatre_file_data;
+	std::string theatre_file_data_printout = "";
+
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
 	void loadStageSettings(graphx::gSettings stage_settings);
