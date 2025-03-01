@@ -1,0 +1,23 @@
+Actor (Test)
+{
+	Mesh:Material <Cube>:<DoomMat>
+}
+
+
+#define THEATRE_REFERENCE 0
+#define RAW_DATA 1
+
+{{"Actor", {RAW_DATA, "Test"}}, {"Actor:Mesh", {THEATRE_REFERENCE, "Cube"}}, {"Actor:Mesh:Material", {THEATRE_REFERENCE, "DoomMat"}}}
+
+gSettings mesh_settings = {{"Name", "Cube"}, {"Material", new_theatre.getDevice(material_uid)}}
+
+{"Mesh", {devices_map[MESH], mesh_settings}}
+
+
+variable = new Mesh(mesh_settings)
+
+
+Mesh::Mesh(gSettings new_settings)
+{
+	loadSettings(new_settings);
+}
