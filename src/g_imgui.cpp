@@ -51,11 +51,8 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	case VAO_HANDMADE:
 		vao_output_strings += "VAO_HANDMADE";
 		break;
-	case VAO_OBJ_FULL:
-		vao_output_strings += "VAO_OBJ_FULL";
-		break;
-	case VAO_OBJ_SEMI:
-		vao_output_strings += "VAO_OBJ_SEMI";
+	case VAO_OBJ:
+		vao_output_strings += "VAO_OBJ";
 		break;
 	default:
 		vao_output_strings += "NO VAO SET";
@@ -68,11 +65,8 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	case VAO_HANDMADE:
 		vao_output_strings += "VAO_HANDMADE";
 		break;
-	case VAO_OBJ_FULL:
-		vao_output_strings += "VAO_OBJ_FULL";
-		break;
-	case VAO_OBJ_SEMI:
-		vao_output_strings += "VAO_OBJ_SEMI";
+	case VAO_OBJ:
+		vao_output_strings += "VAO_OBJ";
 		break;
 	default:
 		vao_output_strings += "NO VAO SET";

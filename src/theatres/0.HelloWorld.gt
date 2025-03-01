@@ -15,9 +15,8 @@ Material (Doom_Dull)
 }
 Material (ERROR_Test_Mat)
 {
-	DiffuseTexture [MISSING_TEXTURE_DIFF]
-	SpecularTexture [NO_TEXTURE]
-	SpecularStrength (0.0)
+	mat_fullbright (True)
+	Color (1.0, 0.0, 0.2)
 }
 Mesh (Cube)
 {
@@ -33,13 +32,15 @@ Collider (ERROR_Collider)
 	ObjectLayer [Moving]
 	Activation  [Activate]
 	Shape       [BoxShape]
+	Position (10.0, 3.5, 0.0)
+	Scale (1.0, 1.0, 1.0)
 }
-RigidBodyActor (ERROR_TESTER)
+PhysicsActor (ERROR_TESTER)
 {
 	Mesh:Material <ERROR_Test>:<ERROR_Test_Mat>
 	Collider <ERROR_Collider>
-	Scale (1.0, 1.0, 1.0)
-	Position (10.0, 1.5, 0.0)
+	Scale (4.0, 4.0, 4.0)
+	Position (10.0, 8.0, 0.0)
 }
 StaticBodyActor (Floor)
 {
@@ -85,6 +86,8 @@ Collider (Test_Collider_1)
 	ObjectLayer [Moving]
 	Activation  [Activate]
 	Shape       [BoxShape]
+	Scale		  (1.0, 1.0, 1.0)
+	Position      (-2.0, 9.0, -6.0)
 }
 RigidBodyActor (Falling_Cube_1)
 {
@@ -99,6 +102,8 @@ Collider (Test_Collider_2)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-2.3, 11.5, -5.2)
+	Rotation        (5.0, -2.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_2)
 {
@@ -114,6 +119,8 @@ Collider (Test_Collider_3)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-3.5, 6.7, -4.0)
+	Rotation        (0.0, 60.0, 25.0)
 }
 RigidBodyActor (Falling_Cube_3)
 {
@@ -129,6 +136,8 @@ Collider (Test_Collider_4)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-3.3, 7.2, -5.2)
+	Rotation        (5.0, -2.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_4)
 {
@@ -144,6 +153,8 @@ Collider (Test_Collider_5)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-5.3, 12.2, -6.2)
+	Rotation        (15.0, -25.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_5)
 {

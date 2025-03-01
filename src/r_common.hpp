@@ -90,6 +90,7 @@ struct Device
 protected:
 	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
+	bool ready_to_destroy = false;
 };
 
 struct Environment final : public Device // Will be extended
@@ -141,7 +142,6 @@ struct Mesh : public Device
 
 	Mesh();
 	Mesh(Material *new_material);
-	~Mesh() override;
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 	void prepForDestruction() override;

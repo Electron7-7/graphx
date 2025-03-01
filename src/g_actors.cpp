@@ -49,14 +49,6 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
-Actor::~Actor()
-{
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
-	mesh = nullptr;
-	delete mesh;
-}
-
 std::string Actor::getTypeName()
 {
 	return graphx::classnames.at(my_type);
@@ -268,6 +260,11 @@ void Actor::callToStage(Theatre *parent_theatre)
 
 void Actor::takeABow()
 {
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
+	// mesh = nullptr;
+	// delete mesh;
+
 	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
@@ -302,11 +299,6 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
-	collider->position = position_global;
-	collider->local_position = position_local;
-	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
-	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
-	collider->scale = scale;
 	collider->createBody();
 
 	reset_position = getPosition<JPH::Vec3>();
@@ -317,12 +309,21 @@ void PhysicsActor::takeABow()
 {
 	Actor::takeABow();
 
+	collider->prepForDestruction();
 	collider = nullptr;
 	delete collider;
 }
 
 void PhysicsActor::tick(int current_tick)
-{}
+{
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
+	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
+
+	position_global = convertMath<glm::vec3>(body_position);
+	quaternion = convertMath<glm::quat>(body_quaternion);
+	updateVectors();
+}
 
 //
 // RigidBodyActor
@@ -340,12 +341,19 @@ void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
+	PhysicsActor::callToStage(parent_theatre);
+
+	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Dynamic;
 	collider->object_layer = Layers::MOVING;
-
-	PhysicsActor::callToStage(parent_theatre);
+	collider->scale = scale;
+	collider->position = position_global;
+	collider->local_position = position_local;
+	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
+	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
+	collider->createBody();
 
 	my_type = graphx::classes::RIGIDBODYACTOR;
 }
@@ -353,14 +361,6 @@ void RigidBodyActor::callToStage(Theatre *parent_theatre)
 void RigidBodyActor::tick(int current_tick)
 {
 	PhysicsActor::tick(current_tick);
-
-	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
-	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
-
-	position_global = convertMath<glm::vec3>(body_position);
-	quaternion = convertMath<glm::quat>(body_quaternion);
-	updateVectors();
 }
 
 void RigidBodyActor::reset_to_initial_orientation_for_testing()
@@ -392,19 +392,24 @@ void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 
 void StaticBodyActor::callToStage(Theatre *parent_theatre)
 {
+	PhysicsActor::callToStage(parent_theatre);
+	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Static;
 	collider->object_layer = Layers::NON_MOVING;
-
-	PhysicsActor::callToStage(parent_theatre);
+	collider->scale = scale;
+	collider->position = position_global;
+	collider->local_position = position_local;
+	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
+	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
+	collider->createBody();
 
 	my_type = graphx::classes::STATICBODYACTOR;
 }
 
 void StaticBodyActor::takeABow()
 {
-	collider->prepForDestruction();
 	PhysicsActor::takeABow();
 }
 
@@ -603,6 +608,7 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 {
 	my_type = graphx::classes::LIGHT;
 	my_light_type = graphx::classes::LIGHT;
+	scale = glm::vec3(0.2f);
 }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
@@ -615,6 +621,8 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(range, new_settings["Range"]);
 	getSetting(intensity, new_settings["Intensity"]);
 	getSetting(falloff, new_settings["Falloff"]);
+
+	temporary_light_mesh = Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
 }
 
 bool Light::isLightType(int light_type)

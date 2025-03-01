@@ -144,7 +144,10 @@ void Device::initialize()
 
 void Device::prepForDestruction()
 {
+	if(ready_to_destroy)
+		return;
 	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	ready_to_destroy = true;
 }
 
 void Device::setUID(long manual_uid)
@@ -261,17 +264,12 @@ Mesh::Mesh(Material *new_material)
 	material = new_material;
 }
 
-Mesh::~Mesh()
-{
-	// material->prepForDestruction();
-	material = nullptr;
-	delete material;
-}
-
 void Mesh::prepForDestruction()
 {
 	Device::prepForDestruction();
 	material->prepForDestruction();
+	material = nullptr;
+	delete material;
 }
 
 void Mesh::loadSettings(graphx::gSettings new_settings)

@@ -1,15 +1,13 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
 #include "g_common.hpp"
+#include "g_jolt.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Character/Character.h>
-
-// Forward Declarations
-struct Collider;
 
 #define ACTOR_ACTOR 		0
 #define ACTOR_LIGHT 		1
@@ -23,7 +21,7 @@ struct Collider;
 class PhysicsActor: public Actor
 {
 public:
-	Collider *collider = nullptr;
+	Collider *collider = new Collider();
 
 	float mass = 1.0f; // in kg
 
@@ -77,7 +75,7 @@ public:
 class Light: public Actor
 {
 public:
-	Mesh temporary_light_mesh = Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f));
+	Mesh temporary_light_mesh = Mesh();
 
 	glm::vec3 light_color = glm::vec3(1.0f);
 	float light_strength = 0.5f; // A more direct "brightness" value than just changing Attenuation values
