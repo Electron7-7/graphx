@@ -46,13 +46,6 @@ std::map<std::string, std::any> cpp_definitions =
 
 gTheatreStorage theatreParser(std::string theatre_data)
 {
-	gObjectStore objects_bucket;
-	gSourceRefStore cpp_references;
-	gTheatreRefStore theatre_references;
-	gRawDataStore raw_data;
-	gSandwichStore layered_definitions;
-	std::string theatre_name;
-
 	std::set<char> whitespace =
 	{
 		' ',
@@ -60,6 +53,183 @@ gTheatreStorage theatreParser(std::string theatre_data)
 		'\n',
 		'\t'
 	};
+
+	char begin_settings = '{';
+	char end_settings = '}';
+
+	char begin_cxx_reference = '[';
+	char begin_theatre_reference = '<';
+	char begin_raw_data = '(';
+
+	char end_cxx_reference = ']';
+	char end_theatre_reference = '>';
+	char end_raw_data = ')';
+
+	char sandwich_layer = ':';
+
+#define RAW_DATA          0
+#define CPP_REFERENCE     1
+#define THEATRE_REFERENCE 2
+
+	typedef std::string gKey;
+	typedef std::pair<int, std::string> gValue;
+	typedef std::pair<gKey, gValue> gSetting;
+	// typedef std::vector<gSetting> gSettings;
+
+	std::vector<gKey> keys;
+	std::vector<gValue> values;
+
+	std::vector<gSetting> object_settings;
+	std::vector<std::vector<gSetting>> all_settings;
+
+	bool reading_settings = false;
+	std::string buffer = "";
+
+	for(int i = 0 ; i < theatre_data.size() ; i++)
+	{
+		if(theatre_data[i] == '@')
+		{
+			while(!whitespace.contains(theatre_data[i]))
+			{
+				buffer += theatre_data[++i];
+			}
+
+			all_settings.insert(all_settings.end(), {gSetting("Theatre", gValue(RAW_DATA, buffer))});
+			buffer = "";
+		}
+
+		if(reading_settings)
+		{
+			if(theatre_data[i] == end_settings)
+			{
+				reading_settings = false;
+
+				for(int it = 0 ; it < keys.size() ; it++)
+				{
+					if(it < values.size())
+					{
+						object_settings.insert(object_settings.end(), gSetting(keys[it], values[it]));
+					}
+				}
+
+				all_settings.insert(all_settings.end(), object_settings);
+				keys.clear();
+				values.clear();
+				object_settings.clear();
+				continue;
+			}
+
+			if(theatre_data[i] == begin_cxx_reference || theatre_data[i] == begin_theatre_reference || theatre_data[i] == begin_raw_data)
+			{
+				i++;
+
+				while(theatre_data[i] != end_cxx_reference && theatre_data[i] != end_theatre_reference && theatre_data[i] != end_raw_data)
+				{
+					buffer += theatre_data[i++];
+				}
+
+				int value_type;
+
+				if(theatre_data[i] == end_cxx_reference)
+					value_type = CPP_REFERENCE;
+				if(theatre_data[i] == end_theatre_reference)
+					value_type = THEATRE_REFERENCE;
+				if(theatre_data[i] == end_raw_data)
+					value_type = RAW_DATA;
+
+				values.insert(values.end(), gValue(value_type, buffer));
+				buffer = "";
+				i++;
+
+				if(theatre_data[i] == sandwich_layer)
+				{
+					continue;
+				}
+			}
+
+			if(whitespace.contains(theatre_data[i]))
+			{
+				if(buffer.size() == 0)
+					continue;
+
+				keys.insert(keys.end(), buffer);
+				buffer = "";
+				continue;
+			}
+
+			if(!whitespace.contains(theatre_data[i]))
+			{
+				if(theatre_data[i] == sandwich_layer)
+				{
+					keys.insert(keys.end(), buffer);
+					buffer += theatre_data[i];
+					continue;
+				}
+
+				buffer += theatre_data[i];
+			}
+		}
+
+		if(!reading_settings)
+		{
+			if(whitespace.contains(theatre_data[i]))
+			{
+				if(buffer.size() == 0)
+					continue;
+
+				keys.insert(keys.end(), buffer);
+				buffer = "";
+				continue;
+			}
+
+			if(theatre_data[i] == begin_raw_data)
+			{
+				i++;
+
+				while(theatre_data[i] != end_raw_data)
+				{
+					buffer += theatre_data[i++];
+				}
+
+				values.insert(values.end(), gValue(RAW_DATA, buffer));
+				buffer = "";
+				object_settings.insert(object_settings.end(), gSetting(keys[0], values[0]));
+				keys.clear();
+				values.clear();
+				continue;
+			}
+
+			if(theatre_data[i] == begin_settings)
+			{
+				buffer = "";
+				reading_settings = true;
+				continue;
+			}
+
+			buffer += theatre_data[i];
+		}
+	}
+
+	for(std::vector<gSetting> object_setting : all_settings)
+	{
+		for(gSetting setting : object_setting)
+			PRINTDEBUG(setting.first + " = " + setting.second.second)
+	}
+
+	gObjectStore objects_bucket;
+	gSourceRefStore cpp_references;
+	gTheatreRefStore theatre_references;
+	gRawDataStore raw_data;
+	gSandwichStore layered_definitions;
+	std::string theatre_name;
+
+	// std::set<char> whitespace =
+	// {
+	// 	' ',
+	// 	'	',
+	// 	'\n',
+	// 	'\t'
+	// };
 
 	std::set<char> begin_value =
 	{
@@ -80,7 +250,7 @@ gTheatreStorage theatreParser(std::string theatre_data)
 	bool reading_value = false;
 	bool layered = false;
 
-	std::string buffer = "";
+	buffer = "";
 	std::string pair_definition_buffer = "";
 	std::vector<std::string> layered_pairs_definitions_buffer = {};
 	std::pair<std::string, int> layered_pairs_first_definition = {};

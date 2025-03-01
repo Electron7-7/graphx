@@ -1362,4 +1362,6 @@ Here's what I want to add/change:
  - I want parsing to be much more programmatic and not just a single loop
  - I want to try and store data in pre-defined types (not std::any)
 
-I ended up fiddling with ImGui and fixing the cursor jump when toggling between GLFW_CURSOR_NORMAL and GLFW_CURSOR_DISABLED.
+I ended up fiddling with ImGui and fixing the cursor jump when toggling between GLFW_CURSOR_NORMAL and GLFW_CURSOR_DISABLED. Now I'm gonna re-write the interpreter.
+
+I have a proof of concept working for a better parser.
