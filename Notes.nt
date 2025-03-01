@@ -1342,3 +1342,8 @@ Also just caught a bug where when getting a setting, it's converted to a long in
 I've set up the Makefile to embed .obj files into "src/models.cpp" and "src/include/models.hpp", as well as put #include directives to all ".graphxmodel" header files in "src/include/models.hpp". Now once I finally write .obj integration, I can use embedded models.
 
 It works! Note, though, that there might be a "malloc" or "free" problem when I exit the application somewhere.
+
+[03/01/25]
+I want to include the ability to load and use external resources (like models, textures, etc) via Theatre file; this means adding a new variable type to the interpreter. Honestly, I might just rewrite the interpreter and make the file format more solid. Maybe save that for another branch.
+
+I also want to try and rewrite the way rendering is handeled to make it more like Jolt (i.e: the return of RenderCmds).

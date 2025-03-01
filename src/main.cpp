@@ -32,6 +32,7 @@ long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool do_jolt_assert = false;
 bool debug_console_open = false;
+bool is_wireframe = false;
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -63,7 +64,7 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-	
+
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
@@ -265,10 +266,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		switch(shader_index)
 		{
 		case SHADER_BLINN_PHONG:
-			PRINTDEBUG("Using Shader: Blinn-Phong")
+			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
 		case SHADER_PHONG:
-			PRINTDEBUG("Using Shader: Phong")
+			PRINTNOTE("Using Shader: Phong")
 			break;
 		}
 	}
@@ -283,10 +284,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		switch(shader_index)
 		{
 		case SHADER_BLINN_PHONG:
-			PRINTDEBUG("Using Shader: Blinn-Phong")
+			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
 		case SHADER_PHONG:
-			PRINTDEBUG("Using Shader: Phong")
+			PRINTNOTE("Using Shader: Phong")
 			break;
 		}
 	}
@@ -341,14 +342,14 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		getCurrentEnvironment()->ambient_lighting_enabled = !getCurrentEnvironment()->ambient_lighting_enabled;
 		if(!getCurrentEnvironment()->ambient_lighting_enabled)
-			PRINTDEBUG("Ambient Lighting Disabled")
+			PRINTNOTE("Ambient Lighting Disabled")
 		else
-			PRINTDEBUG("Ambient Lighting Enabled")
+			PRINTNOTE("Ambient Lighting Enabled")
 	}
 
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
-		PRINTDEBUG("Resetting PhysicsActors to initial transformation!")
+		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
 		for(Actor *actor : getCurrentTheatre()->troupe)
 			if(actor->isPhysicsActor())
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
@@ -358,16 +359,29 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 		{
-			PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
+			PRINTNOTE("Cursor Mode: Disabled (hidden + locked at center)")
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			return;
 		}
 
-		PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
+		PRINTNOTE("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 
-#ifdef GRAPHX_DEBUG
+	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
+	{
+		is_wireframe = !is_wireframe;
+		if(is_wireframe)
+		{
+			PRINTNOTE("Polygon Mode: Wireframe")
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			return;
+		}
+
+		PRINTNOTE("Polygon Mode: Normal")
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
 	if(key == GLFW_KEY_J && action == GLFW_PRESS)
 	{
 		do_jolt_assert = !do_jolt_assert;
@@ -376,7 +390,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		else
 			PRINTDEBUG("Jolt assert printouts disabled")
 	}
-#endif
 }
 
 void toggleCursor(GLFWwindow *window, bool show_cursor)
