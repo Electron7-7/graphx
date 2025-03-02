@@ -44,178 +44,8 @@ std::map<std::string, std::any> cpp_definitions =
 	{"CylinderShape", ColliderShapes::CYLINDER},
 };
 
-gTheatreStorage theatreParser(std::string theatre_data)
+gTheatreStorage oldTheatreParser(std::string theatre_data)
 {
-	std::set<char> whitespace =
-	{
-		' ',
-		'	',
-		'\n',
-		'\t'
-	};
-
-	char begin_settings = '{';
-	char end_settings = '}';
-
-	char begin_cxx_reference = '[';
-	char begin_theatre_reference = '<';
-	char begin_raw_data = '(';
-
-	char end_cxx_reference = ']';
-	char end_theatre_reference = '>';
-	char end_raw_data = ')';
-
-	char sandwich_layer = ':';
-
-#define RAW_DATA          0
-#define CPP_REFERENCE     1
-#define THEATRE_REFERENCE 2
-
-	typedef std::string gKey;
-	typedef std::pair<int, std::string> gValue;
-	typedef std::pair<gKey, gValue> gSetting;
-	// typedef std::vector<gSetting> gSettings;
-
-	std::vector<gKey> keys;
-	std::vector<gValue> values;
-
-	std::vector<gSetting> object_settings;
-	std::vector<std::vector<gSetting>> all_settings;
-
-	bool reading_settings = false;
-	std::string buffer = "";
-
-	for(int i = 0 ; i < theatre_data.size() ; i++)
-	{
-		if(theatre_data[i] == '@')
-		{
-			while(!whitespace.contains(theatre_data[i]))
-			{
-				buffer += theatre_data[++i];
-			}
-
-			all_settings.insert(all_settings.end(), {gSetting("Theatre", gValue(RAW_DATA, buffer))});
-			buffer = "";
-		}
-
-		if(reading_settings)
-		{
-			if(theatre_data[i] == end_settings)
-			{
-				reading_settings = false;
-
-				for(int it = 0 ; it < keys.size() ; it++)
-				{
-					if(it < values.size())
-					{
-						object_settings.insert(object_settings.end(), gSetting(keys[it], values[it]));
-					}
-				}
-
-				all_settings.insert(all_settings.end(), object_settings);
-				keys.clear();
-				values.clear();
-				object_settings.clear();
-				continue;
-			}
-
-			if(theatre_data[i] == begin_cxx_reference || theatre_data[i] == begin_theatre_reference || theatre_data[i] == begin_raw_data)
-			{
-				i++;
-
-				while(theatre_data[i] != end_cxx_reference && theatre_data[i] != end_theatre_reference && theatre_data[i] != end_raw_data)
-				{
-					buffer += theatre_data[i++];
-				}
-
-				int value_type;
-
-				if(theatre_data[i] == end_cxx_reference)
-					value_type = CPP_REFERENCE;
-				if(theatre_data[i] == end_theatre_reference)
-					value_type = THEATRE_REFERENCE;
-				if(theatre_data[i] == end_raw_data)
-					value_type = RAW_DATA;
-
-				values.insert(values.end(), gValue(value_type, buffer));
-				buffer = "";
-				i++;
-
-				if(theatre_data[i] == sandwich_layer)
-				{
-					continue;
-				}
-			}
-
-			if(whitespace.contains(theatre_data[i]))
-			{
-				if(buffer.size() == 0)
-					continue;
-
-				keys.insert(keys.end(), buffer);
-				buffer = "";
-				continue;
-			}
-
-			if(!whitespace.contains(theatre_data[i]))
-			{
-				if(theatre_data[i] == sandwich_layer)
-				{
-					keys.insert(keys.end(), buffer);
-					buffer += theatre_data[i];
-					continue;
-				}
-
-				buffer += theatre_data[i];
-			}
-		}
-
-		if(!reading_settings)
-		{
-			if(whitespace.contains(theatre_data[i]))
-			{
-				if(buffer.size() == 0)
-					continue;
-
-				keys.insert(keys.end(), buffer);
-				buffer = "";
-				continue;
-			}
-
-			if(theatre_data[i] == begin_raw_data)
-			{
-				i++;
-
-				while(theatre_data[i] != end_raw_data)
-				{
-					buffer += theatre_data[i++];
-				}
-
-				values.insert(values.end(), gValue(RAW_DATA, buffer));
-				buffer = "";
-				object_settings.insert(object_settings.end(), gSetting(keys[0], values[0]));
-				keys.clear();
-				values.clear();
-				continue;
-			}
-
-			if(theatre_data[i] == begin_settings)
-			{
-				buffer = "";
-				reading_settings = true;
-				continue;
-			}
-
-			buffer += theatre_data[i];
-		}
-	}
-
-	for(std::vector<gSetting> object_setting : all_settings)
-	{
-		for(gSetting setting : object_setting)
-			PRINTDEBUG(setting.first + " = " + setting.second.second)
-	}
-
 	gObjectStore objects_bucket;
 	gSourceRefStore cpp_references;
 	gTheatreRefStore theatre_references;
@@ -223,13 +53,13 @@ gTheatreStorage theatreParser(std::string theatre_data)
 	gSandwichStore layered_definitions;
 	std::string theatre_name;
 
-	// std::set<char> whitespace =
-	// {
-	// 	' ',
-	// 	'	',
-	// 	'\n',
-	// 	'\t'
-	// };
+	std::set<char> whitespace =
+	{
+		' ',
+		'	',
+		'\n',
+		'\t'
+	};
 
 	std::set<char> begin_value =
 	{
@@ -250,7 +80,7 @@ gTheatreStorage theatreParser(std::string theatre_data)
 	bool reading_value = false;
 	bool layered = false;
 
-	buffer = "";
+	std::string buffer = "";
 	std::string pair_definition_buffer = "";
 	std::vector<std::string> layered_pairs_definitions_buffer = {};
 	std::pair<std::string, int> layered_pairs_first_definition = {};
@@ -414,59 +244,204 @@ gTheatreStorage theatreParser(std::string theatre_data)
 	);
 }
 
-#ifdef GRAPHX_DEBUG
-std::string getTheatreStructure(gTheatreStorage theatre_storage)
+gStringSettings theatreParser(std::string theatre_data)
 {
-	std::string structure_out = "Internal structure of Theatre \"" + std::get<0>(theatre_storage) + "\":\n-----------------------------------------------------------\n";
-	structure_out += "std::map<int, std::pair<std::string, std::string>> objects_bucket =\n{\n";
-	for(const auto& elem : std::get<1>(theatre_storage))
+	std::set<char> whitespace =
 	{
-		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
-	}
-	structure_out += "};\n";
+		' ',
+		'	',
+		'\n',
+		'\t'
+	};
 
-	structure_out += "std::multimap<int, std::pair<std::string, std::string>> cpp_references =\n{\n";
-	for(const auto& elem : std::get<2>(theatre_storage))
-	{
-		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
-	}
-	structure_out += "};\n";
+	char begin_settings = '{';
+	char end_settings = '}';
 
-	structure_out += "std::multimap<int, std::pair<std::string, int>> theatre_references =\n{\n";
-	for(const auto& elem : std::get<3>(theatre_storage))
-	{
-		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + std::to_string(elem.second.second) + "}\n\t},\n";
-	}
-	structure_out += "};\n";
+	char begin_cxx_reference = '[';
+	char begin_theatre_reference = '<';
+	char begin_raw_data = '(';
+	char begin_external_reference = '"';
 
-	structure_out += "std::multimap<int, std::pair<std::string, std::string>> raw_data =\n{\n";
-	for(const auto& elem : std::get<4>(theatre_storage))
-	{
-		structure_out += "\t{\n\t\t" + std::to_string(elem.first) + ",\n\t\t{" + elem.second.first + ", " + elem.second.second + "}\n\t},\n";
-	}
-	structure_out += "};\n";
+	char end_cxx_reference = ']';
+	char end_theatre_reference = '>';
+	char end_raw_data = ')';
+	char end_external_reference = '"';
 
-	structure_out += "std::multimap<int, std::vector<std::pair<std::string, int>>> layered_definitions =\n{\n";
-	for(const auto& elem : std::get<5>(theatre_storage)) // pair #1
+	char sandwich_layer = ':';
+
+#define RAW_DATA           0
+#define CPP_REFERENCE      1
+#define THEATRE_REFERENCE  2
+#define EXTERNAL_REFERENCE 3
+
+	std::vector<gKey> keys;
+	std::vector<gValue> values;
+	gStringSettings all_settings;
+
+	std::vector<gStringSetting> object_settings;
+
+	bool reading_settings = false;
+	std::string buffer = "";
+
+	for(int i = 0 ; i < theatre_data.size() ; i++)
 	{
-		structure_out += "\t{\n\t\t" + std::to_string(elem.first) /*int*/ + ",\n"; // int
-		structure_out += "\t\t{\n"; // pair #2
-		structure_out += "\t\t\t{\n\t\t\t\t" + elem.second.first.first + ", " + std::to_string(elem.second.first.second) + "\n\t\t\t},\n";
-		structure_out += "\t\t\t{\n"; // vector
-		for(auto &pair : elem.second.second)
+		if(theatre_data[i] == '@')
 		{
-			structure_out += "\t\t\t\t{\n\t\t\t\t\t" + pair.first + ", " + std::to_string(pair.second) + "\n\t\t\t\t},\n";
+			i++;
+			while(!whitespace.contains(theatre_data[i]))
+			{
+				buffer += theatre_data[i++];
+			}
+
+			all_settings.insert(all_settings.end(), {gStringSetting("Theatre", gValue(RAW_DATA, buffer))});
+			buffer = "";
 		}
-		structure_out += "\t\t\t},\n\t\t},\n\t},\n";
+
+		if(reading_settings)
+		{
+			if(theatre_data[i] == end_settings)
+			{
+				reading_settings = false;
+
+				for(int it = 0 ; it < keys.size() ; it++)
+					if(it < values.size())
+						object_settings.insert(object_settings.end(), gStringSetting(keys[it], values[it]));
+
+				all_settings.insert(all_settings.end(), object_settings);
+				keys.clear();
+				values.clear();
+				object_settings.clear();
+				continue;
+			}
+
+			if(theatre_data[i] == begin_cxx_reference || theatre_data[i] == begin_theatre_reference || theatre_data[i] == begin_raw_data || theatre_data[i] == begin_external_reference)
+			{
+				i++;
+
+				while(theatre_data[i] != end_cxx_reference && theatre_data[i] != end_theatre_reference && theatre_data[i] != end_raw_data && theatre_data[i] != end_external_reference)
+					buffer += theatre_data[i++];
+
+				int value_type;
+
+				if(theatre_data[i] == end_cxx_reference)
+					value_type = CPP_REFERENCE;
+				if(theatre_data[i] == end_theatre_reference)
+					value_type = THEATRE_REFERENCE;
+				if(theatre_data[i] == end_raw_data)
+					value_type = RAW_DATA;
+				if(theatre_data[i] == end_external_reference)
+					value_type = EXTERNAL_REFERENCE;
+
+				values.insert(values.end(), gValue(value_type, buffer));
+				buffer = "";
+				i++;
+
+				if(theatre_data[i] == sandwich_layer)
+					continue;
+			}
+
+			if(whitespace.contains(theatre_data[i]))
+			{
+				if(buffer.size() == 0)
+					continue;
+
+				keys.insert(keys.end(), buffer);
+				buffer = "";
+				continue;
+			}
+
+			if(!whitespace.contains(theatre_data[i]))
+			{
+				if(theatre_data[i] == sandwich_layer)
+				{
+					keys.insert(keys.end(), buffer);
+					buffer += theatre_data[i];
+					continue;
+				}
+
+				buffer += theatre_data[i];
+			}
+		}
+
+		if(!reading_settings)
+		{
+			if(whitespace.contains(theatre_data[i]))
+			{
+				if(buffer.size() == 0)
+					continue;
+
+				keys.insert(keys.end(), buffer);
+				buffer = "";
+				continue;
+			}
+
+			if(theatre_data[i] == begin_raw_data)
+			{
+				i++;
+
+				while(theatre_data[i] != end_raw_data)
+					buffer += theatre_data[i++];
+
+				values.insert(values.end(), gValue(RAW_DATA, buffer));
+				buffer = "";
+				object_settings.insert(object_settings.end(), gStringSetting(keys[0], values[0]));
+				keys.clear();
+				values.clear();
+				continue;
+			}
+
+			if(theatre_data[i] == begin_settings)
+			{
+				buffer = "";
+				reading_settings = true;
+				continue;
+			}
+
+			buffer += theatre_data[i];
+		}
 	}
-	structure_out += "};\n";
+
+	return all_settings;
+}
+
+std::string getVariableTypeName(int variable_type)
+{
+	switch(variable_type)
+	{
+	case CPP_REFERENCE:
+		return "CPP_REFERENCE";
+	case THEATRE_REFERENCE:
+		return "THEATRE_REFERENCE";
+	case RAW_DATA:
+		return "RAW_DATA";
+	case EXTERNAL_REFERENCE:
+		return "EXTERNAL_REFERENCE";
+	default:
+		return "UNKNOWN";
+	}
+}
+
+#ifdef GRAPHX_DEBUG
+std::string getTheatreStructure(gStringSettings theatre_storage)
+{
+	std::string structure_out = "Theatre Structure\n\nTheatre \"" + theatre_storage[0][0].second.second + "\"\n";
+
+	for(int i = 1 ; i < theatre_storage.size() ; i++)
+	{
+		structure_out += "\n\t" + theatre_storage[i][0].first + " \"" + theatre_storage[i][0].second.second + "\"\n";
+		for(int it = 1 ; it < theatre_storage[i].size() ; it++)
+		{
+			gStringSetting setting = theatre_storage[i][it];
+			structure_out += "\t\t" + setting.first + " = " + setting.second.second + " (type: " + getVariableTypeName(setting.second.first) + ")\n";
+		}
+	}
 
 	return structure_out;
 }
 #else
-std::string getTheatreStructure(gTheatreStorage theatre_storage)
+std::string getTheatreStructure(gStringSettings theatre_storage)
 {
-	return "Parsed Theatre \"" + std::get<0>(theatre_storage) + "\"";
+	return "Parsed Theatre \"" + theatre_storage[0][1] + "\"";
 }
 #endif
 
@@ -542,7 +517,84 @@ int getClassHash(std::string class_name, bool dont_print_error)
 	return -1;
 }
 
-// loadTheatre should not be called directly, which is why it's not in the header file
+void interpretCppReference(gSettings &new_class_settings, std::string variable_name, std::string cpp_reference)
+{
+	if(!cpp_definitions.contains(cpp_reference))
+	{
+		PRINTERR("Tried to load a non-existing C++ Reference Variable \"" << cpp_reference << "\"!")
+		return;
+	}
+
+	new_class_settings[variable_name] = cpp_definitions.at(cpp_reference);
+}
+
+void interpretRawData(gSettings &new_class_settings, std::string variable_name, std::string raw_data)
+{
+	std::set<char> forgiveness =
+	{
+		' ',
+		'	',
+		'\n',
+		'\t'
+	};
+
+	std::set<char> special =
+	{
+		'-',
+		'.',
+		','
+	};
+
+	std::string buffer = "";
+	gRawData vector_buffer;
+	bool is_number = true;
+
+	for(char &character : raw_data)
+	{
+		if(!std::isdigit(character))
+		{
+			if(special.contains(character))
+			{
+				if(character == ',')
+				{
+					vector_buffer.insert(vector_buffer.end(), buffer);
+					buffer = "";
+					continue;
+				}
+
+				buffer += character;
+				continue;
+			}
+
+			if(forgiveness.contains(character))
+				continue;
+
+			is_number = false;
+			break;
+		}
+
+		buffer += character;
+	}
+
+	if(is_number)
+	{
+		vector_buffer.insert(vector_buffer.end(), buffer);
+		new_class_settings[variable_name] = vector_buffer;
+		return;
+	}
+
+	new_class_settings[variable_name] = gRawData{raw_data};
+}
+
+void interpretTheatreReference(gSettings &new_class_settings, gStringSettings theatre_settings, std::string variable_name, std::string theatre_reference)
+{
+	for(int i = 1 ; i < theatre_settings.size() ; i++)
+	{
+		if(theatre_settings[i][0].second.second == theatre_reference)
+			new_class_settings[variable_name] = 
+	}
+}
+
 Theatre loadTheatre(long theatre_uid)
 {
 	if(!embedded_theatres.count(theatre_uid))
@@ -551,11 +603,51 @@ Theatre loadTheatre(long theatre_uid)
 		return Theatre("DEFAULT ERROR RETURN THEATRE RETURNED BY \"loadTheatre\"");
 	}
 
-	gTheatreStorage theatre_data = theatreParser(embedded_theatres.at(theatre_uid));
+	gStringSettings theatre_settings = theatreParser(embedded_theatres.at(theatre_uid));
+
+	Theatre new_theatre = Theatre(theatre_settings[0][0].second.second, theatre_uid);
+	new_theatre.graphx_theatre_settings = theatre_settings;
+	new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
+
+	std::vector<std::pair<int, gSettings>> all_class_settings;
+
+	for(int i = 1 ; i < theatre_settings.size() ; i++)
+	{
+		gSettings new_class_settings = {{"Name", gRawData{theatre_settings[i][0].second.second}}};
+
+		for(int it = 1 ; it < theatre_settings[i].size() ; it++)
+		{
+			gStringSetting setting = theatre_settings[i][it];
+
+			switch(setting.second.first)
+			{
+			case CPP_REFERENCE:
+				interpretCppReference(new_class_settings, setting.first, setting.second.second);
+				break;
+			case RAW_DATA:
+				interpretRawData(new_class_settings, setting.first, setting.second.second);
+				break;
+			case THEATRE_REFERENCE:
+				
+			}
+		}
+	}
+}
+
+// loadTheatre should not be called directly, which is why it's not in the header file
+Theatre oldLoadTheatre(long theatre_uid)
+{
+	if(!embedded_theatres.count(theatre_uid))
+	{
+		PRINTERR("Tried to load a Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " but no Theatre with that UID exists!")
+		return Theatre("DEFAULT ERROR RETURN THEATRE RETURNED BY \"loadTheatre\"");
+	}
+
+	gTheatreStorage theatre_data = oldTheatreParser(embedded_theatres.at(theatre_uid));
 
 	Theatre new_theatre = Theatre(std::get<0>(theatre_data), theatre_uid);
 	new_theatre.theatre_file_data = theatre_data;
-	new_theatre.theatre_file_data_printout = getTheatreStructure(theatre_data);
+	new_theatre.theatre_file_data_printout = getTheatreStructure(theatreParser(embedded_theatres.at(theatre_uid)));
 
 	// PRINTDEBUG(new_theatre.theatre_file_data_printout);
 
@@ -709,7 +801,7 @@ void loadMainTheatre(long theatre_uid)
 	current_theatre.dropCurtains();
 
 	PRINTDEBUG("LOAD THEATRE")
-	current_theatre = loadTheatre(theatre_uid);
+	current_theatre = oldLoadTheatre(theatre_uid);
 	PRINTDEBUG("START PRESHOW")
 	current_theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();

@@ -5,4 +5,5 @@
 #include "../models/pyramid.graphxmodel"
 #include "../models/quad.graphxmodel"
 extern std::string ERROR_obj;
+extern std::string ERROR_mtl;
 #endif

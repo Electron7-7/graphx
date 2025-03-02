@@ -81,6 +81,7 @@ M = $(SRC)/models
 MODELS_C = $(SRC)/models.cpp
 MODELS_H = $(SRC)/include/models.hpp
 MDLS = $(wildcard $(M)/*.obj)
+MTLS = $(wildcard $(M)/*.mtl)
 
 PHONY = obj_testing all clean dirty_clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
 
@@ -183,11 +184,13 @@ $(MODELS_H):
 	$(shell printf "#ifndef GRAPHX_MODELS\n#define GRAPHX_MODELS\n#include <string>\n" > $(MODELS_H))
 	$(foreach graphxmodel,$(wildcard $(M)/*.graphxmodel),$(shell printf "#include \"../$(M:$(SRC)/%=%)/$(graphxmodel:$(M)/%=%)\"\n" >> $(MODELS_H)))
 	$(foreach model,$(MDLS),$(shell printf "extern std::string $(subst .,_,$(model:$(M)/%=%));\n" >> $(MODELS_H)))
+	$(foreach material,$(MTLS),$(shell printf "extern std::string $(subst .,_,$(material:$(M)/%=%));\n" >> $(MODELS_H)))
 	$(shell printf "#endif" >> $(MODELS_H))
 
 $(MODELS_C): $(MODELS_H)
 	$(shell printf "#include <string>\n" > $(MODELS_C))
 	$(foreach model,$(MDLS),$(shell printf "std::string $(subst .,_,$(model:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(model) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))
+	$(foreach material,$(MTLS),$(shell printf "std::string $(subst .,_,$(material:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(material) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))
 
 $(O)/%.opp: $(SRC)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@

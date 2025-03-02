@@ -45,36 +45,22 @@ namespace graphx
 		};
 	}
 
-	typedef std::map<int, std::pair<std::string, std::string>> \
-	gObjectStore;
-	
-	typedef std::multimap<int, std::pair<std::string, std::string>> \
-	gSourceRefStore;
-	
-	typedef std::multimap<int, std::pair<std::string, int>> \
-	gTheatreRefStore;
-	
-	typedef std::multimap<int, std::pair<std::string, std::string>> \
-	gRawDataStore;
-	
-	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> \
-	gSandwichStore;
-	
-	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> \
-	gTheatreStorage;
-	
-	typedef std::unordered_map<std::string, std::any> \
-	gSettings;
-	
-	typedef std::pair<int, std::string> \
-	gSandwichPair;
-	
-	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> \
-	gMeshData;
-	
-	typedef std::vector<std::string> \
-	gRawData;
+	typedef std::map<int, std::pair<std::string, std::string>> gObjectStore;
+	typedef std::multimap<int, std::pair<std::string, std::string>> gSourceRefStore;
+	typedef std::multimap<int, std::pair<std::string, int>> gTheatreRefStore;
+	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
+	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
+	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
 
+	typedef std::string gKey;
+	typedef std::pair<int, std::string> gValue;
+	typedef std::pair<gKey, gValue> gStringSetting;
+	typedef std::vector<std::vector<gStringSetting>> gStringSettings;
+	typedef std::unordered_map<std::string, std::any> gSettings;
+
+	typedef std::pair<int, std::string> gSandwichPair;
+	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> gMeshData;
+	typedef std::vector<std::string> gRawData;
 
 	static std::map<int, std::string> classnames =
 	{

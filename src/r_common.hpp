@@ -95,9 +95,9 @@ protected:
 
 struct Environment final : public Device // Will be extended
 {
-	bool ambient_lighting_enabled;
-	glm::vec3 ambient_light_color;
-	float ambient_light_strength;
+	bool ambient_lighting_enabled = true;
+	glm::vec3 ambient_light_color = glm::vec3(1.0f);
+	float ambient_light_strength = 0.05f;
 
 	Environment(bool enable_ambient_lighting = true, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f);
 

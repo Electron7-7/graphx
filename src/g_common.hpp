@@ -126,6 +126,7 @@ struct Theatre
 	int spot_lights_count = 0;
 
 	graphx::gTheatreStorage theatre_file_data;
+	graphx::gStringSettings graphx_theatre_settings;
 	std::string theatre_file_data_printout = "";
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
@@ -151,6 +152,8 @@ struct Theatre
 
 	void createActor(int actor_type, long uid, graphx::gSettings new_settings = empty_settings);
 	void createDevice(int device_type, long uid, graphx::gSettings new_settings  = empty_settings);
+
+	glm::vec3 getSwapColor();
 
 	Actor *getFirstActorOfType(int type_name);
 	Device *getFirstDeviceOfType(int type_name);

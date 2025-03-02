@@ -5,6 +5,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT
+#define TINYOBJLOADER_USE_DOUBLE
 #include <earcut.hpp>
 #include <tiny_obj_loader.h>
 #include <cmath>
@@ -63,7 +64,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 	{
 		if(!reader.Error().empty())
 		{
-			std::cerr << "TinyObjReader: " << reader.Error();
+			PRINTERR("TinyObjReader: " << reader.Error())
 		}
 
 		exit(1);
@@ -71,7 +72,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 
 	if (!reader.Warning().empty())
 	{
-		std::cout << "TinyObjReader: " << reader.Warning();
+		// std::cout << "TinyObjReader: " << reader.Warning();
 	}
 
 	auto& attrib = reader.GetAttrib();
@@ -98,7 +99,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 				tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
 
 				// std::cout << "Vertex: " << vx << ", " << vy << ", " << vz << std::endl;
-				vertices.insert(vertices.end(), {vx / PREEMPTIVE_OBJ_SCALE, vy / PREEMPTIVE_OBJ_SCALE, vz / PREEMPTIVE_OBJ_SCALE});
+				vertices.insert(vertices.end(), {(float)vx / PREEMPTIVE_OBJ_SCALE, (float)vy / PREEMPTIVE_OBJ_SCALE, (float)vz / PREEMPTIVE_OBJ_SCALE});
 
 				// Check if `normal_index` is zero or positive. negative = no normal data
 				if (idx.normal_index >= 0)
@@ -108,7 +109,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
 
 					// std::cout << "Normal: " << nx << ", " << ny << ", " << nz << std::endl;
-					vertices.insert(vertices.end(), {nx, ny, nz});
+					vertices.insert(vertices.end(), {(float)nx, (float)ny, (float)nz});
 				}
 
 				else
@@ -123,7 +124,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
 				
 					// std::cout << "Texture Coordinate: " << tx << ", " << ty << std::endl;
-					vertices.insert(vertices.end(), {tx, ty});
+					vertices.insert(vertices.end(), {(float)tx, (float)ty});
 				}
 
 				else
@@ -137,7 +138,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
 					tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
 					// std::cout << "Vertex Color: " << red << ", " << green << ", " << blue << std::endl;
-					vertices.insert(vertices.end(), {red, green, blue});
+					vertices.insert(vertices.end(), {(float)red, (float)green, (float)blue});
 				}
 
 				else

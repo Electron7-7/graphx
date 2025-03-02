@@ -10,7 +10,7 @@ template<typename T> std::any getVariableFrom(T *object_pointer, std::string var
 extern std::map<std::string, std::any> cpp_definitions;
 extern bool loading_new_main_theatre;
 
-graphx::gTheatreStorage theatreParser(std::string theatre_data);
+graphx::gStringSettings theatreParser(std::string theatre_data);
 graphx::gRawData 		extractData(std::string data_in_here);
 std::string 			getTheatreStructure(graphx::gTheatreStorage theatre_storage);
 bool					checkForAndLoadExternalTheatres();

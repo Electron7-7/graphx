@@ -21,3 +21,8 @@ Mesh::Mesh(gSettings new_settings)
 {
 	loadSettings(new_settings);
 }
+
+
+The idea is to treat sandwiches the same as theatre references, but I think that it might need to be tweaked.
+
+New Idea: sandwiches are different from theatre references, but are basically just like a nested gSettings with an assigned class type (since sandwiches always result in needing to make a new class anyways). This would also allow for sandwiches to accept any data types.

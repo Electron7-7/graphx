@@ -105,7 +105,7 @@ int main()
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		glm::vec3 swap_color = iKnowWhatActorIWant<LightDirectional *>("Sun")->light_color * iKnowWhatActorIWant<LightDirectional *>("Sun")->light_strength;
+		glm::vec3 swap_color = current_theatre.getSwapColor();
 		W_SwapAndClear(main_window, swap_color);
 		glfwPollEvents();
 

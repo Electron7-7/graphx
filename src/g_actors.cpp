@@ -309,7 +309,8 @@ void PhysicsActor::takeABow()
 {
 	Actor::takeABow();
 
-	collider->prepForDestruction();
+	if(collider != nullptr)
+		collider->prepForDestruction();
 	collider = nullptr;
 	delete collider;
 }
@@ -342,7 +343,10 @@ void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
+	my_type = graphx::classes::RIGIDBODYACTOR;
 
+	if(collider == nullptr)
+		return;
 	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
@@ -354,8 +358,6 @@ void RigidBodyActor::callToStage(Theatre *parent_theatre)
 	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
 	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
 	collider->createBody();
-
-	my_type = graphx::classes::RIGIDBODYACTOR;
 }
 
 void RigidBodyActor::tick(int current_tick)
@@ -372,7 +374,8 @@ void RigidBodyActor::reset_to_initial_orientation_for_testing()
 
 void RigidBodyActor::takeABow()
 {
-	collider->prepForDestruction();
+	if(collider != nullptr)
+		collider->prepForDestruction();
 	PhysicsActor::takeABow();
 }
 
@@ -393,6 +396,9 @@ void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 void StaticBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
+	my_type = graphx::classes::STATICBODYACTOR;
+	if(collider == nullptr)
+		return;
 	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
@@ -404,12 +410,12 @@ void StaticBodyActor::callToStage(Theatre *parent_theatre)
 	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
 	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
 	collider->createBody();
-
-	my_type = graphx::classes::STATICBODYACTOR;
 }
 
 void StaticBodyActor::takeABow()
 {
+	if(collider != nullptr)
+		collider->prepForDestruction();
 	PhysicsActor::takeABow();
 }
 
@@ -638,7 +644,8 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
 	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
-	mesh->prepForDestruction();
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
 	mesh = nullptr;
 }
 
@@ -686,7 +693,8 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
 	_color = light_color;
-	mesh->prepForDestruction();
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
 	mesh = nullptr;
 }
 

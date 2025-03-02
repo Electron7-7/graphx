@@ -804,3 +804,18 @@ f 126/395/1 125/396/1 121/397/1
 f 121/366/2 126/398/2 122/399/2
 
 )~";
+std::string ERROR_mtl = R"~(
+# Blender 4.3.2 MTL File: 'ERROR Mesh.blend'
+# www.blender.org
+
+newmtl Material
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd /home/thelegend27/Github/graphx/src/images/MISSING.jpg
+
+)~";

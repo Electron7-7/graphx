@@ -267,7 +267,8 @@ Mesh::Mesh(Material *new_material)
 void Mesh::prepForDestruction()
 {
 	Device::prepForDestruction();
-	material->prepForDestruction();
+	if(material != nullptr)
+		material->prepForDestruction();
 	material = nullptr;
 	delete material;
 }

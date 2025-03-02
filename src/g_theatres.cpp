@@ -65,7 +65,9 @@ Theatre::Theatre(std::string init_name, long new_uid)
 
 void Theatre::raiseCurtains()
 {
-	PRINTDEBUG("Entering Theatre (" << name << ")")
+	bool has_directional_light = false;
+
+	PRINTDEBUG("Entering Theatre \"" << name << "\"")
 
 	PRINTLN("Devices Present:")
 	for(auto &pair : devices)
@@ -80,8 +82,19 @@ void Theatre::raiseCurtains()
 	{
 		if(pair.second->isType(GRAPHXPLAYER))
 			player_uid = pair.first;
+		else if(pair.second->isType(LIGHTDIRECTIONAL))
+			has_directional_light = true;
 		pair.second->callToStage(this);
 		troupe.insert(troupe.end(), pair.second);
+	}
+
+	if(!has_directional_light)
+	{
+		PRINTERR("Theatre \"" << name << "\" doesn't have a directional light, which is pretty much a representation of the sun! I'm gonna assume you did this on purpose, so in order for the lighting to render \"properly\", I'm adding a LightDirectional light to this Theatre but making its light output pitch black.")
+		createActor(LIGHTDIRECTIONAL, 55252525);
+		objects.at(55252525)->setName("THE FUCKING SUN HAS GONE OUT!!!!!");
+		static_cast<LightDirectional *>(objects.at(55252525))->light_color = glm::vec3(0.0f);
+		static_cast<LightDirectional *>(objects.at(55252525))->intensity = 0.0f;
 	}
 
 	PRINTNOTE("When a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
@@ -113,6 +126,15 @@ void Theatre::loadStageSettings(graphx::gSettings stage_settings)
 	getSetting(stage_scale, stage_settings["Scale"]);
 	getSetting(stage_euler_degrees, stage_settings["Rotation"]);
 	stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
+}
+
+glm::vec3 Theatre::getSwapColor()
+{
+	LightDirectional *sun = static_cast<LightDirectional *>(current_theatre.unsafeGetFirstActorOfType(graphx::classes::LIGHTDIRECTIONAL));
+	if(sun == nullptr)
+		return getCurrentEnvironment()->getAmbientLight();
+
+	return getCurrentEnvironment()->getAmbientLight() + (sun->light_color * sun->light_strength);
 }
 
 void Theatre::delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -255,7 +277,7 @@ Actor *Theatre::unsafeGetFirstActorOfType(int type_name)
 		if(pair.second->isType(type_name))
 			return pair.second;
 
-	PRINTDEBUG("Theatre::unsafeGetFirstActorOfType could not find an Actor of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
+	// PRINTDEBUG("Theatre::unsafeGetFirstActorOfType could not find an Actor of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
 	return nullptr;
 }
 
@@ -270,7 +292,8 @@ Device *Theatre::unsafeGetFirstDeviceOfType(int type_name)
 	for(auto &pair : devices)
 		if(pair.second->isType(type_name))
 			return pair.second;
-	PRINTDEBUG("Theatre::unsafeGetFirstDeviceOfType could not find a Device of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
+
+	// PRINTDEBUG("Theatre::unsafeGetFirstDeviceOfType could not find a Device of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
 	return nullptr;
 }
 
