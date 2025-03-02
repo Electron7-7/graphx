@@ -357,5 +357,14 @@ LightTesterMover (test_light_2)
 	PivotPosition (8.4, 1.8, -3.0)
 	PivotRadius (2.0)
 	PivotSpeed (1.2)
+})~"}},{2, std::string{R"~(@ExternalReferenceTestingTheatre
+LightDirectional (Sun)
+{}
+LightFlashLight (Flashlight)
+{}
+StaticBodyActor (Floor)
+{
+	Scale (50.0, 1.0, 50.0)
+	Position (0.0, -1.0, 0.0)
 })~"}}
 };

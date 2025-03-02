@@ -586,13 +586,37 @@ void interpretRawData(gSettings &new_class_settings, std::string variable_name, 
 	new_class_settings[variable_name] = gRawData{raw_data};
 }
 
-void interpretTheatreReference(gSettings &new_class_settings, gStringSettings theatre_settings, std::string variable_name, std::string theatre_reference)
+void interpretTheatreReference(gSettings &new_class_settings, std::string variable_name, std::string theatre_reference, Theatre *new_theatre)
 {
-	for(int i = 1 ; i < theatre_settings.size() ; i++)
+	if(new_theatre->getActor(theatre_reference) != nullptr)
+		new_class_settings[variable_name] = new_theatre->getActor(theatre_reference);
+
+	else if(new_theatre->getDevice(theatre_reference) != nullptr)
+		new_class_settings[variable_name] = new_theatre->getDevice(theatre_reference);
+}
+
+void interpretExternalReference(gSettings &new_class_settings, std::string variable_name, std::string external_reference)
+{
+	std::set<std::string> valid_extensions =
 	{
-		if(theatre_settings[i][0].second.second == theatre_reference)
-			new_class_settings[variable_name] = 
+		"gt",
+		"obj",
+		"png",
+		"jpg",
+		"jpeg",
+		"bmp",
+		"webp",
+	};
+
+	std::string file_extension = external_reference.substr(external_reference.find_last_of(".") + 1);
+
+	if(!valid_extensions.contains(file_extension))
+	{
+		PRINTERR("Tried to interpret an External Reference setting for a file type that is not supported! Supported files are: .gt (GraphXTheatre), .obj (OBJ 3D Model), .png, .jpg, .jpeg, .bmp, .webp (Texture Images)")
+		return;
 	}
+
+	// else -> load file and use data as the setting value
 }
 
 Theatre loadTheatre(long theatre_uid)
@@ -628,7 +652,11 @@ Theatre loadTheatre(long theatre_uid)
 				interpretRawData(new_class_settings, setting.first, setting.second.second);
 				break;
 			case THEATRE_REFERENCE:
-				
+				interpretTheatreReference(new_class_settings, setting.first, setting.second.second, &new_theatre);
+				break;
+			case EXTERNAL_REFERENCE:
+				interpretExternalReference(new_class_settings, setting.first, setting.second.second);
+				break;
 			}
 		}
 	}

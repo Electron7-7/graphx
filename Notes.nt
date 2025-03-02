@@ -1365,3 +1365,19 @@ Here's what I want to add/change:
 I ended up fiddling with ImGui and fixing the cursor jump when toggling between GLFW_CURSOR_NORMAL and GLFW_CURSOR_DISABLED. Now I'm gonna re-write the interpreter.
 
 I have a proof of concept working for a better parser.
+
+[03/02/25]
+At parents house; chose to renew my lease for a year and try to save+get a better job to finally move into a real place. Feeling anxious. Wanna work on the interpreter some more.
+
+I'm thinking that to make sandwiches work better, maybe I store the string settings for each object in an unordered map where the key value is either the name/typename as a string, or both as strings in a pair. That way I can just go through the map and find the object I'm referencing, copy that object and its settings, and add/change the settings I need to. Finally, when the program is reading string settings and creating actual settings, I need a way to detect sandwiches and correctly assign a function pointer + the settings as that setting (i.e: {"Mesh", {device_map[graphx::classes::MESH], this_actor_mesh_settings)}}). Then, the template function can just make sure that if the std::any's type is equal to that pair (which I'll typedef), set the variable to a new of that class (using the function pointer), then tell that object (via pointer) to load its settings.
+
+Finished with the function "interpretTheatreReference". I'm going to have the interpreter check for sandwiches before it checks what type of setting it's currently reading. This will have a smoother flow and won't need me to recognize them as a unique type while also accounting for what type of variable is in the sandwich (which is the main reason why they've been limited to Theatre references only).
+
+I had a brilliant idea. Instead of all of this... just fucking do this:
+:::C++
+Actor::loadSettings(gSettings new_settings)
+{
+	getSetting(mesh, new_settings["Mesh"]);
+	getSetting(mesh->material, new_settings["Mesh:Material"]);
+}
+:::
