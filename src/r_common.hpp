@@ -93,6 +93,8 @@ protected:
 	bool ready_to_destroy = false;
 };
 
+#define GRAPHX_DEVICE_DEFINED // This keeps forward declarations inside graphx_namespace.hpp from potentially overwriting the actual declarations
+
 struct Environment final : public Device // Will be extended
 {
 	bool ambient_lighting_enabled = true;
@@ -175,6 +177,8 @@ extern std::map<int, Device*(*)()> device_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 
+#define OBJ_FILE 0
+
 GLFWwindow       *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
 void              R_StoreBuffers();
@@ -182,5 +186,6 @@ void              R_GL_BufferMeshes();
 void              R_Render(std::mutex &state_mutex, float interpolation_time);
 void              R_GL_Render(std::mutex &mutex, float interpolation_time);
 void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+graphx::gMeshData M_LoadModelFile(std::string model_file_string, std::string file_extension = "NONE");
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
 #endif
