@@ -52,11 +52,21 @@ namespace graphx
 	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
 	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
 
+	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only
+	// and shouldn't be used by anything else (except for Theatre::graphx_theatre_settings)
 	typedef std::string gKey;
 	typedef std::pair<int, std::string> gValue;
 	typedef std::pair<gKey, gValue> gStringSetting;
 	typedef std::vector<std::vector<gStringSetting>> gStringSettings;
-	typedef std::unordered_map<std::string, std::any> gSettings;
+
+	// The int in gSetting identifies the type (found in t_common.hpp); the four types are:
+	// 0: RAW_DATA (a vector of strings, using the typedef "gRawData")
+	// 1: CPP_REFERENCE (see "cpp_definitions" in "t_interpreter.cpp")
+	// 2: THEATRE_REFERENCE (a pointer to a pre-existing Actor/Device in the current Theatre)
+	// 3: EXTERNAL_REFERENCE (an external file's pathname, passed via string)
+	// 4: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
+	typedef std::pair<int, std::any> gSetting;
+	typedef std::unordered_map<std::string, gSetting> gSettings;
 
 	typedef std::pair<int, std::string> gSandwichPair;
 	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> gMeshData;

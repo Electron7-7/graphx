@@ -1381,3 +1381,30 @@ Actor::loadSettings(gSettings new_settings)
 	getSetting(mesh->material, new_settings["Mesh:Material"]);
 }
 :::
+
+[03/04/25]
+Okay, time to try again; I'm tempted to undo everything from yesterday and start over from where I left off then, using what I know now to try and keep things from breaking. This means learning how to revert commits on github, lol.
+
+Okay, I've reverted the commit, time to do this.
+
+So far so good, I have the new gSetting typedef replacing the old std::any, and the new getSetting template function working with the old interpreter code to properly load Theatres. Now, time to try and replace that load function. I'm also gonna copy and paste the external reference code, because that should be fine.
+
+I also just added a check in getClassHash that lets it accept sandwich buns (e.g: "Mesh:").
+
+I've got a good idea: instead of checking for sandwich buns in the interpreter, do it in the parser and set the value_type to SANDWICH_BUN. Makes life so much easier!
+
+I'm going to make a safer version of getActor and getDevice that return a new Actor/Device if the requested one can't be found. I also just noticed that Theatre::getDevice(std::string device_name) had a bug where it checked .compare without using '!', meaning it would fail on valid checks and return valid on failed checks. I'm also not going to make a safer version because I remembered why I have these functions return a nullptr on wrong names, it's because theatre references (and sandwich buns) shouldn't be incorrect and if they are, returning nullptr and blasting an error message is a good thing to do.
+
+I think I've fixed sandwich buns; basically, they're just theatre references, but when getSettings is given a SANDWICH_BUN variable, it knows to instead set the variable to "new T(std::any_cast<T>(set_value))", which (if my types aren't too fucky) should return a new copy of the theatre reference, ready for setting new values to.
+
+Oh my fucking god it ALMOST works!! Everything is there, but all the Materials are missing (I assume). This means that sandwich buns are working but I think that sandwich variable names like "Mesh:Material" are throwing off the functions.
+
+Oh my god no wait I think it works and I just need to use "getSetting(mesh->material, new_settings["Mesh:Material"])". oh my gooododdddd.
+
+Holy fuck, Saturnine just fucking transitioned from Harpy Dream (JUSTICE music, lfg) when my code finished compiling; anyways, I THINK IT WORKS! I just can't see bc the player mesh is in the way. I'm pretty sure is because Actor is setting the mesh to a new Mesh() when settings are loaded to avoid either crashing or needing an ugly if(mesh != nullptr) check, so I need to make sure that the player accounts for that.
+
+Oh, it's the flashlight; still, same thing.
+
+OH MY GOD IT WORKS!!
+
+Holy fuck it's all done!

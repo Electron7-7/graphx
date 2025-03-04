@@ -340,7 +340,7 @@ void Theatre::createDevice(int device_type, long uid, gSettings new_settings)
 		return;
 	}
 
-	if(device_type ==ENVIRONMENT)
+	if(device_type == ENVIRONMENT)
 		environment_uid = uid;
 
 	devices[uid] = device_map[device_type]();
@@ -532,7 +532,7 @@ Actor *Theatre::getActor(std::string actor_name)
 {
 	for(auto &pair : objects)
 	{
-		if(pair.second->getName().compare(actor_name) == 0)
+		if(!pair.second->getName().compare(actor_name))
 			return pair.second;
 	}
 
@@ -552,7 +552,7 @@ Device *Theatre::getDevice(long device_uid)
 Device *Theatre::getDevice(std::string device_name)
 {
 	for(auto &pair : devices)
-		if(pair.second->getName().compare(device_name))
+		if(!pair.second->getName().compare(device_name))
 			return pair.second;
 
 	PRINTERR("Hey! Someone asked for a Device named " << device_name << ", but none were found! The \"getDevice\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")

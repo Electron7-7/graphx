@@ -182,5 +182,6 @@ void              R_GL_BufferMeshes();
 void              R_Render(std::mutex &state_mutex, float interpolation_time);
 void              R_GL_Render(std::mutex &mutex, float interpolation_time);
 void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension);
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
 #endif

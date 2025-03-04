@@ -2,6 +2,12 @@
 #define GRAPHX_THEATRE_FILE_FORMAT
 #include "graphx_namespace.hpp"
 
+#define RAW_DATA           0
+#define CPP_REFERENCE      1
+#define THEATRE_REFERENCE  2
+#define EXTERNAL_REFERENCE 3
+#define SANDWICH_BUN       4
+
 // Forward Declarations
 struct Theatre;
 

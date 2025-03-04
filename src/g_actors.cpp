@@ -179,8 +179,12 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
 	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
 
+	if(mesh == nullptr)
+		mesh = new Mesh();
+
 	getSetting(name, new_settings["Name"]);
 	getSetting(mesh, new_settings["Mesh"]);
+	getSetting(mesh->material, new_settings["Mesh:Material"]);
 	getSetting(position_global, new_settings["Position"]);
 	getSetting(position_local, new_settings["LocalPosition"]);
 	getSetting(global_euler_degrees, new_settings["Rotation"]);
@@ -460,6 +464,7 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 	my_type = graphx::classes::GRAPHXPLAYER;
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
 	player_camera.setGlobalRotation(init_position);
+	visible = false;
 }
 
 void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
@@ -629,6 +634,12 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(falloff, new_settings["Falloff"]);
 
 	temporary_light_mesh = Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
+	if(mesh != nullptr)
+	{
+		mesh->prepForDestruction();
+		mesh = nullptr;
+		delete mesh;
+	}
 }
 
 bool Light::isLightType(int light_type)

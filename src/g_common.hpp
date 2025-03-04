@@ -125,7 +125,6 @@ struct Theatre
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 
-	graphx::gTheatreStorage theatre_file_data;
 	graphx::gStringSettings graphx_theatre_settings;
 	std::string theatre_file_data_printout = "";
 
@@ -167,6 +166,7 @@ struct Theatre
 	Actor *getActor(std::string actor_name);
 	Device *getDevice(long uid);
 	Device *getDevice(std::string device_name);
+
 	GraphXPlayer *getPlayer();
 	Environment *getEnvironment();
 
