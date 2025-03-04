@@ -2,7 +2,6 @@
 #define GRAPHX_SETTINGS
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
-#include "t_common.hpp"
 #include <algorithm>
 #include <Jolt/Jolt.h>
 
@@ -13,7 +12,6 @@ struct Device;
 extern std::string empty_settings_identifier;
 extern graphx::gSettings empty_settings;
 
-#define GRAB_SETTING_ERR_BOTH_POINTER    -420
 #define GRAB_SETTING_ERR_DEVICE_POINTER  -4
 #define GRAB_SETTING_ERR_ACTOR_POINTER   -8
 #define GRAB_SETTING_ERR_RAW_DATA_SINGLE -15
@@ -24,16 +22,16 @@ extern graphx::gSettings empty_settings;
 
 #define GRAB_SETTING_ERR_MSG_TEMPLATE std::string("getSetting called with non-matching variable and setting!")
 
-template<typename T> int getSetting(T &variable, graphx::gSetting setting)
+template<typename T> int getSetting(T &variable, std::any set_value)
 {
-	if(!setting.second.has_value() || setting.second.type() == typeid(void) || setting.second.type() == typeid(nullptr))
+	if(!set_value.has_value() || set_value.type() == typeid(void) || set_value.type() == typeid(nullptr))
 	{
 		return 0;
 	}
 
-	else if(setting.first == RAW_DATA)
+	else if(set_value.type() == typeid(graphx::gRawData))
 	{
-		graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(setting.second);
+		graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(set_value);
 		std::string raw_data_lower = raw_data[0];
 		std::transform(raw_data_lower.begin(), raw_data_lower.end(), raw_data_lower.begin(), [](unsigned char c)
 		{
@@ -63,7 +61,7 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 
 			else
 			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << setting.second.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
+				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
 				return GRAB_SETTING_ERR_RAW_DATA_SINGLE;
 			}
 
@@ -76,7 +74,7 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 			}
 			else
 			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << setting.second.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
+				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
 				return GRAB_SETTING_ERR_RAW_DATA_TWO;
 			}
 			break;
@@ -93,7 +91,7 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 			}
 			else
 			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << setting.second.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
+				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
 				return GRAB_SETTING_ERR_RAW_DATA_THREE;
 			}
 			break;
@@ -110,57 +108,48 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 			}
 			else
 			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << setting.second.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
+				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
 				return GRAB_SETTING_ERR_RAW_DATA_FOUR;
 			}
 			break;
 		}
 	}
 
-	else if(setting.first == THEATRE_REFERENCE)
+	else if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
 	{
-		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
+		if(set_value.type() != typeid(Device *))
 		{
-			if(setting.second.type() != typeid(Device *))
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << setting.second.type().name() << " (Theatre Reference or Sandwich)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_DEVICE_POINTER;
-			}
-
-			variable = static_cast<T>(std::any_cast<Device *>(setting.second));
-			return 0;
+			PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (unknown)\n\tVariable type: " << typeid(variable).name())
+			return GRAB_SETTING_ERR_DEVICE_POINTER;
 		}
 
-		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
-		{
-			if(setting.second.type() != typeid(Actor *))
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << setting.second.type().name() << " (Theatre Reference or Sandwich)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_ACTOR_POINTER;
-			}
-
-			variable = static_cast<T>(std::any_cast<Actor *>(setting.second));
-			return 0;
-		}
-
-		else
-		{
-			PRINTERR("getSetting called with a Theatre reference setting (Actor/Device pointer) but non-matching variable (variable supplied is not an Actor/Device or subclass of Actor/Device)!")
-			return GRAB_SETTING_ERR_BOTH_POINTER;
-		}
+		variable = static_cast<T>(std::any_cast<Device *>(set_value));
+		return 0;
 	}
 
-	else if(setting.first == CPP_REFERENCE)
+	else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
 	{
-		if(setting.second.type() != typeid(variable))
+		if(set_value.type() != typeid(Actor *))
 		{
-			PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << setting.second.type().name() << " (C++ Reference)\n\tVariable type: " << typeid(variable).name())
+			PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (unknown)\n\tVariable type: " << typeid(variable).name())
+			return GRAB_SETTING_ERR_ACTOR_POINTER;
+		}
+
+		variable = static_cast<T>(std::any_cast<Actor *>(set_value));
+		return 0;
+	}
+
+	else // set_value should be a C++ reference; however, to avoid crashes I still perform type checks
+	{
+		if(set_value.type() != typeid(variable))
+		{
+			PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (assumed to be a C++ Reference)\n\tVariable type: " << typeid(variable).name())
 			return GRAB_SETTING_ERR_CPP_REFERENCE;
 		}
 
 		else
 		{
-			variable = std::any_cast<T>(setting.second);
+			variable = std::any_cast<T>(set_value);
 			return 0;
 		}
 	}

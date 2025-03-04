@@ -6,17 +6,17 @@
 #include "images.h"
 #include <models.hpp>
 #include <theatres.hpp>
+#include <set>
 #include <filesystem> // Yes, the devil hath been invoked... I truly am sorry
 #include <fstream>
 #include <sstream>
-#include <set>
 
 using namespace graphx;
 using namespace graphx::classes;
 
 bool loading_new_main_theatre = true;
 std::string empty_settings_identifier = "FUCKYOU";
-graphx::gSettings empty_settings = {{empty_settings_identifier, gSetting(-1, {})}};
+graphx::gSettings empty_settings = {{empty_settings_identifier, {}}};
 
 std::map<std::string, std::any> cpp_definitions =
 {
@@ -269,6 +269,11 @@ gStringSettings theatreParser(std::string theatre_data)
 
 	char sandwich_layer = ':';
 
+#define RAW_DATA           0
+#define CPP_REFERENCE      1
+#define THEATRE_REFERENCE  2
+#define EXTERNAL_REFERENCE 3
+
 	std::vector<gKey> keys;
 	std::vector<gValue> values;
 	gStringSettings all_settings;
@@ -349,8 +354,8 @@ gStringSettings theatreParser(std::string theatre_data)
 			{
 				if(theatre_data[i] == sandwich_layer)
 				{
-					buffer += theatre_data[i];
 					keys.insert(keys.end(), buffer);
+					buffer += theatre_data[i];
 					continue;
 				}
 
@@ -512,7 +517,7 @@ int getClassHash(std::string class_name, bool dont_print_error)
 	return -1;
 }
 
-void interpretCppReference(gSettings &new_class_settings, std::string variable_final_name, std::string variable_name, std::string cpp_reference)
+void interpretCppReference(gSettings &new_class_settings, std::string variable_name, std::string cpp_reference)
 {
 	if(!cpp_definitions.contains(cpp_reference))
 	{
@@ -520,10 +525,10 @@ void interpretCppReference(gSettings &new_class_settings, std::string variable_f
 		return;
 	}
 
-	new_class_settings[variable_final_name] = gSetting(CPP_REFERENCE, cpp_definitions.at(cpp_reference));
+	new_class_settings[variable_name] = cpp_definitions.at(cpp_reference);
 }
 
-void interpretRawData(gSettings &new_class_settings, std::string variable_final_name, std::string variable_name, std::string raw_data)
+void interpretRawData(gSettings &new_class_settings, std::string variable_name, std::string raw_data)
 {
 	std::set<char> forgiveness =
 	{
@@ -574,82 +579,46 @@ void interpretRawData(gSettings &new_class_settings, std::string variable_final_
 	if(is_number)
 	{
 		vector_buffer.insert(vector_buffer.end(), buffer);
-		new_class_settings[variable_final_name] = gSetting(RAW_DATA, vector_buffer);
+		new_class_settings[variable_name] = vector_buffer;
 		return;
 	}
 
-	new_class_settings[variable_final_name] = gSetting(RAW_DATA, gRawData{raw_data});
+	new_class_settings[variable_name] = gRawData{raw_data};
 }
 
-// Note: sandwich settings are identified as THEATRE_REFERENCE, because "getSetting" handles them both the same exact way (as an Actor/Device pointer)
-void interpretSandwich(gSettings &new_class_settings, std::string sandwich_bun, std::string theatre_reference, Theatre *new_theatre)
+void interpretTheatreReference(gSettings &new_class_settings, std::string variable_name, std::string theatre_reference, Theatre *new_theatre)
 {
-	sandwich_bun.pop_back();
-	new_class_settings[sandwich_bun] = gSetting(SANDWICH_BUN, theatre_reference);
+	if(new_theatre->getActor(theatre_reference) != nullptr)
+		new_class_settings[variable_name] = new_theatre->getActor(theatre_reference);
+
+	else if(new_theatre->getDevice(theatre_reference) != nullptr)
+		new_class_settings[variable_name] = new_theatre->getDevice(theatre_reference);
 }
 
-void interpretTheatreReference(gSettings &new_class_settings, std::string variable_final_name, std::string variable_name, std::string theatre_reference, Theatre *new_theatre)
+void interpretExternalReference(gSettings &new_class_settings, std::string variable_name, std::string external_reference)
 {
-	int class_hash = getClassHash(variable_name);
+	std::set<std::string> valid_extensions =
+	{
+		"gt",
+		"obj",
+		"png",
+		"jpg",
+		"jpeg",
+		"bmp",
+		"webp",
+	};
 
-	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-		new_class_settings[variable_final_name] = gSetting(THEATRE_REFERENCE, new_theatre->getActor(theatre_reference));
+	std::string file_extension = external_reference.substr(external_reference.find_last_of(".") + 1);
 
-	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
-		new_class_settings[variable_final_name] = gSetting(THEATRE_REFERENCE, new_theatre->getDevice(theatre_reference));
+	if(!valid_extensions.contains(file_extension))
+	{
+		PRINTERR("Tried to interpret an External Reference setting for a file type that is not supported! Supported files are: .gt (GraphXTheatre), .obj (OBJ 3D Model), .png, .jpg, .jpeg, .bmp, .webp (Texture Images)")
+		return;
+	}
+
+	// else -> load file and use data as the setting value
 }
 
-// This is how I keep track of supported file types/extensions without having to write them out more than once.
-// I define specific file types as strings that contain all the supported file extensions and I
-// add all these strings to "valid_extensions", which is what "loadExternalFile" uses to check if a
-// setting is referencing a supported file type.
-std::string three_dee_model_extensions = "obj";
-std::string graphx_theatre_extensions = "gt";
-std::string image_extensions = "png jpg jpeg bmp webp";
-
-std::string valid_extensions =   \
-	three_dee_model_extensions + \
-	graphx_theatre_extensions  + \
-	image_extensions;
-
-// This is just me making the error printout easier to find and add to
-std::string what_are_the_valid_extensions =              \
-	"(GraphXTheatre)\n\t" + graphx_theatre_extensions  + \
-	"(3D Model)\n\t"      + three_dee_model_extensions + \
-	"(Image)\n\t"         + image_extensions;
-
-
-#define EXTERNAL_FILE_INVALID std::string("EXTERNAL_FILE_UNABLE_TO_BE_LOADED")
-
-void interpretExternalReference(gSettings &new_class_settings, std::string variable_final_name, std::string variable_name, std::string external_reference)
-{
-	std::string file_extension = variable_name.substr(variable_name.find_last_of(".") + 1);
-
-	if(valid_extensions.find(file_extension) == std::string::npos)
-	{
-		PRINTERR("Tried to interpret an External Reference setting for a file type that is not supported! Supported files are:\n" << what_are_the_valid_extensions)
-		return;
-	}
-
-	if(three_dee_model_extensions.find(file_extension) != std::string::npos)
-	{
-		new_class_settings[variable_final_name] = gSetting(EXTERNAL_REFERENCE, M_LoadModelFile(variable_name, file_extension));
-	}
-
-	else if(graphx_theatre_extensions.find(file_extension) != std::string::npos)
-	{
-		PRINTERR("Tried to interpret an External Reference for a GraphXTheatre file, but support for child Theatres hasn't yet been implemented!")
-		return;
-	}
-
-	else if(image_extensions.find(file_extension) != std::string::npos)
-	{
-		PRINTERR("Tried to interpret an External Reference for an image file, but support for images hasn't yet been implemented!")
-		return;
-	}
-}
-
-// loadTheatre should not be called directly, which is why it's not in the header file
 Theatre loadTheatre(long theatre_uid)
 {
 	if(!embedded_theatres.count(theatre_uid))
@@ -664,86 +633,36 @@ Theatre loadTheatre(long theatre_uid)
 	new_theatre.graphx_theatre_settings = theatre_settings;
 	new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
 
-	PRINTDEBUG(new_theatre.theatre_file_data_printout)
-
 	std::vector<std::pair<int, gSettings>> all_class_settings;
 
 	for(int i = 1 ; i < theatre_settings.size() ; i++)
 	{
-		gSettings new_class_settings = {{"Name", gSetting(RAW_DATA, gRawData{theatre_settings[i][0].second.second})}};
+		gSettings new_class_settings = {{"Name", gRawData{theatre_settings[i][0].second.second}}};
 
 		for(int it = 1 ; it < theatre_settings[i].size() ; it++)
 		{
 			gStringSetting setting = theatre_settings[i][it];
-			std::string variable_name = setting.first;
-
-			if(setting.first.find(':') != std::string::npos)
-			{
-				if(setting.first.back() == ':')
-				{
-					setting.first.pop_back();
-					int class_hash = getClassHash(setting.first);
-					if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-					{
-						new_class_settings[setting.first] = gSetting(THEATRE_REFERENCE, actor_map[class_hash]());
-
-						if(new_theatre.getActor(setting.second.second) != nullptr)
-							std::any_cast<Actor *>(new_class_settings.at(setting.first))->youGotACallBack(new_theatre.getActor(setting.second.second)->settings);
-					}
-
-					else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
-					{
-						new_class_settings[setting.first] = gSetting(THEATRE_REFERENCE, device_map[class_hash]());
-						if(new_theatre.getDevice(setting.second.second) != nullptr)
-							std::any_cast<Device *>(new_class_settings.at(setting.first).second)->loadSettings(new_theatre.getDevice(setting.second.second)->settings);
-					}
-
-					setting.second.first = SANDWICH_BUN;
-				}
-
-				variable_name = setting.first.substr(setting.first.find_last_of(':') + 1);
-			}
 
 			switch(setting.second.first)
 			{
 			case CPP_REFERENCE:
-				interpretCppReference(new_class_settings, setting.first, variable_name, setting.second.second);
+				interpretCppReference(new_class_settings, setting.first, setting.second.second);
 				break;
 			case RAW_DATA:
-				interpretRawData(new_class_settings, setting.first, variable_name, setting.second.second);
+				interpretRawData(new_class_settings, setting.first, setting.second.second);
 				break;
 			case THEATRE_REFERENCE:
-				interpretTheatreReference(new_class_settings, setting.first, variable_name, setting.second.second, &new_theatre);
+				interpretTheatreReference(new_class_settings, setting.first, setting.second.second, &new_theatre);
 				break;
 			case EXTERNAL_REFERENCE:
-				interpretExternalReference(new_class_settings, setting.first, variable_name, setting.second.second);
+				interpretExternalReference(new_class_settings, setting.first, setting.second.second);
 				break;
 			}
 		}
-
-		int class_hash = getClassHash(theatre_settings[i][0].first);
-
-		if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-		{
-			new_theatre.createActor(class_hash, new_class_settings);
-			continue;
-		}
-
-		if(!theatre_settings[i][0].second.second.compare("Stage"))
-		{
-			new_theatre.stage.youGotACallBack(new_class_settings);
-			new_theatre.stage_mesh->loadSettings(new_class_settings);
-			new_theatre.loadStageSettings(new_class_settings);
-			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.getName() << "\" given custom settings")
-			continue;
-		}
-
-		new_theatre.createDevice(class_hash, new_class_settings);
 	}
-
-	return new_theatre;
 }
 
+// loadTheatre should not be called directly, which is why it's not in the header file
 Theatre oldLoadTheatre(long theatre_uid)
 {
 	if(!embedded_theatres.count(theatre_uid))
@@ -770,7 +689,7 @@ Theatre oldLoadTheatre(long theatre_uid)
 	{
 		gSettings new_class_settings = 
 		{
-			{"Name", {RAW_DATA, gRawData{object.second.second}}},
+			{"Name", gRawData{object.second.second}},
 		};
 
 		auto cpp_refs_range = std::get<2>(theatre_data).equal_range(object.first);
@@ -780,7 +699,7 @@ Theatre oldLoadTheatre(long theatre_uid)
 
 		for(auto it = cpp_refs_range.first ; it != cpp_refs_range.second ; ++it)
 		{
-			new_class_settings[it->second.first] = {CPP_REFERENCE, cpp_definitions.at(it->second.second)};
+			new_class_settings[it->second.first] = cpp_definitions.at(it->second.second);
 		}
 
 		for(auto it = theatre_refs_range.first ; it != theatre_refs_range.second ; ++it)
@@ -789,11 +708,11 @@ Theatre oldLoadTheatre(long theatre_uid)
 			{
 				if(ACTORS[0] <= getClassHash(it->second.first) && getClassHash(it->second.first) <= ACTORS[1])
 				{
-					new_class_settings[it->second.first] = {THEATRE_REFERENCE, new_theatre.getActor(it->second.first)};
+					new_class_settings[it->second.first] = new_theatre.getActor(it->second.second);
 					continue;
 				}
 
-				new_class_settings[it->second.first] = {THEATRE_REFERENCE, new_theatre.getDevice(it->second.first)};
+				new_class_settings[it->second.first] = new_theatre.getDevice(it->second.second);
 				continue;
 			}
 
@@ -801,30 +720,30 @@ Theatre oldLoadTheatre(long theatre_uid)
 
 			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 			{
-				if(!new_theatre.getActor(objects_bucket.at(it->second.second).first)->settings.contains(it->second.first))
+				if(!new_theatre.getActor(objects_bucket.at(it->second.second).second)->settings.contains(it->second.first))
 				{
 					PRINTERR(std::quoted(object.second.second) << " (" << object.second.first << ") set variable " << std::quoted(it->second.first) << " to reference a variable that was not set! Skipping this variable!")
 					continue;
 				}
 
-				new_class_settings[it->second.first] = new_theatre.getActor(objects_bucket.at(it->second.second).first)->settings.at(it->second.first);
+				new_class_settings[it->second.first] = new_theatre.getActor(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
 			}
 
 			if(DEVICES[0] <= reference_class_hash && reference_class_hash <= DEVICES[1])
 			{
-				if(!new_theatre.getDevice(objects_bucket.at(it->second.second).first)->settings.contains(it->second.first))
+				if(!new_theatre.getDevice(objects_bucket.at(it->second.second).second)->settings.contains(it->second.first))
 				{
 					PRINTERR(std::quoted(object.second.second) << " (" << object.second.first << ") set variable " << std::quoted(it->second.first) << " to reference a variable that was not set! Skipping this variable!")
 					continue;
 				}
 			
-				new_class_settings[it->second.first] = new_theatre.getDevice(objects_bucket.at(it->second.second).first)->settings.at(it->second.first);
+				new_class_settings[it->second.first] = new_theatre.getDevice(objects_bucket.at(it->second.second).second)->settings.at(it->second.first);
 			}
 		}
 
 		for(auto it = raw_data_range.first ; it != raw_data_range.second ; ++it)
 		{
-			new_class_settings[it->second.first] = {RAW_DATA, extractData(it->second.second)};
+			new_class_settings[it->second.first] = extractData(it->second.second);
 		}
 
 		for(auto it = sandwiches_range.first ; it != sandwiches_range.second ; ++it)
@@ -833,19 +752,19 @@ Theatre oldLoadTheatre(long theatre_uid)
 			int reference_class_hash = getClassHash(it->second.first.first);
 			if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 			{
-				new_class_settings[it->second.first.first] = {THEATRE_REFERENCE, actor_map[reference_class_hash]()};
-				settings_to_modify = new_theatre.getActor(it->second.first.first)->settings;
+				new_class_settings[it->second.first.first] = actor_map[reference_class_hash]();
+				settings_to_modify = new_theatre.getActor(it->second.first.second)->settings;
 				for(auto &pair : it->second.second)
 				{
 					if(settings_to_modify.contains(pair.first))
 					{
 						if(ACTORS[0] <= reference_class_hash && reference_class_hash <= ACTORS[1])
 						{
-							settings_to_modify.at(pair.first) = {THEATRE_REFERENCE, new_theatre.getActor(pair.first)};
+							settings_to_modify.at(pair.first) = new_theatre.getActor(pair.second);
 							continue;
 						}
 
-						settings_to_modify.at(pair.first) = {THEATRE_REFERENCE, new_theatre.getDevice(pair.first)};
+						settings_to_modify.at(pair.first) = new_theatre.getDevice(pair.second);
 					}
 				}
 
@@ -854,17 +773,17 @@ Theatre oldLoadTheatre(long theatre_uid)
 				continue;
 			}
 
-			new_class_settings[it->second.first.first] = {THEATRE_REFERENCE, device_map[reference_class_hash]()};
-			settings_to_modify = new_theatre.getDevice(it->second.first.first)->settings;
+			new_class_settings[it->second.first.first] = device_map[reference_class_hash]();
+			settings_to_modify = new_theatre.getDevice(it->second.first.second)->settings;
 			for(auto &pair : it->second.second)
 			{
 				if(ACTORS[0] <= getClassHash(pair.first) && getClassHash(pair.first) <= ACTORS[1])
 				{
-					settings_to_modify[pair.first] = {THEATRE_REFERENCE, new_theatre.getActor(pair.first)};
+					settings_to_modify[pair.first] = new_theatre.getActor(pair.second);
 					continue;
 				}
 
-				settings_to_modify[pair.first] = {THEATRE_REFERENCE, new_theatre.getDevice(pair.first)};
+				settings_to_modify[pair.first] = new_theatre.getDevice(pair.second);
 			}
 
 			// std::any_cast<Device *>(new_class_settings.at(it->second.first.first))->settings = settings_to_modify;
@@ -875,7 +794,7 @@ Theatre oldLoadTheatre(long theatre_uid)
 
 		if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 		{
-			new_theatre.createActor(class_hash, new_class_settings);
+			new_theatre.createActor(class_hash, object.first, new_class_settings);
 			continue;
 		}
 
@@ -888,7 +807,7 @@ Theatre oldLoadTheatre(long theatre_uid)
 			continue;
 		}
 
-		new_theatre.createDevice(class_hash, new_class_settings);
+		new_theatre.createDevice(class_hash, object.first, new_class_settings);
 	}
 
 	return new_theatre;
@@ -910,7 +829,7 @@ void loadMainTheatre(long theatre_uid)
 	current_theatre.dropCurtains();
 
 	PRINTDEBUG("LOAD THEATRE")
-	current_theatre = loadTheatre(theatre_uid);
+	current_theatre = oldLoadTheatre(theatre_uid);
 	PRINTDEBUG("START PRESHOW")
 	current_theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();

@@ -53,27 +53,6 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension)
-{
-	std::ifstream model_file(file_path);
-	std::stringstream file_string_data;
-	file_string_data << model_file.rdbuf();
-
-	if(!model_file.is_open())
-	{
-		PRINTERR("M_LoadModelFile called but file could not be opened/found! An error mesh will be returned!")
-		return M_LoadOBJ(ERROR_obj);
-	}
-
-	model_file.close();
-
-	if(!file_extension.compare("obj"))
-		return M_LoadOBJ(file_string_data.str());
-
-	PRINTERR("M_LoadModelFile called but no file type was provided! An error mesh will be returned!")
-	return M_LoadOBJ(ERROR_obj);
-}
-
 namespace TO = tinyobj;
 
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)

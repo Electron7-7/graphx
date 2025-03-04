@@ -7,13 +7,6 @@
 #include <vector>
 #include <unordered_map>
 
-#ifndef GRAPHX_ACTOR_DEFINED
-class Actor; // Forward Declaration
-#endif
-#ifndef GRAPHX_DEVICE_DEFINED
-struct Device; // Forward Declaration
-#endif
-
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 
 namespace graphx
@@ -63,15 +56,7 @@ namespace graphx
 	typedef std::pair<int, std::string> gValue;
 	typedef std::pair<gKey, gValue> gStringSetting;
 	typedef std::vector<std::vector<gStringSetting>> gStringSettings;
-
-	typedef std::pair<int, std::any> gSetting;
-	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	// typedef std::any gSetting;
-	// typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	typedef std::pair<long, Actor *> gActorUID;
-	typedef std::pair<long, Device *> gDeviceUID;
+	typedef std::unordered_map<std::string, std::any> gSettings;
 
 	typedef std::pair<int, std::string> gSandwichPair;
 	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> gMeshData;

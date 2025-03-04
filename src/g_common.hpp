@@ -2,13 +2,16 @@
 #define GRAPHX_ENGINE_COMMON
 #include "sanity.hpp" // Included for the GLM headers
 #include "t_settings.hpp"
-#include "r_common.hpp"
 #include "graphx_namespace.hpp"
 #include <mutex>
 
 // Forward Declarations
 struct Theatre; // For Actor
 class GraphXPlayer;
+struct Device;
+struct Environment;
+struct Material;
+struct Mesh;
 
 extern bool loading_new_main_theatre;
 
@@ -26,7 +29,7 @@ class Actor
 public:
 	bool visible = true;
 
-	Mesh *mesh = new Mesh(); // replace with std::vector<Mesh *> meshes later(?)
+	Mesh *mesh = nullptr; // replace with std::vector<Mesh *> meshes later(?)
 
 	glm::vec3 scale = glm::vec3(1.0f);
 
@@ -49,7 +52,7 @@ public:
 
 	graphx::gSettings settings = empty_settings;
 
-	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = nullptr, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 	virtual ~Actor() = default;
 
 	template<typename T> T getPosition();
@@ -62,7 +65,6 @@ public:
 
 	long getUID();
 	void setUID(long manual_uid);
-
 	bool isType(int class_type);
 	bool isType(std::initializer_list<int> const &class_types);
 	// I have to define this in the header file, unfortunately
@@ -102,8 +104,6 @@ protected:
 	virtual void updateVectors();
 };
 
-#define GRAPHX_ACTOR_DEFINED // This keeps forward declarations inside graphx_namespace.hpp from potentially overwriting the actual declarations
-
 // Note about Theatres:
 // I abstracted getting Actor and Device pointers to functions, because directly grabbing them from their maps
 // might return null (if using []) or crash the engine (if using .at()). This crash will appear to happen for no
@@ -131,10 +131,6 @@ struct Theatre
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
-	long generateActorUID();
-	long generateDeviceUID();
-	void cleanUIDs();
-
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();
 	void dropCurtains();
@@ -147,17 +143,15 @@ struct Theatre
 
 	void refreshTroupe();
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
-	void actorEnter(graphx::gActorUID new_actor, graphx::gSettings new_settings = empty_settings);
 	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = empty_settings);
 	void actorLeave(Actor *old_actor);
 	void actorLeave(long uid);
-	void placeDevice(graphx::gDeviceUID new_device, graphx::gSettings new_settings = empty_settings);
 	void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = empty_settings);
 	void removeDevice(Device *old_device);
 	void removeDevice(long uid);
 
-	long createActor(int actor_type, graphx::gSettings new_settings = empty_settings);
-	long createDevice(int device_type, graphx::gSettings new_settings  = empty_settings);
+	void createActor(int actor_type, long uid, graphx::gSettings new_settings = empty_settings);
+	void createDevice(int device_type, long uid, graphx::gSettings new_settings  = empty_settings);
 
 	glm::vec3 getSwapColor();
 
@@ -177,11 +171,6 @@ struct Theatre
 	Environment *getEnvironment();
 
 private:
-	inline static std::vector<graphx::gActorUID> all_actor_uids;
-	inline static std::vector<graphx::gDeviceUID> all_device_uids;
-	inline static constexpr int actor_uid_range[2] = {1, 5000};
-	inline static constexpr int device_uid_range[2] = {5001, 6000};
-
 	std::unordered_map<long, Actor *> objects = {};
 	std::unordered_map<long, Device *> devices = {};
 	long UID = -1;

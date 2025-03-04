@@ -26,8 +26,8 @@ Environment *getCurrentEnvironment()
 	if(current_theatre.unsafeGetFirstDeviceOfType(ENVIRONMENT) == nullptr)
 	{
 		PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment!")
-		long environment_uid = current_theatre.createDevice(ENVIRONMENT);
-		PRINTNOTE("A new Environment with UID #" << std::to_string(environment_uid) << "was created")
+		PRINTNOTE("A new Environment will be created and given a UID of 177013")
+		current_theatre.createDevice(ENVIRONMENT, 177013);
 	}
 
 	return static_cast<Environment *>(current_theatre.getFirstDeviceOfType(ENVIRONMENT));
@@ -44,8 +44,8 @@ GraphXPlayer *getCurrentPlayer()
 	if(current_theatre.unsafeGetFirstActorOfType(GRAPHXPLAYER) == nullptr)
 	{
 		PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer!")
-		long player_uid = current_theatre.createActor(GRAPHXPLAYER);
-		PRINTNOTE("A new GraphXPlayer with UID #" << std::to_string(player_uid) << "was created")
+		PRINTNOTE("A new GraphXPlayer will be created and given a UID of 42069")
+		current_theatre.createActor(GRAPHXPLAYER, 42069);
 		current_theatre.refreshTroupe();
 	}
 
@@ -91,11 +91,10 @@ void Theatre::raiseCurtains()
 	if(!has_directional_light)
 	{
 		PRINTERR("Theatre \"" << name << "\" doesn't have a directional light, which is pretty much a representation of the sun! I'm gonna assume you did this on purpose, so in order for the lighting to render \"properly\", I'm adding a LightDirectional light to this Theatre but making its light output pitch black.")
-		long sun_uid = createActor(LIGHTDIRECTIONAL);
-		PRINTNOTE("A new LightDirectional with UID #" << std::to_string(sun_uid) << "was created")
+		createActor(LIGHTDIRECTIONAL, 55252525);
 		objects.at(55252525)->setName("THE FUCKING SUN HAS GONE OUT!!!!!");
-		static_cast<LightDirectional *>(objects.at(sun_uid))->light_color = glm::vec3(0.0f);
-		static_cast<LightDirectional *>(objects.at(sun_uid))->intensity = 0.0f;
+		static_cast<LightDirectional *>(objects.at(55252525))->light_color = glm::vec3(0.0f);
+		static_cast<LightDirectional *>(objects.at(55252525))->intensity = 0.0f;
 	}
 
 	PRINTNOTE("When a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
@@ -307,67 +306,20 @@ void Theatre::refreshTroupe()
 	countLights();
 }
 
-#include <random> // Put this at the top of the file later
-long Theatre::generateActorUID()
+void Theatre::createActor(int actor_type, long uid, gSettings new_settings)
 {
-	std::random_device random_device;
-	std::mt19937 generator(random_device());
-	std::uniform_int_distribution<> distrobution(actor_uid_range[0], actor_uid_range[1]);
-	bool generate_uid_number = true;
-	long new_uid;
-	while(generate_uid_number)
+	if(objects.contains(uid))
 	{
-		new_uid = distrobution(generator);
-		generate_uid_number = false;
-		for(gActorUID actor_uid : all_actor_uids)
-		{
-			if(actor_uid.first == new_uid)
-				generate_uid_number = true;
-
-			if(generate_uid_number)
-				break;
-		}
+		PRINTERR("Tried adding a new Actor with UID " << std::to_string(uid) << " to Theatre " << name << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
+		return;
 	}
-
-	return new_uid;
-}
-
-long Theatre::generateDeviceUID()
-{
-	std::random_device random_device;
-	std::mt19937 generator(random_device());
-	std::uniform_int_distribution<> distrobution(actor_uid_range[0], actor_uid_range[1]);
-	bool generate_uid_number = true;
-	long new_uid;
-	while(generate_uid_number)
-	{
-		new_uid = distrobution(generator);
-		generate_uid_number = false;
-		for(gDeviceUID device_uid : all_device_uids)
-		{
-			if(device_uid.first == new_uid)
-				generate_uid_number = true;
-
-			if(generate_uid_number)
-				break;
-		}
-	}
-
-	return new_uid;
-}
-
-long Theatre::createActor(int actor_type, gSettings new_settings)
-{
-	long uid = generateActorUID();
 
 	if(actor_type == GRAPHXPLAYER)
 		player_uid = uid;
 
 	objects[uid] = actor_map[actor_type]();
 	objects.at(uid)->setUID(uid);
-	// objects.at(uid)->youGotACallBack(new_settings);
-
-	all_actor_uids.insert(all_actor_uids.end(), gActorUID(uid, objects.at(uid)));
+	objects.at(uid)->youGotACallBack(new_settings);
 
 	sortTroupe();
 	countLights();
@@ -378,23 +330,22 @@ long Theatre::createActor(int actor_type, gSettings new_settings)
 	}
 
 	time_to_store_buffers = time_to_render;
-
-	return uid;
 }
 
-long Theatre::createDevice(int device_type, gSettings new_settings)
+void Theatre::createDevice(int device_type, long uid, gSettings new_settings)
 {
-	long uid = generateDeviceUID();
+	if(devices.contains(uid))
+	{
+		PRINTERR("Tried adding a new Device with UID " << std::to_string(uid) << " to Theatre " << name << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
+		return;
+	}
 
-	if(device_type == ENVIRONMENT)
+	if(device_type ==ENVIRONMENT)
 		environment_uid = uid;
 
 	devices[uid] = device_map[device_type]();
 	devices.at(uid)->setUID(uid);
 	devices.at(uid)->loadSettings(new_settings);
-	all_device_uids.insert(all_device_uids.end(), gDeviceUID(uid, devices.at(uid)));
-
-	return uid;
 }
 
 void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
@@ -424,11 +375,6 @@ void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
 	sortTroupe();
 	countLights();
 	time_to_store_buffers = time_to_render;
-}
-
-void Theatre::actorEnter(gActorUID new_actor, gSettings new_settings)
-{
-	actorEnter(new_actor.second, new_actor.first, new_settings);
 }
 
 void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
@@ -515,11 +461,6 @@ void Theatre::actorLeave(long uid)
 	}
 
 	PRINTERR("Request to remove an Actor with UID " << std::to_string(uid) << " failed!")
-}
-
-void Theatre::placeDevice(gDeviceUID new_device, gSettings new_settings)
-{
-	placeDevice(new_device.second, new_device.first, new_settings);
 }
 
 void Theatre::placeDevice(Device *new_device, long uid, gSettings new_settings)

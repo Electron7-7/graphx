@@ -173,7 +173,6 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 {
 	if(settings.contains(empty_settings_identifier))
 		settings = new_settings;
-
 	if(new_settings.contains(empty_settings_identifier))
 		new_settings = settings;
 
@@ -182,18 +181,11 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 
 	getSetting(name, new_settings["Name"]);
 	getSetting(mesh, new_settings["Mesh"]);
-	getSetting(mesh->material, new_settings["Mesh:Material"]);
-	getSetting(mesh->mesh_scale, new_settings["Mesh:Scale"]);
-	getSetting(mesh->name, new_settings["Mesh:Name"]);
 	getSetting(position_global, new_settings["Position"]);
 	getSetting(position_local, new_settings["LocalPosition"]);
 	getSetting(global_euler_degrees, new_settings["Rotation"]);
 	getSetting(local_euler_degrees, new_settings["LocalRotation"]);
 	getSetting(scale, new_settings["Scale"]);
-
-	PRINTDEBUG(glm::to_string(scale))
-	PRINTDEBUG(glm::to_string(position_global))
-	PRINTDEBUG(mesh->name)
 
 	local_quaternion = glm::quat(glm::radians(local_euler_degrees));
 	quaternion = glm::quat(glm::radians(global_euler_degrees));
@@ -307,8 +299,7 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
-	if(collider != nullptr)
-		collider->createBody();
+	collider->createBody();
 
 	reset_position = getPosition<JPH::Vec3>();
 	reset_quaternion = getRotation<JPH::Quat>();
@@ -326,9 +317,6 @@ void PhysicsActor::takeABow()
 
 void PhysicsActor::tick(int current_tick)
 {
-	if(collider == nullptr)
-		return;
-
 	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
 	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
 	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
@@ -357,8 +345,9 @@ void RigidBodyActor::callToStage(Theatre *parent_theatre)
 	PhysicsActor::callToStage(parent_theatre);
 	my_type = graphx::classes::RIGIDBODYACTOR;
 
-	if(collider != nullptr)
-		collider->prepForDestruction();
+	if(collider == nullptr)
+		return;
+	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Dynamic;
@@ -408,9 +397,8 @@ void StaticBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
 	my_type = graphx::classes::STATICBODYACTOR;
-
 	if(collider == nullptr)
-		collider = new Collider();
+		return;
 	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;

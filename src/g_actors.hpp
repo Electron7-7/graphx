@@ -21,7 +21,7 @@
 class PhysicsActor: public Actor
 {
 public:
-	Collider *collider = nullptr;
+	Collider *collider = new Collider();
 
 	float mass = 1.0f; // in kg
 
