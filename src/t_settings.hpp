@@ -193,10 +193,11 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 		else
 		{
 			variable = std::any_cast<T>(set_value);
+			return 0;
 		}
 	}
 
-	PRINTERR("grabSetting called but none of the if/else statements returned! This shouldn't be possible, so if you see this error message, the real problem is probably not related to grabSetting (or my code is just very very VERY bad, which is always a possibility)")
+	PRINTERR("grabSetting called but none of the if/else statements returned! This shouldn't be possible, so if you see this error message, the real problem is probably not related to grabSetting (or there's a return missing somewhere in here...)")
 	return 0;
 }
 #endif

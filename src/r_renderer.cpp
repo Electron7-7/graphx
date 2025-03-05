@@ -65,8 +65,6 @@ graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extens
 	std::stringstream file_string_data;
 	file_string_data << model_file.rdbuf();
 
-	PRINTDEBUG(file_string_data.str())
-
 	if(!model_file.is_open())
 	{
 		PRINTERR("M_LoadModelFile called but file could not be opened/found! An error mesh will be returned!")
