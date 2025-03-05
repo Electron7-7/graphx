@@ -11,7 +11,7 @@ Theatre current_theatre;
 Theatre *getCurrentTheatre(bool print_note)
 {
 	if(current_theatre.getUID() == -1 && print_note)
-		PRINTNOTE("getCurrentTheatre() called, but current_theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
+		PRINTDEBUG("getCurrentTheatre() called, but current_theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
 	return &current_theatre;
 }
 
@@ -25,8 +25,7 @@ Environment *getCurrentEnvironment()
 
 	if(current_theatre.unsafeGetFirstDeviceOfType(ENVIRONMENT) == nullptr)
 	{
-		PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment!")
-		PRINTNOTE("A new Environment will be created and given a UID of 177013")
+		PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013")
 		current_theatre.createDevice(ENVIRONMENT, 177013);
 	}
 
@@ -37,14 +36,13 @@ GraphXPlayer *getCurrentPlayer()
 {
 	if(loading_new_main_theatre)
 	{
-		PRINTNOTE("getCurrentPlayer called while loading_new_main_theatre == true. Returning a new GraphXPlayer in order to avoid a crash!")
+		PRINTDEBUG("getCurrentPlayer called while loading_new_main_theatre == true. Returning a new GraphXPlayer in order to avoid a crash!")
 		return new GraphXPlayer();
 	}
 
 	if(current_theatre.unsafeGetFirstActorOfType(GRAPHXPLAYER) == nullptr)
 	{
-		PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer!")
-		PRINTNOTE("A new GraphXPlayer will be created and given a UID of 42069")
+		PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069")
 		current_theatre.createActor(GRAPHXPLAYER, 42069);
 		current_theatre.refreshTroupe();
 	}
@@ -94,8 +92,6 @@ void Theatre::raiseCurtains()
 		static_cast<LightDirectional *>(objects.at(55252525))->light_color = glm::vec3(0.0f);
 		static_cast<LightDirectional *>(objects.at(55252525))->intensity = 0.0f;
 	}
-
-	PRINTNOTE("When a Theatre is initialized, it will go through every Actor and run youGotACallBack before callToStage")
 
 	sortTroupe();
 	countLights();

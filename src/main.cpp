@@ -93,9 +93,6 @@ int main()
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	ImGui::GetIO().IniFilename = NULL; // Be rid of imgui.ini (for now)
 
-#ifdef WIN32
-	ImGui_ImplWin32_Init();
-#endif
 	ImGui_ImplGlfw_InitForOpenGL(main_window, true);
 	ImGui_ImplOpenGL3_Init();
 

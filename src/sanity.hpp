@@ -10,7 +10,7 @@ once... I think, at least. This could just be a misnomer/not how that works(?) I
 #include <windows.h>
 #endif
 #ifdef GRAPHX_WINDOWS
-#include <windows.h>
+#include <string>
 #include <libloaderapi.h>
 inline std::string getBinaryPath()
 {
