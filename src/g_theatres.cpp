@@ -149,33 +149,49 @@ void Theatre::delegateMouseInput(GLFWwindow *window, double x_position_in, doubl
 		actor->processMouse(window, x_position_in, y_position_in);
 }
 
-std::string getSettingName(std::any any_value)
+std::string getSettingName(gSetting setting)
 {
-	if(any_value.type() == typeid(Actor*))
+	switch(setting.first)
 	{
-		return(std::any_cast<Actor *>(any_value)->getName());
-	}
+	case THEATRE_REFERENCE:
+		if(setting.second.type() == typeid(Actor*))
+			return(std::any_cast<Actor *>(setting.second)->getName());
 
-	if(any_value.type() == typeid(Device*))
-	{
-		return(std::any_cast<Device *>(any_value)->getName());
-	}
+		if(setting.second.type() == typeid(Device*))
+			return(std::any_cast<Device *>(setting.second)->getName());
 
-	if(any_value.type() == typeid(graphx::gRawData))
-	{
-		std::string buffer = "";
-		graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(any_value);
-		for(int i = 0 ; i < raw_data.size() ; i++)
+		return "Unknown Theatre Reference setting";
+	case RAW_DATA:
+		if(setting.second.type() == typeid(graphx::gRawData))
 		{
-			buffer += raw_data[i];
-			if(i != raw_data.size() - 1)
-				buffer += ", ";
+			std::string buffer = "";
+			graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(setting.second);
+			for(int i = 0 ; i < raw_data.size() ; i++)
+			{
+				buffer += raw_data[i];
+				if(i != raw_data.size() - 1)
+					buffer += ", ";
+			}
+
+			return buffer;
 		}
 
-		return buffer;
-	}
+		return "Unknown Raw Data setting";
+	case CPP_REFERENCE:
+		return "C++ Reference setting";
+	case SANDWICH_BUN:
+		if(setting.second.type() == typeid(Actor*))
+			return(std::any_cast<Actor *>(setting.second)->getName());
 
-	return "C++ Reference (check the GraphXTheatre file)";
+		if(setting.second.type() == typeid(Device*))
+			return(std::any_cast<Device *>(setting.second)->getName());
+
+		return "Unknown Theatre Reference setting (Sandwich Bun)";
+	case EXTERNAL_REFERENCE:
+		return "External Reference setting";
+	default:
+		return "Setting type unknown/invalid!";
+	}
 }
 
 std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)

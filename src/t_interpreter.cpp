@@ -7,7 +7,7 @@
 #include <models.hpp>
 #include <theatres.hpp>
 #include <set>
-#include <filesystem> // Yes, the devil hath been invoked... I truly am sorry
+#include <filesystem> // Yes, the devil hath been invoked... I'm sorry
 #include <fstream>
 #include <sstream>
 
@@ -31,6 +31,7 @@ std::map<std::string, std::any> cpp_definitions =
 	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_VERTS, PYRAMID_INDICES, VAO_HANDMADE)},
 	{"GRAPHX_QUAD", gMeshData(QUAD_VERTS, QUAD_INDICES, VAO_HANDMADE)},
 	{"OBJ_ERROR", M_LoadOBJ(ERROR_obj)},
+	{"notapenis", M_LoadOBJ(purely_for_testing_obj)},
 	{"Dynamic", JPH::EMotionType::Dynamic},
 	{"Static", JPH::EMotionType::Static},
 	{"Kinematic", JPH::EMotionType::Kinematic},
@@ -71,9 +72,9 @@ gStringSettings theatreParser(std::string theatre_data)
 
 	std::vector<gKey> keys;
 	std::vector<gValue> values;
-	gStringSettings all_settings;
-
 	std::vector<gStringSetting> object_settings;
+
+	gStringSettings all_settings;
 
 	bool reading_settings = false;
 	std::string buffer = "";
@@ -90,6 +91,12 @@ gStringSettings theatreParser(std::string theatre_data)
 
 			all_settings.insert(all_settings.end(), {gStringSetting("Theatre", gValue(RAW_DATA, buffer))});
 			buffer = "";
+		}
+
+		if(!theatre_data.substr(i, 2).compare("//"))
+		{ // This is a comment (in the .gt file, not this C++ comment...)
+			while(theatre_data[i] != '\n')
+				i++;
 		}
 
 		if(reading_settings)

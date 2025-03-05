@@ -5,4 +5,6 @@
 #include "../models/pyramid.graphxmodel"
 #include "../models/quad.graphxmodel"
 extern std::string ERROR_obj;
+extern std::string purely_for_testing_obj;
+extern std::string suzanne_obj;
 #endif

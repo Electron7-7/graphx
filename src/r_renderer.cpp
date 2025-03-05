@@ -63,7 +63,7 @@ graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extens
 
 	if(!model_file.is_open())
 	{
-		PRINTERR("M_LoadModelFile called but file could not be opened/found! An error mesh will be returned!")
+		PRINTERR("M_LoadModelFile called but the file \"" << (binary_path + file_path) << "\" could not be opened/found! An error mesh will be returned!")
 		return M_LoadOBJ(ERROR_obj);
 	}
 
@@ -72,7 +72,7 @@ graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extens
 	if(!file_extension.compare("obj"))
 		return M_LoadOBJ(file_string_data.str());
 
-	PRINTERR("M_LoadModelFile called but no file type was provided! An error mesh will be returned!")
+	PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
 	return M_LoadOBJ(ERROR_obj);
 }
 

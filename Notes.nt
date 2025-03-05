@@ -1422,3 +1422,20 @@ Okay, here's the plan for fixing "interpretTheatreReference": I pass "true" to "
 I think there was a race condition, where the renderer was trying to render an Actor that had been removed from the Theatre (because a new one was being loaded) but loading_new_main_theatre wasn't set in time. I fixed this (I think) by changing the iteration from "for(Actor *actor : getCurrentTheatre()->troupe)" to a numerical iteration (i.e: i++) and using a new function Theatre::getFromTroupe(int index) that will safely return a new Actor() if certain conditions are met.
 
 Also, my theory on why the crash was happening is that in the render loops, "loading_new_main_theatre" is only checked once before looping through a troupe, whereas with this new function it's checked on every iteration of the loop.
+
+[03/05/25]
+I decided that implementing comments into GraphXTheatre files before doing another release would be a good idea, but while implementing it I noticed that the way I handle key/value pairs while parsing the file isn't very good. Mainly because they're two separate vectors and aren't directly linked, so if a user comments out a value but not a key, the two vectors will be de-synced. This isn't very good, but due to how I parse all the keys before moving on to the values, I don't know how simple it would be to change this. Let's list the pros and cons.
+Pros:
+  - Parser is less succeptible to key/value "desync"
+    - This also means that forgetting to give a variable a value won't result in a crash or other problems
+
+Cons:
+  - Unknown complexity and time cost
+
+Actually, I think I'll leave things be. I've realized that this isn't a huge problem and I can probably just manually check for a "desync" and drop the key that's missing a value. This is because The parser goes through each key and value one at a time, instead of getting all keys and then all values, so it's still a case-by-case basis.
+
+Uhoh, I forgot that sandwiches are expanded by the parser and will trigger the desync fix. Hmm... maybe the desync fix can use a variable instead of a fixed number and the parser can set that variable to be higher if a sandwich is encountered. I mean, at that point, just fix "desync" while reading keys. Maybe a boolean flag for reading keys and values?
+
+Yeah, on second thought I'm not implementing that; too much work for too little return. I'll just make sure in the documentation I leave a big note saying "don't do that". Also, I could make syntax highlighting plugins for this format... that would help. Plus a linter? Ooh...
+
+Ok I started writing a sublime-syntax file but that's gonna take a second and I want to push this update out first.
