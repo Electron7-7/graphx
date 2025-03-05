@@ -11,6 +11,7 @@ struct GraphXConsole
 {
 	bool active;
 	bool secondary_active;
+	bool tertiary_active;
 	ImGuiKey toggle_activation_key;
 	std::string name;
 	Theatre *current_theatre = nullptr;
@@ -19,6 +20,7 @@ struct GraphXConsole
 
 	void updateFrame(GLFWwindow *window);
 	void displayTheatre();
+	void displayTheatreData();
 	bool justClosed();
 
 private:

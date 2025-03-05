@@ -53,7 +53,7 @@ public:
 	graphx::gSettings settings = empty_settings;
 
 	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = nullptr, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
-	virtual ~Actor();
+	virtual ~Actor() = default;
 
 	template<typename T> T getPosition();
 	template<typename T> T getRotation();
@@ -67,7 +67,14 @@ public:
 	void setUID(long manual_uid);
 	bool isType(int class_type);
 	bool isType(std::initializer_list<int> const &class_types);
-	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types);
+	// I have to define this in the header file, unfortunately
+	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types)
+	{
+		for(int type : class_types)
+			if(my_type == type)
+				return true;
+		return false;
+	}
 	std::string getTypeName();
 	long getType();
 	void setName(std::string new_name);
@@ -84,13 +91,11 @@ public:
 	virtual void tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
 	virtual bool wantsToBeRendered();
-	virtual bool wantsToBeBuffered();
 
 protected:
 	int my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	std::string name = "Untitled Actor";
-	bool debug_visible;
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);
 	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -108,7 +113,9 @@ protected:
 
 struct Theatre
 {
-	Mesh *stage = nullptr;
+	Mesh *stage_mesh = nullptr;
+	Material *stage_material = nullptr;
+	Actor stage;
 	glm::vec3 stage_scale = glm::vec3(0.0f);
 	glm::vec3 stage_position = glm::vec3(0.0f);
 	glm::quat stage_quaternion = glm::quat();
@@ -118,8 +125,12 @@ struct Theatre
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 
+	graphx::gStringSettings graphx_theatre_settings;
+	std::string theatre_file_data_printout = "";
+
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
-	~Theatre();
+
+	Actor *getFromTroupe(int index);
 
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();
@@ -143,6 +154,8 @@ struct Theatre
 	void createActor(int actor_type, long uid, graphx::gSettings new_settings = empty_settings);
 	void createDevice(int device_type, long uid, graphx::gSettings new_settings  = empty_settings);
 
+	glm::vec3 getSwapColor();
+
 	Actor *getFirstActorOfType(int type_name);
 	Device *getFirstDeviceOfType(int type_name);
 
@@ -155,6 +168,7 @@ struct Theatre
 	Actor *getActor(std::string actor_name);
 	Device *getDevice(long uid);
 	Device *getDevice(std::string device_name);
+
 	GraphXPlayer *getPlayer();
 	Environment *getEnvironment();
 
@@ -198,7 +212,7 @@ template<typename T> Actor *createNewActor()
 	return new T;
 }
 
-Theatre *getCurrentTheatre();
+Theatre *getCurrentTheatre(bool print_note = true);
 Environment *getCurrentEnvironment();
 GraphXPlayer *getCurrentPlayer();
 #endif

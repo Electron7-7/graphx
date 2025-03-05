@@ -45,16 +45,32 @@ namespace graphx
 		};
 	}
 
-	typedef std::map<int, std::pair<std::string, std::string>>														gObjectStore;
-	typedef std::multimap<int, std::pair<std::string, std::string>>													gSourceRefStore;
-	typedef std::multimap<int, std::pair<std::string, int>>															gTheatreRefStore;
-	typedef std::multimap<int, std::pair<std::string, std::string>>													gRawDataStore;
-	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>>	gSandwichStore;
-	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore>	gTheatreStorage;
-	typedef std::unordered_map<std::string, std::any>																gSettings;
-	typedef std::pair<int, std::string>																				gSandwichPair;
-	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int>											gMeshData;
-	typedef std::vector<std::string>																				gRawData;
+	typedef std::map<int, std::pair<std::string, std::string>> gObjectStore;
+	typedef std::multimap<int, std::pair<std::string, std::string>> gSourceRefStore;
+	typedef std::multimap<int, std::pair<std::string, int>> gTheatreRefStore;
+	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
+	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
+	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
+
+	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only
+	// and shouldn't be used by anything else (except for Theatre::graphx_theatre_settings)
+	typedef std::string gKey;
+	typedef std::pair<int, std::string> gValue;
+	typedef std::pair<gKey, gValue> gStringSetting;
+	typedef std::vector<std::vector<gStringSetting>> gStringSettings;
+
+	// The int in gSetting identifies the type (found in t_common.hpp); the four types are:
+	// 1: RAW_DATA (a vector of strings, using the typedef "gRawData")
+	// 2: CPP_REFERENCE (see "cpp_definitions" in "t_interpreter.cpp")
+	// 3: THEATRE_REFERENCE (a pointer to a pre-existing Actor/Device in the current Theatre)
+	// 4: EXTERNAL_REFERENCE (an external file's pathname, passed via string)
+	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
+	typedef std::pair<int, std::any> gSetting;
+	typedef std::unordered_map<std::string, gSetting> gSettings;
+
+	typedef std::pair<int, std::string> gSandwichPair;
+	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> gMeshData;
+	typedef std::vector<std::string> gRawData;
 
 	static std::map<int, std::string> classnames =
 	{

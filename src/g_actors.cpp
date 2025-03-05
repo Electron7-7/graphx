@@ -49,13 +49,6 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
-Actor::~Actor()
-{
-	mesh->prepForDestruction();
-	mesh = nullptr;
-	delete mesh;
-}
-
 std::string Actor::getTypeName()
 {
 	return graphx::classnames.at(my_type);
@@ -186,8 +179,12 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
 	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
 
+	if(mesh == nullptr)
+		mesh = new Mesh();
+
 	getSetting(name, new_settings["Name"]);
 	getSetting(mesh, new_settings["Mesh"]);
+	getSetting(mesh->material, new_settings["Mesh:Material"]);
 	getSetting(position_global, new_settings["Position"]);
 	getSetting(position_local, new_settings["LocalPosition"]);
 	getSetting(global_euler_degrees, new_settings["Rotation"]);
@@ -203,14 +200,6 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 bool Actor::isType(int class_type)
 {
 	return class_type == my_type;
-}
-
-template<std::size_t array_size> bool Actor::isType(std::array<int, array_size> class_types)
-{
-	for(auto type : class_types)
-		if(my_type == type)
-			return true;
-	return false;
 }
 
 bool Actor::isType(std::initializer_list<int> const &class_types)
@@ -270,24 +259,20 @@ void Actor::tick(int current_tick)
 
 void Actor::callToStage(Theatre *parent_theatre)
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Actor::takeABow()
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
-}
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
 
-bool Actor::wantsToBeBuffered()
-{
-	if(isType(graphx::classes::LIGHTS))
-		return (debug_visible);
-	return(mesh != NULL);
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 bool Actor::wantsToBeRendered()
 {
-	return (Actor::wantsToBeBuffered() && visible);
+	return (mesh != nullptr && mesh->is_buffered && visible);
 }
 
 //
@@ -316,11 +301,6 @@ void PhysicsActor::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
-	collider->position = position_global;
-	collider->local_position = position_local;
-	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
-	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
-	collider->scale = scale;
 	collider->createBody();
 
 	reset_position = getPosition<JPH::Vec3>();
@@ -331,12 +311,29 @@ void PhysicsActor::takeABow()
 {
 	Actor::takeABow();
 
+	if(collider != nullptr)
+		collider->prepForDestruction();
 	collider = nullptr;
 	delete collider;
 }
 
 void PhysicsActor::tick(int current_tick)
-{}
+{
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
+	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
+
+	position_global = convertMath<glm::vec3>(body_position);
+	quaternion = convertMath<glm::quat>(body_quaternion);
+	updateVectors();
+}
+
+void PhysicsActor::reset_to_initial_orientation_for_testing()
+{
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	body_interface.SetPositionAndRotation(collider->getBodyID(), reset_position, reset_quaternion, JPH::EActivation::Activate);
+	body_interface.SetLinearAndAngularVelocity(collider->getBodyID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
+}
 
 //
 // RigidBodyActor
@@ -354,27 +351,27 @@ void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
+	PhysicsActor::callToStage(parent_theatre);
+	my_type = graphx::classes::RIGIDBODYACTOR;
+
+	if(collider == nullptr)
+		return;
+	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Dynamic;
 	collider->object_layer = Layers::MOVING;
-
-	PhysicsActor::callToStage(parent_theatre);
-
-	my_type = graphx::classes::RIGIDBODYACTOR;
+	collider->scale = scale;
+	collider->position = position_global;
+	collider->local_position = position_local;
+	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
+	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
+	collider->createBody();
 }
 
 void RigidBodyActor::tick(int current_tick)
 {
 	PhysicsActor::tick(current_tick);
-
-	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
-	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
-
-	position_global = convertMath<glm::vec3>(body_position);
-	quaternion = convertMath<glm::quat>(body_quaternion);
-	updateVectors();
 }
 
 void RigidBodyActor::reset_to_initial_orientation_for_testing()
@@ -386,7 +383,8 @@ void RigidBodyActor::reset_to_initial_orientation_for_testing()
 
 void RigidBodyActor::takeABow()
 {
-	collider->prepForDestruction();
+	if(collider != nullptr)
+		collider->prepForDestruction();
 	PhysicsActor::takeABow();
 }
 
@@ -406,19 +404,27 @@ void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 
 void StaticBodyActor::callToStage(Theatre *parent_theatre)
 {
+	PhysicsActor::callToStage(parent_theatre);
+	my_type = graphx::classes::STATICBODYACTOR;
+	if(collider == nullptr)
+		return;
+	collider->prepForDestruction();
 	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Static;
 	collider->object_layer = Layers::NON_MOVING;
-
-	PhysicsActor::callToStage(parent_theatre);
-
-	my_type = graphx::classes::STATICBODYACTOR;
+	collider->scale = scale;
+	collider->position = position_global;
+	collider->local_position = position_local;
+	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
+	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
+	collider->createBody();
 }
 
 void StaticBodyActor::takeABow()
 {
-	collider->prepForDestruction();
+	if(collider != nullptr)
+		collider->prepForDestruction();
 	PhysicsActor::takeABow();
 }
 
@@ -461,9 +467,9 @@ GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::v
 : Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f, 2.0f, 1.0f))
 {
 	my_type = graphx::classes::GRAPHXPLAYER;
-	debug_visible = false;
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
 	player_camera.setGlobalRotation(init_position);
+	visible = false;
 }
 
 void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
@@ -475,6 +481,7 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(lerp_speed, new_settings["MovementAcceleration"]);
 	getSetting(friction, new_settings["Friction"]);
 	getSetting(mass, new_settings["Mass"]);
+	getSetting(field_of_view, new_settings["FOV"]);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
@@ -604,9 +611,6 @@ void GraphXPlayer::takeABow()
 {
 	Actor::takeABow();
 	jolt_physics_system.GetBodyInterface().RemoveBody(jph_character->GetBodyID());
-	// delete jph_character;
-	// jph_character->Release();
-	// jph_character->RemoveFromPhysicsSystem();
 }
 
 //
@@ -617,7 +621,7 @@ Light::Light(std::string init_name, float init_intensity, float init_range, floa
 {
 	my_type = graphx::classes::LIGHT;
 	my_light_type = graphx::classes::LIGHT;
-	debug_visible = true;
+	scale = glm::vec3(0.2f);
 }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
@@ -630,6 +634,14 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(range, new_settings["Range"]);
 	getSetting(intensity, new_settings["Intensity"]);
 	getSetting(falloff, new_settings["Falloff"]);
+
+	temporary_light_mesh = Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
+	if(mesh != nullptr)
+	{
+		mesh->prepForDestruction();
+		mesh = nullptr;
+		delete mesh;
+	}
 }
 
 bool Light::isLightType(int light_type)
@@ -645,8 +657,9 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
 	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
-	debug_visible = false;
-	visible = false;
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
+	mesh = nullptr;
 }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
@@ -692,8 +705,10 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 {
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
-	debug_visible = false;
 	_color = light_color;
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
+	mesh = nullptr;
 }
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)

@@ -52,6 +52,8 @@ struct Collider : public Device
 	~Collider() override;
 
 	void createBody();
+	void destroyBody();
+
 	const JPH::BodyID &getBodyID();
 	JPH::BodyCreationSettings *getBodySettings();
 

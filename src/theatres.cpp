@@ -16,9 +16,34 @@ Material (Doom_Dull)
 	SpecularSharpness (8)
 	SpecularStrength  (0.4)
 }
+Material (ERROR_Test_Mat)
+{
+	mat_fullbright (True)
+	Color (1.0, 0.0, 0.2)
+}
 Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
+}
+Mesh (ERROR_Test)
+{
+	MeshData [OBJ_ERROR]
+}
+Collider (ERROR_Collider)
+{
+	MotionType  [Dynamic]
+	ObjectLayer [Moving]
+	Activation  [Activate]
+	Shape       [BoxShape]
+	Position (10.0, 3.5, 0.0)
+	Scale (1.0, 1.0, 1.0)
+}
+PhysicsActor (ERROR_TESTER)
+{
+	Mesh:Material <ERROR_Test>:<ERROR_Test_Mat>
+	Collider <ERROR_Collider>
+	Scale (4.0, 4.0, 4.0)
+	Position (10.0, 8.0, 0.0)
 }
 StaticBodyActor (Floor)
 {
@@ -64,6 +89,8 @@ Collider (Test_Collider_1)
 	ObjectLayer [Moving]
 	Activation  [Activate]
 	Shape       [BoxShape]
+	Scale		  (1.0, 1.0, 1.0)
+	Position      (-2.0, 9.0, -6.0)
 }
 RigidBodyActor (Falling_Cube_1)
 {
@@ -78,6 +105,8 @@ Collider (Test_Collider_2)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-2.3, 11.5, -5.2)
+	Rotation        (5.0, -2.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_2)
 {
@@ -93,6 +122,8 @@ Collider (Test_Collider_3)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-3.5, 6.7, -4.0)
+	Rotation        (0.0, 60.0, 25.0)
 }
 RigidBodyActor (Falling_Cube_3)
 {
@@ -108,6 +139,8 @@ Collider (Test_Collider_4)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-3.3, 7.2, -5.2)
+	Rotation        (5.0, -2.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_4)
 {
@@ -123,6 +156,8 @@ Collider (Test_Collider_5)
 	ObjectLayer     [Moving]
 	Activation      [Activate]
 	Shape           [BoxShape]
+	Position        (-5.3, 12.2, -6.2)
+	Rotation        (15.0, -25.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_5)
 {
@@ -322,5 +357,57 @@ LightTesterMover (test_light_2)
 	PivotPosition (8.4, 1.8, -3.0)
 	PivotRadius (2.0)
 	PivotSpeed (1.2)
+})~"}},{2, std::string{R"~(@ExternalReferenceTestingTheatre
+LightDirectional (Sun)
+{}
+LightFlashlight (Flashlight)
+{}
+GraphXPlayer (player)
+{
+	Position (0.0, 1.0, 40.0)
+}
+Material (Floor_Material)
+{
+	// Testing comments
+	DiffuseTexture [DOOM_TEXTURE_DIFF]
+	SpecularTexture [DOOM_TEXTURE_SPEC]
+	SpecularStrength (0.4)
+	SpecularSharpness (8)
+}
+Mesh (Floor_Mesh)
+{
+	MeshData [GRAPHX_CUBE]
+}
+StaticBodyActor (Floor)
+{
+	Mesh:Material <Floor_Mesh>:<Floor_Material>
+	Scale (200.0, 1.0, 200.0)
+	Position (0.0, -1.0, 0.0)
+}
+Mesh (TestMesh)
+{
+	MeshData "../src/models/suzanne.obj"
+}
+Collider (TestCollider)
+{
+	Scale (10.0, 8.0, 10.0)
+	Position <TestActor>
+}
+PhysicsActor (TestActor)
+{
+	Mesh <TestMesh>
+	Collider <TestCollider>
+	Position (0.0, 50.0, -4.0)
+	Scale (10.0, 10.0, 10.0)
+}
+RigidBodyActor (FallOnMe)
+{
+	Position (0.0, 1.5, -4.0)
+	Scale (3.4, 0.3, 7.8)
+}
+RigidBodyActor (FallOnMe2)
+{
+	Position (0.0, 3.0, -4.0)
+	Scale (5.1, 0.3, 3.2)
 })~"}}
 };

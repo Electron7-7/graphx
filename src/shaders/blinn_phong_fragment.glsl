@@ -1,10 +1,11 @@
 #version 460 core
-#define MAX_NUMBER_OF_LIGHTS 20
+#define MAX_NUMBER_OF_LIGHTS 50
 out vec4 FragColor;
 
 in vec2 texture_coordinate;
 in vec3 fragment_position;
 in vec3 normal;
+in vec3 vertex_colors;
 
 struct Material
 {

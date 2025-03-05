@@ -3,7 +3,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
-// #include "graphx_namespace.hpp"
 #include "r_common.hpp"
 #include "g_common.hpp"
 #include "g_actors.hpp"
@@ -26,8 +25,6 @@
 
 std::mutex actor_state_mutex;
 
-glm::vec2 main_window_size(1280, 720);
-
 static int TICKRATE = 120;
 
 int current_tick_since_second = 0;
@@ -35,9 +32,10 @@ long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool do_jolt_assert = false;
 bool debug_console_open = false;
+bool is_wireframe = false;
 
-float camera_near = 0.1f;
-float camera_far = 1000.0f;
+double cursor_last_x = 0.0;
+double cursor_last_y = 0.0;
 
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -48,6 +46,8 @@ void testGameTick(GLFWwindow *window);
 
 int main()
 {
+	graphx_api = GRAPHX_OPENGL;
+
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -67,7 +67,7 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
-	
+
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
@@ -88,13 +88,11 @@ int main()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
+	ImGui::GetIO().IniFilename = nullptr;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	ImGui::GetIO().IniFilename = NULL; // Be rid of imgui.ini (for now)
 
-#ifdef WIN32
-	ImGui_ImplWin32_Init();
-#endif
 	ImGui_ImplGlfw_InitForOpenGL(main_window, true);
 	ImGui_ImplOpenGL3_Init();
 
@@ -104,8 +102,7 @@ int main()
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		// glm::vec3 swap_color = getCurrentEnvironment()->getAmbientLight();
-		glm::vec3 swap_color = iKnowWhatActorIWant<LightDirectional *>("Sun")->light_color * iKnowWhatActorIWant<LightDirectional *>("Sun")->light_strength;
+		glm::vec3 swap_color = current_theatre.getSwapColor();
 		W_SwapAndClear(main_window, swap_color);
 		glfwPollEvents();
 
@@ -123,10 +120,8 @@ int main()
 
 		if(time_to_render)
 		{
-			// De-jank all of this shit below
-			glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), (float)main_window_size[0] / (float)main_window_size[1], camera_near, camera_far);
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
-			R_Render(actor_state_mutex, interpolation_time, projection_matrix);
+			R_Render(actor_state_mutex, interpolation_time);
 		}
 
 		ImGui::Render();
@@ -224,6 +219,9 @@ void testGameTick(GLFWwindow *main_window)
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
 
@@ -268,10 +266,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		switch(shader_index)
 		{
 		case SHADER_BLINN_PHONG:
-			PRINTDEBUG("Using Shader: Blinn-Phong")
+			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
 		case SHADER_PHONG:
-			PRINTDEBUG("Using Shader: Phong")
+			PRINTNOTE("Using Shader: Phong")
 			break;
 		}
 	}
@@ -286,16 +284,13 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		switch(shader_index)
 		{
 		case SHADER_BLINN_PHONG:
-			PRINTDEBUG("Using Shader: Blinn-Phong")
+			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
 		case SHADER_PHONG:
-			PRINTDEBUG("Using Shader: Phong")
+			PRINTNOTE("Using Shader: Phong")
 			break;
 		}
 	}
-
-	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
 
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
 	{
@@ -347,33 +342,38 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		getCurrentEnvironment()->ambient_lighting_enabled = !getCurrentEnvironment()->ambient_lighting_enabled;
 		if(!getCurrentEnvironment()->ambient_lighting_enabled)
-			PRINTDEBUG("Ambient Lighting Disabled")
+			PRINTNOTE("Ambient Lighting Disabled")
 		else
-			PRINTDEBUG("Ambient Lighting Enabled")
+			PRINTNOTE("Ambient Lighting Enabled")
 	}
 
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
-		PRINTDEBUG("Resetting PhysicsActors to initial transformation!")
+		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
 		for(Actor *actor : getCurrentTheatre()->troupe)
 			if(actor->isPhysicsActor())
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}
 
-	if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
+	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))
 	{
-		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
+		toggleCursor(window, true);
+	}
+
+	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
+	{
+		is_wireframe = !is_wireframe;
+		if(is_wireframe)
 		{
-			PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			PRINTNOTE("Polygon Mode: Wireframe")
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			return;
 		}
 
-		PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		PRINTNOTE("Polygon Mode: Normal")
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-#ifdef GRAPHX_DEBUG
 	if(key == GLFW_KEY_J && action == GLFW_PRESS)
 	{
 		do_jolt_assert = !do_jolt_assert;
@@ -382,7 +382,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		else
 			PRINTDEBUG("Jolt assert printouts disabled")
 	}
-#endif
 }
 
 void toggleCursor(GLFWwindow *window, bool show_cursor)
@@ -391,10 +390,12 @@ void toggleCursor(GLFWwindow *window, bool show_cursor)
 	{
 		PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetCursorPos(window, cursor_last_x, cursor_last_y);
 		return;
 	}
 
 	PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
+	glfwGetCursorPos(window, &cursor_last_x, &cursor_last_y);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 

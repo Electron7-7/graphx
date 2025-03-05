@@ -1,7 +1,7 @@
 #include "r_common.hpp"
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
-#include "quad.graphxmodel"
+#include <models.hpp>
 #include <iostream>
 
 // Forward Declarations
@@ -90,32 +90,6 @@ template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::ma
 }
 
 //
-// Window Functions
-//
-GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
-{
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow *new_window = glfwCreateWindow(width, height, title, NULL, NULL);
-	
-	if(new_window == NULL)
-	{
-		std::cerr << "[ERROR] Failed to create GLFW window!" << std::endl;
-		glfwTerminate();
-	}
-
-	if(make_context_current)
-		glfwMakeContextCurrent(new_window);
-
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-		std::cerr << "[ERROR] Failed to initialize GLAD!" << std::endl;
-
-	return new_window;
-}
-
-//
 // Device
 //
 Device::Device()
@@ -165,12 +139,15 @@ void Device::loadSettings(graphx::gSettings new_settings)
 
 void Device::initialize()
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Device::prepForDestruction()
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	if(ready_to_destroy)
+		return;
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	ready_to_destroy = true;
 }
 
 void Device::setUID(long manual_uid)
@@ -274,16 +251,24 @@ unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
 //
 // Mesh
 //
-Mesh::Mesh(Material *init_material, std::vector<GLfloat> init_vertices, std::vector<GLuint> init_indices, int init_vao_index, std::string init_name)
-: name(init_name), material(init_material), vao_index(init_vao_index), vertices(init_vertices), indices(init_indices)
+Mesh::Mesh()
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
 }
 
-Mesh::~Mesh()
+Mesh::Mesh(Material *new_material)
 {
-	material->prepForDestruction();
+	my_type = graphx::classes::MESH;
+	name = "Untitled Mesh";
+	material = new_material;
+}
+
+void Mesh::prepForDestruction()
+{
+	Device::prepForDestruction();
+	if(material != nullptr)
+		material->prepForDestruction();
 	material = nullptr;
 	delete material;
 }
@@ -292,7 +277,7 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	gMeshData mesh_data = gMeshData(ERROR_VERTS, ERROR_INDICES, VAO_HANDMADE);
+	gMeshData mesh_data = M_LoadOBJ(ERROR_obj);
 
 	getSetting(material, new_settings["Material"]);
 	getSetting(mesh_data, new_settings["MeshData"]);
@@ -300,16 +285,22 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 	vertices = std::get<0>(mesh_data);
 	indices = std::get<1>(mesh_data);
 	vao_index = std::get<2>(mesh_data);
+
+	if(vao_index == VAO_OBJ)
+		mesh_scale *= PREEMPTIVE_OBJ_SCALE;
 }
 
 //
 // Sprite
 //
-Sprite::Sprite(Material *init_material, int init_vao_index)
-: Mesh(init_material, QUAD_VERTS, QUAD_INDICES, init_vao_index)
+Sprite::Sprite()
+: Mesh()
 {
 	my_type = graphx::classes::SPRITE;
 	name = "Untitled Sprite";
+	vertices = QUAD_VERTS;
+	indices = QUAD_INDICES;
+	vao_index = VAO_HANDMADE;
 }
 
 void Sprite::loadSettings(graphx::gSettings new_settings)

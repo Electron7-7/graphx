@@ -1318,4 +1318,124 @@ All fixed after giving mouse_last a default value. However, there is a crash whe
 Fixed the crash by making sure Actor::tick doesn't get called if the main Theatre is changing.
 
 [02/27/25]
-Reworked setVariable, setRawData, setActorPointer, and setDevicePointer all into one single template function called "getSetting" that is not only much easier to work with, but also is far more preformant (I think) and waaaaayyyyy fucking safer than the previous template functions. It also has verbose error messages and shouldn't crash if errors are detected.
+(from trunk) Reworked setVariable, setRawData, setActorPointer, and setDevicePointer all into one single template function called "getSetting" that is not only much easier to work with, but also is far more preformant (I think) and waaaaayyyyy fucking safer than the previous template functions. It also has verbose error messages and shouldn't crash if errors are detected.
+
+I'm going to continue work on a fully custom integration of .obj files (without assimp). However, if I haven't made significant progress in the next hour and a half to two hours, I'll shift over to integrating assimp.
+
+Aight it took me an hour to create a testing OpenGL scene; fuckin aye. Anyways, I did a few google searches and I think I'm going to forgo making my own obj loader and use https://github.com/tinyobjloader/tinyobjloader instead, depending on how easy it is for me to integrate it (at a glance, it seems to be fairly simple).
+
+Ok, I have a very basic form of tinyobjloader integration in mind. It won't use indices, but that's okay because I can figure that out later. For now, I just want it working.
+
+Oh, that's what you're supposed to do, I guess. Anyways, time to integrate it into Mesh (and the renderer).
+
+[02/28/25]
+Today I'm going to work on integrating tinyobjloader into GraphX. I want to figure out the VAO situation, mainly if I need to use a different VAO if using different vertex attributes, or if I can just activate different vertex attributes. Also if that affects the shaders.
+
+Also note to self: need to de-tangle OpenGL from R_Render and put it in a "R_GL_Render" function.
+
+I'm going to test adding the Theatre's stage Mesh to the troupe via a dummy Actor. To be honest, it might prove to be useful for enabling dynamic map qualities.
+
+I've been refactoring the rendering functions, as well as editing the Makefile to now automatically search for and find image, shader, and Theatre files for embedding. I might make it do the same for the compiler output files (OBJS), but I do like keeping that static for the sake of compile order and stuff like that.
+
+Also just caught a bug where when getting a setting, it's converted to a long instead of a double and thus truncates all decimal values (I caught this because specular strength was always being set to 0).
+
+I've set up the Makefile to embed .obj files into "src/models.cpp" and "src/include/models.hpp", as well as put #include directives to all ".graphxmodel" header files in "src/include/models.hpp". Now once I finally write .obj integration, I can use embedded models.
+
+It works! Note, though, that there might be a "malloc" or "free" problem when I exit the application somewhere.
+
+[03/01/25]
+I want to include the ability to load and use external resources (like models, textures, etc) via Theatre file; this means adding a new variable type to the interpreter. Honestly, I might just rewrite the interpreter and make the file format more solid. Maybe save that for another branch.
+
+I also want to try and rewrite the way rendering is handeled to make it more like Jolt (i.e: the return of RenderCmds).
+
+Oh also holy shit this is a dream for debugging, it prints out the variable name as a string (https://cplusplus.com/forum/beginner/11252):
+:::C++
+#define TO_STREAM(stream,variable) (stream) <<#variable": "<<(variable)
+:::
+
+I'm definitely thinking of re-writing the interpreter. I think I might start another branch for that.
+
+Ok, I'm going to re-write the interpreter. Here are the things I want to keep from the current implementation:
+ - getSetting and how it handles getting variables, defining valid variables, and ignoring unused/empty variables all at once
+
+Here's what I want to add/change:
+ - I want parsing to be much more programmatic and not just a single loop
+ - I want to try and store data in pre-defined types (not std::any)
+
+I ended up fiddling with ImGui and fixing the cursor jump when toggling between GLFW_CURSOR_NORMAL and GLFW_CURSOR_DISABLED. Now I'm gonna re-write the interpreter.
+
+I have a proof of concept working for a better parser.
+
+[03/02/25]
+At parents house; chose to renew my lease for a year and try to save+get a better job to finally move into a real place. Feeling anxious. Wanna work on the interpreter some more.
+
+I'm thinking that to make sandwiches work better, maybe I store the string settings for each object in an unordered map where the key value is either the name/typename as a string, or both as strings in a pair. That way I can just go through the map and find the object I'm referencing, copy that object and its settings, and add/change the settings I need to. Finally, when the program is reading string settings and creating actual settings, I need a way to detect sandwiches and correctly assign a function pointer + the settings as that setting (i.e: {"Mesh", {device_map[graphx::classes::MESH], this_actor_mesh_settings)}}). Then, the template function can just make sure that if the std::any's type is equal to that pair (which I'll typedef), set the variable to a new of that class (using the function pointer), then tell that object (via pointer) to load its settings.
+
+Finished with the function "interpretTheatreReference". I'm going to have the interpreter check for sandwiches before it checks what type of setting it's currently reading. This will have a smoother flow and won't need me to recognize them as a unique type while also accounting for what type of variable is in the sandwich (which is the main reason why they've been limited to Theatre references only).
+
+I had a brilliant idea. Instead of all of this... just fucking do this:
+:::C++
+Actor::loadSettings(gSettings new_settings)
+{
+	getSetting(mesh, new_settings["Mesh"]);
+	getSetting(mesh->material, new_settings["Mesh:Material"]);
+}
+:::
+
+[03/04/25]
+Okay, time to try again; I'm tempted to undo everything from yesterday and start over from where I left off then, using what I know now to try and keep things from breaking. This means learning how to revert commits on github, lol.
+
+Okay, I've reverted the commit, time to do this.
+
+So far so good, I have the new gSetting typedef replacing the old std::any, and the new getSetting template function working with the old interpreter code to properly load Theatres. Now, time to try and replace that load function. I'm also gonna copy and paste the external reference code, because that should be fine.
+
+I also just added a check in getClassHash that lets it accept sandwich buns (e.g: "Mesh:").
+
+I've got a good idea: instead of checking for sandwich buns in the interpreter, do it in the parser and set the value_type to SANDWICH_BUN. Makes life so much easier!
+
+I'm going to make a safer version of getActor and getDevice that return a new Actor/Device if the requested one can't be found. I also just noticed that Theatre::getDevice(std::string device_name) had a bug where it checked .compare without using '!', meaning it would fail on valid checks and return valid on failed checks. I'm also not going to make a safer version because I remembered why I have these functions return a nullptr on wrong names, it's because theatre references (and sandwich buns) shouldn't be incorrect and if they are, returning nullptr and blasting an error message is a good thing to do.
+
+I think I've fixed sandwich buns; basically, they're just theatre references, but when getSettings is given a SANDWICH_BUN variable, it knows to instead set the variable to "new T(std::any_cast<T>(set_value))", which (if my types aren't too fucky) should return a new copy of the theatre reference, ready for setting new values to.
+
+Oh my fucking god it ALMOST works!! Everything is there, but all the Materials are missing (I assume). This means that sandwich buns are working but I think that sandwich variable names like "Mesh:Material" are throwing off the functions.
+
+Oh my god no wait I think it works and I just need to use "getSetting(mesh->material, new_settings["Mesh:Material"])". oh my gooododdddd.
+
+Holy fuck, Saturnine just fucking transitioned from Harpy Dream (JUSTICE music, lfg) when my code finished compiling; anyways, I THINK IT WORKS! I just can't see bc the player mesh is in the way. I'm pretty sure is because Actor is setting the mesh to a new Mesh() when settings are loaded to avoid either crashing or needing an ugly if(mesh != nullptr) check, so I need to make sure that the player accounts for that.
+
+Oh, it's the flashlight; still, same thing.
+
+OH MY GOD IT WORKS!!
+
+Holy fuck it's all done!
+
+Ah, forgot to add external references to "getSetting"; now it should be done.
+
+I also forgot to add returns to the sandwich bun portion of "getSetting". Lol.
+
+Ahhh, we got some weird shit going on; getClassHash is giving errors because somehow the "CollisionTesting" theatre is sending variable names (i.e: "Position", "Rotation", etc) to it somewhere. Also, the crash related to loading external references (I think, although it might be this...).
+
+Oh god... oh fucking god... I just found out... I forgot that I used theatre references to also act as a shorthand for basically "copying and pasting" values from one object to another. I need to take a moment and think about how to implement this without fucking everything else up.
+
+Okay, here's the plan for fixing "interpretTheatreReference": I pass "true" to "getClassHash", so the error doesn't print. I also catch the return integer and check if it's -1. If it is, then I know that this Theatre reference is not a pointer type, but what I'll call a "value type". Then, I need to figure out how I want to find and copy the value I need. I think the way I'm going to do it will be to pass "theatre_settings" to "interpretTheatreReference", find the object via name, find the variable via variable name, and basically copy the switch statement from "loadTheatre" into "interpretTheatreReference" and hope that doesn't tank performance. Thankfully, all this shit should only ever be done once per Theatre load, meaning even if it does tank performance, it's a function that's run once and should (accounting for future child Theatres) not be run during gameplay.
+
+I think there was a race condition, where the renderer was trying to render an Actor that had been removed from the Theatre (because a new one was being loaded) but loading_new_main_theatre wasn't set in time. I fixed this (I think) by changing the iteration from "for(Actor *actor : getCurrentTheatre()->troupe)" to a numerical iteration (i.e: i++) and using a new function Theatre::getFromTroupe(int index) that will safely return a new Actor() if certain conditions are met.
+
+Also, my theory on why the crash was happening is that in the render loops, "loading_new_main_theatre" is only checked once before looping through a troupe, whereas with this new function it's checked on every iteration of the loop.
+
+[03/05/25]
+I decided that implementing comments into GraphXTheatre files before doing another release would be a good idea, but while implementing it I noticed that the way I handle key/value pairs while parsing the file isn't very good. Mainly because they're two separate vectors and aren't directly linked, so if a user comments out a value but not a key, the two vectors will be de-synced. This isn't very good, but due to how I parse all the keys before moving on to the values, I don't know how simple it would be to change this. Let's list the pros and cons.
+Pros:
+  - Parser is less succeptible to key/value "desync"
+    - This also means that forgetting to give a variable a value won't result in a crash or other problems
+
+Cons:
+  - Unknown complexity and time cost
+
+Actually, I think I'll leave things be. I've realized that this isn't a huge problem and I can probably just manually check for a "desync" and drop the key that's missing a value. This is because The parser goes through each key and value one at a time, instead of getting all keys and then all values, so it's still a case-by-case basis.
+
+Uhoh, I forgot that sandwiches are expanded by the parser and will trigger the desync fix. Hmm... maybe the desync fix can use a variable instead of a fixed number and the parser can set that variable to be higher if a sandwich is encountered. I mean, at that point, just fix "desync" while reading keys. Maybe a boolean flag for reading keys and values?
+
+Yeah, on second thought I'm not implementing that; too much work for too little return. I'll just make sure in the documentation I leave a big note saying "don't do that". Also, I could make syntax highlighting plugins for this format... that would help. Plus a linter? Ooh...
+
+Ok I started writing a sublime-syntax file but that's gonna take a second and I want to push this update out first.

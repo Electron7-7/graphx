@@ -92,6 +92,12 @@ void Collider::createBody()
 	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
 }
 
+void Collider::destroyBody()
+{
+	if(!body_id.IsInvalid())
+		J_RemoveAndDestroyBody(body_id);
+}
+
 void Collider::initialize()
 {
 	if(forever_alone)
@@ -102,6 +108,6 @@ void Collider::prepForDestruction()
 {
 	Device::prepForDestruction();
 
-	if(!body_id.IsInvalid())
+	if(jolt_physics_system.GetBodyInterface().IsAdded(body_id))
 		J_RemoveAndDestroyBody(body_id);
 }
