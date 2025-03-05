@@ -1,6 +1,7 @@
 #include "r_common.hpp"
 #include "g_common.hpp"
 #include "g_actors.hpp"
+#include "t_common.hpp"
 #include "graphx_namespace.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
@@ -55,9 +56,16 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 
 graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension)
 {
-	std::ifstream model_file(file_path);
+	// The file path should be relative to the program's location
+	std::string relative_path = file_path;
+	if(relative_path.starts_with("./"))
+		relative_path = file_path.substr(2);
+
+	std::ifstream model_file = std::ifstream(binary_path + relative_path);
 	std::stringstream file_string_data;
 	file_string_data << model_file.rdbuf();
+
+	PRINTDEBUG(file_string_data.str())
 
 	if(!model_file.is_open())
 	{

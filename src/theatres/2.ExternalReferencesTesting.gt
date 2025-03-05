@@ -1,9 +1,0 @@
-@EmbeddedExternalTheatreYouShouldntSeeThis
-LightDirectional (Sun)
-{}
-StaticBodyActor (Floor)
-{
-	Mesh <Cube>
-	Scale (50.0, 1.0, 50.0)
-	Position (0.0, -1.0, 0.0)
-}

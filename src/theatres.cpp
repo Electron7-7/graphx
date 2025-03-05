@@ -357,13 +357,35 @@ LightTesterMover (test_light_2)
 	PivotPosition (8.4, 1.8, -3.0)
 	PivotRadius (2.0)
 	PivotSpeed (1.2)
-})~"}},{2, std::string{R"~(@EmbeddedExternalTheatreYouShouldntSeeThis
+})~"}},{2, std::string{R"~(@ExternalReferenceTestingTheatre
 LightDirectional (Sun)
 {}
+LightFlashlight (Flashlight)
+{}
+Material (Floor_Material)
+{
+	DiffuseTexture [DOOM_TEXTURE_DIFF]
+	SpecularTexture [DOOM_TEXTURE_SPEC]
+	SpecularStrength (0.4)
+	SpecularSharpness (8)
+}
+Mesh (Floor_Mesh)
+{
+	MeshData [GRAPHX_CUBE]
+}
 StaticBodyActor (Floor)
 {
-	Mesh <Cube>
+	Mesh:Material <Floor_Mesh>:<Floor_Material>
 	Scale (50.0, 1.0, 50.0)
 	Position (0.0, -1.0, 0.0)
+}
+Mesh (TestMesh)
+{
+	MeshData "theatres/slope.obj"
+}
+Actor (TestActor)
+{
+	Mesh <TestMesh>
+	Position (0.0, 2.0, -4.0)
 })~"}}
 };
