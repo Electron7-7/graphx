@@ -33,8 +33,7 @@ public:
 	void takeABow() override;
 
 	virtual bool isPhysicsActor() override final;
-	virtual void reset_to_initial_orientation_for_testing()
-	{};
+	virtual void reset_to_initial_orientation_for_testing();
 
 protected:
 	JPH::Vec3 reset_position;

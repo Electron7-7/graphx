@@ -328,6 +328,13 @@ void PhysicsActor::tick(int current_tick)
 	updateVectors();
 }
 
+void PhysicsActor::reset_to_initial_orientation_for_testing()
+{
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	body_interface.SetPositionAndRotation(collider->getBodyID(), reset_position, reset_quaternion, JPH::EActivation::Activate);
+	body_interface.SetLinearAndAngularVelocity(collider->getBodyID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
+}
+
 //
 // RigidBodyActor
 //

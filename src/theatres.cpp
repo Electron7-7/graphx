@@ -381,7 +381,7 @@ StaticBodyActor (Floor)
 }
 Mesh (TestMesh)
 {
-	MeshData "theatres/slope.obj"
+	MeshData "theatres/test.obj"
 }
 Actor (TestActor)
 {
