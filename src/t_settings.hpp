@@ -13,13 +13,15 @@ struct Device;
 extern std::string empty_settings_identifier;
 extern graphx::gSettings empty_settings;
 
-#define GRAB_SETTING_ERR_DEVICE_POINTER  -4
-#define GRAB_SETTING_ERR_ACTOR_POINTER   -8
-#define GRAB_SETTING_ERR_RAW_DATA_SINGLE -15
-#define GRAB_SETTING_ERR_RAW_DATA_TWO    -16
-#define GRAB_SETTING_ERR_RAW_DATA_THREE  -23
-#define GRAB_SETTING_ERR_RAW_DATA_FOUR   -42
-#define GRAB_SETTING_ERR_CPP_REFERENCE   -69
+#define GRAB_SETTING_ERR_DEVICE_POINTER     -4
+#define GRAB_SETTING_ERR_ACTOR_POINTER      -8
+#define GRAB_SETTING_ERR_RAW_DATA_SINGLE    -15
+#define GRAB_SETTING_ERR_RAW_DATA_TWO       -16
+#define GRAB_SETTING_ERR_RAW_DATA_THREE     -23
+#define GRAB_SETTING_ERR_RAW_DATA_FOUR      -42
+#define GRAB_SETTING_ERR_CPP_REFERENCE      -69
+#define GRAB_SETTING_ERR_SANDWICH_BUN       -420
+#define GRAB_SETTING_ERR_EXTERNAL_REFERENCE -808
 
 #define GRAB_SETTING_ERR_MSG_TEMPLATE std::string("getSetting called with non-matching variable and setting!")
 
@@ -28,12 +30,13 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 	std::any set_value = setting.second;
 	int setting_type = setting.first;
 
-	if(!set_value.has_value() || set_value.type() == typeid(void) || set_value.type() == typeid(nullptr))
+	if((setting_type == -1 || setting_type == 0) || (!set_value.has_value() || set_value.type() == typeid(void) || set_value.type() == typeid(nullptr)))
 	{
+		// No setting to get
 		return 0;
 	}
 
-	else if(setting_type == RAW_DATA)
+	if(setting_type == RAW_DATA)
 	{
 		graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(set_value);
 		std::string raw_data_lower = raw_data[0];
@@ -146,6 +149,24 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 		}
 	}
 
+	else if(setting_type == SANDWICH_BUN)
+	{
+		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
+		{
+			variable = *new T(static_cast<T>(std::any_cast<Device *>(set_value)));
+			return 0;
+		}
+		
+		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
+		{
+			variable = *new T(static_cast<T>(std::any_cast<Actor *>(set_value)));
+			return 0;
+		}
+
+		PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (Sandwich Bun)\n\tVariable type: " << typeid(variable).name())
+		return GRAB_SETTING_ERR_SANDWICH_BUN;
+	}
+
 	else if(setting_type == CPP_REFERENCE)
 	{
 		if(set_value.type() != typeid(variable))
@@ -161,16 +182,21 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 		}
 	}
 
-	else if(setting_type == SANDWICH_BUN)
+	else if(setting_type == EXTERNAL_REFERENCE)
 	{
-		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
-			variable = *new T(static_cast<T>(std::any_cast<Device *>(set_value)));
-		
-		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
-			variable = *new T(static_cast<T>(std::any_cast<Actor *>(set_value)));
+		if(set_value.type() != typeid(variable))
+		{
+			PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (External Reference)\n\tVariable type: " << typeid(variable).name())
+			return GRAB_SETTING_ERR_EXTERNAL_REFERENCE;
+		}
+
+		else
+		{
+			variable = std::any_cast<T>(set_value);
+		}
 	}
 
 	PRINTERR("grabSetting called but none of the if/else statements returned! This shouldn't be possible, so if you see this error message, the real problem is probably not related to grabSetting (or my code is just very very VERY bad, which is always a possibility)")
-	return -1;
+	return 0;
 }
 #endif

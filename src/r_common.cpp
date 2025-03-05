@@ -139,14 +139,14 @@ void Device::loadSettings(graphx::gSettings new_settings)
 
 void Device::initialize()
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Device::prepForDestruction()
 {
 	if(ready_to_destroy)
 		return;
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 	ready_to_destroy = true;
 }
 

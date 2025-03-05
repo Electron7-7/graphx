@@ -8,9 +8,9 @@ using namespace graphx::classes;
 
 Theatre current_theatre;
 
-Theatre *getCurrentTheatre()
+Theatre *getCurrentTheatre(bool print_note)
 {
-	if(current_theatre.getUID() == -1)
+	if(current_theatre.getUID() == -1 && print_note)
 		PRINTNOTE("getCurrentTheatre() called, but current_theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
 	return &current_theatre;
 }
@@ -67,9 +67,8 @@ void Theatre::raiseCurtains()
 {
 	bool has_directional_light = false;
 
-	PRINTDEBUG("Entering Theatre \"" << name << "\"")
+	PRINTDEBUG("Raising Curtains for \"" << name << "\"")
 
-	PRINTLN("Devices Present:")
 	for(auto &pair : devices)
 	{
 		if(pair.second->isType(ENVIRONMENT))
@@ -77,7 +76,6 @@ void Theatre::raiseCurtains()
 		pair.second->initialize();
 	}
 
-	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
 	{
 		if(pair.second->isType(GRAPHXPLAYER))
@@ -105,18 +103,24 @@ void Theatre::raiseCurtains()
 
 void Theatre::dropCurtains()
 {
-	PRINTDEBUG("Exiting Theatre (" << name << ")")
+	PRINTDEBUG("Dropping Curtains for \"" << name << "\"")
 
-	PRINTLN("Devices Present:")
 	for(auto &pair : devices)
 		pair.second->prepForDestruction();
 	devices.clear();
 
-	PRINTLN("Actors Present:")
 	for(auto &pair : objects)
 		pair.second->takeABow();
 	objects.clear();
 	troupe.clear();
+}
+
+Actor *Theatre::getFromTroupe(int index)
+{
+	if(loading_new_main_theatre || index > troupe.size())
+		return new Actor();
+
+	return troupe[index];
 }
 
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)
@@ -277,7 +281,6 @@ Actor *Theatre::unsafeGetFirstActorOfType(int type_name)
 		if(pair.second->isType(type_name))
 			return pair.second;
 
-	// PRINTDEBUG("Theatre::unsafeGetFirstActorOfType could not find an Actor of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
 	return nullptr;
 }
 
@@ -293,7 +296,6 @@ Device *Theatre::unsafeGetFirstDeviceOfType(int type_name)
 		if(pair.second->isType(type_name))
 			return pair.second;
 
-	// PRINTDEBUG("Theatre::unsafeGetFirstDeviceOfType could not find a Device of type \"" << classnames.at(type_name) << "\"! This function will return a nullptr")
 	return nullptr;
 }
 

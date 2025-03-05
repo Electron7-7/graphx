@@ -259,17 +259,15 @@ void Actor::tick(int current_tick)
 
 void Actor::callToStage(Theatre *parent_theatre)
 {
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 void Actor::takeABow()
 {
 	if(mesh != nullptr)
 		mesh->prepForDestruction();
-	// mesh = nullptr;
-	// delete mesh;
 
-	PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
+	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 bool Actor::wantsToBeRendered()
@@ -606,9 +604,6 @@ void GraphXPlayer::takeABow()
 {
 	Actor::takeABow();
 	jolt_physics_system.GetBodyInterface().RemoveBody(jph_character->GetBodyID());
-	// delete jph_character;
-	// jph_character->Release();
-	// jph_character->RemoveFromPhysicsSystem();
 }
 
 //

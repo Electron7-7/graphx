@@ -60,11 +60,11 @@ namespace graphx
 	typedef std::vector<std::vector<gStringSetting>> gStringSettings;
 
 	// The int in gSetting identifies the type (found in t_common.hpp); the four types are:
-	// 0: RAW_DATA (a vector of strings, using the typedef "gRawData")
-	// 1: CPP_REFERENCE (see "cpp_definitions" in "t_interpreter.cpp")
-	// 2: THEATRE_REFERENCE (a pointer to a pre-existing Actor/Device in the current Theatre)
-	// 3: EXTERNAL_REFERENCE (an external file's pathname, passed via string)
-	// 4: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
+	// 1: RAW_DATA (a vector of strings, using the typedef "gRawData")
+	// 2: CPP_REFERENCE (see "cpp_definitions" in "t_interpreter.cpp")
+	// 3: THEATRE_REFERENCE (a pointer to a pre-existing Actor/Device in the current Theatre)
+	// 4: EXTERNAL_REFERENCE (an external file's pathname, passed via string)
+	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;
 

@@ -1408,3 +1408,15 @@ Oh, it's the flashlight; still, same thing.
 OH MY GOD IT WORKS!!
 
 Holy fuck it's all done!
+
+Ah, forgot to add external references to "getSetting"; now it should be done.
+
+I also forgot to add returns to the sandwich bun portion of "getSetting". Lol.
+
+Ahhh, we got some weird shit going on; getClassHash is giving errors because somehow the "CollisionTesting" theatre is sending variable names (i.e: "Position", "Rotation", etc) to it somewhere. Also, the crash related to loading external references (I think, although it might be this...).
+
+Oh god... oh fucking god... I just found out... I forgot that I used theatre references to also act as a shorthand for basically "copying and pasting" values from one object to another. I need to take a moment and think about how to implement this without fucking everything else up.
+
+Okay, here's the plan for fixing "interpretTheatreReference": I pass "true" to "getClassHash", so the error doesn't print. I also catch the return integer and check if it's -1. If it is, then I know that this Theatre reference is not a pointer type, but what I'll call a "value type". Then, I need to figure out how I want to find and copy the value I need. I think the way I'm going to do it will be to pass "theatre_settings" to "interpretTheatreReference", find the object via name, find the variable via variable name, and basically copy the switch statement from "loadTheatre" into "interpretTheatreReference" and hope that doesn't tank performance. Thankfully, all this shit should only ever be done once per Theatre load, meaning even if it does tank performance, it's a function that's run once and should (accounting for future child Theatres) not be run during gameplay.
+
+I think there was a race condition, where the renderer was trying to render an Actor that had been removed from the Theatre (because a new one was being loaded) but loading_new_main_theatre wasn't set in time. I fixed this (I think) by changing the iteration from "for(Actor *actor : getCurrentTheatre()->troupe)" to a numerical iteration (i.e: i++) and using a new function Theatre::getFromTroupe(int index) that will safely return a new Actor() if certain conditions are met.

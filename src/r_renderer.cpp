@@ -190,6 +190,9 @@ void R_StoreBuffers()
 
 void R_Render(std::mutex &state_mutex, float interpolation_time)
 {
+	if(loading_new_main_theatre)
+		return;
+
 	if(time_to_store_buffers)
 		R_StoreBuffers();
 
@@ -203,10 +206,14 @@ void R_Render(std::mutex &state_mutex, float interpolation_time)
 
 void R_GL_BufferMeshes()
 {
+	if(loading_new_main_theatre)
+		return;
+
 	current_vao_index = VAOS_AMOUNT + 1;
 
-	for(Actor *actor : getCurrentTheatre()->troupe)
+	for(int i = 0 ; i < getCurrentTheatre()->troupe.size() ; i++)
 	{
+		Actor *actor = getCurrentTheatre()->getFromTroupe(i);
 		// There used to exist Actor::wantsToBeBuffered, but it was only ever used here, so I got rid of it
 		if(actor->mesh == nullptr || actor->mesh->is_buffered || actor->isType(graphx::classes::GRAPHXPLAYER))
 			continue;
@@ -242,6 +249,9 @@ void R_GL_BufferMeshes()
 
 void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 {
+	if(loading_new_main_theatre)
+		return;
+
 	current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
 	int point_light_index = 0;
 	int spot_light_index = 0;
@@ -251,8 +261,10 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
 	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 
-	for(Actor *actor : getCurrentTheatre()->troupe)
+	for(int i = 0 ; i < getCurrentTheatre()->troupe.size() ; i++)
 	{
+		Actor *actor = getCurrentTheatre()->getFromTroupe(i);
+
 		if(actor->isType(graphx::classes::LIGHTS))
 		{
 			Light *current_light = static_cast<Light *>(actor);

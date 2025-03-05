@@ -325,20 +325,6 @@ void interpretRawData(gSettings &current_object_settings, std::string variable_n
 	current_object_settings[variable_name] = gSetting(RAW_DATA, gRawData{raw_data});
 }
 
-void interpretTheatreReference(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre)
-{
-	std::string class_name = variable_name;
-	if(variable_name.find(':') != std::string::npos)
-		class_name = variable_name.substr(variable_name.find_last_of(':') + 1);
-	int class_hash = getClassHash(class_name);
-
-	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
-
-	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
-		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
-}
-
 // This is how I keep track of supported file types/extensions without having to write them out more than once.
 // I define specific file types as strings that contain all the supported file extensions and I
 // add all these strings to "valid_extensions", which is what "loadExternalFile" uses to check if a
@@ -401,6 +387,69 @@ void interpretSandwichBun(gSettings &new_class_settings, std::string variable_na
 	}
 }
 
+void interpretTheatreReference(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, gStringSettings &theatre_settings)
+{
+	std::string class_name = variable_name;
+	if(variable_name.find(':') != std::string::npos)
+		class_name = variable_name.substr(variable_name.find_last_of(':') + 1);
+	int class_hash = getClassHash(class_name, true);
+
+	if(class_hash == -1) // If true, this is a reference to a variable of the same name in another Actor/Device
+	{
+		gStringSetting referenced_setting(gKey("EMPTY"), gValue(-1, "EMPTY"));
+		// BEHOLD!!!
+		// the most disgusting for-if-for-if nest you have EVER SEEN!!!
+		// fuck you, this shouldn't affect performance and I really can't be assed to make anything better...
+		// for now. I'll probably get around to changing this later on down the line...
+		// ...probably...
+		// ...maybe...
+		for(std::vector<gStringSetting> object_settings : theatre_settings)
+		{
+			if(!object_settings[0].second.second.compare(theatre_reference))
+			{
+				for(gStringSetting string_setting : object_settings)
+				{
+					if(!string_setting.first.compare(variable_name))
+					{
+						referenced_setting = string_setting;
+						break;
+					}
+				}
+			}
+		}
+
+		switch(referenced_setting.second.first)
+		{
+		case CPP_REFERENCE:
+			interpretCppReference(current_object_settings, referenced_setting.first, referenced_setting.second.second);
+			return;
+		case RAW_DATA:
+			interpretRawData(current_object_settings, referenced_setting.first, referenced_setting.second.second);
+			return;
+		case THEATRE_REFERENCE:
+			interpretTheatreReference(current_object_settings, referenced_setting.first, referenced_setting.second.second, new_theatre, theatre_settings);
+			return;
+		case EXTERNAL_REFERENCE:
+			interpretExternalReference(current_object_settings, referenced_setting.first, referenced_setting.second.second);
+			return;
+		case SANDWICH_BUN:
+			// I really don't think this is possible or will result in kind things, but better here than not I guess
+			interpretSandwichBun(current_object_settings, referenced_setting.first, referenced_setting.second.second, new_theatre);
+			return;
+		default:
+			PRINTERR("A Theatre reference variable either referenced a nonexisting Actor/Device, or referenced one that didn't define the variable it wanted! (or my code fucked up)\n\tVariable Name: " << variable_name << "\n\tReference Name: " << theatre_reference)
+			return;
+		}
+	}
+
+	// If the abomination above didn't fire off, this is a typical pointer-style reference
+	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
+
+	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
+		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
+}
+
 // loadTheatre should not be called directly, which is why it's not in the header file
 Theatre loadTheatre(long theatre_uid)
 {
@@ -415,6 +464,8 @@ Theatre loadTheatre(long theatre_uid)
 	Theatre new_theatre = Theatre(theatre_settings[0][0].second.second, theatre_uid);
 	new_theatre.graphx_theatre_settings = theatre_settings;
 	new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
+
+	PRINTDEBUG("Loading Theatre \"" << new_theatre.name << "\"")
 
 	std::vector<std::pair<int, gSettings>> all_class_settings;
 
@@ -435,7 +486,7 @@ Theatre loadTheatre(long theatre_uid)
 				interpretRawData(current_object_settings, setting.first, setting.second.second);
 				break;
 			case THEATRE_REFERENCE:
-				interpretTheatreReference(current_object_settings, setting.first, setting.second.second, new_theatre);
+				interpretTheatreReference(current_object_settings, setting.first, setting.second.second, new_theatre, theatre_settings);
 				break;
 			case EXTERNAL_REFERENCE:
 				interpretExternalReference(current_object_settings, setting.first, setting.second.second);
@@ -471,7 +522,7 @@ Theatre loadTheatre(long theatre_uid)
 
 void loadMainTheatre(long theatre_uid)
 {
-	if(getCurrentTheatre()->getUID() == theatre_uid)
+	if(current_theatre.getUID() == theatre_uid)
 	{
 		PRINTERR("A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded because it's already the current Theatre (or the current Theatre has the same UID)!")
 		return;
@@ -481,12 +532,8 @@ void loadMainTheatre(long theatre_uid)
 	time_to_render = false;
 	time_to_store_buffers = false;
 
-	PRINTDEBUG("DROP CURTAINS")
 	current_theatre.dropCurtains();
-
-	PRINTDEBUG("LOAD THEATRE")
 	current_theatre = loadTheatre(theatre_uid);
-	PRINTDEBUG("START PRESHOW")
 	current_theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
 	time_to_store_buffers = true;
@@ -501,7 +548,7 @@ void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
 		return;
 	}
 
-	PRINTNOTE("loadChildTheatre called but this function is empty currently")
+	PRINTNOTE("loadChildTheatre called but this function is currently empty")
 	// NEEDS TO BE FILLED OUT
 }
 

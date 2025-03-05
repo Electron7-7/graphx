@@ -130,6 +130,8 @@ struct Theatre
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
+	Actor *getFromTroupe(int index);
+
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();
 	void dropCurtains();
@@ -210,7 +212,7 @@ template<typename T> Actor *createNewActor()
 	return new T;
 }
 
-Theatre *getCurrentTheatre();
+Theatre *getCurrentTheatre(bool print_note = true);
 Environment *getCurrentEnvironment();
 GraphXPlayer *getCurrentPlayer();
 #endif
