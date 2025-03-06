@@ -54,21 +54,18 @@ Collider::~Collider()
 
 void Collider::loadSettings(graphx::gSettings new_settings)
 {
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-
 	Device::loadSettings(new_settings);
 
-	getSetting(motion_type, new_settings["MotionType"]);
-	getSetting(object_layer, new_settings["ObjectLayer"]);
-	getSetting(activation, new_settings["Activation"]);
-	getSetting(shape, new_settings["Shape"]);
-	getSetting(forever_alone, new_settings["ForeverAlone"]);
-	getSetting(position, new_settings["Position"]);
-	getSetting(euler_angles, new_settings["Rotation"]);
-	getSetting(local_position, new_settings["LocalPosition"]);
-	getSetting(local_euler_angles, new_settings["LocalRotation"]);
-	getSetting(scale, new_settings["Scale"]);
+	getSetting(motion_type, settings["MotionType"]);
+	getSetting(object_layer, settings["ObjectLayer"]);
+	getSetting(activation, settings["Activation"]);
+	getSetting(shape, settings["Shape"]);
+	getSetting(forever_alone, settings["ForeverAlone"]);
+	getSetting(position, settings["Position"]);
+	getSetting(euler_angles, settings["Rotation"]);
+	getSetting(local_position, settings["LocalPosition"]);
+	getSetting(local_euler_angles, settings["LocalRotation"]);
+	getSetting(scale, settings["Scale"]);
 }
 
 JPH::BodyCreationSettings *Collider::getBodySettings()

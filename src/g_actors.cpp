@@ -173,6 +173,7 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 {
 	if(settings.contains(empty_settings_identifier))
 		settings = new_settings;
+
 	if(new_settings.contains(empty_settings_identifier))
 		new_settings = settings;
 
@@ -182,16 +183,14 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	if(mesh == nullptr)
 		mesh = new Mesh();
 
-	getSetting(name, new_settings["Name"]);
-	getSetting(mesh, new_settings["Mesh"]);
-	getSetting(mesh->material, new_settings["Mesh:Material"]);
-	getSetting(mesh->mesh_data, new_settings["Mesh:MeshData"]);
-	mesh->processMeshData();
-	getSetting(position_global, new_settings["Position"]);
-	getSetting(position_local, new_settings["LocalPosition"]);
-	getSetting(global_euler_degrees, new_settings["Rotation"]);
-	getSetting(local_euler_degrees, new_settings["LocalRotation"]);
-	getSetting(scale, new_settings["Scale"]);
+	getSetting(name, settings["Name"]);
+	getSetting(mesh, settings["Mesh"]);
+	mesh->loadSettings();
+	getSetting(position_global, settings["Position"]);
+	getSetting(position_local, settings["LocalPosition"]);
+	getSetting(global_euler_degrees, settings["Rotation"]);
+	getSetting(local_euler_degrees, settings["LocalRotation"]);
+	getSetting(scale, settings["Scale"]);
 
 	local_quaternion = glm::quat(glm::radians(local_euler_degrees));
 	quaternion = glm::quat(glm::radians(global_euler_degrees));
@@ -295,8 +294,9 @@ void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	getSetting(mass, new_settings["Mass"]);
-	getSetting(collider, new_settings["Collider"]);
+	getSetting(mass, settings["Mass"]);
+	getSetting(collider, settings["Collider"]);
+	collider->loadSettings();
 }
 
 void PhysicsActor::callToStage(Theatre *parent_theatre)
@@ -458,8 +458,8 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	getSetting(position_local, new_settings["LocalPosition"]);
-	getSetting(euler_rotation_local, new_settings["LocalRotationDegrees"]);
+	getSetting(position_local, settings["LocalPosition"]);
+	getSetting(euler_rotation_local, settings["LocalRotationDegrees"]);
 }
 
 //
@@ -478,12 +478,12 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	getSetting(mouse_sensitivity, new_settings["MouseSensitivity"]);
-	getSetting(movement_speed, new_settings["MovementSpeed"]);
-	getSetting(lerp_speed, new_settings["MovementAcceleration"]);
-	getSetting(friction, new_settings["Friction"]);
-	getSetting(mass, new_settings["Mass"]);
-	getSetting(field_of_view, new_settings["FOV"]);
+	getSetting(mouse_sensitivity, settings["MouseSensitivity"]);
+	getSetting(movement_speed, settings["MovementSpeed"]);
+	getSetting(lerp_speed, settings["MovementAcceleration"]);
+	getSetting(friction, settings["Friction"]);
+	getSetting(mass, settings["Mass"]);
+	getSetting(field_of_view, settings["FOV"]);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
@@ -630,12 +630,12 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	getSetting(light_color, new_settings["Color"]);
-	getSetting(light_strength, new_settings["Strength"]);
-	getSetting(light_ambient_strength, new_settings["Ambient Strength"]);
-	getSetting(range, new_settings["Range"]);
-	getSetting(intensity, new_settings["Intensity"]);
-	getSetting(falloff, new_settings["Falloff"]);
+	getSetting(light_color, settings["Color"]);
+	getSetting(light_strength, settings["Strength"]);
+	getSetting(light_ambient_strength, settings["Ambient Strength"]);
+	getSetting(range, settings["Range"]);
+	getSetting(intensity, settings["Intensity"]);
+	getSetting(falloff, settings["Falloff"]);
 
 	temporary_light_mesh = Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
 	if(mesh != nullptr)
@@ -668,7 +668,7 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	getSetting(direction, new_settings["Direction"]);
+	getSetting(direction, settings["Direction"]);
 }
 
 //
@@ -685,9 +685,9 @@ void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	getSetting(inner_cutoff_angle, new_settings["InnerCutoffAngle"]);
-	getSetting(outer_cutoff_angle, new_settings["OuterCutoffAngle"]);
-	getSetting(direction, new_settings["Direction"]);
+	getSetting(inner_cutoff_angle, settings["InnerCutoffAngle"]);
+	getSetting(outer_cutoff_angle, settings["OuterCutoffAngle"]);
+	getSetting(direction, settings["Direction"]);
 }
 
 glm::vec2 LightSpot::getCutoffAngles()
@@ -717,8 +717,8 @@ void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	getSetting(position_offset, new_settings["PositionOffset"]);
-	getSetting(rotation_offset, new_settings["RotationOffset"]);
+	getSetting(position_offset, settings["PositionOffset"]);
+	getSetting(rotation_offset, settings["RotationOffset"]);
 
 	_color = light_color;
 }
@@ -769,14 +769,14 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	getSetting(pivot_position, new_settings["PivotPosition"]);
-	getSetting(pivot_radius, new_settings["PivotRadius"]);
-	getSetting(pivot_speed, new_settings["PivotSpeed"]);
+	getSetting(pivot_position, settings["PivotPosition"]);
+	getSetting(pivot_radius, settings["PivotRadius"]);
+	getSetting(pivot_speed, settings["PivotSpeed"]);
 
 	pivot_point.setGlobalPosition(pivot_position);
 	pivot_point.setName("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
 	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
-	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID, new_settings);
+	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID, settings);
 }
 
 void LightTesterMover::tick(int current_tick)

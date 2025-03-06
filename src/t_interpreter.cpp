@@ -138,7 +138,7 @@ gStringSettings theatreParser(std::string theatre_data)
 
 				if(keys.at(values.size()).find(':') != std::string::npos)
 				{
-					if(theatre_data[i+1] != ':')
+					if(keys.at(values.size()).back() == ':')
 					{
 						keys.at(values.size()).pop_back();
 						value_type = SANDWICH;
@@ -146,6 +146,8 @@ gStringSettings theatreParser(std::string theatre_data)
 
 					else
 						value_type += SANDWICH;
+
+					PRINTDEBUG("Sandwich: " << keys.at(values.size()) << "\nValue: " << buffer << "\nValue Type: " << value_type)
 				}
 
 
@@ -173,6 +175,22 @@ gStringSettings theatreParser(std::string theatre_data)
 				{
 					buffer += theatre_data[i];
 					keys.insert(keys.end(), buffer);
+					std::string sandwich_bun = buffer;
+					buffer = "";
+					i++;
+					while(!whitespace.contains(theatre_data[i]))
+					{
+						buffer += theatre_data[i];
+						if(theatre_data[i] == sandwich_layer)
+						{
+							keys.insert(keys.end(), sandwich_bun + buffer);
+							buffer = "";
+						}
+						i++;
+					}
+
+					keys.insert(keys.end(), sandwich_bun + buffer);
+					buffer = "";
 					continue;
 				}
 
@@ -243,7 +261,10 @@ std::string getVariableTypeName(int variable_type)
 		type_return = "SANDWICH";
 		break;
 	default:
-		type_return = "UNKNOWN";
+		if(variable_type > SANDWICH)
+			type_return = getVariableTypeName(variable_type - SANDWICH);
+		else
+			type_return = "UNKNOWN";
 		break;
 	}
 
@@ -424,7 +445,8 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 
 	if(class_hash == -1) // If true, this is a reference to a variable of the same name in another Actor/Device
 	{
-		gStringSetting referenced_setting(gKey("EMPTY"), gValue(-1, "EMPTY"));
+		gStringSetting referenced_setting(variable_name, gValue(-1, "EMPTY"));
+
 		// BEHOLD!!!
 		// the most disgusting for-if-for-if nest you have EVER SEEN!!!
 		// fuck you, this shouldn't affect performance and I really can't be assed to make anything better...
@@ -439,7 +461,7 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 				{
 					if(!string_setting.first.compare(variable_name))
 					{
-						referenced_setting = string_setting;
+						referenced_setting.second = string_setting.second;
 						break;
 					}
 				}
@@ -460,10 +482,6 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 		case EXTERNAL_REFERENCE:
 			interpretExternalReference(current_object_settings, referenced_setting.first, referenced_setting.second.second);
 			return;
-		// case SANDWICH:
-			// I really don't think this is possible or will result in kind things, but better here than not I guess
-			// interpretSandwich(current_object_settings, referenced_setting.first, referenced_setting.second.second, new_theatre);
-			// return;
 		default:
 			PRINTERR("A Theatre reference variable either referenced a nonexisting Actor/Device, or referenced one that didn't define the variable it wanted! (or my code fucked up)\n\tVariable Name: " << variable_name << "\n\tReference Name: " << theatre_reference)
 			return;
@@ -487,34 +505,36 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 void interpretSandwich(gSettings &current_object_settings, gStringSettings &theatre_settings, int &i, int &it, Theatre &new_theatre)
 {
 	gSettings sandwich_settings;
-	int sandwich_bun_index = it;
-	int class_hash = getClassHash(theatre_settings[i][sandwich_bun_index].first);
+	gStringSetting sandwich_bun_setting = theatre_settings[i][it];
+	int class_hash = getClassHash(sandwich_bun_setting.first);
 
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-		sandwich_settings = new_theatre.getActor(theatre_settings[i][sandwich_bun_index].second.second)->settings;
+		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->settings;
 	else
-		sandwich_settings = new_theatre.getDevice(theatre_settings[i][sandwich_bun_index].second.second)->settings;
+		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->settings;
 
-	sandwich_settings["Name"] = gSetting(RAW_DATA, gRawData{theatre_settings[i][sandwich_bun_index].second.second});
+	sandwich_settings["Name"] = gSetting(RAW_DATA, gRawData{sandwich_bun_setting.second.second});
 
 	it++;
-	while(theatre_settings[i][it].first.find(':') != std::string::npos)
+	while(theatre_settings[i][it].second.first > SANDWICH)
 	{
 		std::string sandwich_variable = theatre_settings[i][it].first.substr(theatre_settings[i][it].first.find_last_of(':') + 1);
+		std::string sandwich_value = theatre_settings[i][it].second.second;
+		int sandwich_value_type = theatre_settings[i][it].second.first - SANDWICH;
 
-		switch(theatre_settings[i][it].second.first - SANDWICH)
+		switch(sandwich_value_type)
 		{
 		case CPP_REFERENCE:
-			interpretCppReference(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second);
+			interpretCppReference(sandwich_settings, sandwich_variable, sandwich_value);
 			break;
 		case RAW_DATA:
-			interpretRawData(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second);
+			interpretRawData(sandwich_settings, sandwich_variable, sandwich_value);
 			break;
 		case THEATRE_REFERENCE:
-			interpretTheatreReference(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second, new_theatre, theatre_settings);
+			interpretTheatreReference(sandwich_settings, sandwich_variable, sandwich_value, new_theatre, theatre_settings);
 			break;
 		case EXTERNAL_REFERENCE:
-			interpretExternalReference(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second);
+			interpretExternalReference(sandwich_settings, sandwich_variable, sandwich_value);
 			break;
 		default:
 			PRINTERR("A Sandwich variable... got really fucked up")
@@ -526,15 +546,15 @@ void interpretSandwich(gSettings &current_object_settings, gStringSettings &thea
 
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 	{
-		current_object_settings[theatre_settings[i][sandwich_bun_index].first] = gSetting(SANDWICH, actor_map[class_hash]());
-		Actor *sandwich_bun = std::any_cast<Actor *>(current_object_settings.at(theatre_settings[i][sandwich_bun_index].first).second);
+		current_object_settings[sandwich_bun_setting.first] = gSetting(SANDWICH, actor_map[class_hash]());
+		Actor *sandwich_bun = std::any_cast<Actor *>(current_object_settings.at(sandwich_bun_setting.first).second);
 		sandwich_bun->youGotACallBack(sandwich_settings);
 	}
 
 	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
 	{
-		current_object_settings[theatre_settings[i][sandwich_bun_index].first] = gSetting(SANDWICH, device_map[class_hash]());
-		Device *sandwich_bun = std::any_cast<Device *>(current_object_settings.at(theatre_settings[i][sandwich_bun_index].first).second);
+		current_object_settings[sandwich_bun_setting.first] = gSetting(SANDWICH, device_map[class_hash]());
+		Device *sandwich_bun = std::any_cast<Device *>(current_object_settings.at(sandwich_bun_setting.first).second);
 		sandwich_bun->loadSettings(sandwich_settings);
 	}
 }

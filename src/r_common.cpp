@@ -175,9 +175,9 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	getSetting(ambient_lighting_enabled, new_settings["AmbientLightingEnabled"]);
-	getSetting(ambient_light_color, new_settings["AmbientLightingColor"]);
-	getSetting(ambient_light_strength, new_settings["AmbientLightingStrength"]);
+	getSetting(ambient_lighting_enabled, settings["AmbientLightingEnabled"]);
+	getSetting(ambient_light_color, settings["AmbientLightingColor"]);
+	getSetting(ambient_light_strength, settings["AmbientLightingStrength"]);
 }
 
 
@@ -210,12 +210,12 @@ void Material::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	getSetting(embedded_texture_diffuse, new_settings["DiffuseTexture"]);
-	getSetting(embedded_texture_specular, new_settings["SpecularTexture"]);
-	getSetting(color, new_settings["Color"]);
-	getSetting(specular_sharpness, new_settings["SpecularSharpness"]);
-	getSetting(specular_strength, new_settings["SpecularStrength"]);
-	getSetting(mat_fullbright, new_settings["mat_fullbright"]);
+	getSetting(embedded_texture_diffuse, settings["DiffuseTexture"]);
+	getSetting(embedded_texture_specular, settings["SpecularTexture"]);
+	getSetting(color, settings["Color"]);
+	getSetting(specular_sharpness, settings["SpecularSharpness"]);
+	getSetting(specular_strength, settings["SpecularStrength"]);
+	getSetting(mat_fullbright, settings["mat_fullbright"]);
 }
 
 unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
@@ -284,8 +284,8 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	getSetting(material, new_settings["Material"]);
-	getSetting(mesh_data, new_settings["MeshData"]);
+	getSetting(material, settings["Material"]);
+	getSetting(mesh_data, settings["MeshData"]);
 
 	processMeshData();
 
