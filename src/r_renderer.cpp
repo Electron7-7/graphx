@@ -56,8 +56,14 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 
 graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension)
 {
-	// The file path should be relative to the program's location
-	std::ifstream model_file = std::ifstream(binary_path + file_path);
+	// If the file path is relative, it should be relative to the program's location.
+	std::string file_path_checked = std::string(binary_path + file_path);
+
+	// If the file path is absolute, use it as is.
+	if(file_path.starts_with('/') || !file_path.substr(1, 2).compare(":/"))
+		file_path_checked = file_path;
+
+	std::ifstream model_file = std::ifstream(file_path_checked);
 	std::stringstream file_string_data;
 	file_string_data << model_file.rdbuf();
 

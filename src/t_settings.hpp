@@ -153,13 +153,13 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 	{
 		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
 		{
-			variable = *new T(static_cast<T>(std::any_cast<Device *>(set_value)));
+			variable = static_cast<T>(std::any_cast<Device *>(set_value));
 			return 0;
 		}
 		
 		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
 		{
-			variable = *new T(static_cast<T>(std::any_cast<Actor *>(set_value)));
+			variable = static_cast<T>(std::any_cast<Actor *>(set_value));
 			return 0;
 		}
 

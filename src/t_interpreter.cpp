@@ -31,6 +31,7 @@ std::map<std::string, std::any> cpp_definitions =
 	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_VERTS, PYRAMID_INDICES, VAO_HANDMADE)},
 	{"GRAPHX_QUAD", gMeshData(QUAD_VERTS, QUAD_INDICES, VAO_HANDMADE)},
 	{"OBJ_ERROR", M_LoadOBJ(ERROR_obj)},
+	{"OBJ_SUZANNE", M_LoadOBJ(suzanne_obj)},
 	{"notapenis", M_LoadOBJ(purely_for_testing_obj)},
 	{"Dynamic", JPH::EMotionType::Dynamic},
 	{"Static", JPH::EMotionType::Static},
@@ -351,7 +352,7 @@ std::string what_are_the_valid_extensions =              \
 	"(3D Model)\n\t"      + three_dee_model_extensions + \
 	"(Image)\n\t"         + image_extensions;
 
-void interpretExternalReference(gSettings &new_class_settings, std::string variable_name, std::string external_reference)
+void interpretExternalReference(gSettings &current_object_settings, std::string variable_name, std::string external_reference)
 {
 	std::string file_extension = external_reference.substr(external_reference.find_last_of(".") + 1);
 
@@ -363,7 +364,7 @@ void interpretExternalReference(gSettings &new_class_settings, std::string varia
 
 	if(three_dee_model_extensions.find(file_extension) != std::string::npos)
 	{
-		new_class_settings[variable_name] = gSetting(EXTERNAL_REFERENCE, M_LoadModelFile(external_reference, file_extension));
+		current_object_settings[variable_name] = gSetting(EXTERNAL_REFERENCE, M_LoadModelFile(external_reference, file_extension));
 	}
 
 	else if(graphx_theatre_extensions.find(file_extension) != std::string::npos)
@@ -379,18 +380,20 @@ void interpretExternalReference(gSettings &new_class_settings, std::string varia
 	}
 }
 
-void interpretSandwichBun(gSettings &new_class_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre)
+void interpretSandwichBun(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre)
 {
 	int class_hash = getClassHash(variable_name);
 
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 	{
-		new_class_settings[variable_name] = gSetting(SANDWICH_BUN, new_theatre.getActor(theatre_reference));
+		current_object_settings[variable_name] = gSetting(SANDWICH_BUN, actor_map[class_hash]());
+		std::any_cast<Actor *>(current_object_settings.at(variable_name).second)->youGotACallBack(new_theatre.getActor(theatre_reference)->settings);
 	}
 
 	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
 	{
-		new_class_settings[variable_name] = gSetting(SANDWICH_BUN, new_theatre.getDevice(theatre_reference));
+		current_object_settings[variable_name] = gSetting(SANDWICH_BUN, device_map[class_hash]());
+		std::any_cast<Device *>(current_object_settings.at(variable_name).second)->loadSettings(new_theatre.getDevice(theatre_reference)->settings);
 	}
 }
 
@@ -451,10 +454,16 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
+	{
+		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, actor_map[class_hash]());
+		std::any_cast<Actor *>(current_object_settings.at(variable_name).second)->youGotACallBack(new_theatre.getActor(theatre_reference)->settings);
+	}
 
 	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
-		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
+	{
+		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, device_map[class_hash]());
+		std::any_cast<Device *>(current_object_settings.at(variable_name).second)->loadSettings(new_theatre.getDevice(theatre_reference)->settings);
+	}
 }
 
 // loadTheatre should not be called directly, which is why it's not in the header file
@@ -577,7 +586,7 @@ void embedExternalTheatre(std::filesystem::path theatre_file_path)
 		return;
 	}
 
-	PRINTNOTE("Loading eternal GraphXTheatre file!")
+	PRINTDEBUG("Loading external GraphXTheatre file!")
 
 	std::ifstream theatre_file_stream;
 
@@ -603,7 +612,7 @@ void embedExternalTheatre(std::filesystem::path theatre_file_path)
 	}
 
 	if(embedded_theatres.contains(theatre_uid))
-		PRINTNOTE("Loaded external Theatre is overriding embedded Theatre #" << theatre_uid)
+		PRINTNOTE("An external Theatre will override the embedded Theatre with UID #" << theatre_uid)
 
 	embedded_theatres[theatre_uid] = theatre_file_data_stream.str();
 }

@@ -1,3 +1,4 @@
+// This is the old includes header file for the old, deprecated way of loading Theatres
 #ifndef THEATRE_INCLUDES
 #define THEATRE_INCLUDES
 #include <models.hpp>
