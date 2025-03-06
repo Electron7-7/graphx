@@ -612,7 +612,7 @@ void embedExternalTheatre(std::filesystem::path theatre_file_path)
 		buffer += character;
 	}
 
-	if(embedded_theatres.contains(theatre_uid))
+	if(embedded_theatres.contains(theatre_uid) && embedded_theatres.at(theatre_uid).compare(theatre_file_data_stream.str()))
 		PRINTNOTE("An external Theatre will override the embedded Theatre with UID #" << theatre_uid)
 
 	embedded_theatres[theatre_uid] = theatre_file_data_stream.str();
