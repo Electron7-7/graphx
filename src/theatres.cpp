@@ -46,7 +46,7 @@ Actor (Suzanne_Tester)
 }
 StaticBodyActor (Floor)
 {
-	Mesh:Material <Cube>:<Doom_Dull>
+	Mesh:MeshData:Material <OBJ_Mesh>:[GRAPHX_CUBE]:<Doom_Dull>
 	Scale		  (50.0, 1.0, 50.0)
 	Position      (0.0, -1.0, 0.0)
 }

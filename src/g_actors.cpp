@@ -185,6 +185,8 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(name, new_settings["Name"]);
 	getSetting(mesh, new_settings["Mesh"]);
 	getSetting(mesh->material, new_settings["Mesh:Material"]);
+	getSetting(mesh->mesh_data, new_settings["Mesh:MeshData"]);
+	mesh->processMeshData();
 	getSetting(position_global, new_settings["Position"]);
 	getSetting(position_local, new_settings["LocalPosition"]);
 	getSetting(global_euler_degrees, new_settings["Rotation"]);

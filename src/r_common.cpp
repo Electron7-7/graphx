@@ -273,18 +273,21 @@ void Mesh::prepForDestruction()
 	delete material;
 }
 
+void Mesh::processMeshData()
+{
+	vertices = std::get<0>(mesh_data);
+	indices = std::get<1>(mesh_data);
+	vao_index = std::get<2>(mesh_data);
+}
+
 void Mesh::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	gMeshData mesh_data = M_LoadOBJ(ERROR_obj);
-
 	getSetting(material, new_settings["Material"]);
 	getSetting(mesh_data, new_settings["MeshData"]);
 
-	vertices = std::get<0>(mesh_data);
-	indices = std::get<1>(mesh_data);
-	vao_index = std::get<2>(mesh_data);
+	processMeshData();
 
 	if(vao_index == VAO_OBJ)
 		mesh_scale *= PREEMPTIVE_OBJ_SCALE;

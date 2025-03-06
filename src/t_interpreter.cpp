@@ -136,11 +136,18 @@ gStringSettings theatreParser(std::string theatre_data)
 				if(theatre_data[i] == end_external_reference)
 					value_type = EXTERNAL_REFERENCE;
 
-				if(keys.at(values.size()).back() == ':')
+				if(keys.at(values.size()).find(':') != std::string::npos)
 				{
-					keys.at(values.size()).pop_back();
-					value_type = SANDWICH_BUN;
+					if(theatre_data[i+1] != ':')
+					{
+						keys.at(values.size()).pop_back();
+						value_type = SANDWICH;
+					}
+
+					else
+						value_type += SANDWICH;
 				}
+
 
 				values.insert(values.end(), gValue(value_type, buffer));
 				buffer = "";
@@ -216,21 +223,31 @@ gStringSettings theatreParser(std::string theatre_data)
 
 std::string getVariableTypeName(int variable_type)
 {
+	std::string type_return;
+
 	switch(variable_type)
 	{
 	case CPP_REFERENCE:
-		return "CPP_REFERENCE";
+		type_return = "CPP_REFERENCE";
+		break;
 	case THEATRE_REFERENCE:
-		return "THEATRE_REFERENCE";
+		type_return = "THEATRE_REFERENCE";
+		break;
 	case RAW_DATA:
-		return "RAW_DATA";
+		type_return = "RAW_DATA";
+		break;
 	case EXTERNAL_REFERENCE:
-		return "EXTERNAL_REFERENCE";
-	case SANDWICH_BUN:
-		return "THEATRE_REFERENCE";
+		type_return = "EXTERNAL_REFERENCE";
+		break;
+	case SANDWICH:
+		type_return = "SANDWICH";
+		break;
 	default:
-		return "UNKNOWN";
+		type_return = "UNKNOWN";
+		break;
 	}
+
+	return type_return + " (" + std::to_string(variable_type) + ")";
 }
 
 std::string getTheatreStructure(gStringSettings theatre_storage)
@@ -381,7 +398,7 @@ void interpretExternalReference(gSettings &current_object_settings, std::string 
 	}
 }
 
-void interpretSandwichBun(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre)
+/*void interpretSandwich(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre)
 {
 	int class_hash = getClassHash(variable_name);
 
@@ -396,7 +413,7 @@ void interpretSandwichBun(gSettings &current_object_settings, std::string variab
 		current_object_settings[variable_name] = gSetting(SANDWICH_BUN, device_map[class_hash]());
 		std::any_cast<Device *>(current_object_settings.at(variable_name).second)->loadSettings(new_theatre.getDevice(theatre_reference)->settings);
 	}
-}
+}*/
 
 void interpretTheatreReference(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, gStringSettings &theatre_settings)
 {
@@ -443,10 +460,10 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 		case EXTERNAL_REFERENCE:
 			interpretExternalReference(current_object_settings, referenced_setting.first, referenced_setting.second.second);
 			return;
-		case SANDWICH_BUN:
+		// case SANDWICH:
 			// I really don't think this is possible or will result in kind things, but better here than not I guess
-			interpretSandwichBun(current_object_settings, referenced_setting.first, referenced_setting.second.second, new_theatre);
-			return;
+			// interpretSandwich(current_object_settings, referenced_setting.first, referenced_setting.second.second, new_theatre);
+			// return;
 		default:
 			PRINTERR("A Theatre reference variable either referenced a nonexisting Actor/Device, or referenced one that didn't define the variable it wanted! (or my code fucked up)\n\tVariable Name: " << variable_name << "\n\tReference Name: " << theatre_reference)
 			return;
@@ -464,6 +481,61 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 	{
 		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, device_map[class_hash]());
 		std::any_cast<Device *>(current_object_settings.at(variable_name).second)->loadSettings(new_theatre.getDevice(theatre_reference)->settings);
+	}
+}
+
+void interpretSandwich(gSettings &current_object_settings, gStringSettings &theatre_settings, int &i, int &it, Theatre &new_theatre)
+{
+	gSettings sandwich_settings;
+	int sandwich_bun_index = it;
+	int class_hash = getClassHash(theatre_settings[i][sandwich_bun_index].first);
+
+	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+		sandwich_settings = new_theatre.getActor(theatre_settings[i][sandwich_bun_index].second.second)->settings;
+	else
+		sandwich_settings = new_theatre.getDevice(theatre_settings[i][sandwich_bun_index].second.second)->settings;
+
+	sandwich_settings["Name"] = gSetting(RAW_DATA, gRawData{theatre_settings[i][sandwich_bun_index].second.second});
+
+	it++;
+	while(theatre_settings[i][it].first.find(':') != std::string::npos)
+	{
+		std::string sandwich_variable = theatre_settings[i][it].first.substr(theatre_settings[i][it].first.find_last_of(':') + 1);
+
+		switch(theatre_settings[i][it].second.first - SANDWICH)
+		{
+		case CPP_REFERENCE:
+			interpretCppReference(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second);
+			break;
+		case RAW_DATA:
+			interpretRawData(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second);
+			break;
+		case THEATRE_REFERENCE:
+			interpretTheatreReference(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second, new_theatre, theatre_settings);
+			break;
+		case EXTERNAL_REFERENCE:
+			interpretExternalReference(sandwich_settings, sandwich_variable, theatre_settings[i][it].second.second);
+			break;
+		default:
+			PRINTERR("A Sandwich variable... got really fucked up")
+			break;
+		}
+
+		it++;
+	}
+
+	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+	{
+		current_object_settings[theatre_settings[i][sandwich_bun_index].first] = gSetting(SANDWICH, actor_map[class_hash]());
+		Actor *sandwich_bun = std::any_cast<Actor *>(current_object_settings.at(theatre_settings[i][sandwich_bun_index].first).second);
+		sandwich_bun->youGotACallBack(sandwich_settings);
+	}
+
+	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
+	{
+		current_object_settings[theatre_settings[i][sandwich_bun_index].first] = gSetting(SANDWICH, device_map[class_hash]());
+		Device *sandwich_bun = std::any_cast<Device *>(current_object_settings.at(theatre_settings[i][sandwich_bun_index].first).second);
+		sandwich_bun->loadSettings(sandwich_settings);
 	}
 }
 
@@ -508,8 +580,8 @@ Theatre loadTheatre(long theatre_uid)
 			case EXTERNAL_REFERENCE:
 				interpretExternalReference(current_object_settings, setting.first, setting.second.second);
 				break;
-			case SANDWICH_BUN:
-				interpretSandwichBun(current_object_settings, setting.first, setting.second.second, new_theatre);
+			case SANDWICH:
+				interpretSandwich(current_object_settings, theatre_settings, i, it, new_theatre);
 				break;
 			}
 		}

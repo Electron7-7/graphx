@@ -149,7 +149,7 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 		}
 	}
 
-	else if(setting_type == SANDWICH_BUN)
+	else if(setting_type == SANDWICH)
 	{
 		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
 		{

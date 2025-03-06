@@ -128,6 +128,9 @@ struct Material final : public Device
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
+// Forward Declaration
+graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
+
 struct Mesh : public Device
 {
 	std::string name = "Untitled Mesh";
@@ -139,10 +142,12 @@ struct Mesh : public Device
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 	glm::vec3 mesh_scale = glm::vec3(1.0f);
+	graphx::gMeshData mesh_data = M_LoadOBJ(ERROR_obj);
 
 	Mesh();
 	Mesh(Material *new_material);
 
+	void processMeshData();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 	void prepForDestruction() override;
 };

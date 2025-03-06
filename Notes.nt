@@ -1521,3 +1521,7 @@ else if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
 Aight, there we go! Now I can delete that file, lol
 
 Last minute problem (bc of course there is); I think that sandwiches aren't properly returning a copy of the Actor/Device and are returning a pointer instead.
+
+I'm not happy with sandwiches. I know that with a few tweaks I can make them work dynamically. I need a plan. Here's an idea: label all settings with a colon in them as sandwiches and process them all at the same time as separate sub-settings that get loaded by the sandwich bun.
+
+I did that thing again where I fucked up the code and spaghettified it. I need a break.

@@ -179,7 +179,7 @@ std::string getSettingName(gSetting setting)
 		return "Unknown Raw Data setting";
 	case CPP_REFERENCE:
 		return "C++ Reference setting";
-	case SANDWICH_BUN:
+	case SANDWICH:
 		if(setting.second.type() == typeid(Actor*))
 			return(std::any_cast<Actor *>(setting.second)->getName());
 
