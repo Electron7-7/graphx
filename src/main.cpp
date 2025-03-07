@@ -409,10 +409,3 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 
 	getCurrentTheatre()->delegateMouseInput(window, x_position_in, y_position_in);
 }
-
-int WinMain() // Fuck off, Windows
-{
-	main();
-	system("pause");
-	return 0;
-}
