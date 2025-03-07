@@ -1554,3 +1554,6 @@ I think it's because interpretSandwich is skipping over it with "it++", so I add
 Yup! It works!
 
 Now time to make sure I'm happy with everything; I'll do some quick testing to make sure that there aren't any major issues, update the wiki page on GraphXTheatre syntax, and push an update!
+
+[03/07/25]
+What to do today? I finished a rough v1.0 of the GraphXTheatre syntax highlighting for sublime text; maybe make one for nano? Maybe work on the engine some more? I do want to make a production branch again, because I realize that yeah you make a separate production branch so that any changes that break shit aren't on the trunk. Especially since I work on multiple devices and need to push unfinished work a lot.
