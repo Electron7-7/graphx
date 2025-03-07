@@ -1557,3 +1557,5 @@ Now time to make sure I'm happy with everything; I'll do some quick testing to m
 
 [03/07/25]
 What to do today? I finished a rough v1.0 of the GraphXTheatre syntax highlighting for sublime text; maybe make one for nano? Maybe work on the engine some more? I do want to make a production branch again, because I realize that yeah you make a separate production branch so that any changes that break shit aren't on the trunk. Especially since I work on multiple devices and need to push unfinished work a lot.
+
+I wanna test the branch protection rule I made.
