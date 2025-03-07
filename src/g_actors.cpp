@@ -629,7 +629,7 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 
 	getSetting(light_color, settings["Color"]);
 	getSetting(light_strength, settings["Strength"]);
-	getSetting(light_ambient_strength, settings["Ambient Strength"]);
+	getSetting(light_ambient_strength, settings["AmbientStrength"]);
 	getSetting(range, settings["Range"]);
 	getSetting(intensity, settings["Intensity"]);
 	getSetting(falloff, settings["Falloff"]);
