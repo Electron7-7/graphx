@@ -44,9 +44,6 @@ inline std::string getBinaryPath()
 #define EXTERNAL_THEATRES_DIRECTORY std::string("theatres")
 #endif
 
-static std::string binary_path = BINARY_PATH;
-static std::string theatres_directory = std::string(BINARY_PATH) + EXTERNAL_THEATRES_DIRECTORY;
-
 #include <images.h>
 #include <shaders.hpp>
 

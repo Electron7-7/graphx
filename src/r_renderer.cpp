@@ -56,6 +56,9 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 
 graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension)
 {
+	// Last minute realization that I had to move this out of the header file "sanity.hpp"
+	std::string binary_path = BINARY_PATH;
+
 	// If the file path is relative, it should be relative to the program's location.
 	std::string file_path_checked = std::string(binary_path + file_path);
 

@@ -650,6 +650,10 @@ void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
 
 bool checkForExternalTheatres()
 {
+	// Last minute realization that I had to move these out of the header file "sanity.hpp"
+	std::string binary_path = BINARY_PATH;
+	std::string theatres_directory = std::string(BINARY_PATH) + EXTERNAL_THEATRES_DIRECTORY;
+
 	if(std::filesystem::is_directory(std::filesystem::path(theatres_directory)))
 		for(const auto &entry : std::filesystem::directory_iterator(std::filesystem::path(theatres_directory)))
 			if(entry.path().extension().string().compare(GRAPHXTHEATRE_EXTENSION) == 0)
@@ -706,6 +710,10 @@ bool checkForAndLoadExternalTheatres()
 	}
 
 	bool has_theatre_file = false;
+
+	// Last minute realization that I had to move these out of the header file "sanity.hpp"
+	std::string binary_path = BINARY_PATH;
+	std::string theatres_directory = std::string(BINARY_PATH) + EXTERNAL_THEATRES_DIRECTORY;
 
 	for(const auto &entry : std::filesystem::directory_iterator(std::filesystem::path(theatres_directory)))
 	{
