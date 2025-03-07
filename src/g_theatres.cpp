@@ -18,10 +18,7 @@ Theatre *getCurrentTheatre(bool print_note)
 Environment *getCurrentEnvironment()
 {
 	if(loading_new_main_theatre)
-	{
-		PRINTDEBUG("getCurrentEnvironment called while loading_new_main_theatre == true. Returning a new Environment in order to avoid a crash!")
 		return new Environment();
-	}
 
 	if(current_theatre.unsafeGetFirstDeviceOfType(ENVIRONMENT) == nullptr)
 	{
@@ -35,10 +32,7 @@ Environment *getCurrentEnvironment()
 GraphXPlayer *getCurrentPlayer()
 {
 	if(loading_new_main_theatre)
-	{
-		PRINTDEBUG("getCurrentPlayer called while loading_new_main_theatre == true. Returning a new GraphXPlayer in order to avoid a crash!")
 		return new GraphXPlayer();
-	}
 
 	if(current_theatre.unsafeGetFirstActorOfType(GRAPHXPLAYER) == nullptr)
 	{

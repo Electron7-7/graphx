@@ -2,7 +2,6 @@
 #define GRAPHX_IMGUI
 #include "sanity.hpp" // Included for the GLM header files
 #include "imgui.h"
-#include <string>
 
 // Forward Declarations
 struct Theatre;

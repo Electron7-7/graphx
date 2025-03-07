@@ -37,6 +37,7 @@ bool is_wireframe = false;
 double cursor_last_x = 0.0;
 double cursor_last_y = 0.0;
 
+void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
@@ -48,6 +49,7 @@ int main()
 {
 	graphx_api = GRAPHX_OPENGL;
 
+	// OpenGL/GLFW Setup
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -61,6 +63,7 @@ int main()
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 #endif
 	glfwSetCursorPosCallback(main_window, mouseCallback);
+	glfwSetFramebufferSizeCallback(main_window, frameBufferSizeCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
@@ -76,10 +79,7 @@ int main()
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
-	//------------------------
-	// Start ImGui Boilerplate
-	//------------------------
-
+	// ImGui Setup
 	GraphXConsole graphx_debug_console;
 
 	graphx_debug_console.active = (glfwGetInputMode(main_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL);
@@ -88,17 +88,14 @@ int main()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
+#ifndef GRAPHX_DEBUG
 	ImGui::GetIO().IniFilename = nullptr;
+#endif
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-	ImGui::GetIO().IniFilename = NULL; // Be rid of imgui.ini (for now)
 
 	ImGui_ImplGlfw_InitForOpenGL(main_window, true);
 	ImGui_ImplOpenGL3_Init();
-
-	//----------------------
-	// End ImGui Boilerplate
-	//----------------------
 
 	while(!glfwWindowShouldClose(main_window))
 	{
@@ -408,4 +405,12 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 		return;
 
 	getCurrentTheatre()->delegateMouseInput(window, x_position_in, y_position_in);
+}
+
+void frameBufferSizeCallback(GLFWwindow *window, int width, int height)
+{
+	main_window_size[0] = width;
+	main_window_size[1] = height;
+
+	glViewport(0, 0, width, height);
 }

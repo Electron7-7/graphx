@@ -263,7 +263,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	if(loading_new_main_theatre)
 		return;
 
-	current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
+	// current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
 	int point_light_index = 0;
 	int spot_light_index = 0;
 

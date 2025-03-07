@@ -1561,3 +1561,13 @@ What to do today? I finished a rough v1.0 of the GraphXTheatre syntax highlighti
 I wanna test the branch protection rule I made.
 
 Well it didn't do what I thought, but tbh I'm the only person working on this repo so just try not to work/push directly on/to trunk from now on, lol.
+
+Okay, anyways, I'm going to work on the debug menu a little bit; I wanna put more info on it and also I'm thinking of a list of the keybinds, what they do, and a button to toggle them from the panel. I also want to work on a sort of raycast that will help me select objects and view their internals. Basically, debug tools. If I have time, maybe add more support for other files to external reference variables.
+
+Hmm... I kind of want to overhaul the UID system, too... that's kind of irking me. I think i'll stick to the debug stuff for now and check back in later to see how I feel.
+
+Hmm, currently the shaders seem to be what's the least performant with the engine. Resizing the window causes the frames to drop drastically until I switch on the normals viewing mode, which bypasses all of the shader code. I wonder if it's the data being sent to the shader, or if its the actual code in the shader. If it's the uniforms being sent, wouldn't the lag still be a problem regardless of the code run by the shader?
+
+Okay, I actually kind of want to see if I can change the render loop to allow for rendering specific things (like lines and triangles for debugging), among other things and I think I have an idea of how to do it without a complete overhaul/refactor. Basically, instead of R_GL_Render calling a glDraw function in its loop, have it add a RenderCmd to the RenderCmd stack or something akin to that. Then, the actual renderer that's on its own loop, will be rendering from that stack. This will let me do debug rendering and will also be a nice way to separate rendering from specific APIs and functions and such. This will require some changes, but I think it'll be worth it.
+
+Game plan: instead of iterating through the Actors in a Theatre, iterate through a list of RenderCmds which will all contain two RenderState structs, and all the relevant data for rendering. Then just parse that data, not using any that aren't filled out (so, make sure default values are defined for every member variable).
