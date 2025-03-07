@@ -4,10 +4,9 @@
 
 #define RAW_DATA           1
 #define CPP_REFERENCE      2
-#define THEATRE_REFERENCE  3
-#define EXTERNAL_REFERENCE 4
+#define EXTERNAL_REFERENCE 3
+#define THEATRE_REFERENCE  4
 #define SANDWICH           5
-// #define SANDWICH_BUN       5
 
 // Forward Declarations
 struct Theatre;
@@ -19,7 +18,7 @@ extern bool loading_new_main_theatre;
 
 graphx::gStringSettings theatreParser(std::string theatre_data);
 graphx::gRawData 		extractData(std::string data_in_here);
-std::string 			getTheatreStructure(graphx::gTheatreStorage theatre_storage);
+std::string 			getTheatreStructure(graphx::gStringSettings theatre_storage);
 bool					checkForAndLoadExternalTheatres();
 void 					loadMainTheatre(long theatre_uid);
 void 					loadChildTheatre(long theatre_uid, Theatre *parent_theatre);

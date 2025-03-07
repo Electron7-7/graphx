@@ -197,20 +197,17 @@ std::string getSettingName(gSetting setting)
 std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 {
 	std::string buffer = "";
-	std::string name_string = "Name: ";
-	std::string typename_string = "\n\tTypename: ";
 	std::string uid_string = "\n\tUID: ";
 
 	if(show_actors)
 	{
 		for(auto &pair : objects)
 		{
-			buffer += name_string + pair.second->getName();
-			buffer += typename_string + pair.second->getTypeName();
+			buffer += pair.second->getTypeName() + " \"" + pair.second->getName() + "\"";
 			buffer += uid_string + std::to_string(pair.second->getUID());
 			for(auto &setting : pair.second->settings)
 			{
-				if(!setting.first.compare("Name"))
+				if(!setting.first.compare("Name") || setting.second.first <= 0)
 					continue;
 				buffer += std::string("\n\t") + setting.first + ": " + getSettingName(setting.second);
 			}
@@ -222,12 +219,11 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 	{
 		for(auto &pair : devices)
 		{
-			buffer += name_string + pair.second->getName();
-			buffer += typename_string + pair.second->getTypeName();
+			buffer += pair.second->getTypeName() + " \"" + pair.second->getName() + "\"";
 			buffer += uid_string + std::to_string(pair.second->getUID());
 			for(auto &setting : pair.second->settings)
 			{
-				if(!setting.first.compare("Name"))
+				if(!setting.first.compare("Name") || setting.second.first <= 0)
 					continue;
 				buffer += std::string("\n\t") + setting.first + ": " + getSettingName(setting.second);
 			}

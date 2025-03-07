@@ -39,6 +39,7 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 {
 	my_type = graphx::classes::ACTOR;
 	name = new_name;
+	mesh = new Mesh();
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	current_state = RenderState(init_position, quaternion, init_scale);
 	current_state_copy = current_state;
@@ -180,12 +181,8 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
 	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
 
-	if(mesh == nullptr)
-		mesh = new Mesh();
-
 	getSetting(name, settings["Name"]);
 	getSetting(mesh, settings["Mesh"]);
-	mesh->loadSettings();
 	getSetting(position_global, settings["Position"]);
 	getSetting(position_local, settings["LocalPosition"]);
 	getSetting(global_euler_degrees, settings["Rotation"]);

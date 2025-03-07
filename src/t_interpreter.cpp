@@ -57,182 +57,192 @@ gStringSettings theatreParser(std::string theatre_data)
 		'\t'
 	};
 
-	char begin_settings = '{';
-	char end_settings = '}';
+	const char begin_theatre_name = '@';
+	const char begin_settings = '{';
+	const char begin_cxx_reference = '[';
+	const char begin_theatre_reference = '<';
+	const char begin_raw_data = '(';
+	const char begin_external_reference = '"';
 
-	char begin_cxx_reference = '[';
-	char begin_theatre_reference = '<';
-	char begin_raw_data = '(';
-	char begin_external_reference = '"';
+	const char end_settings = '}';
+	const char end_cxx_reference = ']';
+	const char end_theatre_reference = '>';
+	const char end_raw_data = ')';
+	const char end_external_reference = '"';
 
-	char end_cxx_reference = ']';
-	char end_theatre_reference = '>';
-	char end_raw_data = ')';
-	char end_external_reference = '"';
-
-	char sandwich_layer = ':';
-
-	std::vector<gKey> keys;
-	std::vector<gValue> values;
-	std::vector<gStringSetting> object_settings;
-
-	gStringSettings all_settings;
+	const char sandwich_delimiter = ':';
 
 	bool reading_settings = false;
+
+	std::vector<gStringSetting> object_settings;
+
+	gStringSettings all_settings; // Contains all object string settings
+
 	std::string buffer = "";
+	int current_setting_index = 1;
 
 	for(int i = 0 ; i < theatre_data.size() ; i++)
 	{
-		if(theatre_data[i] == '@')
-		{
-			i++;
-			while(!whitespace.contains(theatre_data[i]))
-			{
-				buffer += theatre_data[i++];
-			}
-
-			all_settings.insert(all_settings.end(), {gStringSetting("Theatre", gValue(RAW_DATA, buffer))});
-			buffer = "";
-		}
+		char character = theatre_data[i];
 
 		if(!theatre_data.substr(i, 2).compare("//"))
-		{ // This is a comment (in the .gt file, not this C++ comment...)
-			while(theatre_data[i] != '\n')
-				i++;
-		}
-
-		if(reading_settings)
-		{
-			if(theatre_data[i] == end_settings)
-			{
-				reading_settings = false;
-
-				for(int it = 0 ; it < keys.size() ; it++)
-					if(it < values.size())
-						object_settings.insert(object_settings.end(), gStringSetting(keys[it], values[it]));
-
-				all_settings.insert(all_settings.end(), object_settings);
-				keys.clear();
-				values.clear();
-				object_settings.clear();
-				continue;
-			}
-
-			if(theatre_data[i] == begin_cxx_reference || theatre_data[i] == begin_theatre_reference || theatre_data[i] == begin_raw_data || theatre_data[i] == begin_external_reference)
-			{
-				i++;
-
-				while(theatre_data[i] != end_cxx_reference && theatre_data[i] != end_theatre_reference && theatre_data[i] != end_raw_data && theatre_data[i] != end_external_reference)
-					buffer += theatre_data[i++];
-
-				int value_type;
-
-				if(theatre_data[i] == end_cxx_reference)
-					value_type = CPP_REFERENCE;
-				if(theatre_data[i] == end_theatre_reference)
-					value_type = THEATRE_REFERENCE;
-				if(theatre_data[i] == end_raw_data)
-					value_type = RAW_DATA;
-				if(theatre_data[i] == end_external_reference)
-					value_type = EXTERNAL_REFERENCE;
-
-				if(keys.at(values.size()).find(':') != std::string::npos)
-				{
-					if(keys.at(values.size()).back() == ':')
-					{
-						keys.at(values.size()).pop_back();
-						value_type = SANDWICH;
-					}
-
-					else
-						value_type += SANDWICH;
-
-					PRINTDEBUG("Sandwich: " << keys.at(values.size()) << "\nValue: " << buffer << "\nValue Type: " << value_type)
-				}
-
-
-				values.insert(values.end(), gValue(value_type, buffer));
-				buffer = "";
-				i++;
-
-				if(theatre_data[i] == sandwich_layer)
-					continue;
-			}
-
-			if(whitespace.contains(theatre_data[i]))
-			{
-				if(buffer.size() == 0)
-					continue;
-
-				keys.insert(keys.end(), buffer);
-				buffer = "";
-				continue;
-			}
-
-			if(!whitespace.contains(theatre_data[i]))
-			{
-				if(theatre_data[i] == sandwich_layer)
-				{
-					buffer += theatre_data[i];
-					keys.insert(keys.end(), buffer);
-					std::string sandwich_bun = buffer;
-					buffer = "";
-					i++;
-					while(!whitespace.contains(theatre_data[i]))
-					{
-						buffer += theatre_data[i];
-						if(theatre_data[i] == sandwich_layer)
-						{
-							keys.insert(keys.end(), sandwich_bun + buffer);
-							buffer = "";
-						}
-						i++;
-					}
-
-					keys.insert(keys.end(), sandwich_bun + buffer);
-					buffer = "";
-					continue;
-				}
-
-				buffer += theatre_data[i];
-			}
+		{ // This is a comment (in the .gt file, not... not this comment...)
+			while(character != '\n')
+				character = theatre_data[++i];
+			buffer = "";
 		}
 
 		if(!reading_settings)
 		{
-			if(whitespace.contains(theatre_data[i]))
+			switch(character)
 			{
-				if(buffer.size() == 0)
-					continue;
-
-				keys.insert(keys.end(), buffer);
-				buffer = "";
-				continue;
-			}
-
-			if(theatre_data[i] == begin_raw_data)
-			{
-				i++;
-
-				while(theatre_data[i] != end_raw_data)
-					buffer += theatre_data[i++];
-
-				values.insert(values.end(), gValue(RAW_DATA, buffer));
-				buffer = "";
-				object_settings.insert(object_settings.end(), gStringSetting(keys[0], values[0]));
-				keys.clear();
-				values.clear();
-				continue;
-			}
-
-			if(theatre_data[i] == begin_settings)
-			{
-				buffer = "";
+			case begin_settings:
 				reading_settings = true;
-				continue;
+				current_setting_index = 1;
+				break;
+			case begin_theatre_name:
+				buffer = "";
+				character = theatre_data[++i];
+
+				while(!whitespace.contains(character))
+				{
+					buffer += character;
+					character = theatre_data[++i];
+				}
+
+				all_settings.insert(all_settings.end(), {gStringSetting(gKey("TheatreName"), gValue(RAW_DATA, buffer))});
+				buffer = "";
+				break;
+			case begin_raw_data:
+				buffer = "";
+				character = theatre_data[++i];
+
+				while(character != end_raw_data)
+				{
+					buffer += character;
+					character = theatre_data[++i];
+				}
+
+				object_settings.at(0).second = gValue(RAW_DATA, buffer);
+				buffer = "";
+				break;
+			default:
+				if(!theatre_data.substr(i, 2).compare("//"))
+				{ // This is a comment (in the .gt file, not... not this comment...)
+					while(character != '\n')
+						character = theatre_data[++i];
+					buffer = "";
+				}
+
+				while(!whitespace.contains(character))
+				{
+					buffer += character;
+					character = theatre_data[++i];
+				}
+
+				if(buffer.size() > 0)
+				{
+					object_settings.insert(object_settings.end(), gStringSetting(buffer, gValue(RAW_DATA, "")));
+					buffer = "";
+					break;
+				}
+			}
+			continue;
+		}
+
+		int setting_type_identifier = 0;
+		int setting_type_padding = 0;
+
+		switch(character)
+		{
+		case end_settings:
+			reading_settings = false;
+			all_settings.insert(all_settings.end(), object_settings);
+			object_settings.clear();
+			buffer = "";
+			break;
+		case begin_raw_data:
+		case begin_cxx_reference:
+		case begin_external_reference:
+		case begin_theatre_reference:
+			switch(character)
+			{
+				case begin_raw_data:
+					setting_type_identifier = RAW_DATA;
+					break;
+				case begin_cxx_reference:
+					setting_type_identifier = CPP_REFERENCE;
+					break;
+				case begin_external_reference:
+					setting_type_identifier = EXTERNAL_REFERENCE;
+					break;
+				case begin_theatre_reference:
+					setting_type_identifier = THEATRE_REFERENCE;
+					break;
 			}
 
-			buffer += theatre_data[i];
+			buffer = "";
+			character = theatre_data[++i];
+
+			while(character != end_raw_data && character != end_cxx_reference && character != end_external_reference && character != end_theatre_reference)
+			{
+				buffer += character;
+				character = theatre_data[++i];
+			}
+
+			if(current_setting_index >= object_settings.size())
+			{
+				PRINTERR("Tried to parse too many values for number of setting variables! (current_setting_index >= object_settings.size())")
+				break;
+			}
+
+			object_settings.at(current_setting_index).second.first += setting_type_identifier;
+			object_settings.at(current_setting_index).second.second = buffer;
+			setting_type_padding = 0;
+			current_setting_index++;
+			buffer = "";
+			break;
+		case sandwich_delimiter:
+			break;
+		default: // Parsing variable name(s)
+			std::string sandwich_bun = "";
+
+			if(!theatre_data.substr(i, 2).compare("//"))
+			{ // This is a comment (in the .gt file, not... not this comment...)
+				while(character != '\n')
+					character = theatre_data[++i];
+				buffer = "";
+			}
+
+			while(!whitespace.contains(character))
+			{
+
+				if(character == sandwich_delimiter)
+				{
+					object_settings.insert(object_settings.end(), gStringSetting(sandwich_bun + buffer, gValue(SANDWICH, "")));
+					setting_type_padding = SANDWICH;
+
+					if(sandwich_bun.empty())
+					{
+						sandwich_bun = buffer + ":";
+						object_settings.back().second.first -= THEATRE_REFERENCE;
+					}
+
+					buffer = "";
+					character = theatre_data[++i];
+				}
+
+				buffer += character;
+				character = theatre_data[++i];
+			}
+
+			if(buffer.size() > 0)
+			{
+				object_settings.insert(object_settings.end(), gStringSetting(sandwich_bun + buffer, gValue(setting_type_padding, "")));
+				buffer = "";
+			}
+
+			break;
 		}
 	}
 
@@ -419,23 +429,6 @@ void interpretExternalReference(gSettings &current_object_settings, std::string 
 	}
 }
 
-/*void interpretSandwich(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre)
-{
-	int class_hash = getClassHash(variable_name);
-
-	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-	{
-		current_object_settings[variable_name] = gSetting(SANDWICH_BUN, actor_map[class_hash]());
-		std::any_cast<Actor *>(current_object_settings.at(variable_name).second)->youGotACallBack(new_theatre.getActor(theatre_reference)->settings);
-	}
-
-	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
-	{
-		current_object_settings[variable_name] = gSetting(SANDWICH_BUN, device_map[class_hash]());
-		std::any_cast<Device *>(current_object_settings.at(variable_name).second)->loadSettings(new_theatre.getDevice(theatre_reference)->settings);
-	}
-}*/
-
 void interpretTheatreReference(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, gStringSettings &theatre_settings)
 {
 	std::string class_name = variable_name;
@@ -490,19 +483,13 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
-	{
-		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, actor_map[class_hash]());
-		std::any_cast<Actor *>(current_object_settings.at(variable_name).second)->youGotACallBack(new_theatre.getActor(theatre_reference)->settings);
-	}
+		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
 
 	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
-	{
-		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, device_map[class_hash]());
-		std::any_cast<Device *>(current_object_settings.at(variable_name).second)->loadSettings(new_theatre.getDevice(theatre_reference)->settings);
-	}
+		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
 
-void interpretSandwich(gSettings &current_object_settings, gStringSettings &theatre_settings, int &i, int &it, Theatre &new_theatre)
+void interpretSandwich(gSettings &current_object_settings, gStringSettings &theatre_settings, std::string current_object_name, int &i, int &it, Theatre &new_theatre)
 {
 	gSettings sandwich_settings;
 	gStringSetting sandwich_bun_setting = theatre_settings[i][it];
@@ -513,7 +500,7 @@ void interpretSandwich(gSettings &current_object_settings, gStringSettings &thea
 	else
 		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->settings;
 
-	sandwich_settings["Name"] = gSetting(RAW_DATA, gRawData{sandwich_bun_setting.second.second});
+	sandwich_settings["Name"] = gSetting(RAW_DATA, gRawData{sandwich_bun_setting.second.second + "_" + current_object_name});
 
 	it++;
 	while(theatre_settings[i][it].second.first > SANDWICH)
@@ -546,17 +533,19 @@ void interpretSandwich(gSettings &current_object_settings, gStringSettings &thea
 
 	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
 	{
-		current_object_settings[sandwich_bun_setting.first] = gSetting(SANDWICH, actor_map[class_hash]());
-		Actor *sandwich_bun = std::any_cast<Actor *>(current_object_settings.at(sandwich_bun_setting.first).second);
+		Actor *sandwich_bun = actor_map[class_hash]();
 		sandwich_bun->youGotACallBack(sandwich_settings);
+		current_object_settings[sandwich_bun_setting.first] = gSetting(SANDWICH, sandwich_bun);
 	}
 
 	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
 	{
-		current_object_settings[sandwich_bun_setting.first] = gSetting(SANDWICH, device_map[class_hash]());
-		Device *sandwich_bun = std::any_cast<Device *>(current_object_settings.at(sandwich_bun_setting.first).second);
+		Device *sandwich_bun = device_map[class_hash]();
 		sandwich_bun->loadSettings(sandwich_settings);
+		current_object_settings[sandwich_bun_setting.first] = gSetting(SANDWICH, sandwich_bun);
 	}
+
+	it--;
 }
 
 // loadTheatre should not be called directly, which is why it's not in the header file
@@ -575,8 +564,6 @@ Theatre loadTheatre(long theatre_uid)
 	new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
 
 	PRINTDEBUG("Loading Theatre \"" << new_theatre.name << "\"")
-
-	std::vector<std::pair<int, gSettings>> all_class_settings;
 
 	for(int i = 1 ; i < theatre_settings.size() ; i++)
 	{
@@ -601,7 +588,7 @@ Theatre loadTheatre(long theatre_uid)
 				interpretExternalReference(current_object_settings, setting.first, setting.second.second);
 				break;
 			case SANDWICH:
-				interpretSandwich(current_object_settings, theatre_settings, i, it, new_theatre);
+				interpretSandwich(current_object_settings, theatre_settings, theatre_settings[i][0].second.second, i, it, new_theatre);
 				break;
 			}
 		}
