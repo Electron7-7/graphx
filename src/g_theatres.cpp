@@ -25,7 +25,7 @@ Environment *getCurrentEnvironment()
 
 	if(current_theatre.unsafeGetFirstDeviceOfType(ENVIRONMENT) == nullptr)
 	{
-		PRINTERR("(in Theatre \"" << current_theatre.name << "\") getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013")
+		PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013 (in Theatre \"" << current_theatre.name << "\")")
 		current_theatre.createDevice(ENVIRONMENT, 177013);
 	}
 
@@ -42,7 +42,7 @@ GraphXPlayer *getCurrentPlayer()
 
 	if(current_theatre.unsafeGetFirstActorOfType(GRAPHXPLAYER) == nullptr)
 	{
-		PRINTERR("(in Theatre \"" << current_theatre.name << "\") getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069")
+		PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069 (in Theatre \"" << current_theatre.name << "\")")
 		current_theatre.createActor(GRAPHXPLAYER, 42069);
 		current_theatre.refreshTroupe();
 	}
