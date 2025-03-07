@@ -13,13 +13,6 @@
 <img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="400"/>
 <img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
 
-## Update: Custom Mapping!
-Creating a `theatres/` folder next to the game executable and putting custom `.gt` files in it will let GraphX find and load your custom Theatres! It even does so every time you switch Theatres with the arrow keys, so no restart needed and changes are updated almost instantly!
-
-## Update: GT Files!
-
-No, not Gran Turismo, "GraphXTheatre" files are the newest addition to the GraphX game engine, and I am thoroughly proud of my horrible code. In a nutshell, I decided to create my own custom file format for creating Theatres and I wanted to do so without using any tutorials or guides (just StackOverflow and tenacity). It was very painful, but very informative! I created my own lexer, parser, and interpreter for a file format/syntax that I also invented, again, without any guides or even learning what the difference between a lexer and a parser is until after I had finished (i.e: right now as I'm writing this, lmfao). See the wiki for a guide to making these files, as well as syntax documentation and other helpful things.
-
 ## An Okay Game Engine
 
 When I started this journey, I had very little programming experience; a few basic Python programs (like, command-line output basic), some shell scripting, a bit of web-design, and some fun ventures in [Blitz3D](https://github.com/blitz-research/blitz3d) (which I highly recommend to anyone interested in the programming side of gamedev). Needless to say, I was in no position _whatsoever_ to think to myself, "hmm, you know what? I want to learn C++ _and_ OpenGL/Graphics Programming at the same exact time! Surely, nothing will go wrong". I am here to tell you I am lucky that I have autism and an autistic intrigue and passion for programming, because if I didn't, this project would have permanently died before a week's time.
@@ -70,6 +63,10 @@ Congratulations! You're ready to compile GraphX on Windows! Using MINGW64, navig
 
 #### Compiling a Linux binary
 I haven't explicitly written in support for compiling a Linux binary on Windows, but theoretically it should be possible using MINGW64 and some tweaking (like you might need to change CXX and CC from `clang++` and `clang` to `g++` and `gcc`). However, I haven't tested this and reccomend just using Linux to compile for Linux (why would you use Windows to do that if you have Linux, anyways?)
+
+## GraphXTheatre Files
+GraphXTheatre (also called "Theatre") files are custom files written in a custom format I created. They define the Actors and Devices contained in a `Theatre`, and are essentially game scenes or levels/maps. If you want to learn how to make one, check out the example files in [src/theatres/](https://github.com/Electron7-7/graphx/blob/trunk/src/theatres), the [GraphX Wiki](https://github.com/Electron7-7/graphx/wiki), and if your IDE is supported, pick up some [syntax highlighting](https://github.com/Electron7-7/graphxtheatre-syntax-highlighting)!
+
 ## Special Thanks
 Big shout out to [LearnOpenGL](https://learnopengl.com), [StackOverflow](https://stackoverflow.com), and [Desmos](https://desmos.com) for teaching me everything I need to know.
 
