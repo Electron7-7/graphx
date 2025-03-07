@@ -1543,6 +1543,8 @@ If at any non-whitespace character that's not inside a value delimiter, parse it
 
 Holy shit, okay, so the parser is doing what I want it to now. Holy fuck. Okay, time to work on the interpreter.
 
+So, I fixed the interpreter, but some settings aren't being set correctly (or at all). I hope this isn't related to inheritance...
+
 I think I have an idea as to what the problem is: I think that the variable that's set right after a sandwich is getting overwritten/skipped! Because that variable for the floor is it's scale and that's what seems to be missing from its settings.
 
 Just tested it and YEP! That's the problem!

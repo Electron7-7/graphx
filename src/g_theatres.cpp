@@ -19,13 +19,13 @@ Environment *getCurrentEnvironment()
 {
 	if(loading_new_main_theatre)
 	{
-		PRINTNOTE("getCurrentEnvironment called while loading_new_main_theatre == true. Returning a new Environment in order to avoid a crash!")
+		PRINTDEBUG("getCurrentEnvironment called while loading_new_main_theatre == true. Returning a new Environment in order to avoid a crash!")
 		return new Environment();
 	}
 
 	if(current_theatre.unsafeGetFirstDeviceOfType(ENVIRONMENT) == nullptr)
 	{
-		PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013")
+		PRINTERR("(in Theatre \"" << current_theatre.name << "\") getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013")
 		current_theatre.createDevice(ENVIRONMENT, 177013);
 	}
 
@@ -42,7 +42,7 @@ GraphXPlayer *getCurrentPlayer()
 
 	if(current_theatre.unsafeGetFirstActorOfType(GRAPHXPLAYER) == nullptr)
 	{
-		PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069")
+		PRINTERR("(in Theatre \"" << current_theatre.name << "\") getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069")
 		current_theatre.createActor(GRAPHXPLAYER, 42069);
 		current_theatre.refreshTroupe();
 	}
