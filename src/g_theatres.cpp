@@ -55,6 +55,17 @@ Theatre::Theatre(std::string init_name, long new_uid)
 	stage_mesh->setName("Stage Mesh for Theatre (" + name + ")");
 }
 
+void Theatre::probeActorsForRenderCommands()
+{
+	for(auto &pair : objects)
+	{
+		if(loading_new_main_theatre)
+			return;
+
+		R_BufferRenderCmd(RenderCmd(pair.second));
+	}
+}
+
 void Theatre::raiseCurtains()
 {
 	bool has_directional_light = false;
@@ -105,13 +116,13 @@ void Theatre::dropCurtains()
 	troupe.clear();
 }
 
-Actor *Theatre::getFromTroupe(int index)
+/*Actor *Theatre::getFromTroupe(int index)
 {
 	if(loading_new_main_theatre || index > troupe.size())
 		return new Actor();
 
 	return troupe[index];
-}
+}*/
 
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)
 {

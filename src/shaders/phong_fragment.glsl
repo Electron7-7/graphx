@@ -5,6 +5,7 @@ out vec4 FragColor;
 in vec2 texture_coordinate;
 in vec3 fragment_position;
 in vec3 normal;
+in vec3 vertex_colors;
 
 struct Material
 {
@@ -52,6 +53,7 @@ uniform bool is_light;
 uniform int point_lights_count;
 uniform int spot_lights_count;
 uniform bool mat_fullbright;
+uniform bool is_primitive;
 
 #define DEBUG_DIFFUSE 1
 #define DEBUG_SPECULAR 2
@@ -72,6 +74,13 @@ mat3x3 calculateLight(Light light, vec3 light_direction);
 
 void main()
 {
+	if(is_primitive)
+	{
+		// No support for primitive textures/lighting, yet
+		FragColor = vec4(vertex_colors, 1.0f);
+		return;
+	}
+
 	if(shader_debug_value == DEBUG_NORMALS)
 	{
 		FragColor = vec4((normalize(normal) + vec3(1.0f)) / vec3(2.0f), 1.0f);

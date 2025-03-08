@@ -632,6 +632,7 @@ void loadMainTheatre(long theatre_uid)
 	current_theatre = loadTheatre(theatre_uid);
 	current_theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
+
 	time_to_store_buffers = true;
 	loading_new_main_theatre = false;
 }

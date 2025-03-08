@@ -23,6 +23,7 @@ glm::vec2 main_window_size(1280.0f, 720.0f);
 float camera_near = 0.1f;
 float camera_far = 1000.0f;
 int current_vao_index = VAOS_AMOUNT + 1; // Pulled out of the render function so my debug menu can see it
+bool jolt_debug_render = false;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
@@ -199,6 +200,13 @@ void R_StoreBuffers()
 	time_to_render = true;
 }
 
+std::vector<RenderCmd> render_commands; // Keeping this out of the header file for now
+
+void R_BufferRenderCmd(RenderCmd render_command)
+{
+	render_commands.insert(render_commands.end(), render_command);
+}
+
 void R_Render(std::mutex &state_mutex, float interpolation_time)
 {
 	if(loading_new_main_theatre)
@@ -222,12 +230,24 @@ void R_GL_BufferMeshes()
 
 	current_vao_index = VAOS_AMOUNT + 1;
 
-	for(int i = 0 ; i < getCurrentTheatre()->troupe.size() ; i++)
+	getCurrentTheatre()->probeActorsForRenderCommands();
+
+	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
-		Actor *actor = getCurrentTheatre()->getFromTroupe(i);
+		if(rendercmd_iterator.base()->isPrimitive())
+		{
+			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+			continue;
+		}
+
+		Actor *actor = rendercmd_iterator.base()->render_actor;
+
 		// There used to exist Actor::wantsToBeBuffered, but it was only ever used here, so I got rid of it
 		if(actor->mesh == nullptr || actor->mesh->is_buffered || actor->isType(graphx::classes::GRAPHXPLAYER))
+		{
+			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
+		}
 
 		Mesh *mesh = actor->mesh;
 		Material *material = mesh->material;
@@ -255,7 +275,36 @@ void R_GL_BufferMeshes()
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		mesh->is_buffered = true;
+
+		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
+}
+
+void R_GL_RenderPrimitive(RenderCmd *render_command)
+{
+	glUseProgram(shaders[shader_index]->id);
+
+	glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
+
+	if(render_command->primitive_material_override != nullptr)
+	{
+		shaders[shader_index]->setUniform("material.texture_diffuse", 0);
+		shaders[shader_index]->setUniform("material.texture_specular", 1);
+		shaders[shader_index]->setUniform("material.color", render_command->primitive_material_override->color);
+		shaders[shader_index]->setUniform("material.specular_sharpness", render_command->primitive_material_override->specular_sharpness);
+		shaders[shader_index]->setUniform("material.specular_strength", render_command->primitive_material_override->specular_strength);
+		shaders[shader_index]->setUniform("mat_fullbright", render_command->primitive_material_override->mat_fullbright);
+	}
+
+	shaders[shader_index]->setUniform("is_primitive", true);
+	shaders[shader_index]->setUniform("model_matrix", glm::mat4(1.0f));
+	shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+	shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
+	shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(glm::mat4(1.0f)))));
+
+	glBindVertexArray(VAO_OBJ);
+	glBindBuffer(GL_ARRAY_BUFFER, render_command->getVBO());
+	glDrawArrays(GL_LINES, 0, render_command->getVertexData().size());
 }
 
 void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
@@ -272,9 +321,18 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
 	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 
-	for(int i = 0 ; i < getCurrentTheatre()->troupe.size() ; i++)
+	getCurrentTheatre()->probeActorsForRenderCommands();
+
+	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
-		Actor *actor = getCurrentTheatre()->getFromTroupe(i);
+		if(rendercmd_iterator.base()->isPrimitive())
+		{
+			R_GL_RenderPrimitive(rendercmd_iterator.base());
+			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+			continue;
+		}
+
+		Actor *actor = rendercmd_iterator.base()->render_actor;
 
 		if(actor->isType(graphx::classes::LIGHTS))
 		{
@@ -314,12 +372,16 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		}
 
 		if(!actor->wantsToBeRendered())
+		{
+			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
+		}
+
+		Mesh *mesh = actor->mesh;
+		Material *material = mesh->material;
 
 		glm::mat4 model_matrix = glm::mat4(1.0f);
 		glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
-
-		Mesh *mesh = actor->mesh;
 
 		std::lock_guard guard(state_mutex);
 
@@ -355,24 +417,26 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mesh->material->texture_diffuse);
+		glBindTexture(GL_TEXTURE_2D, material->texture_diffuse);
 
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, mesh->material->texture_specular);
+		glBindTexture(GL_TEXTURE_2D, material->texture_specular);
 
-		shaders[shader_index]->setUniform("material.texture_diffuse", 0);
-		shaders[shader_index]->setUniform("material.texture_specular", 1);
-		shaders[shader_index]->setUniform("material.color", mesh->material->color);
-		shaders[shader_index]->setUniform("is_light", false);
 		shaders[shader_index]->setUniform("model_matrix", model_matrix);
 		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
+
+		shaders[shader_index]->setUniform("is_light", false);
+		shaders[shader_index]->setUniform("is_primitive", false);
+		shaders[shader_index]->setUniform("material.texture_diffuse", 0);
+		shaders[shader_index]->setUniform("material.texture_specular", 1);
+		shaders[shader_index]->setUniform("material.color", material->color);
+		shaders[shader_index]->setUniform("material.specular_sharpness", material->specular_sharpness);
+		shaders[shader_index]->setUniform("material.specular_strength", material->specular_strength);
+		shaders[shader_index]->setUniform("mat_fullbright", material->mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
-		shaders[shader_index]->setUniform("material.specular_sharpness", actor->mesh->material->specular_sharpness);
-		shaders[shader_index]->setUniform("material.specular_strength", actor->mesh->material->specular_strength);
-		shaders[shader_index]->setUniform("mat_fullbright", actor->mesh->material->mat_fullbright);
 
 		int vao_stride_size = 8;
 
@@ -397,9 +461,11 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		if(current_vao_index == VAO_OBJ)
 		{
 			glDrawArrays(GL_TRIANGLES, mesh->vertices[0], mesh->vertices.size());
+			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
 		}
 
 		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
+		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
 }

@@ -25,13 +25,6 @@ std::map<int, Actor*(*)()> actor_map =
 };
 
 //
-// RenderState
-//
-RenderState::RenderState(glm::vec3 init_position, glm::quat init_quaternion, glm::vec3 init_scale)
-: render_position(init_position), render_quaternion(init_quaternion), render_scale(init_scale)
-{}
-
-//
 // Actor
 //
 Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)

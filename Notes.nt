@@ -1571,3 +1571,5 @@ Hmm, currently the shaders seem to be what's the least performant with the engin
 Okay, I actually kind of want to see if I can change the render loop to allow for rendering specific things (like lines and triangles for debugging), among other things and I think I have an idea of how to do it without a complete overhaul/refactor. Basically, instead of R_GL_Render calling a glDraw function in its loop, have it add a RenderCmd to the RenderCmd stack or something akin to that. Then, the actual renderer that's on its own loop, will be rendering from that stack. This will let me do debug rendering and will also be a nice way to separate rendering from specific APIs and functions and such. This will require some changes, but I think it'll be worth it.
 
 Game plan: instead of iterating through the Actors in a Theatre, iterate through a list of RenderCmds which will all contain two RenderState structs, and all the relevant data for rendering. Then just parse that data, not using any that aren't filled out (so, make sure default values are defined for every member variable).
+
+It works!!! RenderCmds are now a thing!!!

@@ -1,4 +1,6 @@
 #include "r_common.hpp"
+#include "g_common.hpp"
+#include "g_math.hpp"
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
 #include <models.hpp>
@@ -255,6 +257,7 @@ Mesh::Mesh()
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
+	mesh_data = M_LoadOBJ(ERROR_obj);
 }
 
 Mesh::Mesh(Material *new_material)
@@ -309,4 +312,108 @@ Sprite::Sprite()
 void Sprite::loadSettings(graphx::gSettings new_settings)
 {
 	Mesh::loadSettings(new_settings);
+}
+
+//
+// RenderCmd
+//
+RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
+{
+	primitive_type = graphxRenderPrimitive::LINE;
+	vertex_1 = new_vertex_1;
+	vertex_2 = new_vertex_2;
+	colors_1 = new_vertex_color;
+	colors_2 = new_vertex_color;
+}
+
+RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
+{
+	primitive_type = graphxRenderPrimitive::TRIANGLE;
+	vertex_1 = new_vertex_1;
+	vertex_2 = new_vertex_2;
+	vertex_3 = new_vertex_3;
+	colors_1 = new_vertex_color;
+	colors_2 = new_vertex_color;
+	colors_3 = new_vertex_color;
+}
+
+RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
+{
+	primitive_type = graphxRenderPrimitive::LINE;
+	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
+	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
+	colors_1 = convertMath<glm::vec3>(new_vertex_color);
+	colors_2 = convertMath<glm::vec3>(new_vertex_color);
+}
+
+RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
+{
+	primitive_type = graphxRenderPrimitive::TRIANGLE;
+	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
+	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
+	vertex_3 = convertMath<glm::vec3>(new_vertex_3);
+	colors_1 = convertMath<glm::vec3>(new_vertex_color);
+	colors_2 = convertMath<glm::vec3>(new_vertex_color);
+	colors_3 = convertMath<glm::vec3>(new_vertex_color);
+}
+
+RenderCmd::RenderCmd(Actor *new_actor)
+{
+	render_actor = new_actor;
+}
+
+void RenderCmd::bufferData()
+{
+	if(primitive_type == graphxRenderPrimitive::TRIANGLE)
+	{
+		vertex_data =
+		{
+			vertex_1.x, vertex_1.y, vertex_1.z,    normals_1.x, normals_1.y, normals_1.z,    uvs_1.x, uvs_1.y,    colors_1.x, colors_1.y, colors_1.z,
+			vertex_2.x, vertex_2.y, vertex_2.z,    normals_2.x, normals_2.y, normals_2.z,    uvs_2.x, uvs_2.y,    colors_2.x, colors_2.y, colors_2.z,
+			vertex_3.x, vertex_3.y, vertex_3.z,    normals_3.x, normals_3.y, normals_3.z,    uvs_3.x, uvs_3.y,    colors_3.x, colors_3.y, colors_3.z
+		};
+	}
+
+	else if(primitive_type == graphxRenderPrimitive::LINE)
+	{
+		vertex_data =
+		{
+			vertex_1.x, vertex_1.y, vertex_1.z,    normals_1.x, normals_1.y, normals_1.z,    uvs_1.x, uvs_1.y,    colors_1.x, colors_1.y, colors_1.z,
+			vertex_2.x, vertex_2.y, vertex_2.z,    normals_2.x, normals_2.y, normals_2.z,    uvs_2.x, uvs_2.y,    colors_2.x, colors_2.y, colors_2.z
+		};
+	}
+
+	glBindVertexArray(VAO_OBJ);
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), &vertex_data[0], GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+unsigned int RenderCmd::getVBO()
+{
+	return VBO;
+}
+
+std::vector<float> RenderCmd::getVertexData()
+{
+	return vertex_data;
+}
+
+bool RenderCmd::isPrimitive()
+{
+	return (render_actor == nullptr);
 }

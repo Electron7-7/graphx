@@ -1,6 +1,8 @@
 // r_common.hpp - rendering declarations
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
+#include "Jolt/Jolt.h"
+#include "Jolt/Core/Color.h"
 #include "graphx_namespace.hpp"
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
@@ -51,8 +53,6 @@
 #define DEVICE_SPRITE		3
 #define DEVICE_COLLIDER		4
 
-extern int shader_debug_value;
-extern unsigned int shader_index;
 
 struct GLShader
 {
@@ -128,9 +128,6 @@ struct Material final : public Device
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
-// Forward Declaration
-graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
-
 struct Mesh : public Device
 {
 	std::string name = "Untitled Mesh";
@@ -142,7 +139,7 @@ struct Mesh : public Device
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 	glm::vec3 mesh_scale = glm::vec3(1.0f);
-	graphx::gMeshData mesh_data = M_LoadOBJ(ERROR_obj);
+	graphx::gMeshData mesh_data;
 
 	Mesh();
 	Mesh(Material *new_material);
@@ -160,9 +157,67 @@ struct Sprite : public Mesh
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
+// Forward Declaration
+struct RenderState;
+
+namespace graphxRenderPrimitive
+{
+	typedef int gPrimitiveType;
+	// Shorthand versions.
+	// I always want to make my variable names descriptive, so the shorthand still points back to "gPrimitiveType"
+	typedef gPrimitiveType gPrimType;
+	typedef gPrimitiveType gPType;
+
+	static constexpr gPrimitiveType LINE = 0;
+	static constexpr gPrimitiveType TRIANGLE = 1;
+	static constexpr gPrimitiveType TEXT = -1; // Text not supported yet!
+};
+
+// shorthands for "graphxRenderPrimitive"
+namespace gRendPrim = graphxRenderPrimitive;
+namespace gRPrim = graphxRenderPrimitive;
+
+struct RenderCmd
+{
+	Actor *render_actor = nullptr;
+
+	graphxRenderPrimitive::gPrimitiveType primitive_type = -1;
+	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
+
+	glm::vec3 vertex_1 = glm::vec3(0.0f);
+	glm::vec3 vertex_2 = glm::vec3(0.0f);
+	glm::vec3 vertex_3 = glm::vec3(0.0f);
+	// Currently, normals_#, uvs_#, and even colors_# are kind of redundant, but having them here
+	// allows for control over their values for more intricate debugging later on down the line.
+	glm::vec3 normals_1 = glm::vec3(0.0f);
+	glm::vec3 normals_2 = glm::vec3(0.0f);
+	glm::vec3 normals_3 = glm::vec3(0.0f);
+	glm::vec2 uvs_1 = glm::vec2(0.0f);
+	glm::vec2 uvs_2 = glm::vec2(0.0f);
+	glm::vec2 uvs_3 = glm::vec2(0.0f);
+	glm::vec3 colors_1 = glm::vec3(0.0f);
+	glm::vec3 colors_2 = glm::vec3(0.0f);
+	glm::vec3 colors_3 = glm::vec3(0.0f);
+
+	RenderCmd(Actor *new_actor);
+	RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
+	RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
+	RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+	RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+
+	bool isPrimitive();
+	void bufferData();
+	unsigned int getVBO();
+	std::vector<float> getVertexData();
+
+private:
+	unsigned int VBO;
+	std::vector<float> vertex_data = {};
+};
+
 
 #define GRAPHX_OPENGL 917 // When I support other APIs, more of these will be added
-// Found in r_renderer.cpp
+// Variables found in r_renderer.cpp
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::vector<GLShader *> shaders; // Same for shaders
 extern int graphx_api;
@@ -175,7 +230,10 @@ extern glm::vec2 main_window_size;
 extern float camera_near;
 extern float camera_far;
 extern int current_vao_index;
-// Found in r_common.cpp
+extern int shader_debug_value;
+extern unsigned int shader_index;
+extern bool jolt_debug_render;
+// Variables found in r_common.cpp
 extern std::map<int, Device*(*)()> device_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
@@ -185,8 +243,10 @@ void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color =
 void              R_StoreBuffers();
 void              R_GL_BufferMeshes();
 void              R_Render(std::mutex &state_mutex, float interpolation_time);
+void              R_GL_RenderPrimitive(RenderCmd *render_command);
 void              R_GL_Render(std::mutex &mutex, float interpolation_time);
 void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+void              R_BufferRenderCmd(RenderCmd render_command);
 graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension);
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
 #endif

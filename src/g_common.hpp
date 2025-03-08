@@ -16,12 +16,10 @@ struct Mesh;
 extern bool loading_new_main_theatre;
 
 struct RenderState
-{
-	glm::vec3 render_position;
-	glm::quat render_quaternion;
-	glm::vec3 render_scale;
-
-	RenderState(glm::vec3 init_position = glm::vec3(0.0f), glm::quat init_quaternion = glm::quat(), glm::vec3 init_scale = glm::vec3(1.0f));
+{ // Used by Actors to store/send position, rotation, and scale data
+	glm::vec3 render_position = glm::vec3(0.0f);
+	glm::quat render_quaternion = glm::quat();
+	glm::vec3 render_scale = glm::vec3(0.0f);
 };
 
 class Actor
@@ -130,7 +128,7 @@ struct Theatre
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
-	Actor *getFromTroupe(int index);
+	void probeActorsForRenderCommands();
 
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();

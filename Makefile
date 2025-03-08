@@ -1,7 +1,7 @@
 CXX = clang++
 CC = clang
 
-CXXFLAGS = -g -Wall -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
+CXXFLAGS = -g -Wall -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
 INCLUDES = -I src/include
@@ -15,7 +15,7 @@ else
 	WCC = x86_64-w64-mingw32-gcc
 endif
 
-WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows -ffat-lto-objects $(JOLTFLAGS) $(GRAPHXFLAGS)
+WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows -frtti -ffat-lto-objects $(JOLTFLAGS) $(GRAPHXFLAGS)
 WCCFLAGS = -g -Wall -static -mwindows
 WLIBS = -L src/windows_dependencies/lib/jolt-mingw-w64 -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
 WINCLUDES = -I src/include -I src/windows_dependencies/include

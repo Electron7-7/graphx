@@ -19,6 +19,7 @@
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Renderer/DebugRendererSimple.h>
 #include <cstdarg>
 #include <thread>
 #include <mutex>
@@ -69,7 +70,6 @@ int main()
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
 
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 
@@ -136,6 +136,25 @@ int main()
 // The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
 #include "jolt_boilerplate.hpp"
 
+class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
+{
+public:
+    virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
+    {
+        R_BufferRenderCmd(RenderCmd(inFrom, inTo, inColor));
+    }
+
+    virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override
+    {
+        R_BufferRenderCmd(RenderCmd(inV1, inV2, inV3, inColor));
+    }
+
+    virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view &inString, JPH::ColorArg inColor, float inHeight) override
+    {
+        return;
+    }
+};
+
 void testGameTick(GLFWwindow *main_window)
 {
 	JPH::RegisterDefaultAllocator();
@@ -151,10 +170,17 @@ void testGameTick(GLFWwindow *main_window)
 
 	GraphXContactListener contact_listener;
 	jolt_physics_system.SetContactListener(&contact_listener);
+
+	// GraphXDeadSimpleDebugRenderer debug_renderer;
 #endif
 
 	JPH::TempAllocatorImpl jolt_temp_allocator(10 * 1024 * 1024);
 	JPH::JobSystemThreadPool jolt_job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
+	JPH::BodyManager::DrawSettings jolt_draw_settings;
+
+	jolt_draw_settings.mDrawShape = true;
+	jolt_draw_settings.mDrawShapeWireframe = true;
+	jolt_draw_settings.mDrawBoundingBox = true;
 
 	const JPH::uint cMaxBodies = 2048;
 	const JPH::uint cNumBodyMutexes = 0;
@@ -182,6 +208,8 @@ void testGameTick(GLFWwindow *main_window)
 		now_time = glfwGetTime();
 		current_tick_length += (now_time - last_time) / TICKLENGTH;
 		last_time = now_time;
+
+		// jolt_physics_system.DrawBodies(jolt_draw_settings, &debug_renderer);
 
 		while(current_tick_length >= 1.0f && !loading_new_main_theatre)
 		{
@@ -251,6 +279,15 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		shader_debug_value = 5;
 		PRINTNOTE("Shader Debug Focus Lighting Component: Normals")
+	}
+
+	if(key == GLFW_KEY_7 && action == GLFW_PRESS)
+	{
+		jolt_debug_render = !jolt_debug_render;
+		if(jolt_debug_render)
+			PRINTNOTE("Jolt Debug Renderer: Enabled")
+		else
+			PRINTNOTE("Jolt Debug Renderer: Disabled")
 	}
 
 	if(key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)

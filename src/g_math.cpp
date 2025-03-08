@@ -4,6 +4,7 @@
 #include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <Jolt/Jolt.h>
+#include "Jolt/Core/Color.h"
 
 template<> JPH::Vec3 convertMath(const glm::vec3 &convert_me)
 {
@@ -25,6 +26,11 @@ template<> JPH::Quat convertMath(const glm::quat &convert_me)
 	return JPH::Quat(convert_me.x, convert_me.y, convert_me.z, convert_me.w);
 }
 
+template<> glm::vec3 convertMath(const JPH::Color &convert_me)
+{
+	return glm::vec3(convert_me.r, convert_me.g, convert_me.b);
+}
+
 template<> void convertMath(glm::vec3 &convert_me, JPH::Vec3 convert_from)
 {
 	convert_me = glm::vec3(convert_from.GetX(), convert_from.GetY(), convert_from.GetZ());
@@ -43,6 +49,11 @@ template<> void convertMath(glm::quat &convert_me, JPH::Quat convert_from)
 template<> void convertMath(JPH::Quat &convert_me, glm::quat convert_from)
 {
 	convert_me = JPH::Quat(convert_from.x, convert_from.y, convert_from.z, convert_from.w);
+}
+
+template<> void convertMath(glm::vec3 &convert_me, JPH::Color convert_from)
+{
+	convert_me = glm::vec3(convert_me.r, convert_me.g, convert_me.b);
 }
 
 template<> void radToDeg(JPH::Vec3 &convert_me)
