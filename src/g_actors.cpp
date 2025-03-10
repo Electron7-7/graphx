@@ -627,13 +627,15 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(intensity, settings["Intensity"]);
 	getSetting(falloff, settings["Falloff"]);
 
-	temporary_light_mesh = Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
 	if(mesh != nullptr)
 	{
 		mesh->prepForDestruction();
 		mesh = nullptr;
 		delete mesh;
 	}
+
+	temporary_light_mesh.material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color);
+	mesh = &temporary_light_mesh;
 }
 
 bool Light::isLightType(int light_type)
@@ -649,9 +651,6 @@ LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_directi
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
 	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
-	mesh = nullptr;
 }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
@@ -659,6 +658,11 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 	Light::youGotACallBack(new_settings);
 
 	getSetting(direction, settings["Direction"]);
+
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
+	mesh = nullptr;
+	delete mesh;
 }
 
 //
@@ -698,9 +702,6 @@ LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, fl
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
 	_color = light_color;
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
-	mesh = nullptr;
 }
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
@@ -711,6 +712,10 @@ void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(rotation_offset, settings["RotationOffset"]);
 
 	_color = light_color;
+	if(mesh != nullptr)
+		mesh->prepForDestruction();
+	mesh = nullptr;
+	delete mesh;
 }
 
 void LightFlashlight::tick(int current_tick)

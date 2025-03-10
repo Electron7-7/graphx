@@ -1573,3 +1573,11 @@ Okay, I actually kind of want to see if I can change the render loop to allow fo
 Game plan: instead of iterating through the Actors in a Theatre, iterate through a list of RenderCmds which will all contain two RenderState structs, and all the relevant data for rendering. Then just parse that data, not using any that aren't filled out (so, make sure default values are defined for every member variable).
 
 It works!!! RenderCmds are now a thing!!!
+
+[03/08/25]
+Note: lights are now not showing their debug mesh.
+
+(from 03-10-25): I fixed that.
+
+[03/10/25]
+This last weekend was fucking amazing; I fucking love my boyfriend. Anyways, time to work on features! I'd like to streamline the rendering pipeline, as well as flesh out the RenderCmd system. Now that rendering is done via some abstract struct, rendering has become much less tangled up and I think I can research that RenderCmd system and implement it correctly.
