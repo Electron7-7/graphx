@@ -1585,4 +1585,44 @@ This last weekend was fucking amazing; I fucking love my boyfriend. Anyways, tim
 Actually, before that, let's keep it lower level and learn more about OpenGL buffers. I think I'm gonna start with LearnOpenGL: Advanced Data, which (I think) starts by changing how data is stored in VBOs (i.e: all vertex positions first, then normals, etc).
 
 [03/11/25]
-I ended up doing a lot of work on "setting up" the new rendering system but it was just spaghetti code with no clear ideas. I'm going to scrap that work and try again with a clearer head today.
+I ended up doing a lot of work on "setting up" the new rendering system but it was just spaghetti code with no clear ideas. I'm going to scrap that work and try again with a clearer head today. First, I'm going to confirm that its best to buffer mesh data once at the start instead of on every frame. Yeah that was quick, it totally is. Okay, now time to figure out the real fucking difference between a VBO and a VAO, and then decide how to minimize unnessacary buffer creation/recreation.
+
+Holy fuck, yeah, I've been misusing VBOs and VAOs... again. See this link (https://stackoverflow.com/questions/40438590/is-it-necessary-to-bind-all-vbos-and-textures-each-frame) for deeper info.
+
+Basically, you can store the vertex data for multiple objects in one VBO and then render parts of it depending on the object. I'm pretty sure that VAOs are representative of the attribute data and how its stored within the VBO, so that means that you don't need to re-execute the "glAttribArrayPointer" functions every frame. I want to slowly change the rendering engine to use VBOs and VAOs properly, so lets go piece by piece. First off, I'll need to decide how many VBOs to make, how large to make them, and how to make sure I use the right one for the right object; I also need to be able to choose the right place in the VBO to begin buffering data from (and when to stop). I can implement all of these by giving Mesh objects a way to identify their VBO, the position of their data in that VBO, and the size of their data.
+
+OH HOLY SHIT THIS IS ALSO VERY IMPORTANT (https://stackoverflow.com/questions/14249634/opengl-vaos-and-multiple-buffers)!!! Direct quote:
+
+"glVertexAttribPointer uses the buffer object that was bound to GL_ARRAY_BUFFER at the moment the function was called. So you can't do this:
+
+:::C++
+glVertexAttribPointer(...);
+glBindBuffer(GL_ARRAY_BUFFER, bufferObject);
+glDrawArrays(...);
+:::
+
+This will not use bufferObject; it will use whatever was bound to GL_ARRAY_BUFFER when glVertexAttribPointer was originally called.
+
+VAOs capture this state. So the VAO will, for each vertex attribute, store whatever buffer object was bound to GL_ARRAY_BUFFER when it was called. This allows you to do things like this:
+
+:::C++
+glBindVertexArray(VAO);
+glBindBuffer(GL_ARRAY_BUFFER, buffer1);
+glVertexAttribPointer(0, ...);
+glVertexAttribPointer(1, ...);
+glBindBuffer(GL_ARRAY_BUFFER, buffer2);
+glVertexAttribPointer(2, ...);
+:::
+
+Attributes 0 and 1 will come from buffer1, and attribute 2 will come from buffer2. VAO now captures all of that state. To render, you just do this:
+
+:::C++
+glBindVertexArray(VAO);
+glDraw*();
+:::
+
+In short, if you want to change where an attribute's storage comes from in OpenGL, you must also change it's format. Even if it's the same format, you must call glVertexAttribPointer again.
+
+In general, the way we solve this in the OpenGL world is to put as many things as possible in the same buffer object. Failing that, just use one VAO for each object."
+
+Okay, so what do I need to do? Well, I can make a VAO for attributes, then use one VBO for vertex positions, and another for the rest (splitting them up again if needed). I'm less confident about this, but I think I can then use different pairs of VBOs in different VAOs for different types of rendering (i.e: GL_STATIC_DRAW).
