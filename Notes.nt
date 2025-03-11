@@ -1581,3 +1581,8 @@ Note: lights are now not showing their debug mesh.
 
 [03/10/25]
 This last weekend was fucking amazing; I fucking love my boyfriend. Anyways, time to work on features! I'd like to streamline the rendering pipeline, as well as flesh out the RenderCmd system. Now that rendering is done via some abstract struct, rendering has become much less tangled up and I think I can research that RenderCmd system and implement it correctly.
+
+Actually, before that, let's keep it lower level and learn more about OpenGL buffers. I think I'm gonna start with LearnOpenGL: Advanced Data, which (I think) starts by changing how data is stored in VBOs (i.e: all vertex positions first, then normals, etc).
+
+[03/11/25]
+I ended up doing a lot of work on "setting up" the new rendering system but it was just spaghetti code with no clear ideas. I'm going to scrap that work and try again with a clearer head today.
