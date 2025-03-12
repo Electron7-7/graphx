@@ -1626,3 +1626,32 @@ In short, if you want to change where an attribute's storage comes from in OpenG
 In general, the way we solve this in the OpenGL world is to put as many things as possible in the same buffer object. Failing that, just use one VAO for each object."
 
 Okay, so what do I need to do? Well, I can make a VAO for attributes, then use one VBO for vertex positions, and another for the rest (splitting them up again if needed). I'm less confident about this, but I think I can then use different pairs of VBOs in different VAOs for different types of rendering (i.e: GL_STATIC_DRAW).
+
+To do this, I'll need to change a fair amount of stuff, but since I've already started deferring rendering to RenderCmds, I've done some of the heavy lifting already. Basically, meshes will be given their vertices (and indices if applicable) in vector form when first created; then, they'll be buffered, which will store their data in buffer objects and clear their vectors. They'll also be given a variable to identify their buffer(s) as well as the location and size of their buffered data. Then, that data (the ids) is sent via RenderCmd to the render batch. This might be easier with a custom typedef tuple as well. Eventually I can then phase these out in favor of generic buffers, which will hopefully bring my code up to modern OpenGL standards.
+
+Also, small note: texture coordinates and UVs are the same.
+
+I'm going to also temporarily phase out usage of indices; they can be helpful with reducing redundant data, but for my use case currently they are just an extra thing to keep track of and aren't helping that much (yet). This means I'll also temporarily change gMeshData to not take a vector of unsigned ints.
+
+Okay, I've changed what data Meshes can hold, now time to change how that data is interacted with, used, and read. Ohh, before I do I just looked and realized I need to change gMeshData to be more than a single vector of floats. I need to separate each vertex attribute. This means that gMeshData will no longer be a tuple.
+
+Okay some notes: I forgot that you need to pre-allocate the buffer store for a VBO (or any buffer, actually) and that means either allocating exactly enough data for one object, or specifying a maximum amount of data and making a new buffer when that max is hit. That second option would be nice, but with how the codebase and my skill leveel are, currently, the first option seems best. This means, yes, generating new VBOs for each object (which is less efficient but not by that much form what I've read), but still splitting up vertex attributes. This would just be going back to how things were, however, so I might take a chance on the idea of making big buffers and using them until they're filled and making another buffer. I wanna try that, actually. Okay, I will.
+
+Gameplan: VBOs will not be split between the two types that I've made, and all attributes will be contained in singular VBOs. They will, however, be stored in an array of vectors; each vector will be for VBOs of a certain type (UI, Mesh, etc) and will be populated with new VBOs when one is filled up. I'm assuming that when buffering data into a VBO, I'll first want to check how much data it already has, and if it can't fit the data I want to put in it, I'll create and use a new one. If I return the index to that VBO in the gBufferedMeshData object, I could buffer data in a way where even if one VBO is mostly full and a new one has been made, if some un-buffered data would fit that older VBO then the program will use it and return its index. This would mean that I'd have to bind VBOs every frame (or check and re-bind if needed), instead of the nicer binding the VAO and just drawing a range, but if I do a check then that means that for a decent amount of data, I wouldn't be re-binding.
+
+Okay, I want to find out if you can query the "remaining space" of any specific VBO, and if not I'll make a typedef of std::pair<unsigned int, int/long> where the first half is the VBO and the second half is the remaining size (starting at the max size). The remaining size will be calculated by subtracting the amount of data that was just buffered into the VBO from the remaining size.
+
+It seems a bit complicated and would probably be easier to use the typedef.
+
+This is also a good ref: (https://www.reddit.com/r/opengl/comments/xly1ua/does_buffer_size_affect_performance)
+
+Note on gMeshData: I need a way to combine all the vectors into one vector and the feed that vector to the VBO. I can either do this in the function (not really what I want to do) or in the struct. If it's in the struct, however, I don't want "graphx_namespace.hpp" to also have a source file attached to it, so it'd have to be in the header.
+
+I've re-written my "graphxmodels" to not use indices, as I'm phasing them out temporarily. The new rendering process isn't complete, but almost all the pieces are set.
+
+Holy shit, read this -> (https://gamedev.stackexchange.com/questions/61750/large-vertex-buffer-vs-multiple-draw-calls) because you're using VBOs semi-wrong AGAIN and this is how you can make them more efficient!! Use a separate VBO for each unique mesh type!! One for GRPAHX_CUBE, one for GRAPHX_PYRAMID, one for OBJ_ERROR, etc!
+
+Okay, here's what I want to do:
+  - finish latest version of VBO processing
+    - Look at the above link and decide whether or not to integrate into or replace the current version with it
+  - implement PrimitiveRenderCmd code from other Development sub-branch

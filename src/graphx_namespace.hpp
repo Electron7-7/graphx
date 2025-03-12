@@ -1,5 +1,6 @@
 #ifndef GRAPHX_NAMESPACE
 #define GRAPHX_NAMESPACE
+#include <glm/glm.hpp>
 #include <map>
 #include <any>
 #include <array>
@@ -51,6 +52,45 @@ namespace graphx
 	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
 	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
 	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
+	typedef std::vector<std::string> gRawData;
+
+	typedef std::pair<unsigned int, int> gVBO; // Storing a VBO name and its available storage capacity
+
+	struct gMeshData
+	{
+	public:
+		int vao_index = -1;
+
+		std::vector<float> vertex_positions;
+		std::vector<float> vertex_normals;
+		std::vector<float> vertex_uvs;
+		std::vector<float> vertex_colors;
+
+		gMeshData(std::vector<float> init_positions = {0.0f, 0.0f, 0.0f}, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f})
+		: vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors)
+		{}
+
+		inline std::vector<float> getVertexData()
+		{
+			std::vector<float> vertex_data = vertex_positions;
+			vertex_data.insert(vertex_data.end(), vertex_normals.begin(), vertex_normals.end());
+			vertex_data.insert(vertex_data.end(), vertex_uvs.begin(), vertex_uvs.end());
+			vertex_data.insert(vertex_data.end(), vertex_colors.begin(), vertex_colors.end());
+			return vertex_data;
+		}
+
+	private:
+		// For the time being, I'm removing indices from the rendering process
+		// std::vector<unsigned int> vertex_indices;
+	};
+
+	struct gBufferedMeshData
+	{
+	public:
+		int vao_index          = -1;
+		int vbo_name           = -1;
+		long vbo_data_range[2] = {-1, -1};
+	};
 
 	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only
 	// and shouldn't be used by anything else (except for Theatre::graphx_theatre_settings)
@@ -67,10 +107,6 @@ namespace graphx
 	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	typedef std::pair<int, std::string> gSandwichPair;
-	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> gMeshData;
-	typedef std::vector<std::string> gRawData;
 
 	static std::map<int, std::string> classnames =
 	{

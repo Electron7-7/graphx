@@ -25,6 +25,11 @@
 #define SHADER_PHONG		1
 
 
+// Le secret dev texture
+#define DOOM_TEXTURE_DIFF				COMP04_5_png
+#define DOOM_TEXTURE_SPEC				COMP04_5_SPECULAR_jpg
+
+
 // BUFFERS ARENT IMPLEMENTED YET, SO THESE ARENT USED!
 #define BUFFERS_AMOUNT		5
 //---------------------------
@@ -35,24 +40,18 @@
 #define BUFFER_PROPS		4
 
 
-// Le secret dev texture
-#define DOOM_TEXTURE_DIFF				COMP04_5_png
-#define DOOM_TEXTURE_SPEC				COMP04_5_SPECULAR_jpg
-
-
-#define VAOS_AMOUNT			3
+#define VAOS_AMOUNT         2
 //---------------------------
-#define VAO_HANDMADE		0
-#define VAO_OBJ				1
+#define VAO_HANDMADE        0
+#define VAO_OBJ             1
 
 
-#define DEVICE_DEVICE		0
-#define DEVICE_ENVIRONMENT	1
-#define DEVICE_MATERIAL		2
-#define DEVICE_MESH			3
-#define DEVICE_SPRITE		3
-#define DEVICE_COLLIDER		4
-
+#define VBO_SIZE_BYTES      0xA00000 // Equal to 10 MiB (10485760 Bytes)
+//---------------------------
+#define VBOS_AMOUNT         2
+//---------------------------
+#define VBO_MESH            0
+#define VBO_UI              1
 
 struct GLShader
 {
@@ -130,21 +129,27 @@ struct Material final : public Device
 
 struct Mesh : public Device
 {
+	// There are only two VBOs, which are globally used (for the time being)
+	// unsigned int VBO = 0;
+	// It's simpler to forgo indices... for now
+	// std::vector<unsigned int> indices = CUBE_INDICES;
+	// unsigned int IBO = 0;
+	// glm::vec3 mesh_scale = glm::vec3(1.0f);
+
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
-	int vao_index = VAO_HANDMADE;
-	std::vector<float> vertices = CUBE_VERTS;
-	std::vector<unsigned int> indices = CUBE_INDICES;
-	unsigned int VBO = 0;
-	unsigned int IBO = 0;
-	bool is_buffered = false;
-	glm::vec3 mesh_scale = glm::vec3(1.0f);
-	graphx::gMeshData mesh_data;
+	graphx::gMeshData mesh_data; // This should be cleared once the vertices are buffered
+	graphx::gBufferedMeshData buffered_mesh_data;
 
 	Mesh();
 	Mesh(Material *new_material);
 
-	void processMeshData();
+	// I don't know if I'm comfortable with how abstracted these three functions are...
+	// graphx::gBufferedMeshData getBufferData();
+	// graphx::gMeshData getMeshData();
+	// void loadBufferedData(graphx::gBufferedMeshData buffered_data);
+
+	bool isBuffered();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 	void prepForDestruction() override;
 };
@@ -174,8 +179,8 @@ namespace graphxRenderPrimitive
 };
 
 // shorthands for "graphxRenderPrimitive"
-namespace gRendPrim = graphxRenderPrimitive;
-namespace gRPrim = graphxRenderPrimitive;
+namespace gRendPrim = graphxRenderPrimitive; // NOLINT
+namespace gRPrim = graphxRenderPrimitive;    // NOLINT
 
 struct RenderCmd
 {
@@ -218,7 +223,8 @@ private:
 
 #define GRAPHX_OPENGL 917 // When I support other APIs, more of these will be added
 // Variables found in r_renderer.cpp
-extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
+extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
+extern std::array<std::vector<graphx::gVBO>, VBOS_AMOUNT> VBOs;
 extern std::vector<GLShader *> shaders; // Same for shaders
 extern int graphx_api;
 extern bool time_to_render;
@@ -241,12 +247,13 @@ template<typename T> Device *createNewDevice() { return new T; }
 GLFWwindow       *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
 void              R_StoreBuffers();
-void              R_GL_BufferMeshes();
+// void              R_GL_BufferMeshes();
 void              R_Render(std::mutex &state_mutex, float interpolation_time);
-void              R_GL_RenderPrimitive(RenderCmd *render_command);
-void              R_GL_Render(std::mutex &mutex, float interpolation_time);
+// void              R_GL_RenderPrimitive(RenderCmd *render_command);
+// void              R_GL_Render(std::mutex &mutex, float interpolation_time);
 void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void              R_BufferRenderCmd(RenderCmd render_command);
+void              R_InitializeRenderingAPI();
 graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension);
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
 #endif

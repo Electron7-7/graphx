@@ -11,7 +11,8 @@
 #include <tiny_obj_loader.h>
 #include <cmath>
 
-std::array<GLuint, VAOS_AMOUNT> VAOs;
+std::array<unsigned int, VAOS_AMOUNT> VAOs;
+std::array<std::vector<graphx::gVBO>, VBOS_AMOUNT> VBOs;
 std::vector<GLShader *> shaders;
 bool time_to_render = false;
 bool time_to_store_buffers = false;
@@ -24,6 +25,8 @@ float camera_near = 0.1f;
 float camera_far = 1000.0f;
 int current_vao_index = VAOS_AMOUNT + 1; // Pulled out of the render function so my debug menu can see it
 bool jolt_debug_render = false;
+
+std::vector<RenderCmd> render_commands; // Keeping this out of the header file for safety/isolation
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
@@ -90,6 +93,9 @@ namespace TO = tinyobj;
 
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 {
+	graphx::gMeshData mesh_data;
+	mesh_data.vao_index = VAO_OBJ;
+
 	TO::ObjReaderConfig reader_config;
 	TO::ObjReader reader;
 
@@ -111,7 +117,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 	auto& attrib = reader.GetAttrib();
 	auto& shapes = reader.GetShapes();
 
-	std::vector<float> vertices;
+	// std::vector<float> vertices;
 
 	// Loop over shapes
 	for (size_t s = 0; s < shapes.size(); s++)
@@ -132,7 +138,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 				tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
 
 				// std::cout << "Vertex: " << vx << ", " << vy << ", " << vz << std::endl;
-				vertices.insert(vertices.end(), {(float)vx / PREEMPTIVE_OBJ_SCALE, (float)vy / PREEMPTIVE_OBJ_SCALE, (float)vz / PREEMPTIVE_OBJ_SCALE});
+				mesh_data.vertex_positions.insert(mesh_data.vertex_positions.end(), {(float)vx, (float)vy, (float)vz});
 
 				// Check if `normal_index` is zero or positive. negative = no normal data
 				if (idx.normal_index >= 0)
@@ -142,12 +148,12 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
 
 					// std::cout << "Normal: " << nx << ", " << ny << ", " << nz << std::endl;
-					vertices.insert(vertices.end(), {(float)nx, (float)ny, (float)nz});
+					mesh_data.vertex_normals.insert(mesh_data.vertex_normals.end(), {(float)nx, (float)ny, (float)nz});
 				}
 
 				else
 				{
-					vertices.insert(vertices.end(), {0.0f, 0.0f, 0.0f});
+					mesh_data.vertex_normals.insert(mesh_data.vertex_normals.end(), {0.0f, 0.0f, 0.0f});
 				}
 
 				// Check if `texcoord_index` is zero or positive. negative = no texcoord data
@@ -157,12 +163,12 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
 				
 					// std::cout << "Texture Coordinate: " << tx << ", " << ty << std::endl;
-					vertices.insert(vertices.end(), {(float)tx, (float)ty});
+					mesh_data.vertex_uvs.insert(mesh_data.vertex_uvs.end(), {(float)tx, (float)ty});
 				}
 
 				else
 				{
-					vertices.insert(vertices.end(), {0.0f, 0.0f});
+					mesh_data.vertex_uvs.insert(mesh_data.vertex_uvs.end(), {0.0f, 0.0f, 0.0f});
 				}
 
 				if (idx.texcoord_index >= 0)
@@ -171,12 +177,12 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
 					tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
 					// std::cout << "Vertex Color: " << red << ", " << green << ", " << blue << std::endl;
-					vertices.insert(vertices.end(), {(float)red, (float)green, (float)blue});
+					mesh_data.vertex_colors.insert(mesh_data.vertex_colors.end(), {(float)red, (float)green, (float)blue});
 				}
 
 				else
 				{
-					vertices.insert(vertices.end(), {1.0f, 1.0f, 1.0f});
+					mesh_data.vertex_colors.insert(mesh_data.vertex_colors.end(), {1.0f, 1.0f, 1.0f});
 				}
 			}
 
@@ -184,42 +190,19 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 		}
 	}
 
-	return graphx::gMeshData(vertices, {}, VAO_OBJ);
+	return mesh_data;
 }
 
-void R_StoreBuffers()
+void R_GL_Initialize()
 {
-	switch(graphx_api)
+	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
+	for(int i = 0 ; i < VBOS_AMOUNT ; i++)
 	{
-	case GRAPHX_OPENGL:
-		R_GL_BufferMeshes();
-		break;
-	}
-
-	time_to_store_buffers = false;
-	time_to_render = true;
-}
-
-std::vector<RenderCmd> render_commands; // Keeping this out of the header file for now
-
-void R_BufferRenderCmd(RenderCmd render_command)
-{
-	render_commands.insert(render_commands.end(), render_command);
-}
-
-void R_Render(std::mutex &state_mutex, float interpolation_time)
-{
-	if(loading_new_main_theatre)
-		return;
-
-	if(time_to_store_buffers)
-		R_StoreBuffers();
-
-	switch(graphx_api)
-	{
-	case GRAPHX_OPENGL:
-		R_GL_Render(state_mutex, interpolation_time);
-		break;
+		graphx::gVBO new_vbo(0, VBO_SIZE_BYTES);
+		glGenBuffers(1, &new_vbo.first);
+		glBindBuffer(GL_ARRAY_BUFFER, new_vbo.first);
+		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE_BYTES, nullptr, GL_STATIC_DRAW);
+		VBOs[i].insert(VBOs[i].end(), new_vbo);
 	}
 }
 
@@ -228,9 +211,7 @@ void R_GL_BufferMeshes()
 	if(loading_new_main_theatre)
 		return;
 
-	current_vao_index = VAOS_AMOUNT + 1;
-
-	getCurrentTheatre()->probeActorsForRenderCommands();
+	current_vao_index = VAOS_AMOUNT;
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
@@ -243,7 +224,7 @@ void R_GL_BufferMeshes()
 		Actor *actor = rendercmd_iterator.base()->render_actor;
 
 		// There used to exist Actor::wantsToBeBuffered, but it was only ever used here, so I got rid of it
-		if(actor->mesh == nullptr || actor->mesh->is_buffered || actor->isType(graphx::classes::GRAPHXPLAYER))
+		if(actor->mesh == nullptr || actor->mesh->isBuffered() || actor->isType(graphx::classes::GRAPHXPLAYER))
 		{
 			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
@@ -252,30 +233,47 @@ void R_GL_BufferMeshes()
 		Mesh *mesh = actor->mesh;
 		Material *material = mesh->material;
 
-		if(mesh->vao_index != current_vao_index)
-		{
-			current_vao_index = mesh->vao_index;
-			glBindVertexArray(VAOs[current_vao_index]);
-		}
-
-		if(material->embedded_texture_diffuse != NULL)
+		if(material->embedded_texture_diffuse != nullptr)
 			material->texture_diffuse = material->bufferTextureFromMemory(material->embedded_texture_diffuse);
-		if(material->embedded_texture_specular != NULL)
+		if(material->embedded_texture_specular != nullptr)
 			material->texture_specular = material->bufferTextureFromMemory(material->embedded_texture_specular);
 
-		glGenBuffers(1, &mesh->VBO);
-		glGenBuffers(1, &mesh->IBO);
+		glBindVertexArray(VAOs[VAO_OBJ]); // Sticking with one VAO for the time being...
 
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), &mesh->vertices[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
 
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+		glEnableVertexAttribArray(2);
 
-		mesh->is_buffered = true;
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+		glEnableVertexAttribArray(3);
 
+		graphx::gMeshData mesh_data = mesh->mesh_data;
+		graphx::gVBO current_mesh_vbo = VBOs[VBO_MESH].back();
+		std::vector<float> vertex_data = mesh_data.getVertexData();
+
+		if(VBOs[VBO_MESH].back().second < (vertex_data.size() * sizeof(float)))
+		{
+			current_mesh_vbo = graphx::gVBO(0, VBO_SIZE_BYTES);
+			glGenBuffers(1, &current_mesh_vbo.first);
+			glBindBuffer(GL_ARRAY_BUFFER, current_mesh_vbo.first);
+			glBufferData(GL_ARRAY_BUFFER, VBO_SIZE_BYTES, nullptr, GL_STATIC_DRAW);
+			VBOs[VBO_MESH].insert(VBOs[VBO_MESH].end(), current_mesh_vbo);
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, current_mesh_vbo.first);
+		glBufferSubData(GL_ARRAY_BUFFER, (VBO_SIZE_BYTES - current_mesh_vbo.second), (vertex_data.size() * sizeof(float)), &vertex_data[0]);
+
+		mesh->buffered_mesh_data.vao_index = VAO_OBJ;
+		mesh->buffered_mesh_data.vbo_name = current_mesh_vbo.first;
+		mesh->buffered_mesh_data.vbo_data_range[0] = current_mesh_vbo.second - (long)(vertex_data.size() * sizeof(float));
+		mesh->buffered_mesh_data.vbo_data_range[1] = current_mesh_vbo.second;
+
+		current_mesh_vbo.second -= (vertex_data.size() * sizeof(float));
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
 }
@@ -322,6 +320,9 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 
 	getCurrentTheatre()->probeActorsForRenderCommands();
+	// Implement: probeActorsForRenderCommands sets time_to_buffer to true if a Mesh isn't buffered; then,
+	// R_GL_Render runs R_GL_BufferMeshes if if time_to_buffer is true. I might also change R_GL_BufferMeshes
+	// to allow for buffering one specific Mesh (or make a separate function for that).
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
@@ -405,16 +406,15 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		model_matrix = glm::translate(model_matrix, interpolated_position);
 		model_matrix *= glm::toMat4(interpolated_quat);
-		model_matrix = glm::scale(model_matrix, interpolated_scale * mesh->mesh_scale);
+		model_matrix = glm::scale(model_matrix, interpolated_scale);
 
-		if(mesh->vao_index != current_vao_index)
+		if(mesh->buffered_mesh_data.vao_index != current_vao_index)
 		{
-			current_vao_index = mesh->vao_index;
+			current_vao_index = mesh->buffered_mesh_data.vao_index;
 			glBindVertexArray(VAOs[current_vao_index]);
 		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffered_mesh_data.vbo_name);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, material->texture_diffuse);
@@ -438,34 +438,58 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("mat_fullbright", material->mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
-		int vao_stride_size = 8;
-
-		// Currently, both VAOs share the same first three attributes, with VAO_OBJ having an extra fourth attribute
-		// This is subject to change, so keep in mind I'll probably need to move these into a switch statement or something
 		if(current_vao_index == VAO_OBJ)
 		{
-			vao_stride_size = 11;
-			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, vao_stride_size * sizeof(float), (void*)(8 * sizeof(float)));
-			glEnableVertexAttribArray(3);
-		}
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vao_stride_size * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vao_stride_size * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vao_stride_size * sizeof(float), (void*)(6 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-
-		if(current_vao_index == VAO_OBJ)
-		{
-			glDrawArrays(GL_TRIANGLES, mesh->vertices[0], mesh->vertices.size());
+			// glDrawArrays(GL_TRIANGLES, mesh->vertices[0], mesh->vertices.size());
 			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
 		}
 
-		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
+		// glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+	}
+}
+
+void R_InitializeRenderingAPI()
+{
+	switch(graphx_api)
+	{
+	case GRAPHX_OPENGL:
+		R_GL_Initialize();
+		break;
+	}
+}
+
+void R_StoreBuffers()
+{
+	switch(graphx_api)
+	{
+	case GRAPHX_OPENGL:
+		R_GL_BufferMeshes();
+		break;
+	}
+
+	time_to_store_buffers = false;
+	time_to_render = true;
+}
+
+void R_BufferRenderCmd(RenderCmd render_command)
+{
+	render_commands.insert(render_commands.end(), render_command);
+}
+
+void R_Render(std::mutex &state_mutex, float interpolation_time)
+{
+	if(loading_new_main_theatre)
+		return;
+
+	if(time_to_store_buffers)
+		R_StoreBuffers();
+
+	switch(graphx_api)
+	{
+	case GRAPHX_OPENGL:
+		R_GL_Render(state_mutex, interpolation_time);
+		break;
 	}
 }

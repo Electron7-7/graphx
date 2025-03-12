@@ -50,7 +50,7 @@ int main()
 {
 	graphx_api = GRAPHX_OPENGL;
 
-	// OpenGL/GLFW Setup
+	// OpenGL/GLFW Setup (MOVE ALL OF THIS INTO R_GL_Initialize AT SOME POINT)
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -71,11 +71,11 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 
-	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
-
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader});
+
+	R_InitializeRenderingAPI();
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
