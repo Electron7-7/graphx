@@ -12,8 +12,9 @@
 #include <cmath>
 
 std::array<unsigned int, VAOS_AMOUNT> VAOs;
-std::array<std::vector<graphx::gVBO>, VBOS_AMOUNT> VBOs;
+std::array<std::vector<unsigned int>, VBO_CATEGORIES> VBOs;
 std::vector<GLShader *> shaders;
+std::vector<graphx::gMeshDataVBOStore> mesh_data_vbo_store;
 bool time_to_render = false;
 bool time_to_store_buffers = false;
 bool do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
@@ -23,7 +24,6 @@ unsigned int shader_index = SHADER_BLINN_PHONG;
 glm::vec2 main_window_size(1280.0f, 720.0f);
 float camera_near = 0.1f;
 float camera_far = 1000.0f;
-int current_vao_index = VAOS_AMOUNT + 1; // Pulled out of the render function so my debug menu can see it
 bool jolt_debug_render = false;
 
 std::vector<RenderCmd> render_commands; // Keeping this out of the header file for safety/isolation
@@ -93,8 +93,7 @@ namespace TO = tinyobj;
 
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 {
-	graphx::gMeshData mesh_data;
-	mesh_data.vao_index = VAO_OBJ;
+	graphx::gMeshData mesh_data(VAO_DEFAULT);
 
 	TO::ObjReaderConfig reader_config;
 	TO::ObjReader reader;
@@ -193,17 +192,56 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 	return mesh_data;
 }
 
+void M_StoreMeshData(graphx::gMeshDataVBOStore new_data)
+{
+	for(graphx::gMeshDataVBOStore &data_store : mesh_data_vbo_store)
+		if(data_store.first == new_data.first)
+			return;
+
+	mesh_data_vbo_store.insert(mesh_data_vbo_store.end(), new_data);
+}
+
+void M_SyncMeshDataStore()
+{
+	for(Device *mesh_device : getCurrentTheatre()->getAllDevicesOfType(graphx::classes::MESH))
+	{
+		Mesh *mesh = static_cast<Mesh *>(mesh_device);
+
+		for(graphx::gMeshDataVBOStore &data_store : mesh_data_vbo_store)
+		{
+			if(data_store.first == mesh->mesh_data)
+			{
+				mesh->buffered_mesh_data.vao_index = mesh->mesh_data.vao_index;
+				mesh->buffered_mesh_data.vbo_name = data_store.second.first;
+				mesh->buffered_mesh_data.mesh_data_size = mesh->mesh_data.getVertexData().size() * sizeof(float);
+				data_store.second.second = MESH_IS_BUFFERED;
+			}
+		}
+	}
+
+	// Flushing unused VBOs and their paired mesh data
+	for(auto it = mesh_data_vbo_store.cbegin() ; it != mesh_data_vbo_store.cend() ; )
+	{
+		if(it->second.second == MESH_WAS_BUFFERED)
+		{
+			for(auto vbo_it = VBOs[VBOS_MESH].begin() ; vbo_it != VBOs[VBOS_MESH].end() ; ++vbo_it)
+			{
+				glDeleteBuffers(1, vbo_it.base());
+				VBOs[VBOS_MESH].erase(vbo_it);
+			}
+
+			it = mesh_data_vbo_store.erase(it);
+		}
+
+		else
+			++it;
+	}
+}
+
 void R_GL_Initialize()
 {
-	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
-	for(int i = 0 ; i < VBOS_AMOUNT ; i++)
-	{
-		graphx::gVBO new_vbo(0, VBO_SIZE_BYTES);
-		glGenBuffers(1, &new_vbo.first);
-		glBindBuffer(GL_ARRAY_BUFFER, new_vbo.first);
-		glBufferData(GL_ARRAY_BUFFER, VBO_SIZE_BYTES, nullptr, GL_STATIC_DRAW);
-		VBOs[i].insert(VBOs[i].end(), new_vbo);
-	}
+	if(VAOs.empty())
+		glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
 }
 
 void R_GL_BufferMeshes()
@@ -211,24 +249,16 @@ void R_GL_BufferMeshes()
 	if(loading_new_main_theatre)
 		return;
 
-	current_vao_index = VAOS_AMOUNT;
-
-	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
+	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ; rendercmd_iterator++)
 	{
 		if(rendercmd_iterator.base()->isPrimitive())
-		{
-			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
-		}
 
 		Actor *actor = rendercmd_iterator.base()->render_actor;
 
 		// There used to exist Actor::wantsToBeBuffered, but it was only ever used here, so I got rid of it
 		if(actor->mesh == nullptr || actor->mesh->isBuffered() || actor->isType(graphx::classes::GRAPHXPLAYER))
-		{
-			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
-		}
 
 		Mesh *mesh = actor->mesh;
 		Material *material = mesh->material;
@@ -238,7 +268,7 @@ void R_GL_BufferMeshes()
 		if(material->embedded_texture_specular != nullptr)
 			material->texture_specular = material->bufferTextureFromMemory(material->embedded_texture_specular);
 
-		glBindVertexArray(VAOs[VAO_OBJ]); // Sticking with one VAO for the time being...
+		glBindVertexArray(VAOs[VAO_DEFAULT]); // Sticking with one VAO for the time being...
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -253,28 +283,19 @@ void R_GL_BufferMeshes()
 		glEnableVertexAttribArray(3);
 
 		graphx::gMeshData mesh_data = mesh->mesh_data;
-		graphx::gVBO current_mesh_vbo = VBOs[VBO_MESH].back();
 		std::vector<float> vertex_data = mesh_data.getVertexData();
+		VBOs[VBOS_MESH].insert(VBOs[VBOS_MESH].end(), 0);
 
-		if(VBOs[VBO_MESH].back().second < (vertex_data.size() * sizeof(float)))
-		{
-			current_mesh_vbo = graphx::gVBO(0, VBO_SIZE_BYTES);
-			glGenBuffers(1, &current_mesh_vbo.first);
-			glBindBuffer(GL_ARRAY_BUFFER, current_mesh_vbo.first);
-			glBufferData(GL_ARRAY_BUFFER, VBO_SIZE_BYTES, nullptr, GL_STATIC_DRAW);
-			VBOs[VBO_MESH].insert(VBOs[VBO_MESH].end(), current_mesh_vbo);
-		}
+		glGenBuffers(1, &VBOs[VBOS_MESH].back());
+		glNamedBufferData(VBOs[VBOS_MESH].back(), (vertex_data.size() * sizeof(float)), &vertex_data[0], GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ARRAY_BUFFER, current_mesh_vbo.first);
-		glBufferSubData(GL_ARRAY_BUFFER, (VBO_SIZE_BYTES - current_mesh_vbo.second), (vertex_data.size() * sizeof(float)), &vertex_data[0]);
+		mesh->buffered_mesh_data.vao_index = VAO_DEFAULT;
+		mesh->buffered_mesh_data.vbo_name = VBOs[VBOS_MESH].back();
+		mesh->buffered_mesh_data.mesh_data_size = vertex_data.size() * sizeof(float);
+		mesh->buffered_mesh_data.mesh_data_offset = 0; // There are no batched VBOs currently but this is how they would be supported
 
-		mesh->buffered_mesh_data.vao_index = VAO_OBJ;
-		mesh->buffered_mesh_data.vbo_name = current_mesh_vbo.first;
-		mesh->buffered_mesh_data.vbo_data_range[0] = current_mesh_vbo.second - (long)(vertex_data.size() * sizeof(float));
-		mesh->buffered_mesh_data.vbo_data_range[1] = current_mesh_vbo.second;
-
-		current_mesh_vbo.second -= (vertex_data.size() * sizeof(float));
-		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+		M_StoreMeshData(graphx::gMeshDataVBOStore(mesh->mesh_data, graphx::gMeshDataVBOStoreSecondHalf(VBOs[VBOS_MESH].back(), MESH_WAS_BUFFERED)));
+		M_SyncMeshDataStore();
 	}
 }
 
@@ -300,7 +321,7 @@ void R_GL_RenderPrimitive(RenderCmd *render_command)
 	shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 	shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(glm::mat4(1.0f)))));
 
-	glBindVertexArray(VAO_OBJ);
+	glBindVertexArray(VAO_DEFAULT);
 	glBindBuffer(GL_ARRAY_BUFFER, render_command->getVBO());
 	glDrawArrays(GL_LINES, 0, render_command->getVertexData().size());
 }
@@ -310,7 +331,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	if(loading_new_main_theatre)
 		return;
 
-	// current_vao_index = VAOS_AMOUNT + 1; // Make sure we always switch to and bind the first used VAO
+	int current_vao_index = -1; // Make sure we always switch to and bind the first used VAO
 	int point_light_index = 0;
 	int spot_light_index = 0;
 
@@ -318,11 +339,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	shaders[shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
 	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
-
-	getCurrentTheatre()->probeActorsForRenderCommands();
-	// Implement: probeActorsForRenderCommands sets time_to_buffer to true if a Mesh isn't buffered; then,
-	// R_GL_Render runs R_GL_BufferMeshes if if time_to_buffer is true. I might also change R_GL_BufferMeshes
-	// to allow for buffering one specific Mesh (or make a separate function for that).
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
@@ -438,15 +454,12 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("mat_fullbright", material->mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
-		if(current_vao_index == VAO_OBJ)
+		if(current_vao_index == VAO_DEFAULT)
 		{
-			// glDrawArrays(GL_TRIANGLES, mesh->vertices[0], mesh->vertices.size());
+			glDrawArrays(GL_TRIANGLES, mesh->buffered_mesh_data.mesh_data_offset, mesh->buffered_mesh_data.mesh_data_size);
 			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
 		}
-
-		// glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
-		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
 }
 
@@ -462,6 +475,11 @@ void R_InitializeRenderingAPI()
 
 void R_StoreBuffers()
 {
+	if(loading_new_main_theatre)
+		return;
+
+	getCurrentTheatre()->probeActorsForRenderCommands();
+
 	switch(graphx_api)
 	{
 	case GRAPHX_OPENGL:
@@ -476,6 +494,8 @@ void R_StoreBuffers()
 void R_BufferRenderCmd(RenderCmd render_command)
 {
 	render_commands.insert(render_commands.end(), render_command);
+	if(render_command.render_actor != nullptr && render_command.render_actor->mesh != nullptr && !render_command.render_actor->mesh->isBuffered())
+		time_to_store_buffers = true;
 }
 
 void R_Render(std::mutex &state_mutex, float interpolation_time)
@@ -483,8 +503,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time)
 	if(loading_new_main_theatre)
 		return;
 
-	if(time_to_store_buffers)
-		R_StoreBuffers();
+	getCurrentTheatre()->probeActorsForRenderCommands();
 
 	switch(graphx_api)
 	{

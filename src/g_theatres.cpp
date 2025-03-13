@@ -116,13 +116,27 @@ void Theatre::dropCurtains()
 	troupe.clear();
 }
 
-/*Actor *Theatre::getFromTroupe(int index)
+std::vector<Actor *> Theatre::getAllActorsOfType(int type_name)
 {
-	if(loading_new_main_theatre || index > troupe.size())
-		return new Actor();
+	std::vector<Actor *> found_actors;
 
-	return troupe[index];
-}*/
+	for(auto &pair : objects)
+		if(pair.second->isType(type_name))
+			found_actors.insert(found_actors.end(), pair.second);
+
+	return found_actors;
+}
+
+std::vector<Device *> Theatre::getAllDevicesOfType(int type_name)
+{
+	std::vector<Device *> found_devices;
+
+	for(auto &pair : devices)
+		if(pair.second->isType(type_name))
+			found_devices.insert(found_devices.end(), pair.second);
+
+	return found_devices;
+}
 
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)
 {

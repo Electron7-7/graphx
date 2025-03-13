@@ -263,7 +263,7 @@ void Actor::takeABow()
 
 bool Actor::wantsToBeRendered()
 {
-	return (mesh != nullptr && mesh->is_buffered && visible);
+	return (mesh != nullptr && mesh->isBuffered() && visible);
 }
 
 //

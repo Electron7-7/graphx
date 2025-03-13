@@ -54,8 +54,6 @@ namespace graphx
 	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
 	typedef std::vector<std::string> gRawData;
 
-	typedef std::pair<unsigned int, int> gVBO; // Storing a VBO name and its available storage capacity
-
 	struct gMeshData
 	{
 	public:
@@ -65,6 +63,10 @@ namespace graphx
 		std::vector<float> vertex_normals;
 		std::vector<float> vertex_uvs;
 		std::vector<float> vertex_colors;
+
+		gMeshData(int init_vao_index, std::vector<float> init_positions = {0.0f, 0.0f, 0.0f}, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f})
+		: vao_index(init_vao_index), vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors)
+		{}
 
 		gMeshData(std::vector<float> init_positions = {0.0f, 0.0f, 0.0f}, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f})
 		: vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors)
@@ -79,17 +81,33 @@ namespace graphx
 			return vertex_data;
 		}
 
+		inline bool operator==(const gMeshData &compared_with) const
+		{
+			return
+			(
+				vao_index        == compared_with.vao_index        &&
+				vertex_positions == compared_with.vertex_positions &&
+				vertex_normals   == compared_with.vertex_normals   &&
+				vertex_uvs       == compared_with.vertex_uvs       &&
+				vertex_colors    == compared_with.vertex_colors
+			);
+		}
+
 	private:
 		// For the time being, I'm removing indices from the rendering process
 		// std::vector<unsigned int> vertex_indices;
 	};
 
+	typedef std::pair<unsigned int, bool> gMeshDataVBOStoreSecondHalf;
+	typedef std::pair<gMeshData, gMeshDataVBOStoreSecondHalf> gMeshDataVBOStore;
+
 	struct gBufferedMeshData
 	{
 	public:
-		int vao_index          = -1;
-		int vbo_name           = -1;
-		long vbo_data_range[2] = {-1, -1};
+		int vao_index         = -1;
+		int vbo_name          = -1;
+		long mesh_data_size   = -1;
+		long mesh_data_offset = -1;
 	};
 
 	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only

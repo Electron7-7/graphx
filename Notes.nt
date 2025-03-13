@@ -1655,3 +1655,45 @@ Okay, here's what I want to do:
   - finish latest version of VBO processing
     - Look at the above link and decide whether or not to integrate into or replace the current version with it
   - implement PrimitiveRenderCmd code from other Development sub-branch
+
+[03/12/25]
+I had an idea for Meshes and VBOs; if I implement instanced VBOs, then Meshes can just be Devices that contain mesh data that are stored in the Theatre, while the actual thing that Actors would have/use as a "Mesh" would actually be a VBO name reference (or pointer to a Mesh that has that VBO name reference).
+
+I finished the first implementation; data is being rendered incorrectly, but it IS being buffered and rendered without crashing and (seemingly) with the right data. I just think the offset in gBufferedMeshData is incorrectly calculated.
+
+Found out it's probably that but there's another definite reason: I wasn't changing data in the gVBO object, but a copy of it, lol. Anyways, I also realized that when new Theatres are loaded, the VBOs need to be cleared, which is a waste if they're storing vertex data that's going to be used. I think that changing gears to the instanced VBOs idea is the best course of action.
+Here's what I need to do:
+  - Change the VBOs variable to be a vector of VBOs (and remove gVBO)
+  - Meshes are just storage for raw vertex data; if an Actor uses a certain Mesh, it's really using a VBO name
+
+This is almost what I was doing in the first place (lmfao), but now that I know what I'm doing I can intentionally make sure that duplicate VBOs aren't being made. The original version of the renderer would just make a VBO for every Mesh, even if that Mesh's data was already buffered in a VBO. Since Meshes still contain relevant data for rendering (i.e: Materials and such), I'll need to make sure that the interpreter never makes a copy of a Mesh unless its a sandwich (as that's just a shorthand for making a new object).
+
+After checking, the interpreter is already written to avoid duplicating objects outside of a sandwich. All right, here's the full game plan:
+  - Change the VBOs variable to be a vector of VBOs (and remove gVBO)
+  - When buffering data, use the VBO name for the Mesh::isBuffered check
+  - When rendering, use the Mesh's internal VBO, like I used to
+  - When loading a new Theatre, delete any VBOs that won't get used
+
+Just realized I'm basically undoing my work... lmfao. Oh well, at least now I know a lot more about what I'm doing and a lot lot more about buffers in OpenGL.
+
+Here's my idea for deleting VBOs when switching Theatres: make a function in Theatre that will grab all the VBO names from all the Meshes in the devices map and return them in a vector. Then, call that function during R_GL_Initialize, and delete any VBOs that aren't in that vector. This should be done after a Theatre has been loaded, so maybe the Theatre will set a boolean flag called "time_to_flush_buffers" or something.
+
+While doing my rounds, I realized that what I'm doing is almost what I want but not quite. Basically, when a new Theatre is loaded I need to compare the mesh data in each Mesh with a storage of the mesh data in the previous Theatre, NOT the VBO names, since new Meshes won't have VBO names unless they're already buffered (which means a new VBO has been made). I can do this if I write a simple hashing algorithm to generate a unique identifying number that represents a Mesh's mesh data. Then, I can compare hashes from the old Theatre with hashes from the new Theatre and if there are any copies, I set that Mesh's VBO name variable, and if no copies are found for a VBO, I delete it. This means I need to re-add "gVBO" but this time, the second value will be this mesh data hash.
+
+Notes on the hashing algorithm:
+  - What do I want to do?
+    - Generate a unique ID based on the contents of a gMeshData instance (specifically, the different vectors)
+  - Why do I want to do it?
+    - I want a fast and reliable way of comparing two gMeshData instances
+  - How will I do it?
+    - Hmm...
+
+After further research, a hashing algorithm is way too far out of scope. I just need to compare vectors once (storing them after the fact isn't necessary). This means that I don't actually need to worry about the vectors taking up too much space, since I can clear them after the comparison is done. New idea is to just store copies of the mesh data, compare those copies with the new Meshes' mesh data, and clear the copies once I'm done.
+
+I think I'll actually just write an "operator==" for gMeshData.
+
+Ugh, I realized why I was going to write a hashing algorithm in the first place: I do store it... in gVBO. That's really what I'm comparing. I think I can get away with something a bit cheeky, however: when a Mesh's data is buffered, that'll be when M_StoreMeshData is called with a new type "gMeshDataStore", which will be a pair of gMeshData and unsigned int. The unsigned int being the VBO name. Then I can compare the mesh data and the VBO name to discern which VBOs to toss and which meshes to assign to certain VBOs.
+
+I have a big idea: batched instanced VBOs. Basically, batching all of the vertex data that would have been turned into separate instanced VBOs into a single VBO (because I can calculate the exact size needed). Then, when rendering, use stored values for the offset and size and I wouldn't have to change buffers! I would need to recreate the entire VBO, including re-used vertex data on every Theatre load, however, which is the downside. Food for thought, but let me first finish this instanced VBOs implementation.
+
+I'm pretty close, but the functions I'm using to "make sure there are no duplicate VBOs" are all bad and wrong and don't work. Get rid of them and try again tomorrow.

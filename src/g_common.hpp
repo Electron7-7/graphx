@@ -129,7 +129,6 @@ struct Theatre
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
 	void probeActorsForRenderCommands();
-
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();
 	void dropCurtains();
@@ -156,6 +155,9 @@ struct Theatre
 
 	Actor *getFirstActorOfType(int type_name);
 	Device *getFirstDeviceOfType(int type_name);
+
+	std::vector<Actor *> getAllActorsOfType(int type_name);
+	std::vector<Device *> getAllDevicesOfType(int type_name);
 
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
 	Actor *unsafeGetFirstActorOfType(int type_name);

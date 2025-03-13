@@ -281,29 +281,8 @@ void Mesh::prepForDestruction()
 
 bool Mesh::isBuffered()
 {
-	// Basically, check if ALL of the data has changed; partially buffered data should not happen/be used
-	return
-	(
-		buffered_mesh_data.vao_index <= -1         &&
-		buffered_mesh_data.vbo_data_range[0] <= -1 &&
-		buffered_mesh_data.vbo_data_range[1] <= -1
-	);
+	return (buffered_mesh_data.vbo_name != -1);
 }
-
-/*graphx::gBufferedMeshData Mesh::getBufferData()
-{
-	return buffered_mesh_data;
-}
-
-graphx::gMeshData Mesh::getMeshData()
-{
-	return mesh_data;
-}
-
-void Mesh::loadBufferedData(gBufferedMeshData buffered_data)
-{
-	buffered_mesh_data = buffered_data;
-}*/
 
 void Mesh::loadSettings(graphx::gSettings new_settings)
 {
@@ -311,10 +290,6 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 
 	getSetting(material, settings["Material"]);
 	getSetting(mesh_data, settings["MeshData"]);
-
-	// I want to write a much more robust way of making sure all vertex positions for all Mesh types are between -1 and 1 than this shitty thing
-	// if(std::get<1>(mesh_data) == VAO_OBJ)
-		// mesh_scale *= PREEMPTIVE_OBJ_SCALE;
 }
 
 //
@@ -401,7 +376,7 @@ void RenderCmd::bufferData()
 		};
 	}
 
-	glBindVertexArray(VAO_OBJ);
+	glBindVertexArray(VAO_DEFAULT);
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), &vertex_data[0], GL_STATIC_DRAW);

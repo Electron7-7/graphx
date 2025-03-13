@@ -40,18 +40,20 @@
 #define BUFFER_PROPS		4
 
 
-#define VAOS_AMOUNT         2
+#define VAOS_AMOUNT         1
 //---------------------------
-#define VAO_HANDMADE        0
-#define VAO_OBJ             1
+#define VAO_DEFAULT         0
 
 
-#define VBO_SIZE_BYTES      0xA00000 // Equal to 10 MiB (10485760 Bytes)
+// #define VBO_SIZE_BYTES      0xA00000 // Equal to 10 MiB (10485760 Bytes)
+#define VBO_CATEGORIES      2
 //---------------------------
-#define VBOS_AMOUNT         2
-//---------------------------
-#define VBO_MESH            0
-#define VBO_UI              1
+#define VBOS_MESH           0
+#define VBOS_UI             1
+
+
+#define MESH_WAS_BUFFERED   false
+#define MESH_IS_BUFFERED    true
 
 struct GLShader
 {
@@ -138,7 +140,7 @@ struct Mesh : public Device
 
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
-	graphx::gMeshData mesh_data; // This should be cleared once the vertices are buffered
+	graphx::gMeshData mesh_data;
 	graphx::gBufferedMeshData buffered_mesh_data;
 
 	Mesh();
@@ -224,8 +226,9 @@ private:
 #define GRAPHX_OPENGL 917 // When I support other APIs, more of these will be added
 // Variables found in r_renderer.cpp
 extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
-extern std::array<std::vector<graphx::gVBO>, VBOS_AMOUNT> VBOs;
+extern std::array<std::vector<unsigned int>, VBO_CATEGORIES> VBOs;
 extern std::vector<GLShader *> shaders; // Same for shaders
+extern std::vector<graphx::gMeshDataVBOStore> mesh_data_vbo_store;
 extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -235,7 +238,6 @@ extern unsigned int shader_index;
 extern glm::vec2 main_window_size;
 extern float camera_near;
 extern float camera_far;
-extern int current_vao_index;
 extern int shader_debug_value;
 extern unsigned int shader_index;
 extern bool jolt_debug_render;
@@ -247,13 +249,12 @@ template<typename T> Device *createNewDevice() { return new T; }
 GLFWwindow       *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
 void              R_StoreBuffers();
-// void              R_GL_BufferMeshes();
 void              R_Render(std::mutex &state_mutex, float interpolation_time);
-// void              R_GL_RenderPrimitive(RenderCmd *render_command);
-// void              R_GL_Render(std::mutex &mutex, float interpolation_time);
 void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void              R_BufferRenderCmd(RenderCmd render_command);
 void              R_InitializeRenderingAPI();
+void              M_SyncMeshDataStore();
+void              M_StoreMeshData(graphx::gMeshDataVBOStore new_data);
 graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension);
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
 #endif

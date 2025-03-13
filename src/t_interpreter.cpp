@@ -27,9 +27,9 @@ std::map<std::string, std::any> cpp_definitions =
 	{"FLAT_SPEC", FLAT_SPEC_jpg},
 	{"SOURCE_ORANGE", SOURCE_ORANGE_png},
 	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY_png},
-	{"GRAPHX_CUBE", gMeshData(CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS)},
-	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_POSITIONS, PYRAMID_POSITIONS, PYRAMID_UVS)},
-	{"GRAPHX_QUAD", gMeshData(QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS)},
+	{"GRAPHX_CUBE", gMeshData(VAO_DEFAULT, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS)},
+	{"GRAPHX_PYRAMID", gMeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_POSITIONS, PYRAMID_UVS)},
+	{"GRAPHX_QUAD", gMeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS)},
 	{"OBJ_ERROR", M_LoadOBJ(ERROR_obj)},
 	{"OBJ_SUZANNE", M_LoadOBJ(suzanne_obj)},
 	{"notapenis", M_LoadOBJ(purely_for_testing_obj)},
@@ -632,6 +632,8 @@ void loadMainTheatre(long theatre_uid)
 	current_theatre = loadTheatre(theatre_uid);
 	current_theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
+
+	M_SyncMeshDataStore();
 
 	time_to_store_buffers = true;
 	loading_new_main_theatre = false;
