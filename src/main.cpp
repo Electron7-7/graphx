@@ -113,7 +113,7 @@ int main()
 			toggleCursor(main_window, false);
 
 		if(time_to_store_buffers)
-			R_StoreBuffers();
+			R_BufferMeshes();
 
 		if(time_to_render)
 		{

@@ -12,6 +12,31 @@
 
 namespace graphx
 {
+	namespace error
+	{
+		namespace rendercmd
+		{
+			static constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
+			static constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
+			static constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
+			static constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
+
+		};
+	};
+
+	namespace types
+	{
+		typedef int gPrimitive;
+
+		namespace primitive
+		{
+			static constexpr gPrimitive FOO      = -1;
+			static constexpr gPrimitive LINE     = 0;
+			static constexpr gPrimitive TRIANGLE = 1;
+			static constexpr gPrimitive TEXT     = -1; // Text not supported yet!
+		};
+	};
+
 	namespace classes
 	{
 		static constexpr int THEATRE			= 0;
@@ -57,6 +82,7 @@ namespace graphx
 	struct gMeshData
 	{
 	public:
+		int vertex_data_uid = -1;
 		int vao_index = -1;
 
 		std::vector<float> vertex_positions;
@@ -85,7 +111,7 @@ namespace graphx
 		{
 			return
 			(
-				vao_index        == compared_with.vao_index        &&
+				// vao_index        == compared_with.vao_index        &&
 				vertex_positions == compared_with.vertex_positions &&
 				vertex_normals   == compared_with.vertex_normals   &&
 				vertex_uvs       == compared_with.vertex_uvs       &&
@@ -98,13 +124,10 @@ namespace graphx
 		// std::vector<unsigned int> vertex_indices;
 	};
 
-	typedef std::pair<unsigned int, bool> gMeshDataVBOStoreSecondHalf;
-	typedef std::pair<gMeshData, gMeshDataVBOStoreSecondHalf> gMeshDataVBOStore;
-
-	struct gBufferedMeshData
+	struct gMeshBufferData
 	{
 	public:
-		int vao_index         = -1;
+		int vao_index         = 0; // There's only one VAO right now (VAO_DEFAULT == 0)
 		int vbo_name          = -1;
 		long mesh_data_size   = -1;
 		long mesh_data_offset = -1;

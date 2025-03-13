@@ -20,6 +20,16 @@ std::map<int, Device*(*)()> device_map =
 	{graphx::classes::COLLIDER, &createNewDevice<Collider>},
 };
 
+std::map<std::string, graphx::gMeshData> mesh_data_map =
+{
+	{"GRAPHX_CUBE", gMeshData(VAO_DEFAULT, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS)},
+	{"GRAPHX_PYRAMID", gMeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_POSITIONS, PYRAMID_UVS)},
+	{"GRAPHX_QUAD", gMeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS)},
+	{"OBJ_ERROR", M_LoadOBJ(ERROR_obj)},
+	{"OBJ_SUZANNE", M_LoadOBJ(suzanne_obj)},
+	{"notapenis", M_LoadOBJ(purely_for_testing_obj)},
+};
+
 //
 // GLShader
 //
@@ -308,20 +318,20 @@ void Sprite::loadSettings(graphx::gSettings new_settings)
 }
 
 //
-// RenderCmd
+// PrimitiveRenderCmd
 //
-RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
+PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
 {
-	primitive_type = graphxRenderPrimitive::LINE;
+	primitive_type = graphx::types::primitive::LINE;
 	vertex_1 = new_vertex_1;
 	vertex_2 = new_vertex_2;
 	colors_1 = new_vertex_color;
 	colors_2 = new_vertex_color;
 }
 
-RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
+PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
 {
-	primitive_type = graphxRenderPrimitive::TRIANGLE;
+	primitive_type = graphx::types::primitive::TRIANGLE;
 	vertex_1 = new_vertex_1;
 	vertex_2 = new_vertex_2;
 	vertex_3 = new_vertex_3;
@@ -330,18 +340,18 @@ RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 n
 	colors_3 = new_vertex_color;
 }
 
-RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
+PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
 {
-	primitive_type = graphxRenderPrimitive::LINE;
+	primitive_type = graphx::types::primitive::LINE;
 	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
 	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
 	colors_1 = convertMath<glm::vec3>(new_vertex_color);
 	colors_2 = convertMath<glm::vec3>(new_vertex_color);
 }
 
-RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
+PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
 {
-	primitive_type = graphxRenderPrimitive::TRIANGLE;
+	primitive_type = graphx::types::primitive::TRIANGLE;
 	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
 	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
 	vertex_3 = convertMath<glm::vec3>(new_vertex_3);
@@ -350,14 +360,9 @@ RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH
 	colors_3 = convertMath<glm::vec3>(new_vertex_color);
 }
 
-RenderCmd::RenderCmd(Actor *new_actor)
+void PrimitiveRenderCmd::bufferData()
 {
-	render_actor = new_actor;
-}
-
-void RenderCmd::bufferData()
-{
-	if(primitive_type == graphxRenderPrimitive::TRIANGLE)
+	if(primitive_type == graphx::types::primitive::TRIANGLE)
 	{
 		vertex_data =
 		{
@@ -367,7 +372,7 @@ void RenderCmd::bufferData()
 		};
 	}
 
-	else if(primitive_type == graphxRenderPrimitive::LINE)
+	else if(primitive_type == graphx::types::primitive::LINE)
 	{
 		vertex_data =
 		{
@@ -376,7 +381,7 @@ void RenderCmd::bufferData()
 		};
 	}
 
-	glBindVertexArray(VAO_DEFAULT);
+	glBindVertexArray(VAO_OBJ);
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), &vertex_data[0], GL_STATIC_DRAW);
@@ -394,19 +399,4 @@ void RenderCmd::bufferData()
 	glEnableVertexAttribArray(3);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-unsigned int RenderCmd::getVBO()
-{
-	return VBO;
-}
-
-std::vector<float> RenderCmd::getVertexData()
-{
-	return vertex_data;
-}
-
-bool RenderCmd::isPrimitive()
-{
-	return (render_actor == nullptr);
 }

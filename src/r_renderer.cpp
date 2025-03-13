@@ -14,7 +14,7 @@
 std::array<unsigned int, VAOS_AMOUNT> VAOs;
 std::array<std::vector<unsigned int>, VBO_CATEGORIES> VBOs;
 std::vector<GLShader *> shaders;
-std::vector<graphx::gMeshDataVBOStore> mesh_data_vbo_store;
+std::map<int, unsigned int> mesh_data_vbo_map;
 bool time_to_render = false;
 bool time_to_store_buffers = false;
 bool do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
@@ -26,7 +26,9 @@ float camera_near = 0.1f;
 float camera_far = 1000.0f;
 bool jolt_debug_render = false;
 
-std::vector<RenderCmd> render_commands; // Keeping this out of the header file for safety/isolation
+// Keeping these out of the header file for safety/isolation
+std::vector<RenderCmd> render_commands;
+std::vector<PrimitiveRenderCmd> primitive_render_commands;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
@@ -192,7 +194,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 	return mesh_data;
 }
 
-void M_StoreMeshData(graphx::gMeshDataVBOStore new_data)
+/*void M_StoreMeshData(graphx::gMeshDataVBOStore new_data)
 {
 	for(graphx::gMeshDataVBOStore &data_store : mesh_data_vbo_store)
 		if(data_store.first == new_data.first)
@@ -236,7 +238,7 @@ void M_SyncMeshDataStore()
 		else
 			++it;
 	}
-}
+}*/
 
 void R_GL_Initialize()
 {
@@ -251,9 +253,6 @@ void R_GL_BufferMeshes()
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ; rendercmd_iterator++)
 	{
-		if(rendercmd_iterator.base()->isPrimitive())
-			continue;
-
 		Actor *actor = rendercmd_iterator.base()->render_actor;
 
 		// There used to exist Actor::wantsToBeBuffered, but it was only ever used here, so I got rid of it
@@ -473,7 +472,7 @@ void R_InitializeRenderingAPI()
 	}
 }
 
-void R_StoreBuffers()
+void R_BufferMeshes()
 {
 	if(loading_new_main_theatre)
 		return;

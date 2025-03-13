@@ -55,6 +55,7 @@
 #define MESH_WAS_BUFFERED   false
 #define MESH_IS_BUFFERED    true
 
+
 struct GLShader
 {
 	unsigned int id;
@@ -141,15 +142,15 @@ struct Mesh : public Device
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
 	graphx::gMeshData mesh_data;
-	graphx::gBufferedMeshData buffered_mesh_data;
+	graphx::gMeshBufferData buffered_mesh_data;
 
 	Mesh();
 	Mesh(Material *new_material);
 
 	// I don't know if I'm comfortable with how abstracted these three functions are...
-	// graphx::gBufferedMeshData getBufferData();
+	// graphx::gMeshBufferData getBufferData();
 	// graphx::gMeshData getMeshData();
-	// void loadBufferedData(graphx::gBufferedMeshData buffered_data);
+	// void loadBufferedData(graphx::gMeshBufferData buffered_data);
 
 	bool isBuffered();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
@@ -167,24 +168,43 @@ struct Sprite : public Mesh
 // Forward Declaration
 struct RenderState;
 
-namespace graphxRenderPrimitive
+struct RenderCmd
 {
-	typedef int gPrimitiveType;
-	// Shorthand versions.
-	// I always want to make my variable names descriptive, so the shorthand still points back to "gPrimitiveType"
-	typedef gPrimitiveType gPrimType;
-	typedef gPrimitiveType gPType;
+public:
+	graphx::gMeshBufferData buffer_data;
 
-	static constexpr gPrimitiveType LINE = 0;
-	static constexpr gPrimitiveType TRIANGLE = 1;
-	static constexpr gPrimitiveType TEXT = -1; // Text not supported yet!
+	RenderState *current_render_state = nullptr;
+	RenderState *previous_render_state = nullptr;
+
+	Material *mesh_material = nullptr;
+	// graphx::gMeshData *mesh_data = nullptr;
 };
 
-// shorthands for "graphxRenderPrimitive"
-namespace gRendPrim = graphxRenderPrimitive; // NOLINT
-namespace gRPrim = graphxRenderPrimitive;    // NOLINT
+struct PrimitiveRenderCmd
+{
+	glm::vec3 vertex_1 = glm::vec3(0.0f);
+	glm::vec3 vertex_2 = glm::vec3(0.0f);
+	glm::vec3 vertex_3 = glm::vec3(0.0f);
+	glm::vec3 normals_1 = glm::vec3(0.0f);
+	glm::vec3 normals_2 = glm::vec3(0.0f);
+	glm::vec3 normals_3 = glm::vec3(0.0f);
+	glm::vec2 uvs_1 = glm::vec2(0.0f);
+	glm::vec2 uvs_2 = glm::vec2(0.0f);
+	glm::vec2 uvs_3 = glm::vec2(0.0f);
+	glm::vec3 colors_1 = glm::vec3(0.0f);
+	glm::vec3 colors_2 = glm::vec3(0.0f);
+	glm::vec3 colors_3 = glm::vec3(0.0f);
 
-struct RenderCmd
+	graphx::types::gPrimitive primitive_type = graphx::types::primitive::FOO;
+	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
+
+	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
+	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
+	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+};
+
+/*struct RenderCmd
 {
 	Actor *render_actor = nullptr;
 
@@ -220,7 +240,7 @@ struct RenderCmd
 private:
 	unsigned int VBO;
 	std::vector<float> vertex_data = {};
-};
+};*/
 
 
 #define GRAPHX_OPENGL 917 // When I support other APIs, more of these will be added
@@ -228,7 +248,7 @@ private:
 extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::array<std::vector<unsigned int>, VBO_CATEGORIES> VBOs;
 extern std::vector<GLShader *> shaders; // Same for shaders
-extern std::vector<graphx::gMeshDataVBOStore> mesh_data_vbo_store;
+extern std::map<int, unsigned int> mesh_data_vbo_map;
 extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -243,18 +263,18 @@ extern unsigned int shader_index;
 extern bool jolt_debug_render;
 // Variables found in r_common.cpp
 extern std::map<int, Device*(*)()> device_map;
+extern std::map<std::string, graphx::gMeshData> mesh_data_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow       *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void              R_StoreBuffers();
+void              R_BufferMesh(Mesh *mesh);
+void              R_BufferMeshes();
 void              R_Render(std::mutex &state_mutex, float interpolation_time);
 void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void              R_BufferRenderCmd(RenderCmd render_command);
 void              R_InitializeRenderingAPI();
-void              M_SyncMeshDataStore();
-void              M_StoreMeshData(graphx::gMeshDataVBOStore new_data);
 graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension);
 graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
 #endif
