@@ -1,5 +1,6 @@
 #ifndef GRAPHX_PYRAMID
-#define GRAPHX_PYRAMID
+#include <string>
+#define GRAPHX_PYRAMID std::string("GRAPHX_PYRAMID")
 #include <vector>
 const std::vector<float> PYRAMID_NORMALS =
 {

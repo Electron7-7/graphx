@@ -12,9 +12,8 @@
 #include <cmath>
 
 std::array<unsigned int, VAOS_AMOUNT> VAOs;
-std::array<std::vector<unsigned int>, VBO_CATEGORIES> VBOs;
+std::map<std::string, unsigned int> mesh_vbo_names;
 std::vector<GLShader *> shaders;
-std::map<int, unsigned int> mesh_data_vbo_map;
 bool time_to_render = false;
 bool time_to_store_buffers = false;
 bool do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
@@ -60,8 +59,26 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension)
+std::string M_GetOBJName(std::string file_as_string)
 {
+	std::string buffer = "";
+	unsigned long i = file_as_string.find("\no ") + 3;
+		while(file_as_string[i] != '\n')
+			buffer += file_as_string[i++];
+	return buffer;
+}
+
+std::string M_LoadModelFile(std::string file_path, std::string file_extension)
+{
+	gMeshData mesh_data;
+	std::string mesh_data_name = M_GetOBJName(ERROR_obj);
+
+	if(valid_extensions.find(file_extension) == std::string::npos)
+	{
+		PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
+		return mesh_data_name;
+	}
+
 	// Last minute realization that I had to move this out of the header file "sanity.hpp"
 	std::string binary_path = BINARY_PATH;
 
@@ -79,46 +96,42 @@ graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extens
 	if(!model_file.is_open())
 	{
 		PRINTERR("M_LoadModelFile called but the file \"" << (binary_path + file_path) << "\" could not be opened/found! An error mesh will be returned!")
-		return M_LoadOBJ(ERROR_obj);
+		return mesh_data_name;
 	}
 
 	model_file.close();
 
 	if(!file_extension.compare("obj"))
-		return M_LoadOBJ(file_string_data.str());
+	{
+		mesh_data = M_LoadOBJ(file_string_data.str());
+		mesh_data_name = M_GetOBJName(file_string_data.str());
 
-	PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
-	return M_LoadOBJ(ERROR_obj);
+		if(!mesh_data_name.empty() && !mesh_data_map.contains(mesh_data_name))
+			mesh_data_map[mesh_data_name] = mesh_data;
+	}
+
+	return mesh_data_name;
 }
 
-namespace TO = tinyobj;
 
-graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
+gMeshData M_LoadOBJ(std::string embedded_obj_file)
 {
-	graphx::gMeshData mesh_data(VAO_DEFAULT);
+	namespace TO = tinyobj;
+
+	gMeshData mesh_data;
 
 	TO::ObjReaderConfig reader_config;
 	TO::ObjReader reader;
 
 	if(!reader.ParseFromString(embedded_obj_file, "", reader_config))
-	{
 		if(!reader.Error().empty())
-		{
 			PRINTERR("TinyObjReader: " << reader.Error())
-		}
 
-		exit(1);
-	}
+	// if(!reader.Warning().empty())
+		// PRINTDEBUG("TinyObjReader: " << reader.Warning())
 
-	if (!reader.Warning().empty())
-	{
-		// std::cout << "TinyObjReader: " << reader.Warning();
-	}
-
-	auto& attrib = reader.GetAttrib();
-	auto& shapes = reader.GetShapes();
-
-	// std::vector<float> vertices;
+	auto &attrib = reader.GetAttrib();
+	auto &shapes = reader.GetShapes();
 
 	// Loop over shapes
 	for (size_t s = 0; s < shapes.size(); s++)
@@ -169,7 +182,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 
 				else
 				{
-					mesh_data.vertex_uvs.insert(mesh_data.vertex_uvs.end(), {0.0f, 0.0f, 0.0f});
+					mesh_data.vertex_uvs.insert(mesh_data.vertex_uvs.end(), {0.0f, 0.0f});
 				}
 
 				if (idx.texcoord_index >= 0)
@@ -194,78 +207,29 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 	return mesh_data;
 }
 
-/*void M_StoreMeshData(graphx::gMeshDataVBOStore new_data)
-{
-	for(graphx::gMeshDataVBOStore &data_store : mesh_data_vbo_store)
-		if(data_store.first == new_data.first)
-			return;
-
-	mesh_data_vbo_store.insert(mesh_data_vbo_store.end(), new_data);
-}
-
-void M_SyncMeshDataStore()
-{
-	for(Device *mesh_device : getCurrentTheatre()->getAllDevicesOfType(graphx::classes::MESH))
-	{
-		Mesh *mesh = static_cast<Mesh *>(mesh_device);
-
-		for(graphx::gMeshDataVBOStore &data_store : mesh_data_vbo_store)
-		{
-			if(data_store.first == mesh->mesh_data)
-			{
-				mesh->buffered_mesh_data.vao_index = mesh->mesh_data.vao_index;
-				mesh->buffered_mesh_data.vbo_name = data_store.second.first;
-				mesh->buffered_mesh_data.mesh_data_size = mesh->mesh_data.getVertexData().size() * sizeof(float);
-				data_store.second.second = MESH_IS_BUFFERED;
-			}
-		}
-	}
-
-	// Flushing unused VBOs and their paired mesh data
-	for(auto it = mesh_data_vbo_store.cbegin() ; it != mesh_data_vbo_store.cend() ; )
-	{
-		if(it->second.second == MESH_WAS_BUFFERED)
-		{
-			for(auto vbo_it = VBOs[VBOS_MESH].begin() ; vbo_it != VBOs[VBOS_MESH].end() ; ++vbo_it)
-			{
-				glDeleteBuffers(1, vbo_it.base());
-				VBOs[VBOS_MESH].erase(vbo_it);
-			}
-
-			it = mesh_data_vbo_store.erase(it);
-		}
-
-		else
-			++it;
-	}
-}*/
-
 void R_GL_Initialize()
 {
-	if(VAOs.empty())
-		glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
+	for(int i = 0 ; i < VAOS_AMOUNT ; i++)
+		if(VAOs[i] == 0)
+			glGenVertexArrays(VAOS_AMOUNT, &VAOs[i]);
 }
 
-void R_GL_BufferMeshes()
+/*void R_GL_BufferMeshes()
 {
 	if(loading_new_main_theatre)
 		return;
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ; rendercmd_iterator++)
 	{
-		Actor *actor = rendercmd_iterator.base()->render_actor;
-
-		// There used to exist Actor::wantsToBeBuffered, but it was only ever used here, so I got rid of it
-		if(actor->mesh == nullptr || actor->mesh->isBuffered() || actor->isType(graphx::classes::GRAPHXPLAYER))
+		if(!rendercmd_iterator.base()->isRenderable())
 			continue;
 
-		Mesh *mesh = actor->mesh;
-		Material *material = mesh->material;
+		RenderCmd *render_command = rendercmd_iterator.base();
 
-		if(material->embedded_texture_diffuse != nullptr)
-			material->texture_diffuse = material->bufferTextureFromMemory(material->embedded_texture_diffuse);
-		if(material->embedded_texture_specular != nullptr)
-			material->texture_specular = material->bufferTextureFromMemory(material->embedded_texture_specular);
+		if(render_command->mesh_material->embedded_texture_diffuse != nullptr)
+			render_command->mesh_material->texture_diffuse = render_command->mesh_material->bufferTextureFromMemory(render_command->mesh_material->embedded_texture_diffuse);
+		if(render_command->mesh_material->embedded_texture_specular != nullptr)
+			render_command->mesh_material->texture_specular = render_command->mesh_material->bufferTextureFromMemory(render_command->mesh_material->embedded_texture_specular);
 
 		glBindVertexArray(VAOs[VAO_DEFAULT]); // Sticking with one VAO for the time being...
 
@@ -281,8 +245,7 @@ void R_GL_BufferMeshes()
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 		glEnableVertexAttribArray(3);
 
-		graphx::gMeshData mesh_data = mesh->mesh_data;
-		std::vector<float> vertex_data = mesh_data.getVertexData();
+		std::vector<float> vertex_data = render_command->mesh_data->getVertexData();
 		VBOs[VBOS_MESH].insert(VBOs[VBOS_MESH].end(), 0);
 
 		glGenBuffers(1, &VBOs[VBOS_MESH].back());
@@ -296,9 +259,90 @@ void R_GL_BufferMeshes()
 		M_StoreMeshData(graphx::gMeshDataVBOStore(mesh->mesh_data, graphx::gMeshDataVBOStoreSecondHalf(VBOs[VBOS_MESH].back(), MESH_WAS_BUFFERED)));
 		M_SyncMeshDataStore();
 	}
+}*/
+
+unsigned int M_GL_BufferMaterialTexture(unsigned char *texture_buffer)
+{
+	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+
+	unsigned int texture_id;
+	glGenTextures(1, &texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	int t_width, t_height, t_channels;
+	unsigned char *t_data = stbi_load_from_memory(texture_buffer, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+
+	if(!t_data)
+		PRINTERR("Failed to load texture!");
+
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(t_data);
+
+	return texture_id;
 }
 
-void R_GL_RenderPrimitive(RenderCmd *render_command)
+void R_GL_BufferMeshes()
+{
+	if(loading_new_main_theatre)
+		return;
+
+	std::string used_mesh_data_names = "";
+	for(Device *mesh_device : getCurrentTheatre()->getAllDevicesOfType(graphx::classes::MESH))
+	{
+		Mesh *mesh = static_cast<Mesh*>(mesh_device);
+
+		if(used_mesh_data_names.find(mesh->mesh_data_name) == std::string::npos)
+			used_mesh_data_names += mesh->mesh_data_name;
+
+		mesh->material->texture_diffuse = M_GL_BufferMaterialTexture(mesh->material->embedded_texture_diffuse);
+		mesh->material->texture_specular = M_GL_BufferMaterialTexture(mesh->material->embedded_texture_specular);
+	}
+
+	glBindVertexArray(VAOs[VAO_DEFAULT]); // Sticking with one VAO for the time being...
+
+	for(auto &mesh_data_pair : mesh_data_map)
+	{
+		if(mesh_data_pair.first.compare(M_GetOBJName(ERROR_obj)) && used_mesh_data_names.find(mesh_data_pair.first) == std::string::npos)
+		{
+			if(mesh_vbo_names.contains(mesh_data_pair.first))
+			{
+				glDeleteBuffers(1, &mesh_vbo_names.at(mesh_data_pair.first));
+				mesh_vbo_names.erase(mesh_data_pair.first);
+			}
+			continue;
+		}
+
+		if(mesh_vbo_names.contains(mesh_data_pair.first) && mesh_vbo_names.at(mesh_data_pair.first) != 0)
+			continue;
+
+		// mesh_vbo_names[mesh_data_pair.first] = 0;
+		std::vector<float> vertex_data = mesh_data_pair.second.getVertexData();
+
+		glGenBuffers(1, &mesh_vbo_names[mesh_data_pair.first]);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh_vbo_names.at(mesh_data_pair.first));
+		glBufferData(GL_ARRAY_BUFFER, mesh_data_pair.second.getVertexDataSize() * sizeof(float), &vertex_data[0], GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+		glEnableVertexAttribArray(3);
+	
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+}
+
+/*void R_GL_RenderPrimitive(RenderCmd *render_command)
 {
 	glUseProgram(shaders[shader_index]->id);
 
@@ -323,7 +367,7 @@ void R_GL_RenderPrimitive(RenderCmd *render_command)
 	glBindVertexArray(VAO_DEFAULT);
 	glBindBuffer(GL_ARRAY_BUFFER, render_command->getVBO());
 	glDrawArrays(GL_LINES, 0, render_command->getVertexData().size());
-}
+}*/
 
 void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 {
@@ -341,18 +385,9 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
-		if(rendercmd_iterator.base()->isPrimitive())
+		if(rendercmd_iterator.base()->actor_pointer->isType(graphx::classes::LIGHTS))
 		{
-			R_GL_RenderPrimitive(rendercmd_iterator.base());
-			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
-			continue;
-		}
-
-		Actor *actor = rendercmd_iterator.base()->render_actor;
-
-		if(actor->isType(graphx::classes::LIGHTS))
-		{
-			Light *current_light = static_cast<Light *>(actor);
+			Light *current_light = static_cast<Light *>(rendercmd_iterator.base()->actor_pointer);
 			shaders[shader_index]->setUniform("is_light", true);
 			std::string which_light;
 
@@ -387,55 +422,54 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 			shaders[shader_index]->setUniform("material.color", (current_light->light_color * current_light->light_strength));
 		}
 
-		if(!actor->wantsToBeRendered())
+		if(!rendercmd_iterator.base()->actor_pointer->wantsToBeRendered())
 		{
 			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
 		}
-
-		Mesh *mesh = actor->mesh;
-		Material *material = mesh->material;
 
 		glm::mat4 model_matrix = glm::mat4(1.0f);
 		glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
 
 		std::lock_guard guard(state_mutex);
 
-		RenderState current_state		=	actor->current_state_buffer[actor->state_index];
-		RenderState previous_state		=	actor->previous_state_buffer[actor->state_index];
+		RenderState *current_state		=	rendercmd_iterator.base()->current_render_state;
+		RenderState *previous_state		=	rendercmd_iterator.base()->previous_render_state;
 
-		glm::vec3 interpolated_position	=	current_state.render_position;
-		glm::vec3 interpolated_scale	=	current_state.render_scale;
-		glm::quat interpolated_quat		=	current_state.render_quaternion;
+		glm::vec3 interpolated_position	=	current_state->render_position;
+		glm::vec3 interpolated_scale	=	current_state->render_scale;
+		glm::quat interpolated_quat		=	current_state->render_quaternion;
 
 		if(do_interpolation) // Eventually, I want to change interpolation to be more like GZDoom, and this will be how I test that
 		{
 			for(unsigned int i = 0 ; i < 3 ; i++)
-				interpolated_position[i] = std::lerp(previous_state.render_position[i], current_state.render_position[i], interpolation_time);
+				interpolated_position[i] = std::lerp(previous_state->render_position[i], current_state->render_position[i], interpolation_time);
 
-			interpolated_quat = glm::slerp(previous_state.render_quaternion, current_state.render_quaternion, interpolation_time);
+			interpolated_quat = glm::slerp(previous_state->render_quaternion, current_state->render_quaternion, interpolation_time);
 
 			for(unsigned int i = 0 ; i < 3 ; i++)
-				interpolated_scale[i] = std::lerp(previous_state.render_scale[i], current_state.render_scale[i], interpolation_time);
+				interpolated_scale[i] = std::lerp(previous_state->render_scale[i], current_state->render_scale[i], interpolation_time);
 		}
 
 		model_matrix = glm::translate(model_matrix, interpolated_position);
 		model_matrix *= glm::toMat4(interpolated_quat);
 		model_matrix = glm::scale(model_matrix, interpolated_scale);
 
-		if(mesh->buffered_mesh_data.vao_index != current_vao_index)
+		gMeshData *mesh_data = &mesh_data_map.at(rendercmd_iterator.base()->mesh_data_name);
+
+		if(mesh_data->vao_index != current_vao_index)
 		{
-			current_vao_index = mesh->buffered_mesh_data.vao_index;
+			current_vao_index = mesh_data->vao_index;
 			glBindVertexArray(VAOs[current_vao_index]);
 		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffered_mesh_data.vbo_name);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh_vbo_names.at(rendercmd_iterator.base()->mesh_data_name));
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, material->texture_diffuse);
+		glBindTexture(GL_TEXTURE_2D, rendercmd_iterator.base()->mesh_material->texture_diffuse);
 
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, material->texture_specular);
+		glBindTexture(GL_TEXTURE_2D, rendercmd_iterator.base()->mesh_material->texture_specular);
 
 		shaders[shader_index]->setUniform("model_matrix", model_matrix);
 		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
@@ -447,18 +481,17 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("is_primitive", false);
 		shaders[shader_index]->setUniform("material.texture_diffuse", 0);
 		shaders[shader_index]->setUniform("material.texture_specular", 1);
-		shaders[shader_index]->setUniform("material.color", material->color);
-		shaders[shader_index]->setUniform("material.specular_sharpness", material->specular_sharpness);
-		shaders[shader_index]->setUniform("material.specular_strength", material->specular_strength);
-		shaders[shader_index]->setUniform("mat_fullbright", material->mat_fullbright);
+		shaders[shader_index]->setUniform("material.color", rendercmd_iterator.base()->mesh_material->color);
+		shaders[shader_index]->setUniform("material.specular_sharpness", rendercmd_iterator.base()->mesh_material->specular_sharpness);
+		shaders[shader_index]->setUniform("material.specular_strength", rendercmd_iterator.base()->mesh_material->specular_strength);
+		shaders[shader_index]->setUniform("mat_fullbright", rendercmd_iterator.base()->mesh_material->mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
-		if(current_vao_index == VAO_DEFAULT)
-		{
-			glDrawArrays(GL_TRIANGLES, mesh->buffered_mesh_data.mesh_data_offset, mesh->buffered_mesh_data.mesh_data_size);
-			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
-			continue;
-		}
+		if(mesh_data->indices.empty())
+			glDrawArrays(GL_TRIANGLES, 0, mesh_data->getVertexDataSize());
+		else
+			glDrawElements(GL_TRIANGLES, mesh_data->indices.size(), GL_UNSIGNED_INT, mesh_data->indices.data());
+		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
 }
 
@@ -477,8 +510,6 @@ void R_BufferMeshes()
 	if(loading_new_main_theatre)
 		return;
 
-	getCurrentTheatre()->probeActorsForRenderCommands();
-
 	switch(graphx_api)
 	{
 	case GRAPHX_OPENGL:
@@ -493,8 +524,6 @@ void R_BufferMeshes()
 void R_BufferRenderCmd(RenderCmd render_command)
 {
 	render_commands.insert(render_commands.end(), render_command);
-	if(render_command.render_actor != nullptr && render_command.render_actor->mesh != nullptr && !render_command.render_actor->mesh->isBuffered())
-		time_to_store_buffers = true;
 }
 
 void R_Render(std::mutex &state_mutex, float interpolation_time)

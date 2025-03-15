@@ -1,5 +1,6 @@
 #ifndef GRAPHX_CUBE
-#define GRAPHX_CUBE
+#include <string>
+#define GRAPHX_CUBE std::string("GRAPHX_CUBE")
 #include <vector>
 const std::vector<float> CUBE_NORMALS =
 {
@@ -7,22 +8,27 @@ const std::vector<float> CUBE_NORMALS =
 	-1.0f,  0.0f,  0.0f,
 	-1.0f,  0.0f,  0.0f,
 	-1.0f,  0.0f,  0.0f,
+
 	 1.0f,  0.0f,  0.0f,
 	 1.0f,  0.0f,  0.0f,
 	 1.0f,  0.0f,  0.0f,
 	 1.0f,  0.0f,  0.0f,
+	
 	 0.0f, -1.0f,  0.0f,
 	 0.0f, -1.0f,  0.0f,
 	 0.0f, -1.0f,  0.0f,
 	 0.0f, -1.0f,  0.0f,
+	
 	 0.0f,  1.0f,  0.0f,
 	 0.0f,  1.0f,  0.0f,
 	 0.0f,  1.0f,  0.0f,
 	 0.0f,  1.0f,  0.0f,
+	
 	 0.0f,  0.0f, -1.0f,
 	 0.0f,  0.0f, -1.0f,
 	 0.0f,  0.0f, -1.0f,
 	 0.0f,  0.0f, -1.0f,
+	
 	 0.0f,  0.0f,  1.0f,
 	 0.0f,  0.0f,  1.0f,
 	 0.0f,  0.0f,  1.0f,
@@ -35,22 +41,27 @@ const std::vector<float> CUBE_UVS =
 	1.0f, 0.0f,
 	0.0f, 1.0f,
 	1.0f, 1.0f,
+	
 	1.0f, 0.0f,
 	0.0f, 0.0f,
 	1.0f, 1.0f,
 	0.0f, 1.0f,
+	
 	0.0f, 1.0f,
 	0.0f, 0.0f,
 	1.0f, 1.0f,
 	1.0f, 0.0f,
+	
 	0.0f, 1.0f,
 	0.0f, 0.0f,
 	1.0f, 1.0f,
 	1.0f, 0.0f,
+	
 	1.0f, 0.0f,
 	1.0f, 1.0f,
 	0.0f, 0.0f,
 	0.0f, 1.0f,
+	
 	0.0f, 0.0f,
 	0.0f, 1.0f,
 	1.0f, 0.0f,

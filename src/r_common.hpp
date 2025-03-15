@@ -12,11 +12,14 @@
 #include <array>
 #include <mutex>
 
+
+// Rendering APIs (When I support other APIs, more of these will be added)
+#define GRAPHX_OPENGL 917
+
+
 #define GLSHADER_TYPE_VERTEX	0
 #define GLSHADER_TYPE_FRAGMENT	1
 #define GLSHADER_TYPE_PROGRAM	2
-
-#define PREEMPTIVE_OBJ_SCALE 10.0f // In case the vertices of an imported OBJ file aren't between -1 and 1, dividing every vertex in the file by 10 (and multiplying the scale by 10) should fix most cases (I think)
 
 
 #define SHADERS_AMOUNT		1
@@ -141,16 +144,14 @@ struct Mesh : public Device
 
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
-	graphx::gMeshData mesh_data;
-	graphx::gMeshBufferData buffered_mesh_data;
+
+	std::string mesh_data_name = "";
+
+	// gMeshData mesh_data;
+	// gMeshBufferData buffered_mesh_data;
 
 	Mesh();
 	Mesh(Material *new_material);
-
-	// I don't know if I'm comfortable with how abstracted these three functions are...
-	// graphx::gMeshBufferData getBufferData();
-	// graphx::gMeshData getMeshData();
-	// void loadBufferedData(graphx::gMeshBufferData buffered_data);
 
 	bool isBuffered();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
@@ -165,19 +166,19 @@ struct Sprite : public Mesh
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
-// Forward Declaration
-struct RenderState;
+struct RenderState; // Forward Declaration
+struct gMeshData; // Forward Declaration
 
 struct RenderCmd
 {
 public:
-	graphx::gMeshBufferData buffer_data;
-
+	std::string mesh_data_name = "";
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
-
 	Material *mesh_material = nullptr;
-	// graphx::gMeshData *mesh_data = nullptr;
+	Actor *actor_pointer = nullptr;
+
+	bool isRenderable();
 };
 
 struct PrimitiveRenderCmd
@@ -242,13 +243,35 @@ private:
 	std::vector<float> vertex_data = {};
 };*/
 
+struct gMeshData
+{
+public:
+	// Buffered mesh data
+	int vao_index = VAO_DEFAULT;
 
-#define GRAPHX_OPENGL 917 // When I support other APIs, more of these will be added
+	std::vector<float> vertex_positions = {0.0f, 0.0f, 0.0f};
+	std::vector<float> vertex_normals = {0.0f, 0.0f, 0.0f};
+	std::vector<float> vertex_uvs = {0.0f, 0.0f};
+	std::vector<float> vertex_colors = {1.0f, 1.0f, 1.0f};
+	std::vector<unsigned int> indices;
+
+	gMeshData();
+	gMeshData(int init_vao_index, std::vector<unsigned int> init_indices, std::vector<float> init_positions, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f});
+	gMeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f});
+
+	std::vector<float> getVertexData();
+	unsigned long getVertexDataSize();
+	bool operator==(const gMeshData &compared_with) const;
+
+private:
+	// For the time being, I'm removing indices from the rendering process
+	// std::vector<unsigned int> vertex_indices;
+};
+
 // Variables found in r_renderer.cpp
 extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
-extern std::array<std::vector<unsigned int>, VBO_CATEGORIES> VBOs;
 extern std::vector<GLShader *> shaders; // Same for shaders
-extern std::map<int, unsigned int> mesh_data_vbo_map;
+extern std::map<std::string, unsigned int> mesh_vbo_names;
 extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -263,18 +286,18 @@ extern unsigned int shader_index;
 extern bool jolt_debug_render;
 // Variables found in r_common.cpp
 extern std::map<int, Device*(*)()> device_map;
-extern std::map<std::string, graphx::gMeshData> mesh_data_map;
+extern std::map<std::string, gMeshData> mesh_data_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 
-GLFWwindow       *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void              R_BufferMesh(Mesh *mesh);
-void              R_BufferMeshes();
-void              R_Render(std::mutex &state_mutex, float interpolation_time);
-void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
-void              R_BufferRenderCmd(RenderCmd render_command);
-void              R_InitializeRenderingAPI();
-graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension);
-graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
+GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
+void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void        R_BufferMeshes();
+void        R_Render(std::mutex &state_mutex, float interpolation_time);
+void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+void        R_BufferRenderCmd(RenderCmd render_command);
+void        R_InitializeRenderingAPI();
+std::string M_LoadModelFile(std::string file_path, std::string file_extension);
+gMeshData   M_LoadOBJ(std::string embedded_obj_file);
+std::string M_GetOBJName(std::string file_as_string);
 #endif

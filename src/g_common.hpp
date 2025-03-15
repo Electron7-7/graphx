@@ -37,11 +37,11 @@ public:
 	glm::vec3 orientation_right;
 	glm::vec3 world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	RenderState current_state;
-	RenderState current_state_copy;
+	// RenderState current_state;
+	// RenderState current_state_copy;
 
-	RenderState previous_state;
-	RenderState previous_state_copy;
+	// RenderState previous_state;
+	// RenderState previous_state_copy;
 
 	std::vector<RenderState> current_state_buffer;
 	std::vector<RenderState> previous_state_buffer;

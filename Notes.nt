@@ -1704,3 +1704,17 @@ I don't know if I'll be able to get much done today, but I'm going to try and wr
 I have an idea: store every single mesh's vertex data (i.e: gMeshData) in a map, each with a unique long as the key. Meshes will have a long member variable that will be set to the unique log for the mesh data they were given. They will also have an int variable that will be set to the VBO name of the buffered mesh data. If I buffer only the mesh data that is used by the Meshes in the current Theatre, I can use another map to store the mesh data long as a key to the VBO name of its buffered data and use that map to find the VBO associated with a given Mesh.
 
 I'm choosing to put all the meshes that will be compiled into the binary in a map, with a string key. I'll add any external ones to the map as well when they're processed. Then, I'll add a vbo name variable to gMeshData and buffer every gMeshData when switching to a new Theatre (not buffering unused ones). I'll then have Meshes either store a pointer to a gMeshData object or a key to the map.
+
+[03/14/25]
+I'm going to try and finish this new instanced VBO setup... finally. I wanna restate the main idea, to organize my thoughts:
+  - Instance all pre-compiled meshes into VBOs
+  - Instance all external meshes into VBOs
+  - Go through all Meshes and set their VBO name variable
+  - Compare instanced mesh data with Meshes and clear any unused VBOs
+  - Do this on every Theatre change
+
+I'll need a function to instance all mesh data into VBOs and a function to set Mesh VBO name variables as well as clear unused VBOs. A total of two new functions plus the VBO buffering function(s), one global map, and a change to gMeshData / a new type that stores a mesh data ID with the associated VBO name.
+
+I don't like hardcoding the names of the obj files, so I'm going to make a function that just finds and returns the names.
+
+All right, almost done! I need to change the map pair's second value to be a pair of both a gMeshData and int (for the vbo name). Then, when a new Theatre is loaded, I can get all the mesh data names from the Meshes, and only buffer/use the mesh data that matches those names. Then, any unused VBOs can get flushed and voila! Hopefully that'll be it!

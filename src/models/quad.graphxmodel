@@ -1,5 +1,6 @@
 #ifndef GRAPHX_QUAD
-#define GRAPHX_QUAD
+#include <string>
+#define GRAPHX_QUAD std::string("GRAPHX_QUAD")
 #include <vector>
 const std::vector<float> QUAD_NORMALS =
 {

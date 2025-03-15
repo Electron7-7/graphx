@@ -141,12 +141,12 @@ class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
 public:
     virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
     {
-        R_BufferRenderCmd(RenderCmd(inFrom, inTo, inColor));
+        // R_BufferRenderCmd(RenderCmd(inFrom, inTo, inColor));
     }
 
     virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override
     {
-        R_BufferRenderCmd(RenderCmd(inV1, inV2, inV3, inColor));
+        // R_BufferRenderCmd(RenderCmd(inV1, inV2, inV3, inColor));
     }
 
     virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view &inString, JPH::ColorArg inColor, float inHeight) override

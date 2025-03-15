@@ -20,14 +20,14 @@ std::map<int, Device*(*)()> device_map =
 	{graphx::classes::COLLIDER, &createNewDevice<Collider>},
 };
 
-std::map<std::string, graphx::gMeshData> mesh_data_map =
+std::map<std::string, gMeshData> mesh_data_map =
 {
-	{"GRAPHX_CUBE", gMeshData(VAO_DEFAULT, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS)},
-	{"GRAPHX_PYRAMID", gMeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_POSITIONS, PYRAMID_UVS)},
-	{"GRAPHX_QUAD", gMeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS)},
-	{"OBJ_ERROR", M_LoadOBJ(ERROR_obj)},
-	{"OBJ_SUZANNE", M_LoadOBJ(suzanne_obj)},
-	{"notapenis", M_LoadOBJ(purely_for_testing_obj)},
+	{GRAPHX_CUBE, gMeshData(VAO_DEFAULT, CUBE_INDICES, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS)},
+	{GRAPHX_PYRAMID, gMeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_POSITIONS, PYRAMID_UVS)},
+	{GRAPHX_QUAD, gMeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS)},
+	{M_GetOBJName(ERROR_obj), M_LoadOBJ(ERROR_obj)},
+	{M_GetOBJName(suzanne_obj), M_LoadOBJ(suzanne_obj)},
+	{M_GetOBJName(purely_for_testing_obj), M_LoadOBJ(purely_for_testing_obj)},
 };
 
 //
@@ -267,15 +267,20 @@ Mesh::Mesh()
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
-	mesh_data = M_LoadOBJ(ERROR_obj);
+	mesh_data_name = M_GetOBJName(ERROR_obj);
 }
 
 Mesh::Mesh(Material *new_material)
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
-	mesh_data = M_LoadOBJ(ERROR_obj);
 	material = new_material;
+	mesh_data_name = M_GetOBJName(ERROR_obj);
+}
+
+bool Mesh::isBuffered()
+{
+	return (mesh_vbo_names.contains(mesh_data_name) && mesh_vbo_names.at(mesh_data_name) != 0);
 }
 
 void Mesh::prepForDestruction()
@@ -289,17 +294,12 @@ void Mesh::prepForDestruction()
 	delete material;
 }
 
-bool Mesh::isBuffered()
-{
-	return (buffered_mesh_data.vbo_name != -1);
-}
-
 void Mesh::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
 	getSetting(material, settings["Material"]);
-	getSetting(mesh_data, settings["MeshData"]);
+	getSetting(mesh_data_name, settings["MeshData"]);
 }
 
 //
@@ -315,6 +315,14 @@ Sprite::Sprite()
 void Sprite::loadSettings(graphx::gSettings new_settings)
 {
 	Mesh::loadSettings(new_settings);
+}
+
+//
+// RenderCmd
+//
+bool RenderCmd::isRenderable()
+{
+	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
 }
 
 //
@@ -360,7 +368,7 @@ PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg
 	colors_3 = convertMath<glm::vec3>(new_vertex_color);
 }
 
-void PrimitiveRenderCmd::bufferData()
+/*void PrimitiveRenderCmd::bufferData()
 {
 	if(primitive_type == graphx::types::primitive::TRIANGLE)
 	{
@@ -399,4 +407,85 @@ void PrimitiveRenderCmd::bufferData()
 	glEnableVertexAttribArray(3);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}*/
+
+//
+// gMeshData
+//
+gMeshData::gMeshData()
+{}
+
+gMeshData::gMeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors)
+: vao_index(init_vao_index), vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors)
+{
+	if(vertex_normals == std::vector<float>{0.0f, 0.0f, 0.0f})
+	{
+		vertex_normals = vertex_positions;
+		std::fill(vertex_normals.begin(), vertex_normals.end(), 0.0f);
+	}
+
+	if(vertex_uvs == std::vector<float>{0.0f, 0.0f})
+	{
+		vertex_uvs = std::vector<float>(vertex_positions.begin(), vertex_positions.begin() + (vertex_positions.size() / 3));
+		std::fill(vertex_uvs.begin(), vertex_uvs.end(), 0.0f);
+	}
+
+	if(vertex_colors == std::vector<float>{1.0f, 1.0f, 1.0f})
+	{
+		vertex_colors = vertex_positions;
+		std::fill(vertex_colors.begin(), vertex_colors.end(), 1.0f);
+	}
+}
+
+gMeshData::gMeshData(int init_vao_index, std::vector<unsigned int> init_indices, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors)
+: vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors), indices(init_indices)
+{
+	if(vertex_normals == std::vector<float>{0.0f, 0.0f, 0.0f})
+	{
+		vertex_normals = vertex_positions;
+		std::fill(vertex_normals.begin(), vertex_normals.end(), 0.0f);
+	}
+
+	if(vertex_uvs == std::vector<float>{0.0f, 0.0f})
+	{
+		vertex_uvs = std::vector<float>(vertex_positions.begin(), vertex_positions.begin() + (2 * (vertex_positions.size() / 3)));
+		std::fill(vertex_uvs.begin(), vertex_uvs.end(), 0.0f);
+	}
+
+	if(vertex_colors == std::vector<float>{1.0f, 1.0f, 1.0f})
+	{
+		vertex_colors = vertex_positions;
+		std::fill(vertex_colors.begin(), vertex_colors.end(), 1.0f);
+	}
+}
+
+unsigned long gMeshData::getVertexDataSize()
+{
+	return (vertex_positions.size() + vertex_normals.size() + vertex_uvs.size() + vertex_colors.size());
+}
+
+std::vector<float> gMeshData::getVertexData()
+{
+	std::vector<float> vertex_data;
+
+	for(int it = 0,uv_it = 0 ; it < vertex_positions.size() ; it+=3,uv_it+=2)
+	{
+		vertex_data.insert(vertex_data.end(), {vertex_positions.at(it), vertex_positions.at(it + 1), vertex_positions.at(it + 2)});
+		vertex_data.insert(vertex_data.end(), {vertex_normals.at(it), vertex_normals.at(it + 1), vertex_normals.at(it + 2)});
+		vertex_data.insert(vertex_data.end(), {vertex_uvs.at(uv_it), vertex_uvs.at(uv_it + 1)});
+		vertex_data.insert(vertex_data.end(), {vertex_colors.at(it), vertex_colors.at(it + 1), vertex_colors.at(it + 2)});
+	}
+
+	return vertex_data;
+}
+
+bool gMeshData::operator==(const gMeshData &compared_with) const
+{
+	return
+	(
+		vertex_positions == compared_with.vertex_positions &&
+		vertex_normals   == compared_with.vertex_normals   &&
+		vertex_uvs       == compared_with.vertex_uvs       &&
+		vertex_colors    == compared_with.vertex_colors
+	);
 }

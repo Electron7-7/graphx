@@ -62,7 +62,17 @@ void Theatre::probeActorsForRenderCommands()
 		if(loading_new_main_theatre)
 			return;
 
-		R_BufferRenderCmd(RenderCmd(pair.second));
+		if(pair.second->mesh == nullptr || !pair.second->visible || pair.second->isType(graphx::classes::GRAPHXPLAYER))
+			continue;
+
+		RenderCmd render_command;
+		render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
+		render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
+		render_command.mesh_material = pair.second->mesh->material;
+		render_command.mesh_data_name = pair.second->mesh->mesh_data_name;
+		render_command.actor_pointer = pair.second;
+
+		R_BufferRenderCmd(render_command);
 	}
 }
 
