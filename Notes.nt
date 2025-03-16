@@ -1729,3 +1729,5 @@ Hm... the vertex data seems to be corrupted or otherwise weird (see the imgui de
 
 [03/16/25]
 Sitting in a church rn... wish I were anywhere else. Anyways, lets code.
+
+I think that the problem I'm having is related to re-using VBOs and not using the correct ones/corrupting buffered data(?). I don't know, but it has to be OpenGL function-related becsuse none of this happened before. I might revert everything back to the first commit again and focus on making primitive render commands firsf, then try to organize VBO shit.
