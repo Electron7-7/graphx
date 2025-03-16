@@ -1726,3 +1726,6 @@ I have an idea:
 Every time a Theatre is loaded, go through the mesh data map and toggle a boolean to indicate whether or not the mesh data is used. Then, go through and remove buffers for unused data and make buffers for used data.
 
 Hm... the vertex data seems to be corrupted or otherwise weird (see the imgui debug shit).
+
+[03/16/25]
+Sitting in a church rn... wish I were anywhere else. Anyways, lets code.
