@@ -112,8 +112,8 @@ struct Environment final : public Device // Will be extended
 
 struct Material final : public Device
 {
-	unsigned int texture_diffuse;
-	unsigned int texture_specular;
+	unsigned int texture_diffuse = 0;
+	unsigned int texture_specular = 0;
 
 	unsigned char* embedded_texture_diffuse = MISSING_jpg;
 	unsigned char* embedded_texture_specular = FLAT_SPEC_jpg;
@@ -135,25 +135,14 @@ struct Material final : public Device
 
 struct Mesh : public Device
 {
-	// There are only two VBOs, which are globally used (for the time being)
-	// unsigned int VBO = 0;
-	// It's simpler to forgo indices... for now
-	// std::vector<unsigned int> indices = CUBE_INDICES;
-	// unsigned int IBO = 0;
-	// glm::vec3 mesh_scale = glm::vec3(1.0f);
-
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
 
 	std::string mesh_data_name = "";
 
-	// gMeshData mesh_data;
-	// gMeshBufferData buffered_mesh_data;
-
 	Mesh();
 	Mesh(Material *new_material);
 
-	bool isBuffered();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 	void prepForDestruction() override;
 };
@@ -205,55 +194,20 @@ struct PrimitiveRenderCmd
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
 };
 
-/*struct RenderCmd
-{
-	Actor *render_actor = nullptr;
-
-	graphxRenderPrimitive::gPrimitiveType primitive_type = -1;
-	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
-
-	glm::vec3 vertex_1 = glm::vec3(0.0f);
-	glm::vec3 vertex_2 = glm::vec3(0.0f);
-	glm::vec3 vertex_3 = glm::vec3(0.0f);
-	// Currently, normals_#, uvs_#, and even colors_# are kind of redundant, but having them here
-	// allows for control over their values for more intricate debugging later on down the line.
-	glm::vec3 normals_1 = glm::vec3(0.0f);
-	glm::vec3 normals_2 = glm::vec3(0.0f);
-	glm::vec3 normals_3 = glm::vec3(0.0f);
-	glm::vec2 uvs_1 = glm::vec2(0.0f);
-	glm::vec2 uvs_2 = glm::vec2(0.0f);
-	glm::vec2 uvs_3 = glm::vec2(0.0f);
-	glm::vec3 colors_1 = glm::vec3(0.0f);
-	glm::vec3 colors_2 = glm::vec3(0.0f);
-	glm::vec3 colors_3 = glm::vec3(0.0f);
-
-	RenderCmd(Actor *new_actor);
-	RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
-	RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
-	RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
-	RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
-
-	bool isPrimitive();
-	void bufferData();
-	unsigned int getVBO();
-	std::vector<float> getVertexData();
-
-private:
-	unsigned int VBO;
-	std::vector<float> vertex_data = {};
-};*/
-
 struct gMeshData
 {
 public:
 	// Buffered mesh data
+	bool needed_by_current_theatre = false;
 	int vao_index = VAO_DEFAULT;
+	unsigned int VBO = 0;
+	unsigned int IBO = 0;
 
 	std::vector<float> vertex_positions = {0.0f, 0.0f, 0.0f};
 	std::vector<float> vertex_normals = {0.0f, 0.0f, 0.0f};
 	std::vector<float> vertex_uvs = {0.0f, 0.0f};
 	std::vector<float> vertex_colors = {1.0f, 1.0f, 1.0f};
-	std::vector<unsigned int> indices;
+	std::vector<unsigned int> indices = {};
 
 	gMeshData();
 	gMeshData(int init_vao_index, std::vector<unsigned int> init_indices, std::vector<float> init_positions, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f});
@@ -271,7 +225,7 @@ private:
 // Variables found in r_renderer.cpp
 extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::vector<GLShader *> shaders; // Same for shaders
-extern std::map<std::string, unsigned int> mesh_vbo_names;
+extern std::map<std::string, gMeshData> mesh_data_map;
 extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -286,7 +240,6 @@ extern unsigned int shader_index;
 extern bool jolt_debug_render;
 // Variables found in r_common.cpp
 extern std::map<int, Device*(*)()> device_map;
-extern std::map<std::string, gMeshData> mesh_data_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 

@@ -62,7 +62,7 @@ void Theatre::probeActorsForRenderCommands()
 		if(loading_new_main_theatre)
 			return;
 
-		if(pair.second->mesh == nullptr || !pair.second->visible || pair.second->isType(graphx::classes::GRAPHXPLAYER))
+		if(!pair.second->wantsToBeRendered())
 			continue;
 
 		RenderCmd render_command;

@@ -20,16 +20,6 @@ std::map<int, Device*(*)()> device_map =
 	{graphx::classes::COLLIDER, &createNewDevice<Collider>},
 };
 
-std::map<std::string, gMeshData> mesh_data_map =
-{
-	{GRAPHX_CUBE, gMeshData(VAO_DEFAULT, CUBE_INDICES, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS)},
-	{GRAPHX_PYRAMID, gMeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_POSITIONS, PYRAMID_UVS)},
-	{GRAPHX_QUAD, gMeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS)},
-	{M_GetOBJName(ERROR_obj), M_LoadOBJ(ERROR_obj)},
-	{M_GetOBJName(suzanne_obj), M_LoadOBJ(suzanne_obj)},
-	{M_GetOBJName(purely_for_testing_obj), M_LoadOBJ(purely_for_testing_obj)},
-};
-
 //
 // GLShader
 //
@@ -276,11 +266,6 @@ Mesh::Mesh(Material *new_material)
 	name = "Untitled Mesh";
 	material = new_material;
 	mesh_data_name = M_GetOBJName(ERROR_obj);
-}
-
-bool Mesh::isBuffered()
-{
-	return (mesh_vbo_names.contains(mesh_data_name) && mesh_vbo_names.at(mesh_data_name) != 0);
 }
 
 void Mesh::prepForDestruction()

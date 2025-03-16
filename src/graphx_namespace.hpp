@@ -61,7 +61,8 @@ namespace graphx
 
 		static constexpr int ACTORS[2] = {0, 499};
 		static constexpr int DEVICES[2] = {500, 999};
-		static constexpr std::array<int, 5> LIGHTS =
+		static constexpr int LIGHT_TYPES_AMOUNT = 5;
+		static constexpr std::array<int, LIGHT_TYPES_AMOUNT> LIGHTS =
 		{
 			LIGHT,
 			LIGHTSPOT,

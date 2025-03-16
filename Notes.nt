@@ -1718,3 +1718,11 @@ I'll need a function to instance all mesh data into VBOs and a function to set M
 I don't like hardcoding the names of the obj files, so I'm going to make a function that just finds and returns the names.
 
 All right, almost done! I need to change the map pair's second value to be a pair of both a gMeshData and int (for the vbo name). Then, when a new Theatre is loaded, I can get all the mesh data names from the Meshes, and only buffer/use the mesh data that matches those names. Then, any unused VBOs can get flushed and voila! Hopefully that'll be it!
+
+[03/15/25]
+I think I want to put the VBO unsigned int in the gMeshData struct and keep things simple: every Theatre load, buffer Meshes by going through them all and if their linked gMeshData has an unbuffered VBO, buffer it.
+
+I have an idea:
+Every time a Theatre is loaded, go through the mesh data map and toggle a boolean to indicate whether or not the mesh data is used. Then, go through and remove buffers for unused data and make buffers for used data.
+
+Hm... the vertex data seems to be corrupted or otherwise weird (see the imgui debug shit).

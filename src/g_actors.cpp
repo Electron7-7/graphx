@@ -24,6 +24,14 @@ std::map<int, Actor*(*)()> actor_map =
 	{graphx::classes::LIGHTTESTERMOVER, &createNewActor<LightTesterMover>},
 };
 
+bool isLightType(long type)
+{
+	for(int light_type : graphx::classes::LIGHTS)
+		if(type == light_type)
+			return true;
+	return false;
+}
+
 //
 // Actor
 //
@@ -263,7 +271,7 @@ void Actor::takeABow()
 
 bool Actor::wantsToBeRendered()
 {
-	return (mesh != nullptr && mesh->isBuffered() && visible && !isType(graphx::classes::GRAPHXPLAYER));
+	return (mesh != nullptr && visible && !isType(graphx::classes::GRAPHXPLAYER));
 }
 
 //

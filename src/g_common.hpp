@@ -212,6 +212,7 @@ template<typename T> Actor *createNewActor()
 	return new T;
 }
 
+bool isLightType(long type);
 Theatre *getCurrentTheatre(bool print_note = true);
 Environment *getCurrentEnvironment();
 GraphXPlayer *getCurrentPlayer();
