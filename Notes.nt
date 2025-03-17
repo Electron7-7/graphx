@@ -1728,6 +1728,9 @@ Every time a Theatre is loaded, go through the mesh data map and toggle a boolea
 Hm... the vertex data seems to be corrupted or otherwise weird (see the imgui debug shit).
 
 [03/16/25]
-Sitting in a church rn... wish I were anywhere else. Anyways, lets code.
+Sitting in a church rn... wish I were anywhere else.
 
-I think that the problem I'm having is related to re-using VBOs and not using the correct ones/corrupting buffered data(?). I don't know, but it has to be OpenGL function-related becsuse none of this happened before. I might revert everything back to the first commit again and focus on making primitive render commands firsf, then try to organize VBO shit.
+I think that the problem I'm having is related to re-using VBOs and not using the correct ones/corrupting buffered data(?). I don't know, but it has to be OpenGL function-related becsuse none of this happened before. I might revert everything back to the first commit again and focus on making primitive render commands first, then try to organize VBO shit.
+
+[03/17/25]
+Yeah, I'm going to do a merge of the Development branch before I started all this mess and start again from the beginning. However, I'll probably start by pulling/reimplementing smaller things that I know will work before I dig into the VBOs (i.e: RenderCmd, PrimitiveRenderCmd, etc).
