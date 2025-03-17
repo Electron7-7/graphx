@@ -37,11 +37,11 @@ public:
 	glm::vec3 orientation_right;
 	glm::vec3 world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	RenderState current_state;
-	RenderState current_state_copy;
+	// RenderState current_state;
+	// RenderState current_state_copy;
 
-	RenderState previous_state;
-	RenderState previous_state_copy;
+	// RenderState previous_state;
+	// RenderState previous_state_copy;
 
 	std::vector<RenderState> current_state_buffer;
 	std::vector<RenderState> previous_state_buffer;
@@ -129,7 +129,6 @@ struct Theatre
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
 	void probeActorsForRenderCommands();
-
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();
 	void dropCurtains();
@@ -156,6 +155,9 @@ struct Theatre
 
 	Actor *getFirstActorOfType(int type_name);
 	Device *getFirstDeviceOfType(int type_name);
+
+	std::vector<Actor *> getAllActorsOfType(int type_name);
+	std::vector<Device *> getAllDevicesOfType(int type_name);
 
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
 	Actor *unsafeGetFirstActorOfType(int type_name);
@@ -210,6 +212,7 @@ template<typename T> Actor *createNewActor()
 	return new T;
 }
 
+bool isLightType(long type);
 Theatre *getCurrentTheatre(bool print_note = true);
 Environment *getCurrentEnvironment();
 GraphXPlayer *getCurrentPlayer();

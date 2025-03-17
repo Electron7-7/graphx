@@ -42,6 +42,7 @@ void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
+void testCollisionEngine(int current_tick);
 
 #define TICKLENGTH (1.0f / TICKRATE)
 #define PER_SECOND(interval) (current_tick_since_second % (TICKRATE/interval) == 0)
@@ -50,7 +51,7 @@ int main()
 {
 	graphx_api = GRAPHX_OPENGL;
 
-	// OpenGL/GLFW Setup
+	// OpenGL/GLFW Setup (MOVE ALL OF THIS INTO R_GL_Initialize AT SOME POINT)
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -71,11 +72,11 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 
-	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
-
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader});
+
+	R_InitializeRenderingAPI();
 
 	std::thread game_logic_main_thread(testGameTick, main_window);
 
@@ -113,7 +114,7 @@ int main()
 			toggleCursor(main_window, false);
 
 		if(time_to_store_buffers)
-			R_StoreBuffers();
+			R_BufferMeshes();
 
 		if(time_to_render)
 		{
@@ -141,12 +142,12 @@ class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
 public:
     virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
     {
-        R_BufferRenderCmd(RenderCmd(inFrom, inTo, inColor));
+        // R_BufferRenderCmd(RenderCmd(inFrom, inTo, inColor));
     }
 
     virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override
     {
-        R_BufferRenderCmd(RenderCmd(inV1, inV2, inV3, inColor));
+        // R_BufferRenderCmd(RenderCmd(inV1, inV2, inV3, inColor));
     }
 
     virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view &inString, JPH::ColorArg inColor, float inHeight) override
@@ -240,6 +241,11 @@ void testGameTick(GLFWwindow *main_window)
 	JPH::UnregisterTypes();
 	delete JPH::Factory::sInstance;
 	JPH::Factory::sInstance = nullptr;
+}
+
+void testCollisionEngine(int current_tick)
+{
+	P_CheckCollisions(current_theatre->troupe);
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)

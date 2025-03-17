@@ -62,7 +62,17 @@ void Theatre::probeActorsForRenderCommands()
 		if(loading_new_main_theatre)
 			return;
 
-		R_BufferRenderCmd(RenderCmd(pair.second));
+		if(!pair.second->wantsToBeRendered())
+			continue;
+
+		RenderCmd render_command;
+		render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
+		render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
+		render_command.mesh_material = pair.second->mesh->material;
+		render_command.mesh_data_name = pair.second->mesh->mesh_data_name;
+		render_command.actor_pointer = pair.second;
+
+		R_BufferRenderCmd(render_command);
 	}
 }
 
@@ -116,13 +126,27 @@ void Theatre::dropCurtains()
 	troupe.clear();
 }
 
-/*Actor *Theatre::getFromTroupe(int index)
+std::vector<Actor *> Theatre::getAllActorsOfType(int type_name)
 {
-	if(loading_new_main_theatre || index > troupe.size())
-		return new Actor();
+	std::vector<Actor *> found_actors;
 
-	return troupe[index];
-}*/
+	for(auto &pair : objects)
+		if(pair.second->isType(type_name))
+			found_actors.insert(found_actors.end(), pair.second);
+
+	return found_actors;
+}
+
+std::vector<Device *> Theatre::getAllDevicesOfType(int type_name)
+{
+	std::vector<Device *> found_devices;
+
+	for(auto &pair : devices)
+		if(pair.second->isType(type_name))
+			found_devices.insert(found_devices.end(), pair.second);
+
+	return found_devices;
+}
 
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)
 {

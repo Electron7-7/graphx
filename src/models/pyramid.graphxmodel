@@ -1,32 +1,71 @@
 #ifndef GRAPHX_PYRAMID
-#define GRAPHX_PYRAMID
+#include <string>
+#define GRAPHX_PYRAMID std::string("GRAPHX_PYRAMID")
 #include <vector>
-const std::vector<float> PYRAMID_VERTS =
+const std::vector<float> PYRAMID_NORMALS =
 {
-	// positions			// vertex colors		// texture coords
-	-1.0f, -1.0f,  1.0f,	-1.0f,  0.0f,  0.0f,	1.0f,  1.0f,			//	Left	Bottom	Front	0
-	-1.0f, -1.0f, -1.0f,	-1.0f,  0.0f,  0.0f,	0.0f,  1.0f,			//	Left	Bottom	Back	1
-	 1.0f, -1.0f, -1.0f,	 1.0f,  0.0f,  0.0f,	0.0f,  0.0f,			//	Right	Bottom	Back	2
-	 1.0f, -1.0f,  1.0f,	 1.0f,  0.0f,  0.0f,	1.0f,  1.0f,			//	Right	Bottom	Front	3
-	 0.0f,  1.0f,  0.0f,	 0.0f,  1.0f,  0.0f,	0.5f,  0.5f				//	Middle	Up		Middle	4	(the tip of the pyramid)
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f,
+	0.0f,  0.0f,  0.0f
 };
 
-const std::vector<unsigned int> PYRAMID_INDICES =
+const std::vector<float> PYRAMID_UVS =
 {
-	// Base
-	0, 1, 2,	// Bottom Triangle
-	3, 0, 2,	// Top Triangle
+	1.0f,  1.0f,
+	0.0f,  1.0f,
+	0.0f,  1.0f,
+	0.0f,  1.0f,
+	0.0f,  0.0f,
+	0.0f,  1.0f,
+	1.0f,  1.0f,
+	1.0f,  1.0f,
+	0.0f,  1.0f,
+	0.0f,  1.0f,
+	0.0f,  0.0f,
+	0.0f,  1.0f,
+	0.0f,  1.0f,
+	0.0f,  0.0f,
+	1.0f,  1.0f,
+	1.0f,  1.0f,
+	1.0f,  1.0f,
+	0.0f,  1.0f
+};
 
-	// +Z Side
-	0, 3, 4,
+const std::vector<float> PYRAMID_POSITIONS =
+{
 
-	// -Z Side
-	1, 2, 4,
-
-	// +X Side
-	2, 3, 4,
-
-	// -X Side
-	0, 1, 4
+	-1.0f, -1.0f,  1.0f,	//	Left	Bottom	Back	0
+	-1.0f, -1.0f, -1.0f,	//	Left	Bottom	Front	1
+	 0.0f,  1.0f,  0.0f,	//	Middle	Up		Middle	2
+	-1.0f, -1.0f, -1.0f,	//	Left	Bottom	Front	1
+	 1.0f, -1.0f, -1.0f,	//	Right	Bottom	Front	3
+	 0.0f,  1.0f,  0.0f,	//	Middle	Up		Middle	2
+	-1.0f, -1.0f,  1.0f,	//	Left	Bottom	Back	0
+	 1.0f, -1.0f,  1.0f,	//	Right	Bottom	Back	4
+	 0.0f,  1.0f,  0.0f,	//	Middle	Up		Middle	2
+	-1.0f, -1.0f, -1.0f,	//	Left	Bottom	Front	1
+	 1.0f, -1.0f, -1.0f,	//	Right	Bottom	Front	3
+	 0.0f,  1.0f,  0.0f,	//	Middle	Up		Middle	2
+	-1.0f, -1.0f, -1.0f,	//	Left	Bottom	Front	1
+	 1.0f, -1.0f, -1.0f,	//	Right	Bottom	Front	3
+	 1.0f, -1.0f,  1.0f,	//	Right	Bottom	Back	4
+	-1.0f, -1.0f,  1.0f,	//	Left	Bottom	Back	0
+	 1.0f, -1.0f,  1.0f,	//	Right	Bottom	Back	4
+	-1.0f, -1.0f, -1.0f 	//	Left	Bottom	Front	1
 };
 #endif
