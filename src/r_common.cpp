@@ -257,7 +257,7 @@ Mesh::Mesh()
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
-	mesh_data = M_LoadOBJ(ERROR_obj);
+	mesh_data_name = M_GetOBJName(ERROR_obj);
 }
 
 Mesh::Mesh(Material *new_material)
@@ -265,22 +265,18 @@ Mesh::Mesh(Material *new_material)
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
 	material = new_material;
+	mesh_data_name = M_GetOBJName(ERROR_obj);
 }
 
 void Mesh::prepForDestruction()
 {
 	Device::prepForDestruction();
+
 	if(material != nullptr)
 		material->prepForDestruction();
+
 	material = nullptr;
 	delete material;
-}
-
-void Mesh::processMeshData()
-{
-	vertices = std::get<0>(mesh_data);
-	indices = std::get<1>(mesh_data);
-	vao_index = std::get<2>(mesh_data);
 }
 
 void Mesh::loadSettings(graphx::gSettings new_settings)
@@ -288,12 +284,7 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 	Device::loadSettings(new_settings);
 
 	getSetting(material, settings["Material"]);
-	getSetting(mesh_data, settings["MeshData"]);
-
-	processMeshData();
-
-	if(vao_index == VAO_OBJ)
-		mesh_scale *= PREEMPTIVE_OBJ_SCALE;
+	getSetting(mesh_data_name, settings["MeshData"]);
 }
 
 //
@@ -304,9 +295,6 @@ Sprite::Sprite()
 {
 	my_type = graphx::classes::SPRITE;
 	name = "Untitled Sprite";
-	vertices = QUAD_VERTS;
-	indices = QUAD_INDICES;
-	vao_index = VAO_HANDMADE;
 }
 
 void Sprite::loadSettings(graphx::gSettings new_settings)
@@ -317,18 +305,26 @@ void Sprite::loadSettings(graphx::gSettings new_settings)
 //
 // RenderCmd
 //
-RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
+bool RenderCmd::isRenderable()
 {
-	primitive_type = graphxRenderPrimitive::LINE;
+	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
+}
+
+//
+// PrimitiveRenderCmd
+//
+PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
+{
+	primitive_type = graphx::types::primitive::LINE;
 	vertex_1 = new_vertex_1;
 	vertex_2 = new_vertex_2;
 	colors_1 = new_vertex_color;
 	colors_2 = new_vertex_color;
 }
 
-RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
+PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
 {
-	primitive_type = graphxRenderPrimitive::TRIANGLE;
+	primitive_type = graphx::types::primitive::TRIANGLE;
 	vertex_1 = new_vertex_1;
 	vertex_2 = new_vertex_2;
 	vertex_3 = new_vertex_3;
@@ -337,18 +333,18 @@ RenderCmd::RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 n
 	colors_3 = new_vertex_color;
 }
 
-RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
+PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
 {
-	primitive_type = graphxRenderPrimitive::LINE;
+	primitive_type = graphx::types::primitive::LINE;
 	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
 	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
 	colors_1 = convertMath<glm::vec3>(new_vertex_color);
 	colors_2 = convertMath<glm::vec3>(new_vertex_color);
 }
 
-RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
+PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
 {
-	primitive_type = graphxRenderPrimitive::TRIANGLE;
+	primitive_type = graphx::types::primitive::TRIANGLE;
 	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
 	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
 	vertex_3 = convertMath<glm::vec3>(new_vertex_3);
@@ -357,14 +353,9 @@ RenderCmd::RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH
 	colors_3 = convertMath<glm::vec3>(new_vertex_color);
 }
 
-RenderCmd::RenderCmd(Actor *new_actor)
+/*void PrimitiveRenderCmd::bufferData()
 {
-	render_actor = new_actor;
-}
-
-void RenderCmd::bufferData()
-{
-	if(primitive_type == graphxRenderPrimitive::TRIANGLE)
+	if(primitive_type == graphx::types::primitive::TRIANGLE)
 	{
 		vertex_data =
 		{
@@ -374,7 +365,7 @@ void RenderCmd::bufferData()
 		};
 	}
 
-	else if(primitive_type == graphxRenderPrimitive::LINE)
+	else if(primitive_type == graphx::types::primitive::LINE)
 	{
 		vertex_data =
 		{
@@ -401,19 +392,85 @@ void RenderCmd::bufferData()
 	glEnableVertexAttribArray(3);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}*/
+
+//
+// gMeshData
+//
+gMeshData::gMeshData()
+{}
+
+gMeshData::gMeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors)
+: vao_index(init_vao_index), vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors)
+{
+	if(vertex_normals == std::vector<float>{0.0f, 0.0f, 0.0f})
+	{
+		vertex_normals = vertex_positions;
+		std::fill(vertex_normals.begin(), vertex_normals.end(), 0.0f);
+	}
+
+	if(vertex_uvs == std::vector<float>{0.0f, 0.0f})
+	{
+		vertex_uvs = std::vector<float>(vertex_positions.begin(), vertex_positions.begin() + (vertex_positions.size() / 3));
+		std::fill(vertex_uvs.begin(), vertex_uvs.end(), 0.0f);
+	}
+
+	if(vertex_colors == std::vector<float>{1.0f, 1.0f, 1.0f})
+	{
+		vertex_colors = vertex_positions;
+		std::fill(vertex_colors.begin(), vertex_colors.end(), 1.0f);
+	}
 }
 
-unsigned int RenderCmd::getVBO()
+gMeshData::gMeshData(int init_vao_index, std::vector<unsigned int> init_indices, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors)
+: vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors), indices(init_indices)
 {
-	return VBO;
+	if(vertex_normals == std::vector<float>{0.0f, 0.0f, 0.0f})
+	{
+		vertex_normals = vertex_positions;
+		std::fill(vertex_normals.begin(), vertex_normals.end(), 0.0f);
+	}
+
+	if(vertex_uvs == std::vector<float>{0.0f, 0.0f})
+	{
+		vertex_uvs = std::vector<float>(vertex_positions.begin(), vertex_positions.begin() + (2 * (vertex_positions.size() / 3)));
+		std::fill(vertex_uvs.begin(), vertex_uvs.end(), 0.0f);
+	}
+
+	if(vertex_colors == std::vector<float>{1.0f, 1.0f, 1.0f})
+	{
+		vertex_colors = vertex_positions;
+		std::fill(vertex_colors.begin(), vertex_colors.end(), 1.0f);
+	}
 }
 
-std::vector<float> RenderCmd::getVertexData()
+unsigned long gMeshData::getVertexDataSize()
 {
+	return (vertex_positions.size() + vertex_normals.size() + vertex_uvs.size() + vertex_colors.size());
+}
+
+std::vector<float> gMeshData::getVertexData()
+{
+	std::vector<float> vertex_data;
+
+	for(int it = 0,uv_it = 0 ; it < vertex_positions.size() ; it+=3,uv_it+=2)
+	{
+		vertex_data.insert(vertex_data.end(), {vertex_positions.at(it), vertex_positions.at(it + 1), vertex_positions.at(it + 2)});
+		vertex_data.insert(vertex_data.end(), {vertex_normals.at(it), vertex_normals.at(it + 1), vertex_normals.at(it + 2)});
+		vertex_data.insert(vertex_data.end(), {vertex_uvs.at(uv_it), vertex_uvs.at(uv_it + 1)});
+		vertex_data.insert(vertex_data.end(), {vertex_colors.at(it), vertex_colors.at(it + 1), vertex_colors.at(it + 2)});
+	}
+
 	return vertex_data;
 }
 
-bool RenderCmd::isPrimitive()
+bool gMeshData::operator==(const gMeshData &compared_with) const
 {
-	return (render_actor == nullptr);
+	return
+	(
+		vertex_positions == compared_with.vertex_positions &&
+		vertex_normals   == compared_with.vertex_normals   &&
+		vertex_uvs       == compared_with.vertex_uvs       &&
+		vertex_colors    == compared_with.vertex_colors
+	);
 }

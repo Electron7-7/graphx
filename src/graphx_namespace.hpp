@@ -1,5 +1,6 @@
 #ifndef GRAPHX_NAMESPACE
 #define GRAPHX_NAMESPACE
+#include <glm/glm.hpp>
 #include <map>
 #include <any>
 #include <array>
@@ -11,6 +12,31 @@
 
 namespace graphx
 {
+	namespace error
+	{
+		namespace rendercmd
+		{
+			static constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
+			static constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
+			static constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
+			static constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
+
+		};
+	};
+
+	namespace types
+	{
+		typedef int gPrimitive;
+
+		namespace primitive
+		{
+			static constexpr gPrimitive FOO      = -1;
+			static constexpr gPrimitive LINE     = 0;
+			static constexpr gPrimitive TRIANGLE = 1;
+			static constexpr gPrimitive TEXT     = -1; // Text not supported yet!
+		};
+	};
+
 	namespace classes
 	{
 		static constexpr int THEATRE			= 0;
@@ -35,7 +61,8 @@ namespace graphx
 
 		static constexpr int ACTORS[2] = {0, 499};
 		static constexpr int DEVICES[2] = {500, 999};
-		static constexpr std::array<int, 5> LIGHTS =
+		static constexpr int LIGHT_TYPES_AMOUNT = 5;
+		static constexpr std::array<int, LIGHT_TYPES_AMOUNT> LIGHTS =
 		{
 			LIGHT,
 			LIGHTSPOT,
@@ -51,6 +78,7 @@ namespace graphx
 	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
 	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
 	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
+	typedef std::vector<std::string> gRawData;
 
 	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only
 	// and shouldn't be used by anything else (except for Theatre::graphx_theatre_settings)
@@ -67,10 +95,6 @@ namespace graphx
 	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	typedef std::pair<int, std::string> gSandwichPair;
-	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> gMeshData;
-	typedef std::vector<std::string> gRawData;
 
 	static std::map<int, std::string> classnames =
 	{

@@ -4,6 +4,7 @@
 #include "g_common.hpp"
 #include "r_common.hpp"
 #include "images.h"
+#include "models.hpp"
 #include <models.hpp>
 #include <theatres.hpp>
 #include <set>
@@ -27,12 +28,12 @@ std::map<std::string, std::any> cpp_definitions =
 	{"FLAT_SPEC", FLAT_SPEC_jpg},
 	{"SOURCE_ORANGE", SOURCE_ORANGE_png},
 	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY_png},
-	{"GRAPHX_CUBE", gMeshData(CUBE_VERTS, CUBE_INDICES, VAO_HANDMADE)},
-	{"GRAPHX_PYRAMID", gMeshData(PYRAMID_VERTS, PYRAMID_INDICES, VAO_HANDMADE)},
-	{"GRAPHX_QUAD", gMeshData(QUAD_VERTS, QUAD_INDICES, VAO_HANDMADE)},
-	{"OBJ_ERROR", M_LoadOBJ(ERROR_obj)},
-	{"OBJ_SUZANNE", M_LoadOBJ(suzanne_obj)},
-	{"notapenis", M_LoadOBJ(purely_for_testing_obj)},
+	{"GRAPHX_CUBE", GRAPHX_CUBE},
+	{"GRAPHX_PYRAMID", GRAPHX_PYRAMID},
+	{"GRAPHX_QUAD", GRAPHX_QUAD},
+	{"OBJ_ERROR", M_GetOBJName(ERROR_obj)},
+	{"OBJ_SUZANNE", M_GetOBJName(suzanne_obj)},
+	{"notapenis", M_GetOBJName(purely_for_testing_obj)},
 	{"Dynamic", JPH::EMotionType::Dynamic},
 	{"Static", JPH::EMotionType::Static},
 	{"Kinematic", JPH::EMotionType::Kinematic},

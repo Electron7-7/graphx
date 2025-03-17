@@ -24,6 +24,14 @@ std::map<int, Actor*(*)()> actor_map =
 	{graphx::classes::LIGHTTESTERMOVER, &createNewActor<LightTesterMover>},
 };
 
+bool isLightType(long type)
+{
+	for(int light_type : graphx::classes::LIGHTS)
+		if(type == light_type)
+			return true;
+	return false;
+}
+
 //
 // Actor
 //
@@ -34,12 +42,12 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	name = new_name;
 	mesh = new Mesh();
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
-	current_state = RenderState(init_position, quaternion, init_scale);
-	current_state_copy = current_state;
-	previous_state = current_state;
-	previous_state_copy = current_state;
-	current_state_buffer = { current_state, current_state_copy };
-	previous_state_buffer = { previous_state, previous_state_copy };
+	RenderState render_state = RenderState(init_position, quaternion, init_scale);
+	// current_state_copy = current_state;
+	// previous_state = current_state;
+	// previous_state_copy = current_state;
+	current_state_buffer = { render_state, render_state };
+	previous_state_buffer = { render_state, render_state };
 	updateVectors();
 }
 
@@ -263,7 +271,7 @@ void Actor::takeABow()
 
 bool Actor::wantsToBeRendered()
 {
-	return (mesh != nullptr && mesh->is_buffered && visible);
+	return (mesh != nullptr && visible && !isType(graphx::classes::GRAPHXPLAYER));
 }
 
 //
