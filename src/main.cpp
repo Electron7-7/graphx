@@ -42,6 +42,7 @@ void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void testGameTick(GLFWwindow *window);
+void testCollisionEngine(int current_tick);
 
 #define TICKLENGTH (1.0f / TICKRATE)
 #define PER_SECOND(interval) (current_tick_since_second % (TICKRATE/interval) == 0)
@@ -240,6 +241,11 @@ void testGameTick(GLFWwindow *main_window)
 	JPH::UnregisterTypes();
 	delete JPH::Factory::sInstance;
 	JPH::Factory::sInstance = nullptr;
+}
+
+void testCollisionEngine(int current_tick)
+{
+	P_CheckCollisions(current_theatre->troupe);
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)

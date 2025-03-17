@@ -708,7 +708,7 @@ but that won't be all; i'll also implement a way to check on certain details for
 this could just boil down to testing the inner variable "global_location" and I don't have to write any custom checker function. that sounds nice,
 but it also sounds too easy, so I may be misinterpreting how this kind of "state" is supposed to be used.
 
-I could also use pointers? like, can you make sure that an object's state hasn't changed by comparing the pointer to that state with the previous 
+I could also use pointers? like, can you make sure that an object's state hasn't changed by comparing the pointer to that state with the previous
 value of the state's pointer? I'll have to check.
 
 this also means that I'm going to need to know for sure whether or not I want to make this "state" struct mutable or immutable.
@@ -1277,7 +1277,7 @@ Derived_1
     Base_2
     FirstDerived_3
 
-Derived_2   
+Derived_2
 DERIVED2
     SecondDerived
     SecondDerived_2
