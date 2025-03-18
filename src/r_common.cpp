@@ -1,6 +1,6 @@
 #include "r_common.hpp"
 #include "g_common.hpp"
-#include "g_math.hpp"
+#include <gmath.hpp>
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
 #include <models.hpp>
@@ -295,6 +295,7 @@ Sprite::Sprite()
 {
 	my_type = graphx::classes::SPRITE;
 	name = "Untitled Sprite";
+	mesh_data_name = GRAPHX_QUAD;
 }
 
 void Sprite::loadSettings(graphx::gSettings new_settings)
@@ -307,7 +308,7 @@ void Sprite::loadSettings(graphx::gSettings new_settings)
 //
 bool RenderCmd::isRenderable()
 {
-	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
+	return ((current_render_state != nullptr || previous_render_state != nullptr) && mesh_data != nullptr);
 }
 
 //
@@ -315,16 +316,15 @@ bool RenderCmd::isRenderable()
 //
 PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
 {
-	primitive_type = graphx::types::primitive::LINE;
+	primitive_type = graphx::identifiers::primitive::LINE;
 	vertex_1 = new_vertex_1;
 	vertex_2 = new_vertex_2;
 	colors_1 = new_vertex_color;
 	colors_2 = new_vertex_color;
 }
-
 PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
 {
-	primitive_type = graphx::types::primitive::TRIANGLE;
+	primitive_type = graphx::identifiers::primitive::TRIANGLE;
 	vertex_1 = new_vertex_1;
 	vertex_2 = new_vertex_2;
 	vertex_3 = new_vertex_3;
@@ -332,27 +332,24 @@ PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_ver
 	colors_2 = new_vertex_color;
 	colors_3 = new_vertex_color;
 }
-
 PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
 {
-	primitive_type = graphx::types::primitive::LINE;
-	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
-	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
-	colors_1 = convertMath<glm::vec3>(new_vertex_color);
-	colors_2 = convertMath<glm::vec3>(new_vertex_color);
+	primitive_type = graphx::identifiers::primitive::LINE;
+	vertex_1 = gmath::convertMath<glm::vec3>(new_vertex_1);
+	vertex_2 = gmath::convertMath<glm::vec3>(new_vertex_2);
+	colors_1 = gmath::convertMath<glm::vec3>(new_vertex_color);
+	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
 }
-
 PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
 {
-	primitive_type = graphx::types::primitive::TRIANGLE;
-	vertex_1 = convertMath<glm::vec3>(new_vertex_1);
-	vertex_2 = convertMath<glm::vec3>(new_vertex_2);
-	vertex_3 = convertMath<glm::vec3>(new_vertex_3);
-	colors_1 = convertMath<glm::vec3>(new_vertex_color);
-	colors_2 = convertMath<glm::vec3>(new_vertex_color);
-	colors_3 = convertMath<glm::vec3>(new_vertex_color);
+	primitive_type = graphx::identifiers::primitive::TRIANGLE;
+	vertex_1 = gmath::convertMath<glm::vec3>(new_vertex_1);
+	vertex_2 = gmath::convertMath<glm::vec3>(new_vertex_2);
+	vertex_3 = gmath::convertMath<glm::vec3>(new_vertex_3);
+	colors_1 = gmath::convertMath<glm::vec3>(new_vertex_color);
+	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
+	colors_3 = gmath::convertMath<glm::vec3>(new_vertex_color);
 }
-
 /*void PrimitiveRenderCmd::bufferData()
 {
 	if(primitive_type == graphx::types::primitive::TRIANGLE)
@@ -394,83 +391,173 @@ PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }*/
 
+
 //
-// gMeshData
+// MeshData
 //
-gMeshData::gMeshData()
+MeshData::MeshData()
 {}
 
-gMeshData::gMeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors)
-: vao_index(init_vao_index), vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors)
+MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals, std::vector<glm::vec2> init_uvs, std::vector<glm::vec3> init_colors, std::vector<gmath::uintvec3> init_indices)
 {
-	if(vertex_normals == std::vector<float>{0.0f, 0.0f, 0.0f})
-	{
-		vertex_normals = vertex_positions;
-		std::fill(vertex_normals.begin(), vertex_normals.end(), 0.0f);
-	}
+	// These for loops make sure that every vertex has normal, uv, and color data
+	for(int i = init_normals.size() ; i <= init_positions.size() ; i++)
+		init_normals.insert(init_normals.end(), glm::vec3(0.0f, 0.0f, 0.0f));
 
-	if(vertex_uvs == std::vector<float>{0.0f, 0.0f})
-	{
-		vertex_uvs = std::vector<float>(vertex_positions.begin(), vertex_positions.begin() + (vertex_positions.size() / 3));
-		std::fill(vertex_uvs.begin(), vertex_uvs.end(), 0.0f);
-	}
+	for(int i = init_uvs.size() ; i <= init_positions.size() ; i++)
+		init_uvs.insert(init_uvs.end(), glm::vec2(0.0f, 0.0f));
 
-	if(vertex_colors == std::vector<float>{1.0f, 1.0f, 1.0f})
+	for(int i = init_colors.size() ; i <= init_positions.size() ; i++)
+		init_colors.insert(init_colors.end(), glm::vec3(1.0f, 1.0f, 1.0f));
+
+	VAO_index = init_vao_index;
+	vertex_positions = init_positions;
+	vertex_normals = init_normals;
+	vertex_uvs = init_uvs;
+	vertex_colors = init_colors;
+	vertex_indices = init_indices;
+}
+
+MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors, std::vector<unsigned int> init_indices)
+{
+	// These for loops make sure that every vertex has normal, uv, and color data
+	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
+		init_normals.insert(init_normals.end(), 0.0f);
+
+	for(int i = init_uvs.size() ; i < (2 * init_positions.size() / 3) ; i++)
+		init_uvs.insert(init_uvs.end(), 0.0f);
+
+	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
+		init_colors.insert(init_colors.end(), 1.0f);
+
+	if(!init_indices.empty())
+		for(int i = init_indices.size() ; i < init_positions.size() ; i++)
+			init_colors.insert(init_colors.end(), 1.0f);
+
+	VAO_index = init_vao_index;
+	for(int it = 0,uv_it = 0 ; it < init_positions.size() ; it += 3,uv_it += 2)
 	{
-		vertex_colors = vertex_positions;
-		std::fill(vertex_colors.begin(), vertex_colors.end(), 1.0f);
+		vertex_positions.insert(vertex_positions.end(), glm::vec3(init_positions[it], init_positions[it + 1], init_positions[it + 2]));
+		vertex_normals.insert(vertex_normals.end(), glm::vec3(init_normals[it], init_normals[it + 1], init_normals[it + 2]));
+		vertex_uvs.insert(vertex_uvs.end(), glm::vec2(init_uvs[uv_it], init_uvs[uv_it + 1]));
+		vertex_colors.insert(vertex_colors.end(), glm::vec3(init_colors[it], init_colors[it + 1], init_colors[it + 2]));
+		if(!init_indices.empty())
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
 	}
 }
 
-gMeshData::gMeshData(int init_vao_index, std::vector<unsigned int> init_indices, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors)
-: vertex_positions(init_positions), vertex_normals(init_normals), vertex_uvs(init_uvs), vertex_colors(init_colors), indices(init_indices)
+std::vector<float> MeshData::vertices()
 {
-	if(vertex_normals == std::vector<float>{0.0f, 0.0f, 0.0f})
+	std::vector<float> vertices;
+	for(int i = 0 ; i < vertex_positions.size() ; i++)
 	{
-		vertex_normals = vertex_positions;
-		std::fill(vertex_normals.begin(), vertex_normals.end(), 0.0f);
+		vertices.insert(vertices.end(),
+		{
+			vertex_positions.at(i).x,
+			vertex_positions.at(i).y,
+			vertex_positions.at(i).z,
+			vertex_normals.at(i).x,
+			vertex_normals.at(i).y,
+			vertex_normals.at(i).z,
+			vertex_uvs.at(i).x,
+			vertex_uvs.at(i).y,
+			vertex_colors.at(i).x,
+			vertex_colors.at(i).y,
+			vertex_colors.at(i).z
+		});
 	}
-
-	if(vertex_uvs == std::vector<float>{0.0f, 0.0f})
-	{
-		vertex_uvs = std::vector<float>(vertex_positions.begin(), vertex_positions.begin() + (2 * (vertex_positions.size() / 3)));
-		std::fill(vertex_uvs.begin(), vertex_uvs.end(), 0.0f);
-	}
-
-	if(vertex_colors == std::vector<float>{1.0f, 1.0f, 1.0f})
-	{
-		vertex_colors = vertex_positions;
-		std::fill(vertex_colors.begin(), vertex_colors.end(), 1.0f);
-	}
+	return vertices;
 }
 
-unsigned long gMeshData::getVertexDataSize()
+std::vector<unsigned int> MeshData::indices()
 {
-	return (vertex_positions.size() + vertex_normals.size() + vertex_uvs.size() + vertex_colors.size());
-}
-
-std::vector<float> gMeshData::getVertexData()
-{
-	std::vector<float> vertex_data;
-
-	for(int it = 0,uv_it = 0 ; it < vertex_positions.size() ; it+=3,uv_it+=2)
+	// All indices in vertex_indices must be grouped in pairs of 3 to be valid
+	if(!hasValidIndices())
 	{
-		vertex_data.insert(vertex_data.end(), {vertex_positions.at(it), vertex_positions.at(it + 1), vertex_positions.at(it + 2)});
-		vertex_data.insert(vertex_data.end(), {vertex_normals.at(it), vertex_normals.at(it + 1), vertex_normals.at(it + 2)});
-		vertex_data.insert(vertex_data.end(), {vertex_uvs.at(uv_it), vertex_uvs.at(uv_it + 1)});
-		vertex_data.insert(vertex_data.end(), {vertex_colors.at(it), vertex_colors.at(it + 1), vertex_colors.at(it + 2)});
+		PRINTDEBUG("MeshData::indices() called, but vertex_indices is either empty or not divisible by 3! Returning an empty std::vector<unsigned int>")
+		return std::vector<unsigned int>{};
 	}
 
-	return vertex_data;
+	std::vector<unsigned int> indices;
+	for(int i = 0 ; i < vertex_indices.size() ; i++)
+	{
+		indices.insert(indices.end(),
+		{
+			vertex_indices.at(i).x(),
+			vertex_indices.at(i).y(),
+			vertex_indices.at(i).z()
+		});
+	}
+	return indices;
 }
 
-bool gMeshData::operator==(const gMeshData &compared_with) const
+size_t MeshData::vertices_count()
 {
 	return
 	(
-		vertex_positions == compared_with.vertex_positions &&
-		vertex_normals   == compared_with.vertex_normals   &&
-		vertex_uvs       == compared_with.vertex_uvs       &&
-		vertex_colors    == compared_with.vertex_colors
+		(3 * vertex_colors.size())  +
+		(3 * vertex_normals.size()) +
+		(2 * vertex_uvs.size())     +
+		(3 * vertex_colors.size())
 	);
+}
+
+size_t MeshData::vertices_size()
+{
+	return
+	(
+		(3 * sizeof(float) * vertex_colors.size())  +
+		(3 * sizeof(float) * vertex_normals.size()) +
+		(2 * sizeof(float) * vertex_uvs.size())     +
+		(3 * sizeof(float) * vertex_colors.size())
+	);
+}
+
+size_t MeshData::indices_count()
+{
+	return (3 * vertex_indices.size());
+}
+
+size_t MeshData::indices_size()
+{
+	return (3 * sizeof(unsigned int) * vertex_indices.size());
+}
+
+void MeshData::addVertex(glm::vec3 position, glm::vec3 normal, glm::vec2 uv, glm::vec3 color)
+{
+	vertex_positions.insert(vertex_positions.end(), position);
+	vertex_normals.insert(vertex_normals.end(), normal);
+	vertex_uvs.insert(vertex_uvs.end(), uv);
+	vertex_colors.insert(vertex_colors.end(), color);
+}
+
+void MeshData::addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z)
+{
+	vertex_positions.insert(vertex_positions.end(), glm::vec3(position_x, position_y, position_z));
+	vertex_normals.insert(vertex_normals.end(), glm::vec3(normal_x, normal_y, normal_z));
+	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(uv_x, uv_y));
+	vertex_colors.insert(vertex_colors.end(), glm::vec3(color_x, color_y, color_z));
+}
+
+void MeshData::addVertex(std::vector<float> vertex)
+{
+	vertex_positions.insert(vertex_positions.end(), glm::vec3(vertex[0], vertex[1], vertex[2]));
+	vertex_normals.insert(vertex_normals.end(), glm::vec3(vertex[3], vertex[4], vertex[5]));
+	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(vertex[6], vertex[7]));
+	vertex_colors.insert(vertex_colors.end(), glm::vec3(vertex[8], vertex[9], vertex[10]));
+}
+
+void MeshData::addIndex(gmath::uintvec3 indices)
+{
+	vertex_indices.insert(vertex_indices.end(), indices);
+}
+
+void MeshData::addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3)
+{
+	vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(index_1, index_2, index_3));
+}
+
+bool MeshData::hasValidIndices()
+{
+	return (!vertex_indices.empty() && !(vertex_indices.size() % 3));
 }

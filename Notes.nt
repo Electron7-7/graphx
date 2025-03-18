@@ -1094,9 +1094,9 @@ Holy shit big find!! In r_renderer.cpp, the view position is calculated from the
 
 Oh also, I don't have to update the global position, lmfao. Global and local positions can be altered at any time, and as long as position and rotation are read via the functions, it should be fine. I'll probably put the actual variables under protected to keep them from being read directly.
 
-Idea for convertMath:
+Idea for gmath::convertMath:
 :::C++
-template<typename T, typename A> convertMath(T &convert_me, A convert_to)
+template<typename T, typename A> gmath::convertMath(T &convert_me, A convert_to)
 {
     // Do conversion here
 }
@@ -1734,3 +1734,17 @@ I think that the problem I'm having is related to re-using VBOs and not using th
 
 [03/17/25]
 Yeah, I'm going to do a merge of the Development branch before I started all this mess and start again from the beginning. However, I'll probably start by pulling/reimplementing smaller things that I know will work before I dig into the VBOs (i.e: RenderCmd, PrimitiveRenderCmd, etc).
+
+fucking finally... I'm so ass with Github LMFAO.
+
+Okay, I'm actually going to just jump into the VBOs stuff first; get that over with. My thought process is that since mesh data is always something that's roughly static, meaning that mesh data usually doesn't change either at all or very often. What this means for me is that I should load and store all the mesh data that the engine can currently access, and then once rendering is to commence, I check that the meshes I need are all buffered. Oh my god, I also just realized that I could've made my life a lot easier... I can just have mesh data be buffered on demand instead of all at once. This would make sure that I only buffer the mesh data that needs to be buffered. I don't know if clearing all the VBOs every time a new Theatre is loaded is a good idea but regardless of when and how I choose to flush unused buffers, checking/creating them on demand is a much better idea (at least, I think). Before I start coding, however, I do need to answer that question of how/when I'm going to flush the VBOs. It would be more efficient (and lead to better load times) if I don't just flush them all and re-buffer the ones I need, but that method is also the simplest so it'll be a last resort fallback option. I could just use the method I came up with where I add all the current Mesh objects' mesh data identifiers into one big string and then do an std::string::find on every stored mesh data identifier, but that's a bit pedantic. Oh! Wait a minute, I already semi-fixed this problem. Flushing every VBO and rebuilding them on every Theatre load might be inefficient, but setting a boolean to false and then setting it to true is much less inefficient. All that's left is actually flushing buffers. I need to know when it's time to check the booleans (i.e: they've all been set to their final values); if I'm going to be buffering the required VBOs on demand, then there's not going to be a function for checking and buffering them. However, that means that I now don't know when they've all been checked. Maybe instead of a boolean, it could be an int and I could check for three values with two of them being effectively true or false, but the third value being "not yet checked". Yeah, I think I'll do that! I also want to change how mesh data is stored and how VBOs are stored/accessed.
+
+Oh, also, I need to re-introduce PrimitiveRenderCmd.
+
+As well as the mesh data name stuff (plus the map). I'm gonna actually copy that in rq.
+
+Oh my god I just wasted time making a fucking unsigned integer vector3 struct... might as well finish it I guess. (it's for the mesh data vertex indices...)
+
+Okay, I did a lot of work; I'm finally at the point where I can start coding the VBO stuff, LMFAO. Remind me to never get high before work, even a little bit. Anyways, I did get a lot of actually good stuff done. Mainly, better compartmentalization/abstraction that is healthy for the codebase (not abstracting just to abstract). I created my own implementation of a "Vector3" type that only takes unsigned integers; this is to help make the processing of indices resemble the processing of vertices in MeshData. MeshData is an infinitely better implementation of gMeshData; gMeshData used to be a simple typedef, then a small struct, then a big struct and as such it kept a lot of the same ideas and styles of simpler containers. This led to it not fitting its actual purpose very well. MeshData, on the other hand, was designed from the ground up with the failings of gMeshData in mind; some of the improvements made include: way more helper functions, better and more detailed functions for getting the size of the data (both the number of combined elements and the total bytes of the data), way better constructors, specific helper functions for adding whole vertices (position+normal+uv+color) at once, and more. MeshData also has VBO and IBO member variables for holding buffer names, as well as a VAO_index variable for storing the (you guessed it) VAO index in VAOs that it uses (e.g: VAOs[VAO_index]).
+
+In conclusion, I've finished building the ground work for what comes next: the more ardurous process of re-writing the rendering pipeline.

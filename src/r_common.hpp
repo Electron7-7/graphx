@@ -1,8 +1,8 @@
 // r_common.hpp - rendering declarations
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
-#include "Jolt/Jolt.h"
-#include "Jolt/Core/Color.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Core/Color.h>
 #include "graphx_namespace.hpp"
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
@@ -29,34 +29,13 @@
 
 
 // Le secret dev texture
-#define DOOM_TEXTURE_DIFF				COMP04_5_png
-#define DOOM_TEXTURE_SPEC				COMP04_5_SPECULAR_jpg
+#define DOOM_TEXTURE_DIFF   COMP04_5_png
+#define DOOM_TEXTURE_SPEC   COMP04_5_SPECULAR_jpg
 
 
-// BUFFERS ARENT IMPLEMENTED YET, SO THESE ARENT USED!
-#define BUFFERS_AMOUNT		5
-//---------------------------
-#define BUFFER_ERR			0
-#define BUFFER_TESTING		1
-#define BUFFER_FLATS		2
-#define BUFFER_ACTORS		3
-#define BUFFER_PROPS		4
-
-
-#define VAOS_AMOUNT         1
+#define VAOS_AMOUNT			1
 //---------------------------
 #define VAO_DEFAULT         0
-
-
-// #define VBO_SIZE_BYTES      0xA00000 // Equal to 10 MiB (10485760 Bytes)
-#define VBO_CATEGORIES      2
-//---------------------------
-#define VBOS_MESH           0
-#define VBOS_UI             1
-
-
-#define MESH_WAS_BUFFERED   false
-#define MESH_IS_BUFFERED    true
 
 
 struct GLShader
@@ -138,6 +117,10 @@ struct Mesh : public Device
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
 
+	unsigned int VBO = 0;
+	unsigned int IBO = 0;
+	bool is_buffered = false;
+	glm::vec3 mesh_scale = glm::vec3(1.0f);
 	std::string mesh_data_name = "";
 
 	Mesh();
@@ -156,12 +139,12 @@ struct Sprite : public Mesh
 };
 
 struct RenderState; // Forward Declaration
-struct gMeshData; // Forward Declaration
+struct MeshData;    // Forward Declaration
 
 struct RenderCmd
 {
 public:
-	std::string mesh_data_name = "";
+	MeshData *mesh_data = nullptr;
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
 	Material *mesh_material = nullptr;
@@ -184,8 +167,7 @@ struct PrimitiveRenderCmd
 	glm::vec3 colors_1 = glm::vec3(0.0f);
 	glm::vec3 colors_2 = glm::vec3(0.0f);
 	glm::vec3 colors_3 = glm::vec3(0.0f);
-
-	graphx::types::gPrimitive primitive_type = graphx::types::primitive::FOO;
+	int primitive_type = graphx::identifiers::primitive::FOO;
 	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
 
 	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
@@ -194,38 +176,52 @@ struct PrimitiveRenderCmd
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
 };
 
-struct gMeshData
+struct MeshData
 {
-public:
-	// Buffered mesh data
-	bool needed_by_current_theatre = false;
-	int vao_index = VAO_DEFAULT;
-	unsigned int VBO = 0;
-	unsigned int IBO = 0;
+	int is_in_use = graphx::identifiers::mesh_data::NOT_CHECKED;
 
-	std::vector<float> vertex_positions = {0.0f, 0.0f, 0.0f};
-	std::vector<float> vertex_normals = {0.0f, 0.0f, 0.0f};
-	std::vector<float> vertex_uvs = {0.0f, 0.0f};
-	std::vector<float> vertex_colors = {1.0f, 1.0f, 1.0f};
-	std::vector<unsigned int> indices = {};
+	int VAO_index;
+	unsigned int VBO;
+	unsigned int IBO;
 
-	gMeshData();
-	gMeshData(int init_vao_index, std::vector<unsigned int> init_indices, std::vector<float> init_positions, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f});
-	gMeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {0.0f, 0.0f, 0.0f}, std::vector<float> init_uvs = {0.0f, 0.0f}, std::vector<float> init_colors = {1.0f, 1.0f, 1.0f});
+	std::vector<glm::vec3> vertex_positions;
+	std::vector<glm::vec3> vertex_normals;
+	std::vector<glm::vec2> vertex_uvs;
+	std::vector<glm::vec3> vertex_colors;
+	std::vector<gmath::uintvec3> vertex_indices;
 
-	std::vector<float> getVertexData();
-	unsigned long getVertexDataSize();
-	bool operator==(const gMeshData &compared_with) const;
+	MeshData();
+	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::uintvec3> init_indices = {});
+	MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {}, std::vector<float> init_uvs = {}, std::vector<float> init_colors = {}, std::vector<unsigned int> init_indices = {});
 
-private:
-	// For the time being, I'm removing indices from the rendering process
-	// std::vector<unsigned int> vertex_indices;
+	// This implementation of MeshData::addVertex assumes that the floats contained in the "vertex" argument are in this order:
+	//
+	//     vertex[0-2] : position (X, Y, Z)
+	//
+	//     vertex[3-5] : normal   (X, Y, X)
+	//
+	//     vertex[6-7] : uv       (X, Y)
+	//
+	//     vertex[8-10]: color    (R, G, B)
+	void addVertex(std::vector<float> vertex);
+	void addVertex(glm::vec3 position, glm::vec3 normal = glm::vec3(0.0f), glm::vec2 uv = glm::vec2(0.0f), glm::vec3 color = glm::vec3(1.0f));
+	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
+	void addIndex(gmath::uintvec3 indices);
+	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
+	bool hasValidIndices();
+
+	std::vector<float> vertices();
+	std::vector<unsigned int> indices();
+	size_t vertices_count();
+	size_t vertices_size();
+	size_t indices_count();
+	size_t indices_size();
 };
 
 // Variables found in r_renderer.cpp
 extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::vector<GLShader *> shaders; // Same for shaders
-extern std::map<std::string, gMeshData> mesh_data_map;
+extern std::map<std::string, MeshData> mesh_data_storage;
 extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -245,12 +241,15 @@ template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void        R_BufferMeshes();
+void        R_StoreBuffers();
+void        R_GL_BufferMeshes();
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
+void        R_GL_RenderPrimitive(RenderCmd *render_command);
+void        R_GL_Render(std::mutex &mutex, float interpolation_time);
 void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_InitializeRenderingAPI();
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
-gMeshData   M_LoadOBJ(std::string embedded_obj_file);
 std::string M_GetOBJName(std::string file_as_string);
+MeshData    M_LoadOBJ(std::string embedded_obj_file);
 #endif

@@ -137,7 +137,7 @@ int main()
 // The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
 #include "jolt_boilerplate.hpp"
 
-class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
+/*class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
 {
 public:
     virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
@@ -154,7 +154,7 @@ public:
     {
         return;
     }
-};
+};*/
 
 void testGameTick(GLFWwindow *main_window)
 {

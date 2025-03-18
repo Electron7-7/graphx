@@ -1,7 +1,7 @@
 #include "g_actors.hpp"
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
-#include "g_math.hpp"
+#include <gmath.hpp>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
@@ -83,7 +83,7 @@ template<> glm::vec3 Actor::getPosition()
 
 template<> JPH::Vec3 Actor::getPosition()
 {
-	return convertMath<JPH::Vec3>(position_global) + convertMath<JPH::Vec3>(position_local);
+	return gmath::convertMath<JPH::Vec3>(position_global) + gmath::convertMath<JPH::Vec3>(position_local);
 }
 
 template<> glm::vec3 Actor::getRotation()
@@ -93,7 +93,7 @@ template<> glm::vec3 Actor::getRotation()
 
 template<> JPH::Vec3 Actor::getRotation()
 {
-	return convertMath<JPH::Vec3>(glm::eulerAngles(quaternion * local_quaternion));
+	return gmath::convertMath<JPH::Vec3>(glm::eulerAngles(quaternion * local_quaternion));
 }
 
 template<> glm::quat Actor::getRotation()
@@ -103,7 +103,7 @@ template<> glm::quat Actor::getRotation()
 
 template<> JPH::Quat Actor::getRotation()
 {
-	return convertMath<JPH::Quat>(quaternion) * convertMath<JPH::Quat>(local_quaternion);
+	return gmath::convertMath<JPH::Quat>(quaternion) * gmath::convertMath<JPH::Quat>(local_quaternion);
 }
 
 template<> void Actor::setGlobalPosition(glm::vec3 new_value)
@@ -113,7 +113,7 @@ template<> void Actor::setGlobalPosition(glm::vec3 new_value)
 
 template<> void Actor::setGlobalPosition(JPH::Vec3 new_value)
 {
-	position_global = convertMath<glm::vec3>(new_value);
+	position_global = gmath::convertMath<glm::vec3>(new_value);
 }
 
 template<> void Actor::setGlobalRotation(glm::quat new_value)
@@ -123,7 +123,7 @@ template<> void Actor::setGlobalRotation(glm::quat new_value)
 
 template<> void Actor::setGlobalRotation(JPH::Quat new_value)
 {
-	quaternion = convertMath<glm::quat>(new_value);
+	quaternion = gmath::convertMath<glm::quat>(new_value);
 }
 
 template<> void Actor::setGlobalRotation(glm::vec3 new_value)
@@ -133,7 +133,7 @@ template<> void Actor::setGlobalRotation(glm::vec3 new_value)
 
 template<> void Actor::setGlobalRotation(JPH::Vec3 new_value)
 {
-	quaternion = glm::quat(convertMath<glm::vec3>(new_value));
+	quaternion = glm::quat(gmath::convertMath<glm::vec3>(new_value));
 }
 
 template<> void Actor::setLocalPosition(glm::vec3 new_value)
@@ -143,7 +143,7 @@ template<> void Actor::setLocalPosition(glm::vec3 new_value)
 
 template<> void Actor::setLocalPosition(JPH::Vec3 new_value)
 {
-	position_local = convertMath<glm::vec3>(new_value);
+	position_local = gmath::convertMath<glm::vec3>(new_value);
 }
 
 template<> void Actor::setLocalRotation(glm::quat new_value)
@@ -153,7 +153,7 @@ template<> void Actor::setLocalRotation(glm::quat new_value)
 
 template<> void Actor::setLocalRotation(JPH::Quat new_value)
 {
-	local_quaternion = convertMath<glm::quat>(new_value);
+	local_quaternion = gmath::convertMath<glm::quat>(new_value);
 }
 
 template<> void Actor::setLocalRotation(glm::vec3 new_value)
@@ -163,7 +163,7 @@ template<> void Actor::setLocalRotation(glm::vec3 new_value)
 
 template<> void Actor::setLocalRotation(JPH::Vec3 new_value)
 {
-	local_quaternion = glm::quat(convertMath<glm::vec3>(new_value));
+	local_quaternion = glm::quat(gmath::convertMath<glm::vec3>(new_value));
 }
 
 bool Actor::isPhysicsActor()
@@ -323,8 +323,8 @@ void PhysicsActor::tick(int current_tick)
 	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
 	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
 
-	position_global = convertMath<glm::vec3>(body_position);
-	quaternion = convertMath<glm::quat>(body_quaternion);
+	position_global = gmath::convertMath<glm::vec3>(body_position);
+	quaternion = gmath::convertMath<glm::quat>(body_quaternion);
 	updateVectors();
 }
 
@@ -525,7 +525,7 @@ void GraphXPlayer::processInput(GLFWwindow *window)
 
 void GraphXPlayer::tick(int current_tick)
 {
-	position_global = convertMath<glm::vec3>(jph_character->GetPosition());
+	position_global = gmath::convertMath<glm::vec3>(jph_character->GetPosition());
 	player_camera.setGlobalPosition(position_global);
 }
 
@@ -558,8 +558,8 @@ void GraphXPlayer::doMovement(int direction[2])
 		return;
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	wish_velocity += convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
-	wish_velocity += convertMath<JPH::Vec3>(orientation_right) * static_cast<float>(direction[1] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(orientation_right) * static_cast<float>(direction[1] * movement_speed);
 
 	if(direction[0] == last_direction[0] && direction[1] == last_direction[1])
 	{
@@ -577,7 +577,7 @@ void GraphXPlayer::doMovement(int direction[2])
 	last_direction[0] = direction[0];
 	last_direction[1] = direction[1];
 
-	JPH::Vec3 new_velocity = linearInterpolate(current_velocity, wish_velocity, movement_lerp);
+	JPH::Vec3 new_velocity = gmath::linearInterpolate(current_velocity, wish_velocity, movement_lerp);
 	new_velocity.SetY(current_velocity.GetY());
 	if(new_velocity == current_velocity)
 		return;

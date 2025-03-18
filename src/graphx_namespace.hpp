@@ -24,16 +24,21 @@ namespace graphx
 		};
 	};
 
-	namespace types
+	namespace identifiers
 	{
-		typedef int gPrimitive;
-
 		namespace primitive
 		{
-			static constexpr gPrimitive FOO      = -1;
-			static constexpr gPrimitive LINE     = 0;
-			static constexpr gPrimitive TRIANGLE = 1;
-			static constexpr gPrimitive TEXT     = -1; // Text not supported yet!
+			static constexpr int FOO      = -1;
+			static constexpr int LINE     = 0;
+			static constexpr int TRIANGLE = 1;
+			static constexpr int TEXT     = -1; // Text not supported yet!
+		};
+
+		namespace mesh_data
+		{
+			static constexpr int IN_USE      =  1;
+			static constexpr int NOT_IN_USE  = -1;
+			static constexpr int NOT_CHECKED =  0;
 		};
 	};
 
@@ -78,6 +83,7 @@ namespace graphx
 	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
 	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
 	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
+	typedef std::pair<int, std::string> gSandwichPair;
 	typedef std::vector<std::string> gRawData;
 
 	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only

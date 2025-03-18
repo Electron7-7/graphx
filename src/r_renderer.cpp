@@ -24,15 +24,11 @@ float camera_near = 0.1f;
 float camera_far = 1000.0f;
 bool jolt_debug_render = false;
 
-// Keeping these out of the header file for safety/isolation
-std::vector<RenderCmd> render_commands;
-std::vector<PrimitiveRenderCmd> primitive_render_commands;
-
-std::map<std::string, gMeshData> mesh_data_map =
+std::map<std::string, MeshData> mesh_data_storage =
 {
-	{GRAPHX_CUBE, gMeshData(VAO_DEFAULT, CUBE_INDICES, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS)},
-	{GRAPHX_PYRAMID, gMeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_POSITIONS, PYRAMID_UVS)},
-	{GRAPHX_QUAD, gMeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS)},
+	{GRAPHX_CUBE, MeshData(VAO_DEFAULT, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS, CUBE_COLORS, CUBE_INDICES)},
+	{GRAPHX_PYRAMID, MeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_NORMALS, PYRAMID_UVS, PYRAMID_COLORS, PYRAMID_INDICES)},
+	{GRAPHX_QUAD, MeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS, QUAD_COLORS, QUAD_INDICES)},
 	{M_GetOBJName(ERROR_obj), M_LoadOBJ(ERROR_obj)},
 	{M_GetOBJName(suzanne_obj), M_LoadOBJ(suzanne_obj)},
 	{M_GetOBJName(purely_for_testing_obj), M_LoadOBJ(purely_for_testing_obj)},
@@ -79,7 +75,6 @@ std::string M_GetOBJName(std::string file_as_string)
 
 std::string M_LoadModelFile(std::string file_path, std::string file_extension)
 {
-	gMeshData mesh_data;
 	std::string mesh_data_name = M_GetOBJName(ERROR_obj);
 
 	if(valid_extensions.find(file_extension) == std::string::npos)
@@ -112,32 +107,31 @@ std::string M_LoadModelFile(std::string file_path, std::string file_extension)
 
 	if(!file_extension.compare("obj"))
 	{
-		mesh_data = M_LoadOBJ(file_string_data.str());
 		mesh_data_name = M_GetOBJName(file_string_data.str());
-
-		if(!mesh_data_name.empty() && !mesh_data_map.contains(mesh_data_name))
-			mesh_data_map[mesh_data_name] = mesh_data;
+		if(!mesh_data_name.empty() && !mesh_data_storage.contains(mesh_data_name))
+		{
+			mesh_data_storage[mesh_data_name] = M_LoadOBJ(file_string_data.str());
+		}
 	}
 
+	PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
 	return mesh_data_name;
 }
 
-
-gMeshData M_LoadOBJ(std::string embedded_obj_file)
+MeshData M_LoadOBJ(std::string embedded_obj_file)
 {
-	namespace TO = tinyobj;
+	MeshData mesh_data;
 
-	gMeshData mesh_data;
-
-	TO::ObjReaderConfig reader_config;
-	TO::ObjReader reader;
+	tinyobj::ObjReaderConfig reader_config;
+	tinyobj::ObjReader reader;
 
 	if(!reader.ParseFromString(embedded_obj_file, "", reader_config))
 		if(!reader.Error().empty())
 			PRINTERR("TinyObjReader: " << reader.Error())
 
-	// if(!reader.Warning().empty())
-		// PRINTDEBUG("TinyObjReader: " << reader.Warning())
+	// if (!reader.Warning().empty())
+		// PRINTDEBUG("TinyObjReader: " + reader.Warning());
+
 
 	auto &attrib = reader.GetAttrib();
 	auto &shapes = reader.GetShapes();
@@ -149,6 +143,7 @@ gMeshData M_LoadOBJ(std::string embedded_obj_file)
 		size_t index_offset = 0;
 		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
 		{
+			std::vector<float> vertex;
 			size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
 
 			// Loop over vertices in the face.
@@ -160,8 +155,7 @@ gMeshData M_LoadOBJ(std::string embedded_obj_file)
 				tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
 				tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
 
-				// std::cout << "Vertex: " << vx << ", " << vy << ", " << vz << std::endl;
-				mesh_data.vertex_positions.insert(mesh_data.vertex_positions.end(), {(float)vx, (float)vy, (float)vz});
+				vertex.insert(vertex.end(), {(float)vx, (float)vy, (float)vz});
 
 				// Check if `normal_index` is zero or positive. negative = no normal data
 				if (idx.normal_index >= 0)
@@ -170,13 +164,12 @@ gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t ny = attrib.normals[3*size_t(idx.normal_index)+1];
 					tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
 
-					// std::cout << "Normal: " << nx << ", " << ny << ", " << nz << std::endl;
-					mesh_data.vertex_normals.insert(mesh_data.vertex_normals.end(), {(float)nx, (float)ny, (float)nz});
+					vertex.insert(vertex.end(), {(float)nx, (float)ny, (float)nz});
 				}
 
 				else
 				{
-					mesh_data.vertex_normals.insert(mesh_data.vertex_normals.end(), {0.0f, 0.0f, 0.0f});
+					vertex.insert(vertex.end(), {0.0f, 0.0f, 0.0f});
 				}
 
 				// Check if `texcoord_index` is zero or positive. negative = no texcoord data
@@ -185,13 +178,12 @@ gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t tx = attrib.texcoords[2*size_t(idx.texcoord_index)+0];
 					tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
 
-					// std::cout << "Texture Coordinate: " << tx << ", " << ty << std::endl;
-					mesh_data.vertex_uvs.insert(mesh_data.vertex_uvs.end(), {(float)tx, (float)ty});
+					vertex.insert(vertex.end(), {(float)tx, (float)ty});
 				}
 
 				else
 				{
-					mesh_data.vertex_uvs.insert(mesh_data.vertex_uvs.end(), {0.0f, 0.0f});
+					vertex.insert(vertex.end(), {0.0f, 0.0f});
 				}
 
 				if (idx.texcoord_index >= 0)
@@ -199,16 +191,16 @@ gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
 					tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
 					tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
-					// std::cout << "Vertex Color: " << red << ", " << green << ", " << blue << std::endl;
-					mesh_data.vertex_colors.insert(mesh_data.vertex_colors.end(), {(float)red, (float)green, (float)blue});
+					vertex.insert(vertex.end(), {(float)red, (float)green, (float)blue});
 				}
 
 				else
 				{
-					mesh_data.vertex_colors.insert(mesh_data.vertex_colors.end(), {1.0f, 1.0f, 1.0f});
+					vertex.insert(vertex.end(), {1.0f, 1.0f, 1.0f});
 				}
 			}
 
+			mesh_data.addVertex(vertex);
 			index_offset += fv;
 		}
 	}
@@ -272,45 +264,42 @@ void R_GL_BufferMeshes()
 	if(loading_new_main_theatre)
 		return;
 
-	for(auto &mesh_data_pair : mesh_data_map)
-		mesh_data_pair.second.needed_by_current_theatre = false;
-	mesh_data_map.at(M_GetOBJName(ERROR_obj)).needed_by_current_theatre = true;
+	glBindVertexArray(VAOs[VAO_DEFAULT]); // There's only one VAO, currently
 
-	// Eventually, I'd like to move Materials into their own separate storage, like with Mesh data
-	for(Device *mesh_device : getCurrentTheatre()->getAllDevicesOfType(graphx::classes::MESH))
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	for()
 	{
-		Material *material = static_cast<Mesh*>(mesh_device)->material;
+		RenderCmd *render_command = rendercmd_iterator.base();
 
-		if(material->embedded_texture_diffuse != nullptr)
-			material->texture_diffuse = M_GL_BufferMaterialTexture(material->embedded_texture_diffuse);
-		if(material->embedded_texture_specular != nullptr)
-			material->texture_specular = M_GL_BufferMaterialTexture(material->embedded_texture_specular);
-
-		if(mesh_data_map.contains(static_cast<Mesh*>(mesh_device)->mesh_data_name))
-			mesh_data_map.at(static_cast<Mesh*>(mesh_device)->mesh_data_name).needed_by_current_theatre = true;
-	}
-
-	for(auto &mesh_data_pair : mesh_data_map)
-	{
-		if(!mesh_data_pair.second.needed_by_current_theatre && mesh_data_pair.second.VBO != 0)
+		if(!render_command->isRenderable())
 		{
-			glDeleteBuffers(1, &mesh_data_pair.second.VBO);
+			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
 		}
 
-		if(mesh_data_pair.second.VBO != 0)
-			continue;
+		if(render_command->mesh_material->embedded_texture_diffuse != nullptr)
+			render_command->mesh_material->texture_diffuse = render_command->mesh_material->bufferTextureFromMemory(render_command->mesh_material->embedded_texture_diffuse);
+		if(render_command->mesh_material->embedded_texture_specular != nullptr)
+			render_command->mesh_material->texture_specular = render_command->mesh_material->bufferTextureFromMemory(render_command->mesh_material->embedded_texture_specular);
 
-		glGenBuffers(1, &mesh_data_pair.second.VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh_data_pair.second.VBO);
-		glBufferData(GL_ARRAY_BUFFER, mesh_data_pair.second.getVertexDataSize() * sizeof(float), mesh_data_pair.second.getVertexData().data(), GL_STATIC_DRAW);
+		glGenBuffers(1, &render_command->mesh_data->VBO);
+		glGenBuffers(1, &render_command->mesh_data->IBO);
 
-		if(!mesh_data_pair.second.indices.empty())
-		{
-			glGenBuffers(1, &mesh_data_pair.second.IBO);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data_pair.second.IBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh_data_pair.second.indices.size() * sizeof(unsigned int), mesh_data_pair.second.indices.data(), GL_STATIC_DRAW);
-		}
+		glBindBuffer(GL_ARRAY_BUFFER, render_command->mesh_data->VBO);
+		glBufferData(GL_ARRAY_BUFFER, render_command->mesh_data->vertices.size() * sizeof(float), &render_command->mesh_data->vertices[0], GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_command->mesh_data->IBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, render_command->mesh_data->indices.size() * sizeof(unsigned int), &render_command->mesh_data->indices[0], GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -512,6 +501,21 @@ void R_Render(std::mutex &state_mutex, float interpolation_time)
 	{
 	case GRAPHX_OPENGL:
 		R_GL_Render(state_mutex, interpolation_time);
+		break;
+	}
+}
+
+void R_GL_InitializeRenderingAPI()
+{
+	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
+}
+
+void R_InitializeRenderingAPI()
+{
+	switch(graphx_api)
+	{
+	case GRAPHX_OPENGL:
+		R_GL_InitializeRenderingAPI();
 		break;
 	}
 }

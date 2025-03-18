@@ -1,5 +1,5 @@
 #include "g_jolt.hpp"
-#include "g_math.hpp"
+#include <gmath.hpp>
 #include "t_settings.hpp"
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSettings.h>
@@ -18,7 +18,7 @@ const JPH::Shape *createAShape(int shape, jolt_shape_args shape_args)
 	switch(shape)
 	{
 	case ColliderShapes::BOX:
-		return new JPH::BoxShape(convertMath<JPH::Vec3>(std::get<0>(shape_args)));
+		return new JPH::BoxShape(gmath::convertMath<JPH::Vec3>(std::get<0>(shape_args)));
 	case ColliderShapes::SPHERE:
 		return new JPH::SphereShape(std::get<1>(shape_args));
 	case ColliderShapes::CAPSULE:
@@ -81,8 +81,8 @@ const JPH::BodyID &Collider::getBodyID()
 void Collider::createBody()
 {
 	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
-	JPH::RVec3 body_position = convertMath<JPH::Vec3>(position) + convertMath<JPH::Vec3>(local_position);
-	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
+	JPH::RVec3 body_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
+	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
 
 	body_settings = JPH::BodyCreationSettings(createAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
 	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
