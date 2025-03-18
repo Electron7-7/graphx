@@ -2,7 +2,7 @@
 #ifndef THEATRE_INCLUDES
 #define THEATRE_INCLUDES
 #include <models.hpp>
-#include "g_math.hpp"
+#include <gmath.hpp>
 #ifndef GRAPHX_COMPILING
 #include "r_common.hpp"
 #include "g_common.hpp"

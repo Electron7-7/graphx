@@ -1094,9 +1094,9 @@ Holy shit big find!! In r_renderer.cpp, the view position is calculated from the
 
 Oh also, I don't have to update the global position, lmfao. Global and local positions can be altered at any time, and as long as position and rotation are read via the functions, it should be fine. I'll probably put the actual variables under protected to keep them from being read directly.
 
-Idea for convertMath:
+Idea for gmath::convertMath:
 :::C++
-template<typename T, typename A> convertMath(T &convert_me, A convert_to)
+template<typename T, typename A> gmath::convertMath(T &convert_me, A convert_to)
 {
     // Do conversion here
 }
@@ -1581,3 +1581,170 @@ Note: lights are now not showing their debug mesh.
 
 [03/10/25]
 This last weekend was fucking amazing; I fucking love my boyfriend. Anyways, time to work on features! I'd like to streamline the rendering pipeline, as well as flesh out the RenderCmd system. Now that rendering is done via some abstract struct, rendering has become much less tangled up and I think I can research that RenderCmd system and implement it correctly.
+
+Actually, before that, let's keep it lower level and learn more about OpenGL buffers. I think I'm gonna start with LearnOpenGL: Advanced Data, which (I think) starts by changing how data is stored in VBOs (i.e: all vertex positions first, then normals, etc).
+
+[03/11/25]
+I ended up doing a lot of work on "setting up" the new rendering system but it was just spaghetti code with no clear ideas. I'm going to scrap that work and try again with a clearer head today. First, I'm going to confirm that its best to buffer mesh data once at the start instead of on every frame. Yeah that was quick, it totally is. Okay, now time to figure out the real fucking difference between a VBO and a VAO, and then decide how to minimize unnessacary buffer creation/recreation.
+
+Holy fuck, yeah, I've been misusing VBOs and VAOs... again. See this link (https://stackoverflow.com/questions/40438590/is-it-necessary-to-bind-all-vbos-and-textures-each-frame) for deeper info.
+
+Basically, you can store the vertex data for multiple objects in one VBO and then render parts of it depending on the object. I'm pretty sure that VAOs are representative of the attribute data and how its stored within the VBO, so that means that you don't need to re-execute the "glAttribArrayPointer" functions every frame. I want to slowly change the rendering engine to use VBOs and VAOs properly, so lets go piece by piece. First off, I'll need to decide how many VBOs to make, how large to make them, and how to make sure I use the right one for the right object; I also need to be able to choose the right place in the VBO to begin buffering data from (and when to stop). I can implement all of these by giving Mesh objects a way to identify their VBO, the position of their data in that VBO, and the size of their data.
+
+OH HOLY SHIT THIS IS ALSO VERY IMPORTANT (https://stackoverflow.com/questions/14249634/opengl-vaos-and-multiple-buffers)!!! Direct quote:
+
+"glVertexAttribPointer uses the buffer object that was bound to GL_ARRAY_BUFFER at the moment the function was called. So you can't do this:
+
+:::C++
+glVertexAttribPointer(...);
+glBindBuffer(GL_ARRAY_BUFFER, bufferObject);
+glDrawArrays(...);
+:::
+
+This will not use bufferObject; it will use whatever was bound to GL_ARRAY_BUFFER when glVertexAttribPointer was originally called.
+
+VAOs capture this state. So the VAO will, for each vertex attribute, store whatever buffer object was bound to GL_ARRAY_BUFFER when it was called. This allows you to do things like this:
+
+:::C++
+glBindVertexArray(VAO);
+glBindBuffer(GL_ARRAY_BUFFER, buffer1);
+glVertexAttribPointer(0, ...);
+glVertexAttribPointer(1, ...);
+glBindBuffer(GL_ARRAY_BUFFER, buffer2);
+glVertexAttribPointer(2, ...);
+:::
+
+Attributes 0 and 1 will come from buffer1, and attribute 2 will come from buffer2. VAO now captures all of that state. To render, you just do this:
+
+:::C++
+glBindVertexArray(VAO);
+glDraw*();
+:::
+
+In short, if you want to change where an attribute's storage comes from in OpenGL, you must also change it's format. Even if it's the same format, you must call glVertexAttribPointer again.
+
+In general, the way we solve this in the OpenGL world is to put as many things as possible in the same buffer object. Failing that, just use one VAO for each object."
+
+Okay, so what do I need to do? Well, I can make a VAO for attributes, then use one VBO for vertex positions, and another for the rest (splitting them up again if needed). I'm less confident about this, but I think I can then use different pairs of VBOs in different VAOs for different types of rendering (i.e: GL_STATIC_DRAW).
+
+To do this, I'll need to change a fair amount of stuff, but since I've already started deferring rendering to RenderCmds, I've done some of the heavy lifting already. Basically, meshes will be given their vertices (and indices if applicable) in vector form when first created; then, they'll be buffered, which will store their data in buffer objects and clear their vectors. They'll also be given a variable to identify their buffer(s) as well as the location and size of their buffered data. Then, that data (the ids) is sent via RenderCmd to the render batch. This might be easier with a custom typedef tuple as well. Eventually I can then phase these out in favor of generic buffers, which will hopefully bring my code up to modern OpenGL standards.
+
+Also, small note: texture coordinates and UVs are the same.
+
+I'm going to also temporarily phase out usage of indices; they can be helpful with reducing redundant data, but for my use case currently they are just an extra thing to keep track of and aren't helping that much (yet). This means I'll also temporarily change gMeshData to not take a vector of unsigned ints.
+
+Okay, I've changed what data Meshes can hold, now time to change how that data is interacted with, used, and read. Ohh, before I do I just looked and realized I need to change gMeshData to be more than a single vector of floats. I need to separate each vertex attribute. This means that gMeshData will no longer be a tuple.
+
+Okay some notes: I forgot that you need to pre-allocate the buffer store for a VBO (or any buffer, actually) and that means either allocating exactly enough data for one object, or specifying a maximum amount of data and making a new buffer when that max is hit. That second option would be nice, but with how the codebase and my skill leveel are, currently, the first option seems best. This means, yes, generating new VBOs for each object (which is less efficient but not by that much form what I've read), but still splitting up vertex attributes. This would just be going back to how things were, however, so I might take a chance on the idea of making big buffers and using them until they're filled and making another buffer. I wanna try that, actually. Okay, I will.
+
+Gameplan: VBOs will not be split between the two types that I've made, and all attributes will be contained in singular VBOs. They will, however, be stored in an array of vectors; each vector will be for VBOs of a certain type (UI, Mesh, etc) and will be populated with new VBOs when one is filled up. I'm assuming that when buffering data into a VBO, I'll first want to check how much data it already has, and if it can't fit the data I want to put in it, I'll create and use a new one. If I return the index to that VBO in the gBufferedMeshData object, I could buffer data in a way where even if one VBO is mostly full and a new one has been made, if some un-buffered data would fit that older VBO then the program will use it and return its index. This would mean that I'd have to bind VBOs every frame (or check and re-bind if needed), instead of the nicer binding the VAO and just drawing a range, but if I do a check then that means that for a decent amount of data, I wouldn't be re-binding.
+
+Okay, I want to find out if you can query the "remaining space" of any specific VBO, and if not I'll make a typedef of std::pair<unsigned int, int/long> where the first half is the VBO and the second half is the remaining size (starting at the max size). The remaining size will be calculated by subtracting the amount of data that was just buffered into the VBO from the remaining size.
+
+It seems a bit complicated and would probably be easier to use the typedef.
+
+This is also a good ref: (https://www.reddit.com/r/opengl/comments/xly1ua/does_buffer_size_affect_performance)
+
+Note on gMeshData: I need a way to combine all the vectors into one vector and the feed that vector to the VBO. I can either do this in the function (not really what I want to do) or in the struct. If it's in the struct, however, I don't want "graphx_namespace.hpp" to also have a source file attached to it, so it'd have to be in the header.
+
+I've re-written my "graphxmodels" to not use indices, as I'm phasing them out temporarily. The new rendering process isn't complete, but almost all the pieces are set.
+
+Holy shit, read this -> (https://gamedev.stackexchange.com/questions/61750/large-vertex-buffer-vs-multiple-draw-calls) because you're using VBOs semi-wrong AGAIN and this is how you can make them more efficient!! Use a separate VBO for each unique mesh type!! One for GRPAHX_CUBE, one for GRAPHX_PYRAMID, one for OBJ_ERROR, etc!
+
+Okay, here's what I want to do:
+  - finish latest version of VBO processing
+    - Look at the above link and decide whether or not to integrate into or replace the current version with it
+  - implement PrimitiveRenderCmd code from other Development sub-branch
+
+[03/12/25]
+I had an idea for Meshes and VBOs; if I implement instanced VBOs, then Meshes can just be Devices that contain mesh data that are stored in the Theatre, while the actual thing that Actors would have/use as a "Mesh" would actually be a VBO name reference (or pointer to a Mesh that has that VBO name reference).
+
+I finished the first implementation; data is being rendered incorrectly, but it IS being buffered and rendered without crashing and (seemingly) with the right data. I just think the offset in gBufferedMeshData is incorrectly calculated.
+
+Found out it's probably that but there's another definite reason: I wasn't changing data in the gVBO object, but a copy of it, lol. Anyways, I also realized that when new Theatres are loaded, the VBOs need to be cleared, which is a waste if they're storing vertex data that's going to be used. I think that changing gears to the instanced VBOs idea is the best course of action.
+Here's what I need to do:
+  - Change the VBOs variable to be a vector of VBOs (and remove gVBO)
+  - Meshes are just storage for raw vertex data; if an Actor uses a certain Mesh, it's really using a VBO name
+
+This is almost what I was doing in the first place (lmfao), but now that I know what I'm doing I can intentionally make sure that duplicate VBOs aren't being made. The original version of the renderer would just make a VBO for every Mesh, even if that Mesh's data was already buffered in a VBO. Since Meshes still contain relevant data for rendering (i.e: Materials and such), I'll need to make sure that the interpreter never makes a copy of a Mesh unless its a sandwich (as that's just a shorthand for making a new object).
+
+After checking, the interpreter is already written to avoid duplicating objects outside of a sandwich. All right, here's the full game plan:
+  - Change the VBOs variable to be a vector of VBOs (and remove gVBO)
+  - When buffering data, use the VBO name for the Mesh::isBuffered check
+  - When rendering, use the Mesh's internal VBO, like I used to
+  - When loading a new Theatre, delete any VBOs that won't get used
+
+Just realized I'm basically undoing my work... lmfao. Oh well, at least now I know a lot more about what I'm doing and a lot lot more about buffers in OpenGL.
+
+Here's my idea for deleting VBOs when switching Theatres: make a function in Theatre that will grab all the VBO names from all the Meshes in the devices map and return them in a vector. Then, call that function during R_GL_Initialize, and delete any VBOs that aren't in that vector. This should be done after a Theatre has been loaded, so maybe the Theatre will set a boolean flag called "time_to_flush_buffers" or something.
+
+While doing my rounds, I realized that what I'm doing is almost what I want but not quite. Basically, when a new Theatre is loaded I need to compare the mesh data in each Mesh with a storage of the mesh data in the previous Theatre, NOT the VBO names, since new Meshes won't have VBO names unless they're already buffered (which means a new VBO has been made). I can do this if I write a simple hashing algorithm to generate a unique identifying number that represents a Mesh's mesh data. Then, I can compare hashes from the old Theatre with hashes from the new Theatre and if there are any copies, I set that Mesh's VBO name variable, and if no copies are found for a VBO, I delete it. This means I need to re-add "gVBO" but this time, the second value will be this mesh data hash.
+
+Notes on the hashing algorithm:
+  - What do I want to do?
+    - Generate a unique ID based on the contents of a gMeshData instance (specifically, the different vectors)
+  - Why do I want to do it?
+    - I want a fast and reliable way of comparing two gMeshData instances
+  - How will I do it?
+    - Hmm...
+
+After further research, a hashing algorithm is way too far out of scope. I just need to compare vectors once (storing them after the fact isn't necessary). This means that I don't actually need to worry about the vectors taking up too much space, since I can clear them after the comparison is done. New idea is to just store copies of the mesh data, compare those copies with the new Meshes' mesh data, and clear the copies once I'm done.
+
+I think I'll actually just write an "operator==" for gMeshData.
+
+Ugh, I realized why I was going to write a hashing algorithm in the first place: I do store it... in gVBO. That's really what I'm comparing. I think I can get away with something a bit cheeky, however: when a Mesh's data is buffered, that'll be when M_StoreMeshData is called with a new type "gMeshDataStore", which will be a pair of gMeshData and unsigned int. The unsigned int being the VBO name. Then I can compare the mesh data and the VBO name to discern which VBOs to toss and which meshes to assign to certain VBOs.
+
+I have a big idea: batched instanced VBOs. Basically, batching all of the vertex data that would have been turned into separate instanced VBOs into a single VBO (because I can calculate the exact size needed). Then, when rendering, use stored values for the offset and size and I wouldn't have to change buffers! I would need to recreate the entire VBO, including re-used vertex data on every Theatre load, however, which is the downside. Food for thought, but let me first finish this instanced VBOs implementation.
+
+I'm pretty close, but the functions I'm using to "make sure there are no duplicate VBOs" are all bad and wrong and don't work. Get rid of them and try again tomorrow.
+
+[03/13/25]
+I don't know if I'll be able to get much done today, but I'm going to try and wrap up the VBO related stuff I've been doing. First step is to remove the functions I talked about yesterday and try and come up with a better way of keeping VBO memory in Meshes. Maybe separate mesh data from Meshes entirely and make them their own Device, so I can keep mesh data in memory? I might also start by bringing over the new PrimitiveRenderCmd and changed RenderCmd classes from the other Development branch.
+
+I have an idea: store every single mesh's vertex data (i.e: gMeshData) in a map, each with a unique long as the key. Meshes will have a long member variable that will be set to the unique log for the mesh data they were given. They will also have an int variable that will be set to the VBO name of the buffered mesh data. If I buffer only the mesh data that is used by the Meshes in the current Theatre, I can use another map to store the mesh data long as a key to the VBO name of its buffered data and use that map to find the VBO associated with a given Mesh.
+
+I'm choosing to put all the meshes that will be compiled into the binary in a map, with a string key. I'll add any external ones to the map as well when they're processed. Then, I'll add a vbo name variable to gMeshData and buffer every gMeshData when switching to a new Theatre (not buffering unused ones). I'll then have Meshes either store a pointer to a gMeshData object or a key to the map.
+
+[03/14/25]
+I'm going to try and finish this new instanced VBO setup... finally. I wanna restate the main idea, to organize my thoughts:
+  - Instance all pre-compiled meshes into VBOs
+  - Instance all external meshes into VBOs
+  - Go through all Meshes and set their VBO name variable
+  - Compare instanced mesh data with Meshes and clear any unused VBOs
+  - Do this on every Theatre change
+
+I'll need a function to instance all mesh data into VBOs and a function to set Mesh VBO name variables as well as clear unused VBOs. A total of two new functions plus the VBO buffering function(s), one global map, and a change to gMeshData / a new type that stores a mesh data ID with the associated VBO name.
+
+I don't like hardcoding the names of the obj files, so I'm going to make a function that just finds and returns the names.
+
+All right, almost done! I need to change the map pair's second value to be a pair of both a gMeshData and int (for the vbo name). Then, when a new Theatre is loaded, I can get all the mesh data names from the Meshes, and only buffer/use the mesh data that matches those names. Then, any unused VBOs can get flushed and voila! Hopefully that'll be it!
+
+[03/15/25]
+I think I want to put the VBO unsigned int in the gMeshData struct and keep things simple: every Theatre load, buffer Meshes by going through them all and if their linked gMeshData has an unbuffered VBO, buffer it.
+
+I have an idea:
+Every time a Theatre is loaded, go through the mesh data map and toggle a boolean to indicate whether or not the mesh data is used. Then, go through and remove buffers for unused data and make buffers for used data.
+
+Hm... the vertex data seems to be corrupted or otherwise weird (see the imgui debug shit).
+
+[03/16/25]
+Sitting in a church rn... wish I were anywhere else.
+
+I think that the problem I'm having is related to re-using VBOs and not using the correct ones/corrupting buffered data(?). I don't know, but it has to be OpenGL function-related becsuse none of this happened before. I might revert everything back to the first commit again and focus on making primitive render commands first, then try to organize VBO shit.
+
+[03/17/25]
+Yeah, I'm going to do a merge of the Development branch before I started all this mess and start again from the beginning. However, I'll probably start by pulling/reimplementing smaller things that I know will work before I dig into the VBOs (i.e: RenderCmd, PrimitiveRenderCmd, etc).
+
+fucking finally... I'm so ass with Github LMFAO.
+
+Okay, I'm actually going to just jump into the VBOs stuff first; get that over with. My thought process is that since mesh data is always something that's roughly static, meaning that mesh data usually doesn't change either at all or very often. What this means for me is that I should load and store all the mesh data that the engine can currently access, and then once rendering is to commence, I check that the meshes I need are all buffered. Oh my god, I also just realized that I could've made my life a lot easier... I can just have mesh data be buffered on demand instead of all at once. This would make sure that I only buffer the mesh data that needs to be buffered. I don't know if clearing all the VBOs every time a new Theatre is loaded is a good idea but regardless of when and how I choose to flush unused buffers, checking/creating them on demand is a much better idea (at least, I think). Before I start coding, however, I do need to answer that question of how/when I'm going to flush the VBOs. It would be more efficient (and lead to better load times) if I don't just flush them all and re-buffer the ones I need, but that method is also the simplest so it'll be a last resort fallback option. I could just use the method I came up with where I add all the current Mesh objects' mesh data identifiers into one big string and then do an std::string::find on every stored mesh data identifier, but that's a bit pedantic. Oh! Wait a minute, I already semi-fixed this problem. Flushing every VBO and rebuilding them on every Theatre load might be inefficient, but setting a boolean to false and then setting it to true is much less inefficient. All that's left is actually flushing buffers. I need to know when it's time to check the booleans (i.e: they've all been set to their final values); if I'm going to be buffering the required VBOs on demand, then there's not going to be a function for checking and buffering them. However, that means that I now don't know when they've all been checked. Maybe instead of a boolean, it could be an int and I could check for three values with two of them being effectively true or false, but the third value being "not yet checked". Yeah, I think I'll do that! I also want to change how mesh data is stored and how VBOs are stored/accessed.
+
+Oh, also, I need to re-introduce PrimitiveRenderCmd.
+
+As well as the mesh data name stuff (plus the map). I'm gonna actually copy that in rq.
+
+Oh my god I just wasted time making a fucking unsigned integer vector3 struct... might as well finish it I guess. (it's for the mesh data vertex indices...)
+
+Okay, I did a lot of work; I'm finally at the point where I can start coding the VBO stuff, LMFAO. Remind me to never get high before work, even a little bit. Anyways, I did get a lot of actually good stuff done. Mainly, better compartmentalization/abstraction that is healthy for the codebase (not abstracting just to abstract). I created my own implementation of a "Vector3" type that only takes unsigned integers; this is to help make the processing of indices resemble the processing of vertices in MeshData. MeshData is an infinitely better implementation of gMeshData; gMeshData used to be a simple typedef, then a small struct, then a big struct and as such it kept a lot of the same ideas and styles of simpler containers. This led to it not fitting its actual purpose very well. MeshData, on the other hand, was designed from the ground up with the failings of gMeshData in mind; some of the improvements made include: way more helper functions, better and more detailed functions for getting the size of the data (both the number of combined elements and the total bytes of the data), way better constructors, specific helper functions for adding whole vertices (position+normal+uv+color) at once, and more. MeshData also has VBO and IBO member variables for holding buffer names, as well as a VAO_index variable for storing the (you guessed it) VAO index in VAOs that it uses (e.g: VAOs[VAO_index]).
+
+In conclusion, I've finished building the ground work for what comes next: the more ardurous process of re-writing the rendering pipeline.

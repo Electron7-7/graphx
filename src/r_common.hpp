@@ -1,8 +1,8 @@
 // r_common.hpp - rendering declarations
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
-#include "Jolt/Jolt.h"
-#include "Jolt/Core/Color.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Core/Color.h>
 #include "graphx_namespace.hpp"
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
@@ -16,8 +16,6 @@
 #define GLSHADER_TYPE_FRAGMENT	1
 #define GLSHADER_TYPE_PROGRAM	2
 
-#define PREEMPTIVE_OBJ_SCALE 10.0f // In case the vertices of an imported OBJ file aren't between -1 and 1, dividing every vertex in the file by 10 (and multiplying the scale by 10) should fix most cases (I think)
-
 
 #define SHADERS_AMOUNT		1
 //---------------------------
@@ -25,33 +23,14 @@
 #define SHADER_PHONG		1
 
 
-// BUFFERS ARENT IMPLEMENTED YET, SO THESE ARENT USED!
-#define BUFFERS_AMOUNT		5
-//---------------------------
-#define BUFFER_ERR			0
-#define BUFFER_TESTING		1
-#define BUFFER_FLATS		2
-#define BUFFER_ACTORS		3
-#define BUFFER_PROPS		4
-
-
 // Le secret dev texture
-#define DOOM_TEXTURE_DIFF				COMP04_5_png
-#define DOOM_TEXTURE_SPEC				COMP04_5_SPECULAR_jpg
+#define DOOM_TEXTURE_DIFF   COMP04_5_png
+#define DOOM_TEXTURE_SPEC   COMP04_5_SPECULAR_jpg
 
 
-#define VAOS_AMOUNT			3
+#define VAOS_AMOUNT			1
 //---------------------------
-#define VAO_HANDMADE		0
-#define VAO_OBJ				1
-
-
-#define DEVICE_DEVICE		0
-#define DEVICE_ENVIRONMENT	1
-#define DEVICE_MATERIAL		2
-#define DEVICE_MESH			3
-#define DEVICE_SPRITE		3
-#define DEVICE_COLLIDER		4
+#define VAO_DEFAULT         0
 
 
 struct GLShader
@@ -132,14 +111,11 @@ struct Mesh : public Device
 {
 	std::string name = "Untitled Mesh";
 	Material *material = new Material();
-	int vao_index = VAO_HANDMADE;
-	std::vector<float> vertices = CUBE_VERTS;
-	std::vector<unsigned int> indices = CUBE_INDICES;
 	unsigned int VBO = 0;
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 	glm::vec3 mesh_scale = glm::vec3(1.0f);
-	graphx::gMeshData mesh_data;
+	std::string mesh_data_name = "";
 
 	Mesh();
 	Mesh(Material *new_material);
@@ -157,38 +133,26 @@ struct Sprite : public Mesh
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
-// Forward Declaration
-struct RenderState;
-
-namespace graphxRenderPrimitive
-{
-	typedef int gPrimitiveType;
-	// Shorthand versions.
-	// I always want to make my variable names descriptive, so the shorthand still points back to "gPrimitiveType"
-	typedef gPrimitiveType gPrimType;
-	typedef gPrimitiveType gPType;
-
-	static constexpr gPrimitiveType LINE = 0;
-	static constexpr gPrimitiveType TRIANGLE = 1;
-	static constexpr gPrimitiveType TEXT = -1; // Text not supported yet!
-};
-
-// shorthands for "graphxRenderPrimitive"
-namespace gRendPrim = graphxRenderPrimitive;
-namespace gRPrim = graphxRenderPrimitive;
+struct RenderState; // Forward Declaration
+struct MeshData;    // Forward Declaration
 
 struct RenderCmd
 {
-	Actor *render_actor = nullptr;
+public:
+	MeshData *mesh_data = nullptr;
+	RenderState *current_render_state = nullptr;
+	RenderState *previous_render_state = nullptr;
+	Material *mesh_material = nullptr;
+	Actor *actor_pointer = nullptr;
 
-	graphxRenderPrimitive::gPrimitiveType primitive_type = -1;
-	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
+	bool isRenderable();
+};
 
+struct PrimitiveRenderCmd
+{
 	glm::vec3 vertex_1 = glm::vec3(0.0f);
 	glm::vec3 vertex_2 = glm::vec3(0.0f);
 	glm::vec3 vertex_3 = glm::vec3(0.0f);
-	// Currently, normals_#, uvs_#, and even colors_# are kind of redundant, but having them here
-	// allows for control over their values for more intricate debugging later on down the line.
 	glm::vec3 normals_1 = glm::vec3(0.0f);
 	glm::vec3 normals_2 = glm::vec3(0.0f);
 	glm::vec3 normals_3 = glm::vec3(0.0f);
@@ -198,21 +162,55 @@ struct RenderCmd
 	glm::vec3 colors_1 = glm::vec3(0.0f);
 	glm::vec3 colors_2 = glm::vec3(0.0f);
 	glm::vec3 colors_3 = glm::vec3(0.0f);
+	int primitive_type = graphx::identifiers::primitive::FOO;
+	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
 
-	RenderCmd(Actor *new_actor);
-	RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
-	RenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
-	RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
-	RenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
+	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
+	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+};
 
-	bool isPrimitive();
-	void bufferData();
-	unsigned int getVBO();
-	std::vector<float> getVertexData();
+struct MeshData
+{
+	int is_in_use = graphx::identifiers::mesh_data::NOT_CHECKED;
 
-private:
+	int VAO_index;
 	unsigned int VBO;
-	std::vector<float> vertex_data = {};
+	unsigned int IBO;
+
+	std::vector<glm::vec3> vertex_positions;
+	std::vector<glm::vec3> vertex_normals;
+	std::vector<glm::vec2> vertex_uvs;
+	std::vector<glm::vec3> vertex_colors;
+	std::vector<gmath::uintvec3> vertex_indices;
+
+	MeshData();
+	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::uintvec3> init_indices = {});
+	MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {}, std::vector<float> init_uvs = {}, std::vector<float> init_colors = {}, std::vector<unsigned int> init_indices = {});
+
+	// This implementation of MeshData::addVertex assumes that the floats contained in the "vertex" argument are in this order:
+	//
+	//     vertex[0-2] : position (X, Y, Z)
+	//
+	//     vertex[3-5] : normal   (X, Y, X)
+	//
+	//     vertex[6-7] : uv       (X, Y)
+	//
+	//     vertex[8-10]: color    (R, G, B)
+	void addVertex(std::vector<float> vertex);
+	void addVertex(glm::vec3 position, glm::vec3 normal = glm::vec3(0.0f), glm::vec2 uv = glm::vec2(0.0f), glm::vec3 color = glm::vec3(1.0f));
+	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
+	void addIndex(gmath::uintvec3 indices);
+	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
+	bool hasValidIndices();
+
+	std::vector<float> vertices();
+	std::vector<unsigned int> indices();
+	size_t vertices_count();
+	size_t vertices_size();
+	size_t indices_count();
+	size_t indices_size();
 };
 
 
@@ -220,6 +218,7 @@ private:
 // Variables found in r_renderer.cpp
 extern std::array<GLuint, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::vector<GLShader *> shaders; // Same for shaders
+extern std::map<std::string, MeshData> mesh_data_storage;
 extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -238,15 +237,17 @@ extern std::map<int, Device*(*)()> device_map;
 
 template<typename T> Device *createNewDevice() { return new T; }
 
-GLFWwindow       *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void              W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void              R_StoreBuffers();
-void              R_GL_BufferMeshes();
-void              R_Render(std::mutex &state_mutex, float interpolation_time);
-void              R_GL_RenderPrimitive(RenderCmd *render_command);
-void              R_GL_Render(std::mutex &mutex, float interpolation_time);
-void              R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
-void              R_BufferRenderCmd(RenderCmd render_command);
-graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension);
-graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file);
+GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
+void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void        R_StoreBuffers();
+void        R_GL_BufferMeshes();
+void        R_Render(std::mutex &state_mutex, float interpolation_time);
+void        R_GL_RenderPrimitive(RenderCmd *render_command);
+void        R_GL_Render(std::mutex &mutex, float interpolation_time);
+void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+void        R_BufferRenderCmd(RenderCmd render_command);
+void        R_InitializeRenderingAPI();
+std::string M_LoadModelFile(std::string file_path, std::string file_extension);
+std::string M_GetOBJName(std::string file_as_string);
+MeshData    M_LoadOBJ(std::string embedded_obj_file);
 #endif

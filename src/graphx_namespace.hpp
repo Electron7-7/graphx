@@ -11,6 +11,36 @@
 
 namespace graphx
 {
+	namespace error
+	{
+		namespace rendercmd
+		{
+			static constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
+			static constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
+			static constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
+			static constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
+
+		};
+	};
+
+	namespace identifiers
+	{
+		namespace primitive
+		{
+			static constexpr int FOO      = -1;
+			static constexpr int LINE     = 0;
+			static constexpr int TRIANGLE = 1;
+			static constexpr int TEXT     = -1; // Text not supported yet!
+		};
+
+		namespace mesh_data
+		{
+			static constexpr int IN_USE      =  1;
+			static constexpr int NOT_IN_USE  = -1;
+			static constexpr int NOT_CHECKED =  0;
+		};
+	};
+
 	namespace classes
 	{
 		static constexpr int THEATRE			= 0;
@@ -51,6 +81,8 @@ namespace graphx
 	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
 	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
 	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
+	typedef std::pair<int, std::string> gSandwichPair;
+	typedef std::vector<std::string> gRawData;
 
 	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only
 	// and shouldn't be used by anything else (except for Theatre::graphx_theatre_settings)
@@ -67,10 +99,6 @@ namespace graphx
 	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	typedef std::pair<int, std::string> gSandwichPair;
-	typedef std::tuple<std::vector<float>, std::vector<unsigned int>, int> gMeshData;
-	typedef std::vector<std::string> gRawData;
 
 	static std::map<int, std::string> classnames =
 	{

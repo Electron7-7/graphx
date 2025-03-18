@@ -25,6 +25,16 @@ float camera_far = 1000.0f;
 int current_vao_index = VAOS_AMOUNT + 1; // Pulled out of the render function so my debug menu can see it
 bool jolt_debug_render = false;
 
+std::map<std::string, MeshData> mesh_data_storage =
+{
+	{GRAPHX_CUBE, MeshData(VAO_DEFAULT, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS, CUBE_COLORS, CUBE_INDICES)},
+	{GRAPHX_PYRAMID, MeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_NORMALS, PYRAMID_UVS, PYRAMID_COLORS, PYRAMID_INDICES)},
+	{GRAPHX_QUAD, MeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS, QUAD_COLORS, QUAD_INDICES)},
+	{M_GetOBJName(ERROR_obj), M_LoadOBJ(ERROR_obj)},
+	{M_GetOBJName(suzanne_obj), M_LoadOBJ(suzanne_obj)},
+	{M_GetOBJName(purely_for_testing_obj), M_LoadOBJ(purely_for_testing_obj)},
+};
+
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -55,8 +65,25 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extension)
+std::string M_GetOBJName(std::string file_as_string)
 {
+	std::string buffer = "";
+	unsigned long i = file_as_string.find("\no ") + 3;
+		while(file_as_string[i] != '\n')
+			buffer += file_as_string[i++];
+	return buffer;
+}
+
+std::string M_LoadModelFile(std::string file_path, std::string file_extension)
+{
+	std::string mesh_data_name = M_GetOBJName(ERROR_obj);
+
+	if(valid_extensions.find(file_extension) == std::string::npos)
+	{
+		PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
+		return mesh_data_name;
+	}
+
 	// Last minute realization that I had to move this out of the header file "sanity.hpp"
 	std::string binary_path = BINARY_PATH;
 
@@ -74,44 +101,40 @@ graphx::gMeshData M_LoadModelFile(std::string file_path, std::string file_extens
 	if(!model_file.is_open())
 	{
 		PRINTERR("M_LoadModelFile called but the file \"" << (binary_path + file_path) << "\" could not be opened/found! An error mesh will be returned!")
-		return M_LoadOBJ(ERROR_obj);
+		return mesh_data_name;
 	}
 
 	model_file.close();
 
 	if(!file_extension.compare("obj"))
-		return M_LoadOBJ(file_string_data.str());
+	{
+		mesh_data_name = M_GetOBJName(file_string_data.str());
+		if(!mesh_data_name.empty() && !mesh_data_storage.contains(mesh_data_name))
+		{
+			mesh_data_storage[mesh_data_name] = M_LoadOBJ(file_string_data.str());
+		}
+	}
 
 	PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
-	return M_LoadOBJ(ERROR_obj);
+	return mesh_data_name;
 }
 
-namespace TO = tinyobj;
-
-graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
+MeshData M_LoadOBJ(std::string embedded_obj_file)
 {
-	TO::ObjReaderConfig reader_config;
-	TO::ObjReader reader;
+	MeshData mesh_data;
+
+	tinyobj::ObjReaderConfig reader_config;
+	tinyobj::ObjReader reader;
 
 	if(!reader.ParseFromString(embedded_obj_file, "", reader_config))
-	{
 		if(!reader.Error().empty())
-		{
 			PRINTERR("TinyObjReader: " << reader.Error())
-		}
 
-		exit(1);
-	}
-
-	if (!reader.Warning().empty())
-	{
-		// std::cout << "TinyObjReader: " << reader.Warning();
-	}
+	// if (!reader.Warning().empty())
+		// PRINTDEBUG("TinyObjReader: " + reader.Warning());
 
 	auto& attrib = reader.GetAttrib();
 	auto& shapes = reader.GetShapes();
-
-	std::vector<float> vertices;
 
 	// Loop over shapes
 	for (size_t s = 0; s < shapes.size(); s++)
@@ -120,6 +143,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 		size_t index_offset = 0;
 		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
 		{
+			std::vector<float> vertex;
 			size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
 
 			// Loop over vertices in the face.
@@ -131,8 +155,7 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 				tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
 				tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
 
-				// std::cout << "Vertex: " << vx << ", " << vy << ", " << vz << std::endl;
-				vertices.insert(vertices.end(), {(float)vx / PREEMPTIVE_OBJ_SCALE, (float)vy / PREEMPTIVE_OBJ_SCALE, (float)vz / PREEMPTIVE_OBJ_SCALE});
+				vertex.insert(vertex.end(), {(float)vx, (float)vy, (float)vz});
 
 				// Check if `normal_index` is zero or positive. negative = no normal data
 				if (idx.normal_index >= 0)
@@ -141,13 +164,12 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t ny = attrib.normals[3*size_t(idx.normal_index)+1];
 					tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
 
-					// std::cout << "Normal: " << nx << ", " << ny << ", " << nz << std::endl;
-					vertices.insert(vertices.end(), {(float)nx, (float)ny, (float)nz});
+					vertex.insert(vertex.end(), {(float)nx, (float)ny, (float)nz});
 				}
 
 				else
 				{
-					vertices.insert(vertices.end(), {0.0f, 0.0f, 0.0f});
+					vertex.insert(vertex.end(), {0.0f, 0.0f, 0.0f});
 				}
 
 				// Check if `texcoord_index` is zero or positive. negative = no texcoord data
@@ -156,13 +178,12 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t tx = attrib.texcoords[2*size_t(idx.texcoord_index)+0];
 					tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
 				
-					// std::cout << "Texture Coordinate: " << tx << ", " << ty << std::endl;
-					vertices.insert(vertices.end(), {(float)tx, (float)ty});
+					vertex.insert(vertex.end(), {(float)tx, (float)ty});
 				}
 
 				else
 				{
-					vertices.insert(vertices.end(), {0.0f, 0.0f});
+					vertex.insert(vertex.end(), {0.0f, 0.0f});
 				}
 
 				if (idx.texcoord_index >= 0)
@@ -170,21 +191,21 @@ graphx::gMeshData M_LoadOBJ(std::string embedded_obj_file)
 					tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
 					tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
 					tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
-					// std::cout << "Vertex Color: " << red << ", " << green << ", " << blue << std::endl;
-					vertices.insert(vertices.end(), {(float)red, (float)green, (float)blue});
+					vertex.insert(vertex.end(), {(float)red, (float)green, (float)blue});
 				}
 
 				else
 				{
-					vertices.insert(vertices.end(), {1.0f, 1.0f, 1.0f});
+					vertex.insert(vertex.end(), {1.0f, 1.0f, 1.0f});
 				}
 			}
 
+			mesh_data.addVertex(vertex);
 			index_offset += fv;
 		}
 	}
 
-	return graphx::gMeshData(vertices, {}, VAO_OBJ);
+	return mesh_data;
 }
 
 void R_StoreBuffers()
@@ -228,53 +249,40 @@ void R_GL_BufferMeshes()
 	if(loading_new_main_theatre)
 		return;
 
-	current_vao_index = VAOS_AMOUNT + 1;
+	glBindVertexArray(VAOs[VAO_DEFAULT]); // There's only one VAO, currently
 
-	getCurrentTheatre()->probeActorsForRenderCommands();
-
-	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	// START CODING HERE
+	for()
 	{
-		if(rendercmd_iterator.base()->isPrimitive())
+		RenderCmd *render_command = rendercmd_iterator.base();
+
+		if(!render_command->isRenderable())
 		{
 			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
 		}
 
-		Actor *actor = rendercmd_iterator.base()->render_actor;
+		if(render_command->mesh_material->embedded_texture_diffuse != nullptr)
+			render_command->mesh_material->texture_diffuse = render_command->mesh_material->bufferTextureFromMemory(render_command->mesh_material->embedded_texture_diffuse);
+		if(render_command->mesh_material->embedded_texture_specular != nullptr)
+			render_command->mesh_material->texture_specular = render_command->mesh_material->bufferTextureFromMemory(render_command->mesh_material->embedded_texture_specular);
 
-		// There used to exist Actor::wantsToBeBuffered, but it was only ever used here, so I got rid of it
-		if(actor->mesh == nullptr || actor->mesh->is_buffered || actor->isType(graphx::classes::GRAPHXPLAYER))
-		{
-			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
-			continue;
-		}
+		glGenBuffers(1, &render_command->mesh_data->VBO);
+		glGenBuffers(1, &render_command->mesh_data->IBO);
 
-		Mesh *mesh = actor->mesh;
-		Material *material = mesh->material;
+		glBindBuffer(GL_ARRAY_BUFFER, render_command->mesh_data->VBO);
+		glBufferData(GL_ARRAY_BUFFER, render_command->mesh_data->vertices.size() * sizeof(float), &render_command->mesh_data->vertices[0], GL_STATIC_DRAW);
 
-		if(mesh->vao_index != current_vao_index)
-		{
-			current_vao_index = mesh->vao_index;
-			glBindVertexArray(VAOs[current_vao_index]);
-		}
-
-		if(material->embedded_texture_diffuse != NULL)
-			material->texture_diffuse = material->bufferTextureFromMemory(material->embedded_texture_diffuse);
-		if(material->embedded_texture_specular != NULL)
-			material->texture_specular = material->bufferTextureFromMemory(material->embedded_texture_specular);
-
-		glGenBuffers(1, &mesh->VBO);
-		glGenBuffers(1, &mesh->IBO);
-
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(float), &mesh->vertices[0], GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->IBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_command->mesh_data->IBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, render_command->mesh_data->indices.size() * sizeof(unsigned int), &render_command->mesh_data->indices[0], GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		mesh->is_buffered = true;
 
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
@@ -467,5 +475,20 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+	}
+}
+
+void R_GL_InitializeRenderingAPI()
+{
+	glGenVertexArrays(VAOS_AMOUNT, &VAOs[0]);
+}
+
+void R_InitializeRenderingAPI()
+{
+	switch(graphx_api)
+	{
+	case GRAPHX_OPENGL:
+		R_GL_InitializeRenderingAPI();
+		break;
 	}
 }

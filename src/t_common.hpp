@@ -15,6 +15,7 @@ template<typename T> std::any getVariableFrom(T *object_pointer, std::string var
 
 extern std::map<std::string, std::any> cpp_definitions;
 extern bool loading_new_main_theatre;
+extern std::string valid_extensions;
 
 graphx::gStringSettings theatreParser(std::string theatre_data);
 graphx::gRawData 		extractData(std::string data_in_here);
