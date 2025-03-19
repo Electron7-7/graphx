@@ -277,6 +277,8 @@ void Mesh::prepForDestruction()
 
 	material = nullptr;
 	delete material;
+
+	mesh_data_storage.at(mesh_data_name).is_in_use = graphx::identifiers::mesh_data::NOT_IN_USE;
 }
 
 void Mesh::loadSettings(graphx::gSettings new_settings)
@@ -285,6 +287,8 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 
 	getSetting(material, settings["Material"]);
 	getSetting(mesh_data_name, settings["MeshData"]);
+
+	mesh_data_storage.at(mesh_data_name).is_in_use = graphx::identifiers::mesh_data::IN_USE;
 }
 
 //
@@ -493,29 +497,23 @@ std::vector<unsigned int> MeshData::indices()
 
 size_t MeshData::vertices_count()
 {
-	return
-	(
-		(3 * vertex_colors.size())  +
-		(3 * vertex_normals.size()) +
-		(2 * vertex_uvs.size())     +
-		(3 * vertex_colors.size())
-	);
+	return (vertex_positions.size());
 }
 
 size_t MeshData::vertices_size()
 {
 	return
 	(
-		(3 * sizeof(float) * vertex_colors.size())  +
-		(3 * sizeof(float) * vertex_normals.size()) +
-		(2 * sizeof(float) * vertex_uvs.size())     +
+		(3 * sizeof(float) * vertex_positions.size()) +
+		(3 * sizeof(float) * vertex_normals.size())   +
+		(2 * sizeof(float) * vertex_uvs.size())       +
 		(3 * sizeof(float) * vertex_colors.size())
 	);
 }
 
 size_t MeshData::indices_count()
 {
-	return (3 * vertex_indices.size());
+	return (vertex_indices.size() * 3);
 }
 
 size_t MeshData::indices_size()
@@ -561,3 +559,65 @@ bool MeshData::hasValidIndices()
 {
 	return (!vertex_indices.empty() && !(vertex_indices.size() % 3));
 }
+
+//
+// Vertex
+//
+/*Vertex::Vertex(glm::vec3 new_position, glm::vec3 new_normal, glm::vec2 new_uv, glm::vec3 new_color)
+{
+	position[0] = new_position[0];
+	position[1] = new_position[1];
+	position[2] = new_position[2];
+
+	normal[0] = new_normal[0];
+	normal[1] = new_normal[1];
+	normal[2] = new_normal[2];
+
+	uv[0] = new_uv[0];
+	uv[1] = new_uv[1];
+
+	color[0] = new_color[0];
+	color[1] = new_color[1];
+	color[2] = new_color[2];
+}
+
+Vertex::Vertex(float new_position[3], float new_normal[3], float new_uv[2], float new_color[3])
+{
+	position[0] = new_position[0];
+	position[1] = new_position[1];
+	position[2] = new_position[2];
+
+	normal[0] = new_normal[0];
+	normal[1] = new_normal[1];
+	normal[2] = new_normal[2];
+
+	uv[0] = new_uv[0];
+	uv[1] = new_uv[1];
+
+	color[0] = new_color[0];
+	color[1] = new_color[1];
+	color[2] = new_color[2];
+}
+
+Vertex::Vertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z)
+{
+	position[0] = position_x;
+	position[1] = position_y;
+	position[2] = position_z;
+
+	normal[0] = normal_x;
+	normal[1] = normal_y;
+	normal[2] = normal_z;
+
+	uv[0] = uv_x;
+	uv[1] = uv_y;
+
+	color[0] = color_x;
+	color[1] = color_y;
+	color[2] = color_z;
+}
+
+std::vector<float> Vertex::combined()
+{
+	return std::vector<float>({position[0], position[1], position[2], normal[0], normal[1], normal[2], uv[0], uv[1], color[0], color[1], color[2]});
+}*/

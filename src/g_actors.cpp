@@ -643,6 +643,7 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	}
 
 	temporary_light_mesh.material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color);
+	// temporary_light_mesh.mesh_data_name = GRAPHX_CUBE; // For some reason, this causes a crash because the floor's VBO doesn't get buffered I think(?????)
 	mesh = &temporary_light_mesh;
 }
 
@@ -777,9 +778,14 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(pivot_speed, settings["PivotSpeed"]);
 
 	pivot_point.setGlobalPosition(pivot_position);
-	pivot_point.setName("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
 	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
-	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID, settings);
+	pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
+	graphx::gSettings pivot_settings
+	{
+		{"Name", graphx::gSetting(RAW_DATA, graphx::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
+		{"MeshData", settings["MeshData"]},
+	};
+	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID, pivot_settings);
 }
 
 void LightTesterMover::tick(int current_tick)

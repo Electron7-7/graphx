@@ -58,5 +58,6 @@ inline std::string getBinaryPath()
 #include <glm/gtx/string_cast.hpp>
 #include <glm/ext.hpp>
 
+#include "sanity_nowarn.hpp"
 #include "sanity_printouts.hpp"
 #endif

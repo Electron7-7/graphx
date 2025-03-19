@@ -33,8 +33,8 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	if(tertiary_active)
 		displayTheatreData();
 
-	if(fourth_active)
-		displayMeshData();
+	// if(fourth_active)
+		// displayMeshData();
 
 	if(!active)
 		return;
@@ -95,7 +95,7 @@ void GraphXConsole::displayTheatreData()
 	IMGUI::End();
 }
 
-void GraphXConsole::displayMeshData()
+/*void GraphXConsole::displayMeshData()
 {
 #ifndef GRAPHX_DEBUG
 	IMGUI::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Once);
@@ -113,7 +113,7 @@ void GraphXConsole::displayMeshData()
 		IMGUI::Text("%s", getMeshData(mesh_data_pair).c_str());
 		IMGUI::End();
 	}
-}
+}*/
 
 std::string toStringNice(float number)
 {
@@ -124,7 +124,7 @@ std::string toStringNice(float number)
 	return buffer;
 }
 
-std::string GraphXConsole::getMeshData(std::pair<const std::string, gMeshData> &mesh_data_pair)
+/*std::string GraphXConsole::getMeshData(std::pair<const std::string, gMeshData> &mesh_data_pair)
 {
 	std::string buffer = "";
 
@@ -138,7 +138,7 @@ std::string GraphXConsole::getMeshData(std::pair<const std::string, gMeshData> &
 		buffer += toStringNice(mesh_data_pair.second.vertex_normals[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_normals[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_normals[it+2]) + " | ";
 		buffer += toStringNice(mesh_data_pair.second.vertex_uvs[uv_it]) + ", " + toStringNice(mesh_data_pair.second.vertex_uvs[uv_it+1]) + " | ";
 		buffer += toStringNice(mesh_data_pair.second.vertex_colors[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_colors[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_colors[it+2]) + "\n";
-	}*/
+	}*//*
 	for(int it = 0 ; it < mesh_data_pair.second.getVertexDataSize() ; it+=11)
 	{
 		buffer += "\t" + toStringNice(mesh_data_pair.second.vertex_positions[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+2]) + " | ";
@@ -150,4 +150,4 @@ std::string GraphXConsole::getMeshData(std::pair<const std::string, gMeshData> &
 	mesh_data_printouts[mesh_data_pair.first] = buffer;
 
 	return mesh_data_printouts.at(mesh_data_pair.first);
-}
+}*/

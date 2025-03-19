@@ -2,6 +2,7 @@
 #include "r_common.hpp"
 #include "t_settings.hpp"
 #include <algorithm>
+#include <set>
 
 using namespace graphx;
 using namespace graphx::classes;
@@ -55,6 +56,17 @@ Theatre::Theatre(std::string init_name, long new_uid)
 	stage_mesh->setName("Stage Mesh for Theatre (" + name + ")");
 }
 
+std::set<std::string> Theatre::getMeshDataNames()
+{
+	std::set<std::string> mesh_data_names;
+
+	for(auto &device_pair : devices)
+		if(device_pair.second->isType(MESH))
+			mesh_data_names.insert(static_cast<Mesh *>(device_pair.second)->mesh_data_name);
+
+	return mesh_data_names;
+}
+
 void Theatre::probeActorsForRenderCommands()
 {
 	for(auto &pair : objects)
@@ -69,7 +81,7 @@ void Theatre::probeActorsForRenderCommands()
 		render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
 		render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
 		render_command.mesh_material = pair.second->mesh->material;
-		render_command.mesh_data_name = pair.second->mesh->mesh_data_name;
+		render_command.mesh_data = &mesh_data_storage.at(pair.second->mesh->mesh_data_name);
 		render_command.actor_pointer = pair.second;
 
 		R_BufferRenderCmd(render_command);

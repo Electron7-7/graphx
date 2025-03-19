@@ -177,21 +177,6 @@ protected:
 	glm::vec3 position_local = glm::vec3(0.0f, 3.0f, 0.0f); // temporary default offset
 };
 
-/*class PlayerCamera : public Camera
-{
-public:
-	PlayerCamera();
-
-	void tick(int current_tick) override;
-	void doRotation(glm::vec2 mouse_input);
-};*/
-
-/*class CharacterController: public Actor
-{
-public:
-
-};*/
-
 class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:

@@ -1,9 +1,11 @@
 #ifndef GRAPHX_ENGINE_COMMON
 #define GRAPHX_ENGINE_COMMON
-#include "sanity.hpp" // Included for the GLM headers
 #include "t_settings.hpp"
 #include "graphx_namespace.hpp"
+#include <glm/fwd.hpp>
+#include <GLFW/glfw3.h>
 #include <mutex>
+#include <set>
 
 // Forward Declarations
 struct Theatre; // For Actor
@@ -128,6 +130,8 @@ struct Theatre
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
+	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
+	std::set<std::string> getMeshDataNames();
 	void probeActorsForRenderCommands();
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();
@@ -136,9 +140,6 @@ struct Theatre
 	void setUID(long new_uid);
 	void delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods);
 	void delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in);
-
-	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
-
 	void refreshTroupe();
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
 	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = empty_settings);
@@ -153,12 +154,11 @@ struct Theatre
 
 	glm::vec3 getSwapColor();
 
-	Actor *getFirstActorOfType(int type_name);
-	Device *getFirstDeviceOfType(int type_name);
-
 	std::vector<Actor *> getAllActorsOfType(int type_name);
 	std::vector<Device *> getAllDevicesOfType(int type_name);
 
+	Actor *getFirstActorOfType(int type_name);
+	Device *getFirstDeviceOfType(int type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
 	Actor *unsafeGetFirstActorOfType(int type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO DEVICE MATCHING type_name IS FOUND!!

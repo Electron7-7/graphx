@@ -1748,3 +1748,19 @@ Oh my god I just wasted time making a fucking unsigned integer vector3 struct...
 Okay, I did a lot of work; I'm finally at the point where I can start coding the VBO stuff, LMFAO. Remind me to never get high before work, even a little bit. Anyways, I did get a lot of actually good stuff done. Mainly, better compartmentalization/abstraction that is healthy for the codebase (not abstracting just to abstract). I created my own implementation of a "Vector3" type that only takes unsigned integers; this is to help make the processing of indices resemble the processing of vertices in MeshData. MeshData is an infinitely better implementation of gMeshData; gMeshData used to be a simple typedef, then a small struct, then a big struct and as such it kept a lot of the same ideas and styles of simpler containers. This led to it not fitting its actual purpose very well. MeshData, on the other hand, was designed from the ground up with the failings of gMeshData in mind; some of the improvements made include: way more helper functions, better and more detailed functions for getting the size of the data (both the number of combined elements and the total bytes of the data), way better constructors, specific helper functions for adding whole vertices (position+normal+uv+color) at once, and more. MeshData also has VBO and IBO member variables for holding buffer names, as well as a VAO_index variable for storing the (you guessed it) VAO index in VAOs that it uses (e.g: VAOs[VAO_index]).
 
 In conclusion, I've finished building the ground work for what comes next: the more ardurous process of re-writing the rendering pipeline.
+
+[03/18/25]
+Before I start working on the buffering code, I want to go into the interpreter and make sure that any external reference variables are added to their appropriate maps; currently, only mesh data is supported but eventually I want to include textures and rework them similarly to meshes.
+
+Oh, sweet, it looks like I already accounted for this and made sure that M_LoadModelFile adds new meshes to the store! Welp, time to get cracking away at the buffer function, I guess.
+
+Small side tangent/idea:
+    What if all buffering and rendering was done on a separate thread that was started and closed every frame, and if a new Theatre was being loaded that thread could be closed by the main loop. In theory, this would remove my paranoid sprinkling of "if(loading_new_main_theatre) return;" from the code.
+
+Okay, what algorithm am I going to write for buffering meshes? I need to account for the buffering function being called more than once (meaning there is a mix of buffered and non-buffered mesh data), and I'd like to make it decently efficient. What if I gave Theatre a function that goes through every Mesh, aggregates their mesh_data_name variables, and returns it as a check? Maybe I could even use std::set!
+
+After doing a little more reading, I think that putting all the mesh data in a single VBO and IBO is the better way of doing things.
+
+To do this, I'll need to make a few tweaks to MeshData; basically, just removing the VBO and IBO variables and adding vbo_range and ibo_range variables (or whatever I end up naming them) instead.
+
+This is overengineered for my use case. Back to multiple VBOs for each mesh.

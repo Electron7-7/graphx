@@ -2,7 +2,8 @@
 #include <gmath.hpp>
 #include <glm/glm.hpp>
 #include <vector>
-#define GRAPHX_QUAD "GRAPHX_QUAD"
+#include <string>
+#define GRAPHX_QUAD std::string("GRAPHX_QUAD")
 const std::vector<glm::vec3> QUAD_COLORS =
 {
 	glm::vec3(1.0f),

@@ -28,10 +28,10 @@ struct GraphXConsole
 	void displayTheatreData();
 	void displayMeshData();
 	bool justClosed();
-	std::string getMeshData(std::pair<const std::string, gMeshData> &mesh_data);
+	// std::string getMeshData(std::pair<const std::string, MeshData> &mesh_data);
 
 private:
-	std::map<std::string, gMeshData> mesh_data_store;
+	// std::map<std::string, MeshData> mesh_data_store;
 	std::map<std::string, std::string> mesh_data_printouts;
 	bool was_active;
 };

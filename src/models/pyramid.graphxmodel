@@ -1,8 +1,9 @@
 #ifndef GRAPHX_PYRAMID
-#define GRAPHX_PYRAMID "GRAPHX_PYRAMID"
 #include <vector>
 #include <gmath.hpp>
 #include <glm/glm.hpp>
+#include <string>
+#define GRAPHX_PYRAMID std::string("GRAPHX_PYRAMID")
 const std::vector<glm::vec3> PYRAMID_COLORS =
 {
 	glm::vec3(1.0f),

@@ -2,29 +2,35 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <gmath.hpp>
-#define GRAPHX_CUBE "GRAPHX_CUBE"
+#include <string>
+#define GRAPHX_CUBE std::string("GRAPHX_CUBE")
 const std::vector<glm::vec3> CUBE_COLORS =
 {
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
+
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
+
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
+
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
+
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
+
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
@@ -37,22 +43,27 @@ const std::vector<glm::vec3> CUBE_NORMALS =
 	glm::vec3(-1.0f, 0.0f,  0.0f),
 	glm::vec3(-1.0f, 0.0f,  0.0f),
 	glm::vec3(-1.0f, 0.0f,  0.0f),
+
 	glm::vec3(1.0f,  0.0f,  0.0f),
 	glm::vec3(1.0f,  0.0f,  0.0f),
 	glm::vec3(1.0f,  0.0f,  0.0f),
 	glm::vec3(1.0f,  0.0f,  0.0f),
+
 	glm::vec3(0.0f, -1.0f,  0.0f),
 	glm::vec3(0.0f, -1.0f,  0.0f),
 	glm::vec3(0.0f, -1.0f,  0.0f),
 	glm::vec3(0.0f, -1.0f,  0.0f),
+
 	glm::vec3(0.0f,  1.0f,  0.0f),
 	glm::vec3(0.0f,  1.0f,  0.0f),
 	glm::vec3(0.0f,  1.0f,  0.0f),
 	glm::vec3(0.0f,  1.0f,  0.0f),
+
 	glm::vec3(0.0f,  0.0f, -1.0f),
 	glm::vec3(0.0f,  0.0f, -1.0f),
 	glm::vec3(0.0f,  0.0f, -1.0f),
 	glm::vec3(0.0f,  0.0f, -1.0f),
+
 	glm::vec3(0.0f,  0.0f,  1.0f),
 	glm::vec3(0.0f,  0.0f,  1.0f),
 	glm::vec3(0.0f,  0.0f,  1.0f),
@@ -65,26 +76,31 @@ const std::vector<glm::vec2> CUBE_UVS =
 	glm::vec2(1.0f, 0.0f),
 	glm::vec2(0.0f, 1.0f),
 	glm::vec2(1.0f, 1.0f),
+
 	glm::vec2(1.0f, 0.0f),
 	glm::vec2(0.0f, 0.0f),
 	glm::vec2(1.0f, 1.0f),
 	glm::vec2(0.0f, 1.0f),
+
 	glm::vec2(0.0f, 1.0f),
 	glm::vec2(0.0f, 0.0f),
 	glm::vec2(1.0f, 1.0f),
 	glm::vec2(1.0f, 0.0f),
+
 	glm::vec2(0.0f, 1.0f),
 	glm::vec2(0.0f, 0.0f),
 	glm::vec2(1.0f, 1.0f),
 	glm::vec2(1.0f, 0.0f),
+
 	glm::vec2(1.0f, 0.0f),
 	glm::vec2(1.0f, 1.0f),
 	glm::vec2(0.0f, 0.0f),
 	glm::vec2(0.0f, 1.0f),
+
 	glm::vec2(0.0f, 0.0f),
 	glm::vec2(0.0f, 1.0f),
 	glm::vec2(1.0f, 0.0f),
-	glm::vec2(1.0f, 1.0)
+	glm::vec2(1.0f, 1.0),
 };
 
 const std::vector<glm::vec3> CUBE_POSITIONS =
@@ -93,22 +109,27 @@ const std::vector<glm::vec3> CUBE_POSITIONS =
 	glm::vec3(-1.0f, -1.0f,  1.0f),    // Left     Down	   Back       1
 	glm::vec3(-1.0f,  1.0f, -1.0f),    // Left     Up      Forward    2
 	glm::vec3(-1.0f,  1.0f,  1.0f),    // Left     Up      Back       3
+
 	glm::vec3( 1.0f, -1.0f, -1.0f),    // Right    Down    Forward    4
 	glm::vec3( 1.0f, -1.0f,  1.0f),    // Right    Down    Back       5
 	glm::vec3( 1.0f,  1.0f, -1.0f),    // Right    Up      Forward    6
 	glm::vec3( 1.0f,  1.0f,  1.0f),    // Right    Up      Back       7
+
 	glm::vec3(-1.0f, -1.0f, -1.0f),    // Left     Down	   Forward    8
 	glm::vec3(-1.0f, -1.0f,  1.0f),    // Left     Down	   Back       9
 	glm::vec3( 1.0f, -1.0f, -1.0f),    // Right    Down	   Forward    10
 	glm::vec3( 1.0f, -1.0f,  1.0f),    // Right    Down	   Back       11
+
 	glm::vec3(-1.0f,  1.0f, -1.0f),    // Left     Up      Forward    12
-	glm::vec3( -1.0f, 1.0f,  1.0f),    // Left     Up      Back       13
+	glm::vec3(-1.0f,  1.0f,  1.0f),    // Left     Up      Back       13
 	glm::vec3( 1.0f,  1.0f, -1.0f),    // Right    Up      Forward    14
 	glm::vec3( 1.0f,  1.0f,  1.0f),    // Right    Up      Back       15
+
 	glm::vec3(-1.0f, -1.0f, -1.0f),    // Left     Down	   Forward    16
 	glm::vec3(-1.0f,  1.0f, -1.0f),    // Left     Up      Forward    17
 	glm::vec3( 1.0f, -1.0f, -1.0f),    // Right    Down	   Forward    18
 	glm::vec3( 1.0f,  1.0f, -1.0f),    // Right    Up      Forward    19
+
 	glm::vec3(-1.0f, -1.0f,  1.0f),    // Left     Down	   Back       20
 	glm::vec3(-1.0f,  1.0f,  1.0f),    // Left     Up      Back       21
 	glm::vec3( 1.0f, -1.0f,  1.0f),    // Right    Down	   Back       22

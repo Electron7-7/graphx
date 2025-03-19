@@ -176,11 +176,24 @@ struct PrimitiveRenderCmd
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
 };
 
+/*struct Vertex
+{
+	float position[3] = {0.0f, 0.0f, 0.0f};
+	float normal[3]   = {0.0f, 0.0f, 0.0f};
+	float uv[2]       = {0.0f, 0.0f};
+	float color[3]    = {1.0f, 1.0f, 1.0f};
+
+	Vertex(glm::vec3 new_position, glm::vec3 new_normal, glm::vec2 new_uv, glm::vec3 new_color);
+	Vertex(float new_position[3], float new_normal[3], float new_uv[2], float new_color[3]);
+	Vertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
+
+	std::vector<float> combined();
+};*/
+
 struct MeshData
 {
 	int is_in_use = graphx::identifiers::mesh_data::NOT_CHECKED;
-
-	int VAO_index;
+	int VAO_index = VAO_DEFAULT;
 	unsigned int VBO;
 	unsigned int IBO;
 
@@ -241,7 +254,7 @@ template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void        R_StoreBuffers();
+void        R_BufferMeshes();
 void        R_GL_BufferMeshes();
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 void        R_GL_RenderPrimitive(RenderCmd *render_command);
