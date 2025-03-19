@@ -220,36 +220,6 @@ void Material::loadSettings(graphx::gSettings new_settings)
 	getSetting(mat_fullbright, settings["mat_fullbright"]);
 }
 
-unsigned int Material::bufferTextureFromMemory(unsigned char *texture_buffer)
-{
-	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
-
-	unsigned int texture_id;
-	glGenTextures(1, &texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load_from_memory(texture_buffer, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
-
-	if(!t_data)
-	{
-		std::cerr << "Failed to load texture!" << std::endl;
-		return 20;
-	}
-
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	stbi_image_free(t_data);
-
-	return texture_id;
-}
-
 //
 // Mesh
 //
@@ -277,8 +247,6 @@ void Mesh::prepForDestruction()
 
 	material = nullptr;
 	delete material;
-
-	mesh_data_storage.at(mesh_data_name).is_in_use = graphx::identifiers::mesh_data::NOT_IN_USE;
 }
 
 void Mesh::loadSettings(graphx::gSettings new_settings)
@@ -287,8 +255,6 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 
 	getSetting(material, settings["Material"]);
 	getSetting(mesh_data_name, settings["MeshData"]);
-
-	mesh_data_storage.at(mesh_data_name).is_in_use = graphx::identifiers::mesh_data::IN_USE;
 }
 
 //
@@ -310,9 +276,26 @@ void Sprite::loadSettings(graphx::gSettings new_settings)
 //
 // RenderCmd
 //
+RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color)
+{
+	is_light_debug_mesh = true;
+	current_render_state = light_render_command.current_render_state;
+	previous_render_state = light_render_command.previous_render_state;
+	mesh_material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 8, 0.0f, light_debug_material_color);
+	mesh_data_name = GRAPHX_CUBE;
+}
+
 bool RenderCmd::isRenderable()
 {
-	return ((current_render_state != nullptr || previous_render_state != nullptr) && mesh_data != nullptr);
+	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
+}
+
+//
+// LightRenderCmd
+//
+bool LightRenderCmd::renderDebugMesh()
+{
+	return ((current_render_state != nullptr || previous_render_state != nullptr));
 }
 
 //
@@ -354,47 +337,41 @@ PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg
 	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
 	colors_3 = gmath::convertMath<glm::vec3>(new_vertex_color);
 }
-/*void PrimitiveRenderCmd::bufferData()
+
+std::vector<float> PrimitiveRenderCmd::getVertices()
 {
-	if(primitive_type == graphx::types::primitive::TRIANGLE)
+	std::vector<float> vertex_data =
 	{
-		vertex_data =
+		vertex_1.x, vertex_1.y, vertex_1.z,    normals_1.x, normals_1.y, normals_1.z,    uvs_1.x, uvs_1.y,    colors_1.x, colors_1.y, colors_1.z,
+		vertex_2.x, vertex_2.y, vertex_2.z,    normals_2.x, normals_2.y, normals_2.z,    uvs_2.x, uvs_2.y,    colors_2.x, colors_2.y, colors_2.z
+	};
+
+	if(primitive_type == graphx::identifiers::primitive::TRIANGLE)
+	{
+		vertex_data.insert(vertex_data.end(),
 		{
-			vertex_1.x, vertex_1.y, vertex_1.z,    normals_1.x, normals_1.y, normals_1.z,    uvs_1.x, uvs_1.y,    colors_1.x, colors_1.y, colors_1.z,
-			vertex_2.x, vertex_2.y, vertex_2.z,    normals_2.x, normals_2.y, normals_2.z,    uvs_2.x, uvs_2.y,    colors_2.x, colors_2.y, colors_2.z,
 			vertex_3.x, vertex_3.y, vertex_3.z,    normals_3.x, normals_3.y, normals_3.z,    uvs_3.x, uvs_3.y,    colors_3.x, colors_3.y, colors_3.z
-		};
+		});
+
 	}
 
-	else if(primitive_type == graphx::types::primitive::LINE)
+	return vertex_data;
+}
+
+unsigned int PrimitiveRenderCmd::numberOfVertices()
+{
+	switch(primitive_type)
 	{
-		vertex_data =
-		{
-			vertex_1.x, vertex_1.y, vertex_1.z,    normals_1.x, normals_1.y, normals_1.z,    uvs_1.x, uvs_1.y,    colors_1.x, colors_1.y, colors_1.z,
-			vertex_2.x, vertex_2.y, vertex_2.z,    normals_2.x, normals_2.y, normals_2.z,    uvs_2.x, uvs_2.y,    colors_2.x, colors_2.y, colors_2.z
-		};
+	case graphx::identifiers::primitive::LINE:
+		return 2;
+	case graphx::identifiers::primitive::TRIANGLE:
+		return 3;
+	case graphx::identifiers::primitive::TEXT:
+		return 0; // Text not supported yet
+	default:
+		return 0;
 	}
-
-	glBindVertexArray(VAO_OBJ);
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), &vertex_data[0], GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-	glEnableVertexAttribArray(3);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}*/
-
+}
 
 //
 // MeshData
@@ -559,65 +536,3 @@ bool MeshData::hasValidIndices()
 {
 	return (!vertex_indices.empty() && !(vertex_indices.size() % 3));
 }
-
-//
-// Vertex
-//
-/*Vertex::Vertex(glm::vec3 new_position, glm::vec3 new_normal, glm::vec2 new_uv, glm::vec3 new_color)
-{
-	position[0] = new_position[0];
-	position[1] = new_position[1];
-	position[2] = new_position[2];
-
-	normal[0] = new_normal[0];
-	normal[1] = new_normal[1];
-	normal[2] = new_normal[2];
-
-	uv[0] = new_uv[0];
-	uv[1] = new_uv[1];
-
-	color[0] = new_color[0];
-	color[1] = new_color[1];
-	color[2] = new_color[2];
-}
-
-Vertex::Vertex(float new_position[3], float new_normal[3], float new_uv[2], float new_color[3])
-{
-	position[0] = new_position[0];
-	position[1] = new_position[1];
-	position[2] = new_position[2];
-
-	normal[0] = new_normal[0];
-	normal[1] = new_normal[1];
-	normal[2] = new_normal[2];
-
-	uv[0] = new_uv[0];
-	uv[1] = new_uv[1];
-
-	color[0] = new_color[0];
-	color[1] = new_color[1];
-	color[2] = new_color[2];
-}
-
-Vertex::Vertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z)
-{
-	position[0] = position_x;
-	position[1] = position_y;
-	position[2] = position_z;
-
-	normal[0] = normal_x;
-	normal[1] = normal_y;
-	normal[2] = normal_z;
-
-	uv[0] = uv_x;
-	uv[1] = uv_y;
-
-	color[0] = color_x;
-	color[1] = color_y;
-	color[2] = color_z;
-}
-
-std::vector<float> Vertex::combined()
-{
-	return std::vector<float>({position[0], position[1], position[2], normal[0], normal[1], normal[2], uv[0], uv[1], color[0], color[1], color[2]});
-}*/

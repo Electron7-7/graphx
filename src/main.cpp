@@ -69,7 +69,6 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_FRAMEBUFFER_SRGB);
-	// glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE); // Disable notifications
 
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
@@ -141,12 +140,12 @@ int main()
 public:
     virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
     {
-        // R_BufferRenderCmd(RenderCmd(inFrom, inTo, inColor));
+        R_BufferRenderCmd(PrimitiveRenderCmd(inFrom, inTo, inColor));
     }
 
     virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override
     {
-        // R_BufferRenderCmd(RenderCmd(inV1, inV2, inV3, inColor));
+        R_BufferRenderCmd(PrimitiveRenderCmd(inV1, inV2, inV3, inColor));
     }
 
     virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view &inString, JPH::ColorArg inColor, float inHeight) override
@@ -209,7 +208,7 @@ void testGameTick(GLFWwindow *main_window)
 		current_tick_length += (now_time - last_time) / TICKLENGTH;
 		last_time = now_time;
 
-		// jolt_physics_system.DrawBodies(jolt_draw_settings, &debug_renderer);
+		// jolt_physics_system.DrawBodies(jolt_draw_settings, &debug_renderer); // THIS WILL FUCKING FREEZE THE APPLICATION LMFAO UNFUCK MY CODE FIRST
 
 		while(current_tick_length >= 1.0f && !loading_new_main_theatre)
 		{

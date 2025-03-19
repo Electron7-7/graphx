@@ -74,6 +74,12 @@ mat3x3 calculateLight(Light light, vec3 light_direction);
 
 void main()
 {
+	if(is_light)
+	{
+		FragColor = vec4(texture(material.texture_diffuse, texture_coordinate).rgb * material.color, 1.0f);
+		return;
+	}
+
 	if(is_primitive)
 	{
 		// No support for primitive textures/lighting, yet
@@ -87,7 +93,7 @@ void main()
 		return;
 	}
 
-	if(mat_fullbright || is_light)
+	if(mat_fullbright)
 	{
 		FragColor = vec4(material.color, 1.0f);
 		return;

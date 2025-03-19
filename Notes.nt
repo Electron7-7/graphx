@@ -1764,3 +1764,29 @@ After doing a little more reading, I think that putting all the mesh data in a s
 To do this, I'll need to make a few tweaks to MeshData; basically, just removing the VBO and IBO variables and adding vbo_range and ibo_range variables (or whatever I end up naming them) instead.
 
 This is overengineered for my use case. Back to multiple VBOs for each mesh.
+
+[03/19/25]
+All right, continuing from last night, I want to figure out why the LightTesterMover mesh fucks up the mesh data process. The few clues that I have are:
+  - Commenting out "temporary_light_mesh.mesh_data_name = GRAPHX_CUBE;" stops the crash
+  - The crash seems to be due to a VBO/IBO being unbound/overflowing(?)
+    - The VBO/IBO in question is/are the GRAPHX_CUBE one(s)
+  - A similar type of issue happened (again with the LightTesterMover) because of problems changing a map while iterating through it. Maybe I could change iteration to be via a helper function that grabs references so that changes don't cause problems or something else.
+
+My hypothesis is that LightTesterMover interrupts the buffer function's for loop by affecting the mesh data map. I could try and just change the map to a vector, and put the mesh data name in the mesh data object. Before I do that, I'll need to look at every bit of code that interacts with the map and make sure that I can replicate the same functionality with a vector.
+
+Oh my god... I think it's because RenderCmds have a pointer to a MeshData object... and it uses the std::map::at function... and that might be interrupted by LightTesterMover's Mesh. Maybe I should change interaction with the map to be through a function, so I can return error data if a problem occurs and/or switch that member variable to be the MeshData name.
+
+Hmm... I think I got the right direction but slightly off target. Basically, I think the problem might actually be with how I made Mesh set the MeshData::is_in_use flag when it loads settings and when it's going to get destroyed. OH MY GOD! If the Mesh is destroyed, its mesh data gets set to NOT_IN_USE, but it could still be in use! Yeah, I need to go back to the iterative way of setting and checking the flags.
+
+All right, it seems to be working now! I was (I think, at least) right about the map access being the issue. I also realized that the flashlight wasn't rendering bc it has no Mesh and Theatre::probeActorsForRenderCommands checks Actor::wantsToBeRendered before making a RenderCmd. Removing that check, however, causes a crash when the Theatre tries to access a Material in a Mesh that doesn't exist. I'm thinking of making a LightRenderCmd that the Light Actors can use instead. This might also be a boon to performance, since I can process the Lights separately and either before or after the rest of the Meshes (depending on what's more performant). Also, keeping all these RenderCmd variants as separate classes and not deriving them from a base class will definitely help with organization since they shouldn't be mixed with eachother and should all be processed separately, anways.
+
+Oh, just noticed that I might want to change how Theatre::actorEnter works and make sure that if a new Actor has a unique Mesh, that it gets added to the devices map and the Actor's Mesh variable is replaced with a reference to the Mesh in the map.
+
+I also had a thought that instead of Actor having a pointer to a Mesh, and Mesh having a pointer to a Material, they should instead store a UID. This would make things so much nicer. I'll implement this after I finish this scrappy bit of code in Theatre::actorEnter.
+
+The renderer is almost completely done! I have GRAPHX_ meshes rendering correctly (they have indices and use an IBO), I've given Lights their own LightRenderCmd and it works beautifully, and I've started work on some ideas for rendering primitives. However, there's still one problem with the renderer: OBJ models aren't being rendered correctly. I believe this is one of three things:
+  1. I can't use the same VAO for GRAPHX_ models and OBJ models, because OBJ models don't use an IBO but GRAPHX_ models do
+  2. I need to give OBJ models an empty/dummy IBO
+  3. The function for loading OBJ data and the new way MeshData stores vertices are slightly different/misaligned
+
+My money's on 1 or 2, I'd really like it to not be 1 because making another VAO sounds annoying. The main hypothesis is that because GRAPHX_ models use and buffer an IBO but OBJ models don't, the renderer renders OBJ models incorrectly (it could also be because I don't do anything to tell the renderer "Hey! You don't need to care about indices!"). I'm not too sure, but that's my theory.

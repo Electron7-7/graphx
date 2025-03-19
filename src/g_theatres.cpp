@@ -64,6 +64,7 @@ std::set<std::string> Theatre::getMeshDataNames()
 		if(device_pair.second->isType(MESH))
 			mesh_data_names.insert(static_cast<Mesh *>(device_pair.second)->mesh_data_name);
 
+	mesh_data_names.insert(M_GetOBJName(ERROR_obj));
 	return mesh_data_names;
 }
 
@@ -74,6 +75,34 @@ void Theatre::probeActorsForRenderCommands()
 		if(loading_new_main_theatre)
 			return;
 
+		if(pair.second->isType(graphx::classes::LIGHTS))
+		{
+			LightRenderCmd light_render_command;
+			if(pair.second->wantsToBeRendered())
+			{
+				light_render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
+				light_render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
+			}
+
+			light_render_command.light_type = static_cast<Light *>(pair.second)->getLightType();
+
+			switch(light_render_command.light_type)
+			{
+			case graphx::classes::LIGHT:
+				light_render_command.light_data = new LightData(static_cast<Light *>(pair.second)->getLightData());
+				break;
+			case graphx::classes::LIGHTSPOT:
+				light_render_command.light_data = new LightData(static_cast<LightSpot *>(pair.second)->getLightData());
+				break;
+			case graphx::classes::LIGHTDIRECTIONAL:
+				light_render_command.light_data = new LightData(static_cast<LightDirectional *>(pair.second)->getLightData());
+				break;
+			}
+
+			R_BufferRenderCmd(light_render_command);
+			continue;
+		}
+
 		if(!pair.second->wantsToBeRendered())
 			continue;
 
@@ -81,8 +110,7 @@ void Theatre::probeActorsForRenderCommands()
 		render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
 		render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
 		render_command.mesh_material = pair.second->mesh->material;
-		render_command.mesh_data = &mesh_data_storage.at(pair.second->mesh->mesh_data_name);
-		render_command.actor_pointer = pair.second;
+		render_command.mesh_data_name = pair.second->mesh->mesh_data_name;
 
 		R_BufferRenderCmd(render_command);
 	}
@@ -444,6 +472,17 @@ void Theatre::actorEnter(Actor *new_actor, long uid, gSettings new_settings)
 		player_uid = uid;
 
 	new_actor->youGotACallBack(new_settings);
+
+	// Writing this has made me realize just how nasty my usage of pointers is.
+	// I want to rectify this by using UIDs instead; basically, instead of
+	// Actor::mesh being a Mesh pointer, it'd be the UID of a Mesh.
+	// Same goes for Mesh::material.
+	// Basically, anything that's stored somewhere else shouldn't be a pointer (Materials are already stored in devices, but I'm going to make them more closely resemble MeshData)
+	if(!devices.contains(new_actor->mesh->getUID()))
+	{
+		devices[new_actor->mesh->getUID()] = new Mesh(*new_actor->mesh);
+		new_actor->mesh = static_cast<Mesh *>(devices.at(new_actor->mesh->getUID()));
+	}
 
 	sortTroupe();
 	countLights();

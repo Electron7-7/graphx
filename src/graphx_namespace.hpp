@@ -51,7 +51,7 @@ namespace graphx
 		static constexpr int STATICBODYACTOR	= 11;
 		static constexpr int CAMERA				= 4;
 		static constexpr int GRAPHXPLAYER		= 5;
-		static constexpr int LIGHT				= 6;
+		static constexpr int LIGHT				= 6; // The base Light class is also used as a point light
 		static constexpr int LIGHTDIRECTIONAL	= 7;
 		static constexpr int LIGHTSPOT			= 8;
 		static constexpr int LIGHTFLASHLIGHT	= 9;

@@ -206,11 +206,13 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 	return mesh_data;
 }
 
-unsigned int M_GL_BufferMaterialTexture(unsigned char *texture_buffer)
+void M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer)
 {
+	if(texture_id != 0)
+		return;
+
 	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
 
-	unsigned int texture_id;
 	glGenTextures(1, &texture_id);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -229,22 +231,35 @@ unsigned int M_GL_BufferMaterialTexture(unsigned char *texture_buffer)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(t_data);
-
-	return texture_id;
 }
+
+// Temporary
+/*unsigned int primitives_VBO;
+#define NUMBER_OF_PRIMITIVES_IN_ONE_VBO 500*/
 
 void R_GL_BufferMeshes()
 {
 	if(loading_new_main_theatre)
 		return;
 
+	// Buffer big VBO for primitives
+
 	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
-	used_mesh_data_names.insert(M_GetOBJName(ERROR_obj));
+
+	for(auto &mesh_data_pair : mesh_data_storage)
+	{
+		mesh_data_pair.second.is_in_use = graphx::identifiers::mesh_data::NOT_IN_USE;
+		if(used_mesh_data_names.contains(mesh_data_pair.first))
+			mesh_data_pair.second.is_in_use = graphx::identifiers::mesh_data::IN_USE;
+	}
 
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
 		if(mesh_data_pair.second.is_in_use == graphx::identifiers::mesh_data::NOT_CHECKED)
+		{
+			PRINTDEBUG("Uh... not checked got found for Mesh Data \"" << mesh_data_pair.first << "\"")
 			continue;
+		}
 
 		if(mesh_data_pair.second.is_in_use == graphx::identifiers::mesh_data::NOT_IN_USE)
 		{
@@ -252,33 +267,26 @@ void R_GL_BufferMeshes()
 			// Buffer names are created/assigned by doing one of two things:
 			//   1. Creating a buffer using glCreateBuffers
 			//   2. Generating a buffer using glGenBuffers AND THEN binding it with glBindBuffer
-			glDeleteBuffers(1, &mesh_data_pair.second.VBO);
-			glDeleteBuffers(1, &mesh_data_pair.second.IBO);
-			mesh_data_pair.second.is_in_use = graphx::identifiers::mesh_data::NOT_CHECKED;
+			if(glIsBuffer(mesh_data_pair.second.VBO))
+				glDeleteBuffers(1, &mesh_data_pair.second.VBO);
+			if(glIsBuffer(mesh_data_pair.second.IBO))
+				glDeleteBuffers(1, &mesh_data_pair.second.IBO);
 			continue;
 		}
 
 		if(glIsBuffer(mesh_data_pair.second.VBO)) // If the VBO is buffered, the IBO doesn't need to be checked
 			continue;
 
-		glBindVertexArray(VAOs[VAO_DEFAULT]); // There's only one VAO, currently
+		glBindVertexArray(VAOs[VAO_DEFAULT]);
 		glGenBuffers(1, &mesh_data_pair.second.VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh_data_pair.second.VBO);
 		glBufferData(GL_ARRAY_BUFFER, mesh_data_pair.second.vertices_size(), mesh_data_pair.second.vertices().data(), GL_STATIC_DRAW);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
 		glEnableVertexAttribArray(0);
-
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
-
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
 		glEnableVertexAttribArray(2);
-
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 		glEnableVertexAttribArray(3);
 
-		// Not using indices for now
 		if(mesh_data_pair.second.hasValidIndices())
 		{
 			glGenBuffers(1, &mesh_data_pair.second.IBO);
@@ -288,94 +296,130 @@ void R_GL_BufferMeshes()
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-
 }
 
-/*void R_GL_RenderPrimitive(RenderCmd *render_command)
+std::vector<RenderCmd> render_commands;
+std::vector<PrimitiveRenderCmd> primitive_render_commands;
+std::vector<LightRenderCmd> light_render_commands;
+
+/*void R_GL_RenderPrimitives()
 {
-	glUseProgram(shaders[shader_index]->id);
-
-	glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
-
-	if(render_command->primitive_material_override != nullptr)
+	glBindVertexArray(VAOs[VAO_PRIMITIVES]);
+	glBindBuffer(GL_ARRAY_BUFFER, primitives_VBO);
+	unsigned int primitive_offset = 0;
+	for(auto rendercmd_iterator = primitive_render_commands.begin() ; rendercmd_iterator != primitive_render_commands.end() ; rendercmd_iterator++)
 	{
-		shaders[shader_index]->setUniform("material.texture_diffuse", 0);
-		shaders[shader_index]->setUniform("material.texture_specular", 1);
-		shaders[shader_index]->setUniform("material.color", render_command->primitive_material_override->color);
-		shaders[shader_index]->setUniform("material.specular_sharpness", render_command->primitive_material_override->specular_sharpness);
-		shaders[shader_index]->setUniform("material.specular_strength", render_command->primitive_material_override->specular_strength);
-		shaders[shader_index]->setUniform("mat_fullbright", render_command->primitive_material_override->mat_fullbright);
+		glBufferSubData(GL_ARRAY_BUFFER, primitive_offset, rendercmd_iterator.base()->numberOfVertices() * 11 * sizeof(float), rendercmd_iterator.base()->getVertices().data());
+		primitive_offset += rendercmd_iterator.base()->numberOfVertices() * 11 * sizeof(float);
 	}
 
-	shaders[shader_index]->setUniform("is_primitive", true);
-	shaders[shader_index]->setUniform("model_matrix", glm::mat4(1.0f));
-	shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
-	shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
-	shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(glm::mat4(1.0f)))));
+	glUseProgram(shaders[shader_index]->id);
 
-	glBindVertexArray(VAO_DEFAULT);
-	glBindBuffer(GL_ARRAY_BUFFER, render_command->getVBO());
-	glDrawArrays(GL_LINES, 0, render_command->getVertexData().size());
+	for(auto rendercmd_iterator = primitive_render_commands.begin() ; rendercmd_iterator != primitive_render_commands.end() ;)
+	{
+		PrimitiveRenderCmd *render_command = rendercmd_iterator.base();
+		std::vector<float> vertices = render_command->getVertices();
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+
+		glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
+
+		if(render_command->primitive_material_override != nullptr)
+		{
+			shaders[shader_index]->setUniform("material.texture_diffuse", 0);
+			shaders[shader_index]->setUniform("material.texture_specular", 1);
+			shaders[shader_index]->setUniform("material.color", render_command->primitive_material_override->color);
+			shaders[shader_index]->setUniform("material.specular_sharpness", render_command->primitive_material_override->specular_sharpness);
+			shaders[shader_index]->setUniform("material.specular_strength", render_command->primitive_material_override->specular_strength);
+			shaders[shader_index]->setUniform("mat_fullbright", render_command->primitive_material_override->mat_fullbright);
+		}
+
+		shaders[shader_index]->setUniform("is_primitive", true);
+		shaders[shader_index]->setUniform("model_matrix", glm::mat4(1.0f));
+		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
+		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(glm::mat4(1.0f)))));
+
+		glDrawArrays(GL_LINES, render_command->array_offset, render_command->numberOfVertices());
+
+		rendercmd_iterator = primitive_render_commands.erase(rendercmd_iterator);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }*/
 
-std::vector<RenderCmd> render_commands;
+void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
+{
+	int point_light_index = 0;
+	int spot_light_index = 0;
+
+	glUseProgram(shaders[shader_index]->id);
+
+	for(auto rendercmd_iterator = light_render_commands.begin() ; rendercmd_iterator != light_render_commands.end() ;)
+	{
+		LightRenderCmd render_command = *rendercmd_iterator.base();
+		std::string which_light;
+
+		if(render_command.light_type == graphx::classes::LIGHT)
+		{
+			which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
+		}
+
+		else if(render_command.light_type == graphx::classes::LIGHTDIRECTIONAL)
+		{
+			which_light = "directional_light.";
+			shaders[shader_index]->setUniform(which_light + "direction", render_command.light_data->direction);
+		}
+
+		else if(render_command.light_type == graphx::classes::LIGHTSPOT)
+		{
+			which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
+			shaders[shader_index]->setUniform(which_light + "inner_cutoff", render_command.light_data->inner_cutoff);
+			shaders[shader_index]->setUniform(which_light + "outer_cutoff", render_command.light_data->outer_cutoff);
+			shaders[shader_index]->setUniform(which_light + "direction", render_command.light_data->direction);
+		}
+
+		shaders[shader_index]->setUniform(which_light + "position", render_command.light_data->position);
+		shaders[shader_index]->setUniform(which_light + "strength", render_command.light_data->strength);
+		shaders[shader_index]->setUniform(which_light + "color", render_command.light_data->color);
+		shaders[shader_index]->setUniform(which_light + "specular", render_command.light_data->color);
+		shaders[shader_index]->setUniform(which_light + "ambient_strength", render_command.light_data->ambient_strength);
+		shaders[shader_index]->setUniform(which_light + "range", render_command.light_data->range);
+		shaders[shader_index]->setUniform(which_light + "intensity", render_command.light_data->intensity);
+		shaders[shader_index]->setUniform(which_light + "falloff", render_command.light_data->falloff);
+
+		if(render_command.renderDebugMesh())
+			R_BufferRenderCmd(RenderCmd(render_command, (render_command.light_data->color * render_command.light_data->strength)));
+
+		rendercmd_iterator = light_render_commands.erase(rendercmd_iterator);
+	}
+}
 
 void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 {
 	if(loading_new_main_theatre)
 		return;
 
-	// int current_vao_index = -1;
-	int point_light_index = 0;
-	int spot_light_index = 0;
+	R_GL_RenderLights(state_mutex, interpolation_time);
 
 	glUseProgram(shaders[shader_index]->id);
+	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 	shaders[shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
-	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
 		RenderCmd render_command = *rendercmd_iterator.base();
 
-		if(render_command.actor_pointer->isType(graphx::classes::LIGHTS))
-		{
-			Light *current_light = static_cast<Light *>(render_command.actor_pointer);
-			shaders[shader_index]->setUniform("is_light", true);
-			std::string which_light;
-
-			if(current_light->isLightType(graphx::classes::LIGHT))
-			{
-				which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
-			}
-
-			else if(current_light->isLightType(graphx::classes::LIGHTDIRECTIONAL))
-			{
-				which_light = "directional_light.";
-				shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightDirectional *>(current_light)->direction);
-			}
-
-			else if(current_light->isLightType(graphx::classes::LIGHTSPOT))
-			{
-				which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
-				shaders[shader_index]->setUniform(which_light + "inner_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[0]);
-				shaders[shader_index]->setUniform(which_light + "outer_cutoff", static_cast<LightSpot *>(current_light)->getCutoffAngles()[1]);
-				shaders[shader_index]->setUniform(which_light + "direction", static_cast<LightSpot *>(current_light)->direction);
-			}
-
-			shaders[shader_index]->setUniform(which_light + "position", current_light->getPosition<glm::vec3>());
-			shaders[shader_index]->setUniform(which_light + "strength", current_light->light_strength);
-			shaders[shader_index]->setUniform(which_light + "color", current_light->light_color);
-			shaders[shader_index]->setUniform(which_light + "specular", current_light->light_color);
-			shaders[shader_index]->setUniform(which_light + "ambient_strength", current_light->light_ambient_strength);
-			shaders[shader_index]->setUniform(which_light + "range", current_light->range);
-			shaders[shader_index]->setUniform(which_light + "intensity", current_light->intensity);
-			shaders[shader_index]->setUniform(which_light + "falloff", current_light->falloff);
-
-			shaders[shader_index]->setUniform("material.color", (current_light->light_color * current_light->light_strength));
-		}
-
-		if(!render_command.actor_pointer->wantsToBeRendered())
+		if(!render_command.isRenderable())
 		{
 			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 			continue;
@@ -408,29 +452,21 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		model_matrix *= glm::toMat4(interpolated_quat);
 		model_matrix = glm::scale(model_matrix, interpolated_scale);
 
+		MeshData mesh_data = mesh_data_storage.at(render_command.mesh_data_name);
+
 		glBindVertexArray(VAOs[VAO_DEFAULT]);
-		glBindBuffer(GL_ARRAY_BUFFER, render_command.mesh_data->VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
+
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
-		glEnableVertexAttribArray(0);
-
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-		glEnableVertexAttribArray(3);
 
-		if(render_command.mesh_material->texture_diffuse == 0)
-			render_command.mesh_material->texture_diffuse = render_command.mesh_material->bufferTextureFromMemory(render_command.mesh_material->embedded_texture_diffuse);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, render_command.mesh_material->texture_diffuse);
+		M_GL_BufferMaterialTexture(render_command.mesh_material->texture_diffuse, render_command.mesh_material->embedded_texture_diffuse);
+		M_GL_BufferMaterialTexture(render_command.mesh_material->texture_specular, render_command.mesh_material->embedded_texture_specular);
 
-		if(render_command.mesh_material->texture_specular == 0)
-			render_command.mesh_material->texture_specular = render_command.mesh_material->bufferTextureFromMemory(render_command.mesh_material->embedded_texture_specular);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, render_command.mesh_material->texture_specular);
+		glBindTextureUnit(0, render_command.mesh_material->texture_diffuse);
+		glBindTextureUnit(1, render_command.mesh_material->texture_specular);
 
 		shaders[shader_index]->setUniform("model_matrix", model_matrix);
 		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
@@ -438,7 +474,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
 
-		shaders[shader_index]->setUniform("is_light", false);
+		shaders[shader_index]->setUniform("is_light", render_command.is_light_debug_mesh);
 		shaders[shader_index]->setUniform("is_primitive", false);
 		shaders[shader_index]->setUniform("material.texture_diffuse", 0);
 		shaders[shader_index]->setUniform("material.texture_specular", 1);
@@ -448,15 +484,15 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("mat_fullbright", render_command.mesh_material->mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
-		render_command.actor_pointer->mesh;
-
-		if(render_command.mesh_data->hasValidIndices())
-			glDrawElements(GL_TRIANGLES, render_command.mesh_data->indices_count(), GL_UNSIGNED_INT, 0);
+		if(mesh_data.hasValidIndices())
+			glDrawElements(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, 0);
 		else
-			glDrawArrays(GL_TRIANGLES, 0, render_command.mesh_data->vertices_count());
+			glDrawArrays(GL_TRIANGLES, 0, mesh_data.vertices_count());
 
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
+
+	// R_GL_RenderPrimitives();
 }
 
 void R_BufferMeshes()
@@ -478,6 +514,16 @@ void R_BufferMeshes()
 void R_BufferRenderCmd(RenderCmd render_command)
 {
 	render_commands.insert(render_commands.end(), render_command);
+}
+
+void R_BufferRenderCmd(LightRenderCmd light_render_command)
+{
+	light_render_commands.insert(light_render_commands.end(), light_render_command);
+}
+
+void R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command)
+{
+	primitive_render_commands.insert(primitive_render_commands.end(), primitive_render_command);
 }
 
 void R_Render(std::mutex &state_mutex, float interpolation_time)

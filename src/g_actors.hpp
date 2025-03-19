@@ -71,6 +71,28 @@ public:
 	void takeABow() override;
 };
 
+// Idea for later:
+// Instead of using a struct to send data to a LightRenderCmd,
+// what if I just used a float vector/data stream instead? I could
+// access specific data like how OpenGL access vertex attributes!
+// Pretty over-engineered, but a cool idea I think.
+struct LightData
+{
+	float strength;
+	float ambient_strength;
+
+	glm::vec3 color;
+	glm::vec3 position;
+	glm::vec3 direction;
+
+	float range;
+	float intensity;
+	float falloff;
+
+	float inner_cutoff;
+	float outer_cutoff;
+};
+
 class Light: public Actor
 {
 public:
@@ -89,6 +111,9 @@ public:
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 	bool isLightType(int light_type);
+	int getLightType();
+
+	virtual LightData getLightData();
 
 protected:
 	int my_light_type;
@@ -102,6 +127,7 @@ public:
 	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	LightData getLightData() override;
 };
 
 class LightSpot: public Light
@@ -113,9 +139,8 @@ public:
 
 	LightSpot(std::string init_name = "UNTITLED SPOT LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_direction = glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f));
 
-	glm::vec2 getCutoffAngles();
-
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	LightData getLightData() override;
 };
 
 class LightFlashlight: public LightSpot

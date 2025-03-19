@@ -24,14 +24,6 @@ std::map<int, Actor*(*)()> actor_map =
 	{graphx::classes::LIGHTTESTERMOVER, &createNewActor<LightTesterMover>},
 };
 
-bool isLightType(long type)
-{
-	for(int light_type : graphx::classes::LIGHTS)
-		if(type == light_type)
-			return true;
-	return false;
-}
-
 //
 // Actor
 //
@@ -642,14 +634,36 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 		delete mesh;
 	}
 
-	temporary_light_mesh.material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color);
+	// temporary_light_mesh.material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color);
 	// temporary_light_mesh.mesh_data_name = GRAPHX_CUBE; // For some reason, this causes a crash because the floor's VBO doesn't get buffered I think(?????)
-	mesh = &temporary_light_mesh;
+	// mesh = &temporary_light_mesh;
+	mesh = new Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
+	mesh->mesh_data_name = GRAPHX_CUBE;
 }
 
 bool Light::isLightType(int light_type)
 {
 	return light_type == my_light_type;
+}
+
+int Light::getLightType()
+{
+	return my_light_type;
+}
+
+LightData Light::getLightData()
+{
+	LightData light_data;
+
+	light_data.strength = light_strength;
+	light_data.ambient_strength = light_ambient_strength;
+	light_data.color = light_color;
+	light_data.position = getPosition<glm::vec3>();
+	light_data.range = range;
+	light_data.intensity = intensity;
+	light_data.falloff = falloff;
+
+	return light_data;
 }
 
 //
@@ -674,6 +688,13 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 	delete mesh;
 }
 
+LightData LightDirectional::getLightData()
+{
+	LightData directional_light_data = Light::getLightData();
+	directional_light_data.direction = direction;
+	return directional_light_data;
+}
+
 //
 // LightSpot
 //
@@ -693,13 +714,14 @@ void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(direction, settings["Direction"]);
 }
 
-glm::vec2 LightSpot::getCutoffAngles()
+LightData LightSpot::getLightData()
 {
-	return glm::vec2
-	{
-		glm::cos(glm::radians(inner_cutoff_angle)),
-		glm::cos(glm::radians(outer_cutoff_angle)),
-	};
+	LightData spot_light_data = Light::getLightData();
+	spot_light_data.direction = direction;
+	spot_light_data.inner_cutoff = glm::cos(glm::radians(inner_cutoff_angle));
+	spot_light_data.outer_cutoff = glm::cos(glm::radians(outer_cutoff_angle));
+
+	return spot_light_data;
 }
 
 //
@@ -766,7 +788,7 @@ LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_p
 : Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
 {
 	my_type = graphx::classes::LIGHTTESTERMOVER;
-	my_light_type = graphx::classes::LIGHTSPOT;
+	my_light_type = graphx::classes::LIGHT;
 }
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
@@ -780,12 +802,13 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	pivot_point.setGlobalPosition(pivot_position);
 	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
 	pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
+	pivot_point.mesh->setUID(4815 + UID);
 	graphx::gSettings pivot_settings
 	{
 		{"Name", graphx::gSetting(RAW_DATA, graphx::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
 		{"MeshData", settings["MeshData"]},
 	};
-	getCurrentTheatre()->actorEnter(&pivot_point, 4815 + UID, pivot_settings);
+	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);
 }
 
 void LightTesterMover::tick(int current_tick)

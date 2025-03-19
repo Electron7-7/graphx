@@ -33,9 +33,10 @@
 #define DOOM_TEXTURE_SPEC   COMP04_5_SPECULAR_jpg
 
 
-#define VAOS_AMOUNT			1
+#define VAOS_AMOUNT			2
 //---------------------------
 #define VAO_DEFAULT         0
+#define VAO_PRIMITIVES      1
 
 
 struct GLShader
@@ -107,8 +108,6 @@ struct Material final : public Device
 	Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE_jpg, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
-	unsigned int bufferTextureFromMemory(unsigned char* texture_buffer);
-
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
@@ -138,23 +137,41 @@ struct Sprite : public Mesh
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
-struct RenderState; // Forward Declaration
-struct MeshData;    // Forward Declaration
+struct RenderState;                                   // Forward Declaration
+struct LightData;                                     // Forward Declaration
+std::string M_GetOBJName(std::string file_as_string); // Forward Declaration
+
+struct LightRenderCmd
+{
+public:
+	LightData *light_data = nullptr;
+	RenderState *current_render_state = nullptr;
+	RenderState *previous_render_state = nullptr;
+	int light_type = graphx::classes::LIGHT;
+
+	bool renderDebugMesh();
+};
 
 struct RenderCmd
 {
 public:
-	MeshData *mesh_data = nullptr;
+	bool is_light_debug_mesh = false;
+	std::string mesh_data_name = M_GetOBJName(ERROR_obj);
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
 	Material *mesh_material = nullptr;
-	Actor *actor_pointer = nullptr;
+	// Actor *actor_pointer = nullptr;
+
+	RenderCmd() = default;
+	RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color);
 
 	bool isRenderable();
 };
 
 struct PrimitiveRenderCmd
 {
+	unsigned int array_offset;
+	int primitive_type = graphx::identifiers::primitive::FOO;
 	glm::vec3 vertex_1 = glm::vec3(0.0f);
 	glm::vec3 vertex_2 = glm::vec3(0.0f);
 	glm::vec3 vertex_3 = glm::vec3(0.0f);
@@ -167,28 +184,16 @@ struct PrimitiveRenderCmd
 	glm::vec3 colors_1 = glm::vec3(0.0f);
 	glm::vec3 colors_2 = glm::vec3(0.0f);
 	glm::vec3 colors_3 = glm::vec3(0.0f);
-	int primitive_type = graphx::identifiers::primitive::FOO;
 	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
 
 	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
 	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
+
+	std::vector<float> getVertices();
+	unsigned int numberOfVertices();
 };
-
-/*struct Vertex
-{
-	float position[3] = {0.0f, 0.0f, 0.0f};
-	float normal[3]   = {0.0f, 0.0f, 0.0f};
-	float uv[2]       = {0.0f, 0.0f};
-	float color[3]    = {1.0f, 1.0f, 1.0f};
-
-	Vertex(glm::vec3 new_position, glm::vec3 new_normal, glm::vec2 new_uv, glm::vec3 new_color);
-	Vertex(float new_position[3], float new_normal[3], float new_uv[2], float new_color[3]);
-	Vertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
-
-	std::vector<float> combined();
-};*/
 
 struct MeshData
 {
@@ -257,11 +262,14 @@ void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::
 void        R_BufferMeshes();
 void        R_GL_BufferMeshes();
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
-void        R_GL_RenderPrimitive(RenderCmd *render_command);
+void        R_GL_RenderPrimitives(RenderCmd *render_command);
 void        R_GL_Render(std::mutex &mutex, float interpolation_time);
 void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void        R_BufferRenderCmd(RenderCmd render_command);
+void        R_BufferRenderCmd(LightRenderCmd light_render_command);
+void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
 void        R_InitializeRenderingAPI();
+void        M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 std::string M_GetOBJName(std::string file_as_string);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);
