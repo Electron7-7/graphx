@@ -1836,3 +1836,16 @@ Hmm... there's a "ghost" of the flashlight in the diffuse lighting even if the f
 Also, I have copious amounts of memory leaks... and I can't just "too bad!" my way out of these ones...
 
 I also wanna figure out if and how I can make the lighting better (mainly have the cutoff not be so harsh).
+
+[03/21/25]
+Okay, today I have an extra hour to work, so here's some things to work on:
+  - Use that macro for getting variable names in the interpreter
+  - Reduce number of lines I need to write in order to add a new class to the interpreter:
+    - graphx::classes (graphx_namespace.hpp)
+    - graphx::classnames (graphx_namespace.hpp)
+    - actor_map (g_actors.cpp) / device_map (r_common.cpp)
+  - Give debug menu more functionality
+    - Implement way to interface with classes and change values directly (raycast?)
+  - Find and fix memory leaks (in a new branch)
+
+I wanna start with the memory leaks, tbh, because that's more important and also will take the most work I assume (or at least I wanna make a new branch for that work)
