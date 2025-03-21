@@ -1790,3 +1790,49 @@ The renderer is almost completely done! I have GRAPHX_ meshes rendering correctl
   3. The function for loading OBJ data and the new way MeshData stores vertices are slightly different/misaligned
 
 My money's on 1 or 2, I'd really like it to not be 1 because making another VAO sounds annoying. The main hypothesis is that because GRAPHX_ models use and buffer an IBO but OBJ models don't, the renderer renders OBJ models incorrectly (it could also be because I don't do anything to tell the renderer "Hey! You don't need to care about indices!"). I'm not too sure, but that's my theory.
+
+[03/20/25]
+ALl right, let's take a crack at this.
+
+Helped Dexter with his computer; now I can start working lmfao.
+
+I'm going to give OBJs their own VAO as a test.
+
+Oh my fucking god I'm kinda stupid... the obj file has indices... just use the indices.
+
+NOPE! NOPE! I'M JUST FUCKING STUPID! :DDDDDDDD
+
+
+I'M GOING TO FUCKING CRASH OUT!!!!!!!
+
+I spent hours and hours and hours pouring myself over the documentation on VBOs VAOs and EBOs, writing and scrapping and re-writing my code, and fucked up part of my github development branch all to fucking realize that 90% of the problems I was having was because THIS:
+:::C++
+std::vector<float> vertex;
+for (size_t v = 0; v < fv; v++)
+{
+    // code and shit blah blah blah
+}
+mesh_data.addVertex(vertex);
+:::
+
+WAS SUPPOSED TO LOOK LIKE THIS:
+:::C++
+for (size_t v = 0; v < fv; v++)
+{
+    std::vector<float> vertex;
+    // code and shit blah blah blah
+    mesh_data.addVertex(vertex);
+}
+:::
+
+GOD FUCKING DAMNIT!!!
+
+On a serious note, I did also do a lot of stuff that will make life easier in the long run. Things like a total rework of gMeshData into MeshData, the creation of RenderCmd, LightRenderCmd, and PrimitiveRenderCmd, among other things. All this to say that the work I put in wasn't worthless or wasted... but the annoying reason behind my work (as well as a decent chunk of unused and/or scrapped work) definitely was.
+
+Okay, now that I've fixed that problem, I want to go back to using one VAO and I'd like to move the render debug options from the keyboard to ImGui (and maybe also leave the keybinds).
+
+Hmm... there's a "ghost" of the flashlight in the diffuse lighting even if the flashlight is off. It's probably because of how I turn it "off" by cranking a falloff variable iirc.
+
+Also, I have copious amounts of memory leaks... and I can't just "too bad!" my way out of these ones...
+
+I also wanna figure out if and how I can make the lighting better (mainly have the cutoff not be so harsh).

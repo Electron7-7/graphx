@@ -56,6 +56,7 @@ namespace graphx
 		static constexpr int LIGHTSPOT			= 8;
 		static constexpr int LIGHTFLASHLIGHT	= 9;
 		static constexpr int LIGHTTESTERMOVER	= 10;
+		static constexpr int RAMIEL				= 12;
 
 		static constexpr int DEVICE				= 500;
 		static constexpr int ENVIRONMENT		= 501;
@@ -116,6 +117,8 @@ namespace graphx
 		{classes::LIGHTSPOT, "LightSpot"},
 		{classes::LIGHTFLASHLIGHT, "LightFlashlight"},
 		{classes::LIGHTTESTERMOVER, "LightTesterMover"},
+		{classes::RAMIEL, "Ramiel"},
+
 		{classes::DEVICE, "Device"},
 		{classes::ENVIRONMENT, "Environment"},
 		{classes::MATERIAL, "Material"},

@@ -30,9 +30,21 @@ Material (Suzanne_Mat)
 	SpecularSharpness (128)
 	SpecularStrength (0.5)
 }
+Material (Pyramid_Mat)
+{
+	DiffuseTexture [SOURCE_LIGHT_GREY]
+	SpecularTexture [NO_TEXTURE]
+	Color (0.1, 0.7, 0.9)
+	SpecularSharpness (128)
+	SpecularStrength (0.5)
+}
 Mesh (Cube)
 {
 	MeshData [GRAPHX_CUBE]
+}
+Mesh (Pyramid)
+{
+	MeshData [GRAPHX_PYRAMID]
 }
 Mesh (OBJ_Mesh)
 {
@@ -41,8 +53,14 @@ Mesh (OBJ_Mesh)
 Actor (Suzanne_Tester)
 {
 	Mesh:Material <OBJ_Mesh>:<Suzanne_Mat>
-	Scale (4.0, 4.0, 4.0)
+	Scale (1.0, 1.0, 1.0)
 	Position (10.0, 4.0, 0.0)
+}
+Actor (Pyramid_Tester)
+{
+	Mesh:Material <Pyramid>:<Doom_Shiny>
+	Scale (1.0, 1.0, 1.0)
+	Position (8.0, 2.0, -4.0)
 }
 StaticBodyActor (Floor)
 {

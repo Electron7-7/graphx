@@ -9,6 +9,8 @@
 #define TINYOBJLOADER_USE_DOUBLE
 #include <earcut.hpp>
 #include <tiny_obj_loader.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include <cmath>
 
 std::array<unsigned int, VAOS_AMOUNT> VAOs;
@@ -16,13 +18,16 @@ std::vector<GLShader *> shaders;
 bool time_to_render = false;
 bool time_to_store_buffers = false;
 bool do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
-int graphx_api = 0; // Cheeky lil joke of a name
+int graphx_api = 0;
 int shader_debug_value = 4;
 unsigned int shader_index = SHADER_BLINN_PHONG;
 glm::vec2 main_window_size(1280.0f, 720.0f);
 float camera_near = 0.1f;
 float camera_far = 1000.0f;
 bool jolt_debug_render = false;
+bool lighting_switch_diffuse = true;
+bool lighting_switch_specular = true;
+bool lighting_switch_ambient = true;
 
 std::map<std::string, MeshData> mesh_data_storage =
 {
@@ -130,7 +135,6 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 	// if (!reader.Warning().empty())
 		// PRINTDEBUG("TinyObjReader: " + reader.Warning());
 
-
 	auto &attrib = reader.GetAttrib();
 	auto &shapes = reader.GetShapes();
 
@@ -141,12 +145,13 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 		size_t index_offset = 0;
 		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
 		{
-			std::vector<float> vertex;
 			size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
 
 			// Loop over vertices in the face.
 			for (size_t v = 0; v < fv; v++)
 			{
+				std::vector<float> vertex;
+
 				// access to vertex
 				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
 				tinyobj::real_t vx = attrib.vertices[3*size_t(idx.vertex_index)+0];
@@ -196,13 +201,15 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 				{
 					vertex.insert(vertex.end(), {1.0f, 1.0f, 1.0f});
 				}
+
+				mesh_data.addVertex(vertex);
 			}
 
-			mesh_data.addVertex(vertex);
 			index_offset += fv;
 		}
 	}
 
+	mesh_data.fixOBJData();
 	return mesh_data;
 }
 
@@ -242,7 +249,9 @@ void R_GL_BufferMeshes()
 	if(loading_new_main_theatre)
 		return;
 
-	// Buffer big VBO for primitives
+	//
+	// Buffer big VBO for primitives up here
+	//
 
 	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
 
@@ -293,14 +302,12 @@ void R_GL_BufferMeshes()
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data_pair.second.IBO);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh_data_pair.second.indices_size(), mesh_data_pair.second.indices().data(), GL_STATIC_DRAW);
 		}
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
 
 std::vector<RenderCmd> render_commands;
-std::vector<PrimitiveRenderCmd> primitive_render_commands;
 std::vector<LightRenderCmd> light_render_commands;
+std::vector<PrimitiveRenderCmd> primitive_render_commands;
 
 /*void R_GL_RenderPrimitives()
 {
@@ -412,6 +419,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 	glUseProgram(shaders[shader_index]->id);
 	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
+	shaders[shader_index]->setUniform("lighting_debug_switches", glm::bvec3(lighting_switch_diffuse, lighting_switch_specular, lighting_switch_ambient));
 	shaders[shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
 
@@ -456,7 +464,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		glBindVertexArray(VAOs[VAO_DEFAULT]);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
-
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
@@ -485,9 +492,14 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
 		if(mesh_data.hasValidIndices())
+		{
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data.IBO);
 			glDrawElements(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, 0);
+		}
 		else
+		{
 			glDrawArrays(GL_TRIANGLES, 0, mesh_data.vertices_count());
+		}
 
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}

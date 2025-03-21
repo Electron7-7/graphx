@@ -259,8 +259,10 @@ void Earcut<N>::earcutLinked(Node* ear, int pass) {
     Node* stop = ear;
     Node* prev;
     Node* next;
-
+#include "../sanity_nowarn.hpp"
+NOWARN(-Wunused-but-set-variable,
     int iterations = 0;
+)
 
     // iterate through ears, slicing them one by one
     while (ear->prev != ear->next) {

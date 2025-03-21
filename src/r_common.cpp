@@ -1,12 +1,9 @@
 #include "r_common.hpp"
 #include "g_common.hpp"
-#include <gmath.hpp>
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
-#include <models.hpp>
-#include <iostream>
-
-// Forward Declarations
+#include <gmath.hpp>
+#include <glm/gtx/component_wise.hpp>
 
 using namespace graphx;
 using namespace graphx::classes;
@@ -74,6 +71,12 @@ template<> void GLShader::setUniform<glm::vec2>(const std::string &name, glm::ve
 template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const
 {
 	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+}
+
+template<> void GLShader::setUniform<glm::bvec3>(const std::string &name, glm::bvec3 value) const
+{
+	glm::vec3 bool_as_float((float)value.x, (float)value.y, (float)value.z);
+	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(bool_as_float));
 }
 
 template<> void GLShader::setUniform<glm::vec4>(const std::string &name, glm::vec4 value) const
@@ -382,13 +385,13 @@ MeshData::MeshData()
 MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals, std::vector<glm::vec2> init_uvs, std::vector<glm::vec3> init_colors, std::vector<gmath::uintvec3> init_indices)
 {
 	// These for loops make sure that every vertex has normal, uv, and color data
-	for(int i = init_normals.size() ; i <= init_positions.size() ; i++)
+	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
 		init_normals.insert(init_normals.end(), glm::vec3(0.0f, 0.0f, 0.0f));
 
-	for(int i = init_uvs.size() ; i <= init_positions.size() ; i++)
+	for(int i = init_uvs.size() ; i < init_positions.size() ; i++)
 		init_uvs.insert(init_uvs.end(), glm::vec2(0.0f, 0.0f));
 
-	for(int i = init_colors.size() ; i <= init_positions.size() ; i++)
+	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
 		init_colors.insert(init_colors.end(), glm::vec3(1.0f, 1.0f, 1.0f));
 
 	VAO_index = init_vao_index;
@@ -530,6 +533,36 @@ void MeshData::addIndex(gmath::uintvec3 indices)
 void MeshData::addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3)
 {
 	vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(index_1, index_2, index_3));
+}
+
+void MeshData::fixOBJData()
+{
+	float max_coordinate = 0.0f;
+	float min_coordinate = 0.0f;
+
+	for(glm::vec3 vertex : vertex_positions)
+	{
+		if(std::abs(vertex.x) > 1 || std::abs(vertex.y) > 1 || std::abs(vertex.z) > 1)
+		{
+			float biggest_pos = glm::compMax(vertex);
+			float smallest_pos = glm::compMin(vertex);
+			if(biggest_pos > max_coordinate)
+				max_coordinate = biggest_pos;
+			if(smallest_pos < min_coordinate)
+				min_coordinate = smallest_pos;
+		}
+	}
+
+	for(glm::vec3 vertex : vertex_positions)
+	{
+		for(float component : vertex)
+		{
+			component = (component - min_coordinate) / (max_coordinate - min_coordinate);
+		}
+		// vertex.x = (vertex.x - min_coordinate) / (max_coordinate - min_coordinate);
+		// vertex.y = (vertex.y - min_coordinate) / (max_coordinate - min_coordinate);
+		// vertex.z = (vertex.z - min_coordinate) / (max_coordinate - min_coordinate);
+	}
 }
 
 bool MeshData::hasValidIndices()

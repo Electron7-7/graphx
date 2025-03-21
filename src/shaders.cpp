@@ -7,7 +7,7 @@ out vec4 FragColor;
 in vec2 texture_coordinate;
 in vec3 fragment_position;
 in vec3 normal;
-in vec3 vertex_colors;
+in vec3 vertex_color;
 
 struct Material
 {
@@ -57,13 +57,11 @@ uniform int spot_lights_count;
 uniform bool mat_fullbright;
 uniform bool is_primitive;
 
-#define DEBUG_DIFFUSE 1
-#define DEBUG_SPECULAR 2
-#define DEBUG_AMBIENT 3
-#define DEBUG_ALL 4
-#define DEBUG_NORMALS 5
+#define DEBUG_NORMALS       1
+#define DEBUG_VERTEX_COLORS 2
 
-uniform int shader_debug_value;
+uniform vec3 lighting_debug_switches; // Switches for Diffuse, Specular, and Ambient light output
+uniform int shader_debug_value; // Show Normals or Vertex Colors?
 
 vec3 material_diffuse;
 vec3 material_specular;
@@ -85,13 +83,20 @@ void main()
 	if(is_primitive)
 	{
 		// No support for primitive textures/lighting, yet
-		FragColor = vec4(vertex_colors, 1.0f);
+		FragColor = vec4(vertex_color, 1.0f);
 		return;
 	}
 
 	if(shader_debug_value == DEBUG_NORMALS)
 	{
-		FragColor = vec4((normalize(normal) + vec3(1.0f)) / vec3(2.0f), 1.0f);
+		// FragColor = vec4((normalize(normal) + vec3(1.0f)) / vec3(2.0f), 1.0f);
+		FragColor = vec4(normalize(normal), 1.0f);
+		return;
+	}
+
+	if(shader_debug_value == DEBUG_VERTEX_COLORS)
+	{
+		FragColor = vec4(vertex_color, 1.0f);
 		return;
 	}
 
@@ -138,16 +143,10 @@ vec3 calculateSpotLight(Light light)
 	vec3 this_specular = light_components[1];
 	vec3 this_ambient = light_components[2];
 
-	this_diffuse *= light_attenuation * spotlight_radius;
-	this_specular *= light_attenuation * spotlight_radius;
-	this_ambient *= light_attenuation * spotlight_radius;
+	this_diffuse *= light_attenuation * spotlight_radius  * lighting_debug_switches[0];
+	this_specular *= light_attenuation * spotlight_radius * lighting_debug_switches[1];
+	this_ambient *= light_attenuation * spotlight_radius  * lighting_debug_switches[2];
 
-	if(shader_debug_value == DEBUG_DIFFUSE)
-		return this_diffuse;
-	if(shader_debug_value == DEBUG_SPECULAR)
-		return this_specular;
-	if(shader_debug_value == DEBUG_AMBIENT)
-		return this_ambient;
 	return (this_diffuse + this_specular + this_ambient);
 };
 
@@ -169,16 +168,10 @@ vec3 calculatePointLight(Light light)
 	vec3 this_specular = light_components[1];
 	vec3 this_ambient = light_components[2];
 
-	this_diffuse *= light_attenuation;
-	this_specular *= light_attenuation;
-	this_ambient *= light_attenuation;
+	this_diffuse *= light_attenuation  * lighting_debug_switches[0];
+	this_specular *= light_attenuation * lighting_debug_switches[1];
+	this_ambient *= light_attenuation  * lighting_debug_switches[2];
 
-	if(shader_debug_value == DEBUG_DIFFUSE)
-		return this_diffuse;
-	if(shader_debug_value == DEBUG_SPECULAR)
-		return this_specular;
-	if(shader_debug_value == DEBUG_AMBIENT)
-		return this_ambient;
 	return (this_diffuse + this_specular + this_ambient);
 };
 
@@ -187,16 +180,10 @@ vec3 calculateDirectionalLight(Light light)
 	vec3 light_direction = normalize(-light.direction);
 	mat3x3 light_components = calculateLight(light, light_direction);
 
-	vec3 this_diffuse = light_components[0];
-	vec3 this_specular = light_components[1];
-	vec3 this_ambient = light_components[2];
+	vec3 this_diffuse = light_components[0]  * lighting_debug_switches[0];
+	vec3 this_specular = light_components[1] * lighting_debug_switches[1];
+	vec3 this_ambient = light_components[2]  * lighting_debug_switches[2];
 
-	if(shader_debug_value == DEBUG_DIFFUSE)
-		return this_diffuse;
-	if(shader_debug_value == DEBUG_SPECULAR)
-		return this_specular;
-	if(shader_debug_value == DEBUG_AMBIENT)
-		return this_ambient;
 	return (this_diffuse + this_specular + this_ambient);
 };
 
@@ -209,9 +196,12 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 	float diffuse = max(dot(normalize(normal), light_direction), 0.0f);
 	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), 0.0f), material.specular_sharpness);
 
-	vec3 this_diffuse  = light.strength * light.color * material_diffuse * material.color * diffuse;
+	vec3 material_color = material.color;
+	if(shader_debug_value == DEBUG_VERTEX_COLORS)
+		material_color = vec3(1.0f);
+	vec3 this_diffuse  = light.strength * light.color * vertex_color * material_diffuse * material_color * diffuse;
 	vec3 this_specular = light.color * material_specular * material.color * material.specular_strength * specular;
-	vec3 this_ambient  = light.ambient_strength * light.color * material_diffuse * material.color * environment.ambient_light;
+	vec3 this_ambient  = light.ambient_strength * light.color * material_diffuse * material_color * environment.ambient_light;
 
 	mat3x3 light_components;
 	light_components[0] = this_diffuse;
@@ -226,11 +216,11 @@ std::string blinn_phong_vertex_glsl = R"~(
 layout (location = 0) in vec3 _vertex_position;
 layout (location = 1) in vec3 _vertex_normal;
 layout (location = 2) in vec2 _vertex_texture_coordinate;
-layout (location = 3) in vec3 _vertex_colors;
+layout (location = 3) in vec3 _vertex_color;
 
 out vec3 fragment_position;
 out vec2 texture_coordinate;
-out vec3 vertex_colors;
+out vec3 vertex_color;
 out vec3 normal;
 
 uniform mat4 model_matrix;
@@ -244,7 +234,7 @@ void main()
 	texture_coordinate = _vertex_texture_coordinate;
 	fragment_position = vec3(model_matrix * vec4(_vertex_position, 1.0f)); // Transforming vertex position from local to global coordinates
 	normal = normal_matrix * _vertex_normal;
-	vertex_colors = _vertex_colors;
+	vertex_color = _vertex_color;
 };
 )~";
 std::string phong_fragment_glsl = R"~(

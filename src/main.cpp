@@ -1,7 +1,6 @@
 // Hello, production branch!
 // :3
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "sanity.hpp"
 #include "r_common.hpp"
 #include "g_common.hpp"
@@ -253,34 +252,70 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_1 && action == GLFW_PRESS)
 	{
-		shader_debug_value = 1;
-		PRINTNOTE("Shader Debug Focus Lighting Component: Diffuse")
+		lighting_switch_diffuse = !lighting_switch_diffuse;
+		if(lighting_switch_diffuse)
+			PRINTNOTE("Diffuse Lighting Component: Enabled")
+		else
+			PRINTNOTE("Diffuse Lighting Component: Disabled")
 	}
 
 	if(key == GLFW_KEY_2 && action == GLFW_PRESS)
 	{
-		shader_debug_value = 2;
-		PRINTNOTE("Shader Debug Focus Lighting Component: Specular")
+		lighting_switch_specular = !lighting_switch_specular;
+		if(lighting_switch_specular)
+			PRINTNOTE("Specular Lighting Component: Enabled")
+		else
+			PRINTNOTE("Specular Lighting Component: Disabled")
 	}
+
 	if(key == GLFW_KEY_3 && action == GLFW_PRESS)
 	{
-		shader_debug_value = 3;
-		PRINTNOTE("Shader Debug Focus Lighting Component: Ambient")
+		lighting_switch_ambient = !lighting_switch_ambient;
+		if(lighting_switch_ambient)
+			PRINTNOTE("Ambient Lighting Component: Enabled")
+		else
+			PRINTNOTE("Ambient Lighting Component: Disabled")
 	}
 
 	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
 	{
-		shader_debug_value = 4;
-		PRINTNOTE("Shader Debug Focus Lighting Component: All (Diffuse + Specular + Ambient)")
+		if(shader_debug_value != SHADER_DEBUG_NORMALS)
+		{
+			shader_debug_value = SHADER_DEBUG_NORMALS;
+			PRINTNOTE("Shader Debug Focus Lighting Component: Normals")
+			return;
+		}
+		shader_debug_value = 0;
+		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
 	}
 
 	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
 	{
-		shader_debug_value = 5;
-		PRINTNOTE("Shader Debug Focus Lighting Component: Normals")
+		if(shader_debug_value != SHADER_DEBUG_VERTEX_COLORS)
+		{
+			shader_debug_value = SHADER_DEBUG_VERTEX_COLORS;
+			PRINTNOTE("Shader replacing textures with vertex colors")
+			return;
+		}
+		shader_debug_value = 0;
+		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
 	}
 
-	if(key == GLFW_KEY_7 && action == GLFW_PRESS)
+	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
+	{
+		is_wireframe = !is_wireframe;
+		if(is_wireframe)
+		{
+			PRINTNOTE("Polygon Mode: Wireframe")
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			return;
+		}
+
+		PRINTNOTE("Polygon Mode: Normal")
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	if(key == GLFW_KEY_0 && action == GLFW_PRESS)
 	{
 		jolt_debug_render = !jolt_debug_render;
 		if(jolt_debug_render)
@@ -371,15 +406,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 	}
 
-	if(key == GLFW_KEY_G && action == GLFW_PRESS)
-	{
-		getCurrentEnvironment()->ambient_lighting_enabled = !getCurrentEnvironment()->ambient_lighting_enabled;
-		if(!getCurrentEnvironment()->ambient_lighting_enabled)
-			PRINTNOTE("Ambient Lighting Disabled")
-		else
-			PRINTNOTE("Ambient Lighting Enabled")
-	}
-
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
@@ -391,20 +417,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))
 	{
 		toggleCursor(window, true);
-	}
-
-	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
-	{
-		is_wireframe = !is_wireframe;
-		if(is_wireframe)
-		{
-			PRINTNOTE("Polygon Mode: Wireframe")
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			return;
-		}
-
-		PRINTNOTE("Polygon Mode: Normal")
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 	if(key == GLFW_KEY_J && action == GLFW_PRESS)

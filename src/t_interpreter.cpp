@@ -309,6 +309,7 @@ int getClassHash(std::string class_name, bool dont_print_error)
 	for(auto &pair : graphx::classnames)
 		if(!pair.second.compare(class_name_checked)) // true if equal
 			return pair.first;
+
 	if(!dont_print_error)
 		PRINTERR("Class name \"" << class_name_checked << "\" not found in \"graphx::classnames\"!\n\tSolution 1: Add it!\n\tSolution 2: Fix typo!\n\tSolution 3: Uhoh...")
 	return -1;

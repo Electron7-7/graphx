@@ -152,7 +152,7 @@ public:
 
 	LightFlashlight(std::string init_name = "UNTITLED FLASHLIGHT", float init_intensity = 0.5f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_position_offset = glm::vec3(0.0f), glm::vec3 init_rotation_offset = glm::vec3(0.0f));
 
-	void setLight(bool is_off);
+	void setLight(bool is_on);
 	void setLightColor(glm::vec3 color);
 	void setLightColor(bool color_toggle);
 
@@ -160,7 +160,6 @@ public:
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 
 private:
-	float _intensity;
 	glm::vec3 _color = light_color;
 };
 
@@ -235,11 +234,24 @@ public:
 
 private:
 	glm::vec2 mouse_last = glm::vec2(0.0f);
-	bool flashlight_toggle = false;
+	bool flashlight_toggle = true;
 	bool flashlight_color_toggle = false;
 	JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
+};
+
+class Ramiel: public Actor
+{
+	glm::vec3 pivot_position = glm::vec3(0.0f);
+	float pivot_radius = 3.0f;
+	float pivot_speed = 1.0f;
+	float pivot_theta = 0.0f;
+
+	using Actor::Actor;
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 };
 
 extern glm::vec3 vector3_up;

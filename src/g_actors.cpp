@@ -22,6 +22,7 @@ std::map<int, Actor*(*)()> actor_map =
 	{graphx::classes::LIGHTSPOT, &createNewActor<LightSpot>},
 	{graphx::classes::LIGHTFLASHLIGHT, &createNewActor<LightFlashlight>},
 	{graphx::classes::LIGHTTESTERMOVER, &createNewActor<LightTesterMover>},
+	{graphx::classes::RAMIEL, &createNewActor<Ramiel>},
 };
 
 //
@@ -528,9 +529,9 @@ void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int act
 		flashlight_toggle = !flashlight_toggle;
 		player_flashlight->setLight(flashlight_toggle);
 		if(flashlight_toggle)
-			PRINTNOTE("Flashlight Off")
-		else
 			PRINTNOTE("Flashlight On")
+		else
+			PRINTNOTE("Flashlight Off")
 	}
 
 	if(key == GLFW_KEY_Q && action == GLFW_PRESS && player_flashlight != nullptr)
@@ -728,7 +729,7 @@ LightData LightSpot::getLightData()
 // LightFlashlight
 //
 LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, float init_inner_cutoff_angle, float init_outer_cutoff_angle, glm::vec3 init_position_offset, glm::vec3 init_rotation_offset)
-: LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset), _intensity(init_intensity)
+: LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset)
 {
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
@@ -760,14 +761,15 @@ void LightFlashlight::tick(int current_tick)
 	direction = quaternion * vector3_front;
 }
 
-void LightFlashlight::setLight(bool is_off)
+void LightFlashlight::setLight(bool is_on)
 {
-	intensity = _intensity + (100.0f * is_off);
+	light_color = _color * is_on;
 }
 
 void LightFlashlight::setLightColor(glm::vec3 color)
 {
 	light_color = color;
+	_color = color;
 }
 
 void LightFlashlight::setLightColor(bool color_toggle)
@@ -829,3 +831,37 @@ void LightTesterMover::callToStage(Theatre *parent_theatre)
 
 void LightTesterMover::takeABow()
 {}
+
+
+/*class Ramiel: public Actor
+{
+	glm::vec3 pivot_position = glm::vec3(0.0f);
+	float pivot_radius = 3.0f;
+	float pivot_speed = 1.0f;
+	float pivot_theta = 0.0f;
+
+	using Actor::Actor;
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+};*/
+
+void Ramiel::tick(int current_tick)
+{
+	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
+	position_global[1] = pivot_position[1];
+	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+
+	pivot_theta += pivot_speed;
+	if(pivot_theta >= 360.0f)
+		pivot_theta = 0.0f;
+}
+
+void Ramiel::youGotACallBack(graphx::gSettings new_settings)
+{
+	Actor::youGotACallBack(new_settings);
+
+	getSetting(pivot_position, settings["PivotPosition"]);
+	getSetting(pivot_radius, settings["PivotRadius"]);
+	getSetting(pivot_speed, settings["PivotSpeed"]);
+}

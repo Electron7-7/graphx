@@ -4,13 +4,14 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/Core/Color.h>
 #include "graphx_namespace.hpp"
-#include "sanity.hpp"
-#include "graphx_namespace.hpp"
 #include "t_settings.hpp"
 #include <models.hpp>
-#include <stb_image.h>
 #include <array>
 #include <mutex>
+
+
+#define SHADER_DEBUG_NORMALS       1
+#define SHADER_DEBUG_VERTEX_COLORS 2
 
 
 // Rendering APIs (When I support other APIs, more of these will be added)
@@ -202,6 +203,8 @@ struct MeshData
 	unsigned int VBO;
 	unsigned int IBO;
 
+	std::string name = "";
+
 	std::vector<glm::vec3> vertex_positions;
 	std::vector<glm::vec3> vertex_normals;
 	std::vector<glm::vec2> vertex_uvs;
@@ -226,8 +229,8 @@ struct MeshData
 	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
 	void addIndex(gmath::uintvec3 indices);
 	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
+	void fixOBJData();
 	bool hasValidIndices();
-
 	std::vector<float> vertices();
 	std::vector<unsigned int> indices();
 	size_t vertices_count();
@@ -252,6 +255,9 @@ extern float camera_far;
 extern int shader_debug_value;
 extern unsigned int shader_index;
 extern bool jolt_debug_render;
+extern bool lighting_switch_diffuse;
+extern bool lighting_switch_specular;
+extern bool lighting_switch_ambient;
 // Variables found in r_common.cpp
 extern std::map<int, Device*(*)()> device_map;
 
