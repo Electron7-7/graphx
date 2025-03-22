@@ -1,11 +1,13 @@
 // r_common.hpp - rendering declarations
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
-#include <Jolt/Jolt.h>
-#include <Jolt/Core/Color.h>
 #include "graphx_namespace.hpp"
 #include "t_settings.hpp"
+#include <images.h>
 #include <models.hpp>
+#include <glfw_fwd.hpp>
+#include <Jolt/Jolt.h>
+#include <Jolt/Core/Color.h>
 #include <array>
 #include <mutex>
 
@@ -58,9 +60,7 @@ struct Device
 	Device();
 	virtual ~Device() = default;
 
-	bool isType(int class_type);
 	long getType();
-	std::string getTypeName();
 	void setName(std::string new_name);
 	void setName(char *new_name);
 	std::string getName();
@@ -91,12 +91,28 @@ struct Environment final : public Device // Will be extended
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
+struct Texture final : public Device
+{
+public:
+	unsigned int texture_id = 0;
+	unsigned char *texture_data = MISSING_TEXTURE_jpg;
+
+	Texture();
+	Texture(unsigned char *init_texture_data);
+	Texture(const char *init_texture_data);
+	Texture(std::string init_texture_data);
+
+	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+};
+
 struct Material final : public Device
 {
+	std::string diffuse_texture_name = MISSING_TEXTURE;
+	std::string specular_texture_name = MISSING_TEXTURE;
+
 	unsigned int texture_diffuse = 0;
 	unsigned int texture_specular = 0;
-
-	unsigned char* embedded_texture_diffuse = MISSING_jpg;
+	unsigned char* embedded_texture_diffuse = MISSING_TEXTURE_jpg;
 	unsigned char* embedded_texture_specular = FLAT_SPEC_jpg;
 
 	glm::vec3 color = glm::vec3(1.0f);
@@ -106,7 +122,8 @@ struct Material final : public Device
 
 	Material();
 	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
-	Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE_jpg, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
+	Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
+	// Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE_jpg, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
@@ -115,6 +132,7 @@ struct Material final : public Device
 struct Mesh : public Device
 {
 	std::string name = "Untitled Mesh";
+	// Material *material = new Material();
 	Material *material = new Material();
 
 	unsigned int VBO = 0;
@@ -160,8 +178,7 @@ public:
 	std::string mesh_data_name = M_GetOBJName(ERROR_obj);
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
-	Material *mesh_material = nullptr;
-	// Actor *actor_pointer = nullptr;
+	Material mesh_material;
 
 	RenderCmd() = default;
 	RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color);
@@ -243,6 +260,7 @@ struct MeshData
 extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::vector<GLShader *> shaders; // Same for shaders
 extern std::map<std::string, MeshData> mesh_data_storage;
+extern std::map<std::string, Texture> texture_storage;
 extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -275,6 +293,7 @@ void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
 void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
 void        R_InitializeRenderingAPI();
+std::string T_LoadImageFile(std::string file_path);
 void        M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 std::string M_GetOBJName(std::string file_as_string);

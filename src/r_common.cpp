@@ -1,5 +1,5 @@
 #include "r_common.hpp"
-#include "g_common.hpp"
+#include "sanity.hpp"
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
 #include <gmath.hpp>
@@ -102,16 +102,6 @@ Device::Device()
 	my_type = graphx::classes::DEVICE;
 }
 
-bool Device::isType(int class_type)
-{
-	return class_type == my_type;
-}
-
-std::string Device::getTypeName()
-{
-	return graphx::classnames.at(my_type);
-}
-
 long Device::getType()
 {
 	return my_type;
@@ -143,15 +133,12 @@ void Device::loadSettings(graphx::gSettings new_settings)
 }
 
 void Device::initialize()
-{
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
-}
+{}
 
 void Device::prepForDestruction()
 {
 	if(ready_to_destroy)
 		return;
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 	ready_to_destroy = true;
 }
 
@@ -190,6 +177,42 @@ glm::vec3 Environment::getAmbientLight()
 {
 	return ambient_light_color * ambient_light_strength * (int)ambient_lighting_enabled;
 }
+
+//
+// Texture
+//
+Texture::Texture()
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+}
+
+Texture::Texture(unsigned char *init_texture_data)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_data = init_texture_data;
+}
+
+Texture::Texture(const char *init_texture_data)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_data = reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data));
+}
+
+Texture::Texture(std::string init_texture_data)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_data = reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()));
+}
+
+void Texture::loadSettings(graphx::gSettings new_settings)
+{
+	Device::loadSettings(new_settings);
+}
+
 //
 // Material
 //
@@ -203,9 +226,13 @@ Material::Material(bool is_fullbright, glm::vec3 init_color)
 : embedded_texture_specular(NO_TEXTURE_jpg), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
-Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
+: diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), embedded_texture_diffuse(MISSING_TEXTURE_jpg), embedded_texture_specular(NO_TEXTURE_jpg), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
+
+/*Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
+: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+{}*/
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
 : embedded_texture_specular(FLAT_SPEC_jpg), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
@@ -215,8 +242,10 @@ void Material::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	getSetting(embedded_texture_diffuse, settings["DiffuseTexture"]);
-	getSetting(embedded_texture_specular, settings["SpecularTexture"]);
+	// getSetting(embedded_texture_diffuse, settings["DiffuseTexture"]);
+	// getSetting(embedded_texture_specular, settings["SpecularTexture"]);
+	getSetting(diffuse_texture_name, settings["DiffuseTexture"]);
+	getSetting(specular_texture_name, settings["SpecularTexture"]);
 	getSetting(color, settings["Color"]);
 	getSetting(specular_sharpness, settings["SpecularSharpness"]);
 	getSetting(specular_strength, settings["SpecularStrength"]);
@@ -284,7 +313,8 @@ RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug
 	is_light_debug_mesh = true;
 	current_render_state = light_render_command.current_render_state;
 	previous_render_state = light_render_command.previous_render_state;
-	mesh_material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 8, 0.0f, light_debug_material_color);
+	// mesh_material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 8, 0.0f, light_debug_material_color);
+	mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_debug_material_color);
 	mesh_data_name = GRAPHX_CUBE;
 }
 

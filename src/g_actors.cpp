@@ -1,6 +1,9 @@
 #include "g_actors.hpp"
 #include "t_settings.hpp"
 #include "g_jolt.hpp"
+// #include "sanity.hpp" // Included for the GLFW #include
+#include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
 #include <gmath.hpp>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
@@ -36,17 +39,9 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	mesh = new Mesh();
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	RenderState render_state = RenderState(init_position, quaternion, init_scale);
-	// current_state_copy = current_state;
-	// previous_state = current_state;
-	// previous_state_copy = current_state;
 	current_state_buffer = { render_state, render_state };
 	previous_state_buffer = { render_state, render_state };
 	updateVectors();
-}
-
-std::string Actor::getTypeName()
-{
-	return graphx::classnames.at(my_type);
 }
 
 long Actor::getType()
@@ -189,19 +184,6 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	updateVectors();
 }
 
-bool Actor::isType(int class_type)
-{
-	return class_type == my_type;
-}
-
-bool Actor::isType(std::initializer_list<int> const &class_types)
-{
-	for(int type : class_types)
-		if(my_type == type)
-			return true;
-	return false;
-}
-
 void Actor::setUID(long manual_uid)
 {
 	if(manual_uid != -1)
@@ -264,7 +246,7 @@ void Actor::takeABow()
 
 bool Actor::wantsToBeRendered()
 {
-	return (mesh != nullptr && visible && !isType(graphx::classes::GRAPHXPLAYER));
+	return (mesh != nullptr && visible && !(my_type == graphx::classes::GRAPHXPLAYER));
 }
 
 //
@@ -638,7 +620,7 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	// temporary_light_mesh.material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color);
 	// temporary_light_mesh.mesh_data_name = GRAPHX_CUBE; // For some reason, this causes a crash because the floor's VBO doesn't get buffered I think(?????)
 	// mesh = &temporary_light_mesh;
-	mesh = new Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
+	mesh = new Mesh(new Material(LIGHT_DEBUGGING, NO_TEXTURE, 4, 0.0f, light_color));
 	mesh->mesh_data_name = GRAPHX_CUBE;
 }
 
@@ -763,7 +745,7 @@ void LightFlashlight::tick(int current_tick)
 
 void LightFlashlight::setLight(bool is_on)
 {
-	light_color = _color * is_on;
+	light_color = _color * (float)is_on;
 }
 
 void LightFlashlight::setLightColor(glm::vec3 color)

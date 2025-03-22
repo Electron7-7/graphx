@@ -21,13 +21,14 @@ graphx::gSettings empty_settings = {{empty_settings_identifier, gSetting(-1, {})
 
 std::map<std::string, std::any> cpp_definitions =
 {
-	{"DOOM_TEXTURE_DIFF", COMP04_5_png},
-	{"DOOM_TEXTURE_SPEC", COMP04_5_SPECULAR_jpg},
-	{"MISSING_TEXTURE_DIFF", MISSING_jpg},
-	{"NO_TEXTURE", NO_TEXTURE_jpg},
-	{"FLAT_SPEC", FLAT_SPEC_jpg},
-	{"SOURCE_ORANGE", SOURCE_ORANGE_png},
-	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY_png},
+	{"DOOM_TEXTURE_DIFF", COMP04_5},
+	{"DOOM_TEXTURE_SPEC", COMP04_5_SPECULAR},
+	{"MISSING_TEXTURE_DIFF", MISSING_TEXTURE},
+	{"NO_TEXTURE", NO_TEXTURE},
+	{"FLAT_SPEC", FLAT_SPEC},
+	{"SOURCE_ORANGE", SOURCE_ORANGE},
+	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY},
+	{"LIGHT_DEBUGGING", LIGHT_DEBUGGING},
 	{"GRAPHX_CUBE", GRAPHX_CUBE},
 	{"GRAPHX_PYRAMID", GRAPHX_PYRAMID},
 	{"GRAPHX_QUAD", GRAPHX_QUAD},
@@ -306,13 +307,12 @@ int getClassHash(std::string class_name, bool dont_print_error)
 	if(class_name.back() == ':')
 		class_name_checked = class_name.substr(0, class_name.size() - 1);
 
-	for(auto &pair : graphx::classnames)
-		if(!pair.second.compare(class_name_checked)) // true if equal
-			return pair.first;
+	if(graphx::classes::classnames.contains(class_name_checked)) // true if equal
+		return graphx::classes::classnames.at(class_name_checked);
 
 	if(!dont_print_error)
-		PRINTERR("Class name \"" << class_name_checked << "\" not found in \"graphx::classnames\"!\n\tSolution 1: Add it!\n\tSolution 2: Fix typo!\n\tSolution 3: Uhoh...")
-	return -1;
+		PRINTERR("Class name \"" << class_name_checked << "\" not found in \"graphx::classes::classnames\"!\n\tSolution 1: Add it!\n\tSolution 2: Fix typo!\n\tSolution 3: Uhoh...")
+	return graphx::classes::INVALID_TYPE;
 }
 
 void interpretCppReference(gSettings &current_object_settings, std::string variable_name, std::string cpp_reference)
@@ -438,7 +438,7 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 		class_name = variable_name.substr(variable_name.find_last_of(':') + 1);
 	int class_hash = getClassHash(class_name, true);
 
-	if(class_hash == -1) // If true, this is a reference to a variable of the same name in another Actor/Device
+	if(class_hash == graphx::classes::INVALID_TYPE) // If true, this is a reference to a variable of the same name in another Actor/Device
 	{
 		gStringSetting referenced_setting(variable_name, gValue(-1, "EMPTY"));
 
@@ -484,10 +484,10 @@ void interpretTheatreReference(gSettings &current_object_settings, std::string v
 	}
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
-	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+	if(graphx::classes::getBaseType(class_hash) == graphx::classes::ACTOR)
 		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
 
-	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
+	else if(graphx::classes::getBaseType(class_hash) == graphx::classes::DEVICE)
 		current_object_settings[variable_name] = gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
 
@@ -497,7 +497,7 @@ void interpretSandwich(gSettings &current_object_settings, gStringSettings &thea
 	gStringSetting sandwich_bun_setting = theatre_settings[i][it];
 	int class_hash = getClassHash(sandwich_bun_setting.first);
 
-	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+	if(graphx::classes::getBaseType(class_hash) == graphx::classes::ACTOR)
 		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->settings;
 	else
 		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->settings;
@@ -533,14 +533,14 @@ void interpretSandwich(gSettings &current_object_settings, gStringSettings &thea
 		it++;
 	}
 
-	if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+	if(graphx::classes::getBaseType(class_hash) == graphx::classes::ACTOR)
 	{
 		Actor *sandwich_bun = actor_map[class_hash]();
 		sandwich_bun->youGotACallBack(sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = gSetting(SANDWICH, sandwich_bun);
 	}
 
-	else if(DEVICES[0] <= class_hash && class_hash <= DEVICES[1])
+	else if(graphx::classes::getBaseType(class_hash) == graphx::classes::DEVICE)
 	{
 		Device *sandwich_bun = device_map[class_hash]();
 		sandwich_bun->loadSettings(sandwich_settings);
@@ -597,7 +597,7 @@ Theatre loadTheatre(long theatre_uid)
 
 		int class_hash = getClassHash(theatre_settings[i][0].first);
 
-		if(ACTORS[0] <= class_hash && class_hash <= ACTORS[1])
+		if(graphx::classes::getBaseType(class_hash) == graphx::classes::ACTOR)
 		{
 			new_theatre.createActor(class_hash, i, current_object_settings);
 			continue;

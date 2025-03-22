@@ -1,15 +1,13 @@
 #ifndef GRAPHX_THEATRE_FILE_FORMAT
 #define GRAPHX_THEATRE_FILE_FORMAT
 #include "graphx_namespace.hpp"
+#include "g_common_fwd.hpp"
 
 #define RAW_DATA           1
 #define CPP_REFERENCE      2
 #define EXTERNAL_REFERENCE 3
 #define THEATRE_REFERENCE  4
 #define SANDWICH           5
-
-// Forward Declarations
-struct Theatre;
 
 template<typename T> std::any getVariableFrom(T *object_pointer, std::string variable_name);
 

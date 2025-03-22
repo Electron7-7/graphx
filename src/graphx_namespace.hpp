@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 #include <map>
 #include <any>
-#include <array>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -44,39 +43,89 @@ namespace graphx
 
 	namespace classes
 	{
+		static constexpr int INVALID_TYPE       = -481516;
+
 		static constexpr int THEATRE			= 0;
 		static constexpr int ACTOR				= 1;
 		static constexpr int PHYSICSACTOR		= 2;
-		static constexpr int RIGIDBODYACTOR		= 3;
-		static constexpr int STATICBODYACTOR	= 11;
-		static constexpr int CAMERA				= 4;
-		static constexpr int GRAPHXPLAYER		= 5;
-		static constexpr int LIGHT				= 6; // The base Light class is also used as a point light
-		static constexpr int LIGHTDIRECTIONAL	= 7;
-		static constexpr int LIGHTSPOT			= 8;
-		static constexpr int LIGHTFLASHLIGHT	= 9;
-		static constexpr int LIGHTTESTERMOVER	= 10;
-		static constexpr int RAMIEL				= 12;
+		static constexpr int STATICBODYACTOR	= 3;
+		static constexpr int RIGIDBODYACTOR		= 4;
+		static constexpr int CAMERA				= 5;
+		static constexpr int GRAPHXPLAYER		= 6;
+		static constexpr int RAMIEL				= 7;
+		// ALL LIGHT DERIVED CLASS IDS MUST BE NEGATIVE IN ORDER FOR graphx::classes::isLight TO WORK
+		static constexpr int LIGHT				= -1;
+		static constexpr int LIGHTDIRECTIONAL	= -2;
+		static constexpr int LIGHTSPOT			= -3;
+		static constexpr int LIGHTFLASHLIGHT	= -4;
+		static constexpr int LIGHTTESTERMOVER	= -5;
 
-		static constexpr int DEVICE				= 500;
-		static constexpr int ENVIRONMENT		= 501;
-		static constexpr int MATERIAL			= 502;
-		static constexpr int MESH				= 503;
-		static constexpr int SPRITE				= 504;
-		static constexpr int COLLIDER			= 505;
+		static constexpr int DEVICE				= 1000;
+		static constexpr int ENVIRONMENT		= 1001;
+		static constexpr int MATERIAL			= 1002;
+		static constexpr int MESH				= 1003;
+		static constexpr int SPRITE				= 1004;
+		static constexpr int COLLIDER			= 1005;
+		static constexpr int TEXTURE			= 1006;
 
-		static constexpr int ACTORS[2] = {0, 499};
-		static constexpr int DEVICES[2] = {500, 999};
-		static constexpr int LIGHT_TYPES_AMOUNT = 5;
-		static constexpr std::array<int, LIGHT_TYPES_AMOUNT> LIGHTS =
+		// Feel free to expand these limits if needed; just remember to update the above values accordingly
+		static constexpr int ACTOR_ID_LIMIT    = 999;
+		static constexpr int DEVICE_ID_LIMIT   = 1999;
+
+		// Don't forget to add new classes to this map after giving them an ID!
+		static inline const std::map<std::string, int> classnames =
 		{
-			LIGHT,
-			LIGHTSPOT,
-			LIGHTFLASHLIGHT,
-			LIGHTDIRECTIONAL,
-			LIGHTTESTERMOVER,
+			{ "Theatre",          THEATRE          },
+
+			{ "Actor",            ACTOR            },
+			{ "PhysicsActor",     PHYSICSACTOR     },
+			{ "StaticBodyActor",  STATICBODYACTOR  },
+			{ "RigidBodyActor",   RIGIDBODYACTOR   },
+			{ "Camera",           CAMERA           },
+			{ "GraphXPlayer",     GRAPHXPLAYER     },
+			{ "Ramiel",           RAMIEL           },
+			{ "Light",            LIGHT            },
+			{ "LightDirectional", LIGHTDIRECTIONAL },
+			{ "LightSpot",        LIGHTSPOT        },
+			{ "LightFlashlight",  LIGHTFLASHLIGHT  },
+			{ "LightTesterMover", LIGHTTESTERMOVER },
+
+			{ "Device",           DEVICE           },
+			{ "Environment",      ENVIRONMENT      },
+			{ "Material",         MATERIAL         },
+			{ "Mesh",             MESH             },
+			{ "Sprite",           SPRITE           },
+			{ "Collider",         COLLIDER         },
+			{ "Texture",          TEXTURE          },
 		};
-	}
+
+		static inline constexpr int getBaseType(int type) noexcept
+		{
+			type = std::abs(type);
+
+			if(type == THEATRE)
+				return THEATRE;
+
+			if(type <= ACTOR_ID_LIMIT && type >= ACTOR)
+				return ACTOR;
+
+			if(type <= DEVICE_ID_LIMIT && type >= DEVICE)
+				return DEVICE;
+
+			return INVALID_TYPE;
+		}
+
+		static inline constexpr bool isLight(int type) noexcept
+		{
+			if(type == INVALID_TYPE || getBaseType(type != ACTOR))
+				return false;
+
+			if(type > 0)
+				return false;
+
+			return true;
+		}
+	};
 
 	typedef std::map<int, std::pair<std::string, std::string>> gObjectStore;
 	typedef std::multimap<int, std::pair<std::string, std::string>> gSourceRefStore;
@@ -102,29 +151,5 @@ namespace graphx
 	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	static std::map<int, std::string> classnames =
-	{
-		{classes::THEATRE, "Theatre"},
-		{classes::ACTOR, "Actor"},
-		{classes::PHYSICSACTOR, "PhysicsActor"},
-		{classes::RIGIDBODYACTOR, "RigidBodyActor"},
-		{classes::STATICBODYACTOR, "StaticBodyActor"},
-		{classes::CAMERA, "Camera"},
-		{classes::GRAPHXPLAYER, "GraphXPlayer"},
-		{classes::LIGHT, "Light"},
-		{classes::LIGHTDIRECTIONAL, "LightDirectional"},
-		{classes::LIGHTSPOT, "LightSpot"},
-		{classes::LIGHTFLASHLIGHT, "LightFlashlight"},
-		{classes::LIGHTTESTERMOVER, "LightTesterMover"},
-		{classes::RAMIEL, "Ramiel"},
-
-		{classes::DEVICE, "Device"},
-		{classes::ENVIRONMENT, "Environment"},
-		{classes::MATERIAL, "Material"},
-		{classes::MESH, "Mesh"},
-		{classes::SPRITE, "Sprite"},
-		{classes::COLLIDER, "Collider"}
-	};
 }
 #endif

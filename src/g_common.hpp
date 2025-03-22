@@ -2,18 +2,11 @@
 #define GRAPHX_ENGINE_COMMON
 #include "t_settings.hpp"
 #include "graphx_namespace.hpp"
+#include "r_common_fwd.hpp"
+#include "g_common_fwd.hpp"
 #include <glm/fwd.hpp>
-#include <GLFW/glfw3.h>
 #include <mutex>
 #include <set>
-
-// Forward Declarations
-struct Theatre; // For Actor
-class GraphXPlayer;
-struct Device;
-struct Environment;
-struct Material;
-struct Mesh;
 
 extern bool loading_new_main_theatre;
 
@@ -65,7 +58,7 @@ public:
 
 	long getUID();
 	void setUID(long manual_uid);
-	bool isType(int class_type);
+/*	bool isType(int class_type);
 	bool isType(std::initializer_list<int> const &class_types);
 	// I have to define this in the header file, unfortunately
 	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types)
@@ -74,8 +67,7 @@ public:
 			if(my_type == type)
 				return true;
 		return false;
-	}
-	std::string getTypeName();
+	}*/
 	long getType();
 	void setName(std::string new_name);
 	void setName(char *new_name);

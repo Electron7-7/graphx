@@ -1,6 +1,7 @@
 #include "r_common.hpp"
 #include "g_common.hpp"
 #include "g_actors.hpp"
+#include "sanity.hpp"
 #include "t_common.hpp"
 #include "graphx_namespace.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -39,6 +40,19 @@ std::map<std::string, MeshData> mesh_data_storage =
 	{M_GetOBJName(purely_for_testing_obj), M_LoadOBJ(purely_for_testing_obj)},
 };
 
+std::map<std::string, Texture> texture_storage =
+{
+	{COMP04_5, Texture(COMP04_5_png)},
+	{COMP04_5_SPECULAR, Texture(COMP04_5_SPECULAR_jpg)},
+	{FLAT_SPEC, Texture(FLAT_SPEC_jpg)},
+	{LIGHT_DEBUGGING, Texture(LIGHT_DEBUGGING_jpg)},
+	{MISSING_TEXTURE, Texture(MISSING_TEXTURE_jpg)},
+	{NO_TEXTURE, Texture(NO_TEXTURE_jpg)},
+	{SOURCE_LIGHT_GREY, Texture(SOURCE_LIGHT_GREY_png)},
+	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png)},
+};
+
+
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -67,6 +81,76 @@ void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 	glfwSwapBuffers(w_window);
 	glClearColor(w_clear_color[0], w_clear_color[1], w_clear_color[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+std::string T_LoadImageFile(std::string file_path)
+{
+	std::string binary_path = BINARY_PATH;
+
+	// If the file path is relative, it should be relative to the program's location.
+	std::string file_path_checked = std::string(binary_path + file_path);
+
+	// If the file path is absolute, use it as is.
+	if(file_path.starts_with('/') || !file_path.substr(1, 2).compare(":/"))
+		file_path_checked = file_path;
+
+	std::string texture_name = std::filesystem::path(file_path_checked).stem();
+
+	if(texture_storage.contains(texture_name))
+		return texture_name;
+
+	std::ifstream image_file = std::ifstream(file_path_checked);
+	std::stringstream file_string_data;
+	file_string_data << image_file.rdbuf();
+
+	if(!image_file.is_open())
+	{
+		PRINTERR("T_LoadImageFile(std::string file_path) - Image file unable to be read / does not exist!")
+		return MISSING_TEXTURE;
+	}
+
+	Texture new_texture(file_string_data.str());
+
+	texture_storage[texture_name] = new_texture;
+
+	image_file.close();
+	return texture_name;
+}
+
+// WILL REPLACE M_GL_BufferTexture
+void T_GL_BufferTexture(std::string texture_name)
+{
+	if(!texture_storage.contains(texture_name))
+	{
+		PRINTERR("T_GL_BufferTexture(std::string texture_name) - No valid texture found with name \"" << texture_name << "\"! ")
+		return;
+	}
+
+	Texture &texture = texture_storage.at(texture_name);
+
+	if(texture.texture_id != 0)
+		return;
+
+	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+
+	glGenTextures(1, &texture.texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture.texture_id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	int t_width, t_height, t_channels;
+	unsigned char *t_data = stbi_load_from_memory(texture.texture_data, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+
+	if(!t_data)
+		PRINTERR("Failed to load texture!");
+
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(t_data);
 }
 
 std::string M_GetOBJName(std::string file_as_string)
@@ -130,10 +214,10 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 
 	if(!reader.ParseFromString(embedded_obj_file, "", reader_config))
 		if(!reader.Error().empty())
-			PRINTERR("TinyObjReader: " << reader.Error())
+			PRINTERR("TinyObjReader Error - " << reader.Error())
 
-	// if (!reader.Warning().empty())
-		// PRINTDEBUG("TinyObjReader: " + reader.Warning());
+	if (!reader.Warning().empty())
+		PRINTDEBUG("TinyObjReader Warning - " + reader.Warning());
 
 	auto &attrib = reader.GetAttrib();
 	auto &shapes = reader.GetShapes();
@@ -213,7 +297,7 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 	return mesh_data;
 }
 
-void M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer)
+void M_GL_BufferTexture(unsigned int &texture_id, unsigned char *texture_buffer)
 {
 	if(texture_id != 0)
 		return;
@@ -469,11 +553,17 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 
-		M_GL_BufferMaterialTexture(render_command.mesh_material->texture_diffuse, render_command.mesh_material->embedded_texture_diffuse);
-		M_GL_BufferMaterialTexture(render_command.mesh_material->texture_specular, render_command.mesh_material->embedded_texture_specular);
+		// M_GL_BufferTexture(render_command.mesh_material.texture_diffuse, render_command.mesh_material.embedded_texture_diffuse);
+		// M_GL_BufferTexture(render_command.mesh_material.texture_specular, render_command.mesh_material.embedded_texture_specular);
+		// glBindTextureUnit(0, render_command.mesh_material.texture_diffuse);
+		// glBindTextureUnit(1, render_command.mesh_material.texture_specular);
 
-		glBindTextureUnit(0, render_command.mesh_material->texture_diffuse);
-		glBindTextureUnit(1, render_command.mesh_material->texture_specular);
+		T_GL_BufferTexture(render_command.mesh_material.diffuse_texture_name);
+		T_GL_BufferTexture(render_command.mesh_material.specular_texture_name);
+		// TODO:
+		// Replace the usage of std::map::get with an abstraction that safely returns an error Texture if the requested Texture doesn't exist
+		glBindTextureUnit(0, texture_storage.at(render_command.mesh_material.diffuse_texture_name).texture_id);
+		glBindTextureUnit(1, texture_storage.at(render_command.mesh_material.specular_texture_name).texture_id);
 
 		shaders[shader_index]->setUniform("model_matrix", model_matrix);
 		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
@@ -485,10 +575,10 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("is_primitive", false);
 		shaders[shader_index]->setUniform("material.texture_diffuse", 0);
 		shaders[shader_index]->setUniform("material.texture_specular", 1);
-		shaders[shader_index]->setUniform("material.color", render_command.mesh_material->color);
-		shaders[shader_index]->setUniform("material.specular_sharpness", render_command.mesh_material->specular_sharpness);
-		shaders[shader_index]->setUniform("material.specular_strength", render_command.mesh_material->specular_strength);
-		shaders[shader_index]->setUniform("mat_fullbright", render_command.mesh_material->mat_fullbright);
+		shaders[shader_index]->setUniform("material.color", render_command.mesh_material.color);
+		shaders[shader_index]->setUniform("material.specular_sharpness", render_command.mesh_material.specular_sharpness);
+		shaders[shader_index]->setUniform("material.specular_strength", render_command.mesh_material.specular_strength);
+		shaders[shader_index]->setUniform("mat_fullbright", render_command.mesh_material.mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
 		if(mesh_data.hasValidIndices())
