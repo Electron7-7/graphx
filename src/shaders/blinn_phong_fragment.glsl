@@ -87,8 +87,8 @@ void main()
 
 	if(shader_debug_value == DEBUG_NORMALS)
 	{
-		// FragColor = vec4((normalize(normal) + vec3(1.0f)) / vec3(2.0f), 1.0f);
-		FragColor = vec4(normalize(normal), 1.0f);
+		// FragColor = vec4(normalize(normal), 1.0f);
+		FragColor = vec4((normalize(normal) + vec3(1.0f)) / vec3(2.0f), 1.0f);
 		return;
 	}
 

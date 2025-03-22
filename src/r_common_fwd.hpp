@@ -52,7 +52,7 @@ template<typename T> Device *createNewDevice();
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color);
-void        R_BufferMeshes();
+void        R_BufferMeshesAndTextures();
 void        R_GL_BufferMeshes();
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 void        R_GL_RenderPrimitives(RenderCmd *render_command);

@@ -58,9 +58,15 @@ Actor (Suzanne_Tester)
 }
 Actor (Pyramid_Tester)
 {
-	Mesh:Material <Pyramid>:<Doom_Shiny>
-	Scale (1.0, 1.0, 1.0)
-	Position (8.0, 2.0, -4.0)
+	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 4.0, -4.0)
+}
+Actor (Pyramid_Tester_2)
+{
+	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 1.0, -8.0)
 }
 StaticBodyActor (Floor)
 {

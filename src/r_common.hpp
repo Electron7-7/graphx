@@ -94,6 +94,7 @@ struct Environment final : public Device // Will be extended
 struct Texture final : public Device
 {
 public:
+	int is_in_use = graphx::identifiers::buffer_type::NOT_CHECKED;
 	unsigned int texture_id = 0;
 	unsigned char *texture_data = MISSING_TEXTURE_jpg;
 
@@ -215,7 +216,7 @@ struct PrimitiveRenderCmd
 
 struct MeshData
 {
-	int is_in_use = graphx::identifiers::mesh_data::NOT_CHECKED;
+	int is_in_use = graphx::identifiers::buffer_type::NOT_CHECKED;
 	int VAO_index = VAO_DEFAULT;
 	unsigned int VBO;
 	unsigned int IBO;
@@ -283,7 +284,9 @@ template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
-void        R_BufferMeshes();
+void        R_BufferMeshesAndTextures();
+void		T_BufferTexture(std::string texture_name);
+void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 void        R_GL_RenderPrimitives(RenderCmd *render_command);
@@ -294,7 +297,6 @@ void        R_BufferRenderCmd(LightRenderCmd light_render_command);
 void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
 void        R_InitializeRenderingAPI();
 std::string T_LoadImageFile(std::string file_path);
-void        M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 std::string M_GetOBJName(std::string file_as_string);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);

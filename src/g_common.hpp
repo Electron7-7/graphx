@@ -124,6 +124,7 @@ struct Theatre
 
 	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
 	std::set<std::string> getMeshDataNames();
+	std::set<std::string> getTextureNames();
 	void probeActorsForRenderCommands();
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();

@@ -33,7 +33,7 @@ namespace graphx
 			static constexpr int TEXT     = -1; // Text not supported yet!
 		};
 
-		namespace mesh_data
+		namespace buffer_type
 		{
 			static constexpr int IN_USE      =  1;
 			static constexpr int NOT_IN_USE  = -1;
@@ -117,7 +117,7 @@ namespace graphx
 
 		static inline constexpr bool isLight(int type) noexcept
 		{
-			if(type == INVALID_TYPE || getBaseType(type != ACTOR))
+			if(type == INVALID_TYPE || getBaseType(type) != ACTOR)
 				return false;
 
 			if(type > 0)

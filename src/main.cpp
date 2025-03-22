@@ -111,7 +111,7 @@ int main()
 			toggleCursor(main_window, false);
 
 		if(time_to_store_buffers)
-			R_BufferMeshes();
+			R_BufferMeshesAndTextures();
 
 		if(time_to_render)
 		{

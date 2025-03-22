@@ -313,7 +313,6 @@ RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug
 	is_light_debug_mesh = true;
 	current_render_state = light_render_command.current_render_state;
 	previous_render_state = light_render_command.previous_render_state;
-	// mesh_material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 8, 0.0f, light_debug_material_color);
 	mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_debug_material_color);
 	mesh_data_name = GRAPHX_CUBE;
 }

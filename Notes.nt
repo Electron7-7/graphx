@@ -1864,3 +1864,24 @@ God, I wanna fucking change UIDs and the Theatre maps and everything... it's so 
 Okay, I refactored a lot of shit related to the classnames. I wasn't able to remove any of the places you need to add code to for new classes, but I did refactor, and make more efficient, certain functionalities like checking if an Actor is a Light , checking if a class is an Actor or Device, etc. Now, I'm gonna continue taking a stab at making a Texture struct that acts like MeshData.
 
 I've almost fully implemented Texture, it just doesn't seem to be working / loading any textures. It doesn't crash the engine, though, so that's good! I'll figure it out tomorrow.
+
+[03/22/25]
+At the airport, sitting at my gate rn; gonna dick around with the Texture class some more.
+
+In the air now. Found the problem with the textures not rendering; it's actually not that the textures aren't rendering, it's that the Theatre isn't creating LightRenderCmds for the Lights. I'm assuming that graphx::classes::isLight is broken.
+
+Fucking...
+This:
+:::C++
+if(type == INVALID_TYPE || getBaseType(type != ACTOR))
+:::
+Was supposed to be this:
+:::C++
+if(type == INVALID_TYPE || getBaseType(type) != ACTOR)
+:::
+
+Kms.
+
+Yup, it works now.
+
+Seeing some weird bugs; could be because this laptop is so fucking slow that it's not reading the .gt files fast enough or some shit. Idk.

@@ -11,63 +11,63 @@ const std::vector<glm::vec3> PYRAMID_COLORS =
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
 	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
-	glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
+	// glm::vec3(1.0f),
 };
 
 const std::vector<glm::vec3> PYRAMID_NORMALS =
 {
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
-	glm::vec3(0.0f,  0.0f,  0.0f),
+	glm::vec3(-1.0f, -1.0f,  1.0f),
+	glm::vec3(-1.0f, -1.0f, -1.0f),
+	glm::vec3( 0.0f,  1.0f,  0.0f),
+	glm::vec3( 1.0f, -1.0f,  1.0f),
+	glm::vec3( 1.0f, -1.0f, -1.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
+	// glm::vec3(0.0f,  0.0f,  0.0f),
 };
 
 const std::vector<glm::vec2> PYRAMID_UVS =
 {
-	glm::vec2(1.0f,  1.0f),
-	glm::vec2(0.0f,  1.0f),
-	glm::vec2(0.0f,  1.0f),
-	glm::vec2(0.0f,  1.0f),
+	glm::vec2(0.0f,  0.2f),
 	glm::vec2(0.0f,  0.0f),
-	glm::vec2(0.0f,  1.0f),
-	glm::vec2(1.0f,  1.0f),
-	glm::vec2(1.0f,  1.0f),
-	glm::vec2(0.0f,  1.0f),
-	glm::vec2(0.0f,  1.0f),
-	glm::vec2(0.0f,  0.0f),
-	glm::vec2(0.0f,  1.0f),
-	glm::vec2(0.0f,  1.0f),
-	glm::vec2(0.0f,  0.0f),
-	glm::vec2(1.0f,  1.0f),
-	glm::vec2(1.0f,  1.0f),
-	glm::vec2(1.0f,  1.0f),
-	glm::vec2(0.0f,  1.0f),
+	glm::vec2(0.5f,  0.2f),
+	glm::vec2(0.2f,  0.2f),
+	glm::vec2(0.2f,  0.0f),
+	// glm::vec2(0.0f,  1.0f),
+	// glm::vec2(1.0f,  1.0f),
+	// glm::vec2(1.0f,  1.0f),
+	// glm::vec2(0.0f,  1.0f),
+	// glm::vec2(0.0f,  1.0f),
+	// glm::vec2(0.0f,  0.0f),
+	// glm::vec2(0.0f,  1.0f),
+	// glm::vec2(0.0f,  1.0f),
+	// glm::vec2(0.0f,  0.0f),
+	// glm::vec2(1.0f,  1.0f),
+	// glm::vec2(1.0f,  1.0f),
+	// glm::vec2(1.0f,  1.0f),
+	// glm::vec2(0.0f,  1.0f),
 };
 
 const std::vector<glm::vec3> PYRAMID_POSITIONS =
@@ -75,32 +75,18 @@ const std::vector<glm::vec3> PYRAMID_POSITIONS =
 	glm::vec3(-1.0f, -1.0f,  1.0f),	//	Left	Bottom	Back	0
 	glm::vec3(-1.0f, -1.0f, -1.0f),	//	Left	Bottom	Front	1
 	glm::vec3( 0.0f,  1.0f,  0.0f),	//	Middle	Up		Middle	2
-	glm::vec3(-1.0f, -1.0f, -1.0f),	//	Left	Bottom	Front	1
-	glm::vec3( 1.0f, -1.0f, -1.0f),	//	Right	Bottom	Front	3
-	glm::vec3( 0.0f,  1.0f,  0.0f),	//	Middle	Up		Middle	2
-	glm::vec3(-1.0f, -1.0f,  1.0f),	//	Left	Bottom	Back	0
-	glm::vec3( 1.0f, -1.0f,  1.0f),	//	Right	Bottom	Back	4
-	glm::vec3( 0.0f,  1.0f,  0.0f),	//	Middle	Up		Middle	2
-	glm::vec3(-1.0f, -1.0f, -1.0f),	//	Left	Bottom	Front	1
-	glm::vec3( 1.0f, -1.0f, -1.0f),	//	Right	Bottom	Front	3
-	glm::vec3( 0.0f,  1.0f,  0.0f),	//	Middle	Up		Middle	2
-	glm::vec3(-1.0f, -1.0f, -1.0f),	//	Left	Bottom	Front	1
-	glm::vec3( 1.0f, -1.0f, -1.0f),	//	Right	Bottom	Front	3
-	glm::vec3( 1.0f, -1.0f,  1.0f),	//	Right	Bottom	Back	4
-	glm::vec3(-1.0f, -1.0f,  1.0f),	//	Left	Bottom	Back	0
-	glm::vec3( 1.0f, -1.0f,  1.0f),	//	Right	Bottom	Back	4
-	glm::vec3(-1.0f, -1.0f, -1.0f), //	Left	Bottom	Front	1
+	glm::vec3( 1.0f, -1.0f,  1.0f),	//	Right	Bottom	Back	3
+	glm::vec3( 1.0f, -1.0f, -1.0f),	//	Right	Bottom	Front	4
 };
 
 const std::vector<gmath::uintvec3> PYRAMID_INDICES =
 {
 	gmath::uintvec3(0, 1, 2),
-	gmath::uintvec3(1, 3, 2),
+	gmath::uintvec3(3, 4, 2),
+	gmath::uintvec3(1, 4, 2),
+	gmath::uintvec3(0, 3, 2),
 
-	gmath::uintvec3(0, 4, 2),
-	gmath::uintvec3(1, 3, 2),
-
-	gmath::uintvec3(1, 3, 4),
-	gmath::uintvec3(0, 4, 1),
+	gmath::uintvec3(0, 1, 3),
+	gmath::uintvec3(4, 1, 3),
 };
 #endif

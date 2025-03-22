@@ -65,6 +65,23 @@ std::set<std::string> Theatre::getMeshDataNames()
 	return mesh_data_names;
 }
 
+std::set<std::string> Theatre::getTextureNames()
+{
+	std::set<std::string> texture_names;
+
+	for(auto &device_pair : devices)
+	{
+		if(device_pair.second->getType() == graphx::classes::MATERIAL)
+		{
+			texture_names.insert(static_cast<Material *>(device_pair.second)->diffuse_texture_name);
+			texture_names.insert(static_cast<Material *>(device_pair.second)->specular_texture_name);
+		}
+	}
+
+	texture_names.insert(MISSING_TEXTURE);
+	return texture_names;
+}
+
 void Theatre::probeActorsForRenderCommands()
 {
 	for(auto &pair : objects)

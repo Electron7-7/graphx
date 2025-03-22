@@ -117,42 +117,6 @@ std::string T_LoadImageFile(std::string file_path)
 	return texture_name;
 }
 
-// WILL REPLACE M_GL_BufferTexture
-void T_GL_BufferTexture(std::string texture_name)
-{
-	if(!texture_storage.contains(texture_name))
-	{
-		PRINTERR("T_GL_BufferTexture(std::string texture_name) - No valid texture found with name \"" << texture_name << "\"! ")
-		return;
-	}
-
-	Texture &texture = texture_storage.at(texture_name);
-
-	if(texture.texture_id != 0)
-		return;
-
-	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
-
-	glGenTextures(1, &texture.texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture.texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load_from_memory(texture.texture_data, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
-
-	if(!t_data)
-		PRINTERR("Failed to load texture!");
-
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	stbi_image_free(t_data);
-}
-
 std::string M_GetOBJName(std::string file_as_string)
 {
 	std::string buffer = "";
@@ -297,15 +261,21 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 	return mesh_data;
 }
 
-void M_GL_BufferTexture(unsigned int &texture_id, unsigned char *texture_buffer)
+void T_BufferTexture(std::string texture_name)
 {
-	if(texture_id != 0)
+	if(!texture_storage.contains(texture_name))
+	{
+		PRINTERR("T_BufferTexture(std::string texture_name) - texture_name not found in texture_storage")
+		return;
+	}
+
+	if(glIsBuffer(texture_storage.at(texture_name).texture_id))
 		return;
 
 	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
 
-	glGenTextures(1, &texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glGenTextures(1, &texture_storage.at(texture_name).texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_storage.at(texture_name).texture_id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
@@ -313,7 +283,7 @@ void M_GL_BufferTexture(unsigned int &texture_id, unsigned char *texture_buffer)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load_from_memory(texture_buffer, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+	unsigned char *t_data = stbi_load_from_memory(texture_storage.at(texture_name).texture_data, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
 
 	if(!t_data)
 		PRINTERR("Failed to load texture!");
@@ -322,6 +292,36 @@ void M_GL_BufferTexture(unsigned int &texture_id, unsigned char *texture_buffer)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(t_data);
+}
+
+void R_GL_BufferTextures()
+{
+	std::set<std::string> used_texture_names = getCurrentTheatre()->getTextureNames();
+
+	for(auto &texture_pair : texture_storage)
+	{
+		texture_pair.second.is_in_use = graphx::identifiers::buffer_type::NOT_IN_USE;
+		if(used_texture_names.contains(texture_pair.first))
+			texture_pair.second.is_in_use = graphx::identifiers::buffer_type::IN_USE;
+	}
+
+	for(auto &texture_pair : texture_storage)
+	{
+		if(texture_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_CHECKED)
+		{
+			PRINTDEBUG("Uh... not checked got found for Texture \"" << texture_pair.first << "\"")
+			continue;
+		}
+
+		if(texture_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_IN_USE)
+		{
+			// if(texture_pair.second.texture_id != 0)
+				// glDeleteBuffers(1, &texture_pair.second.texture_id);
+			continue;
+		}
+
+		T_BufferTexture(texture_pair.first);
+	}
 }
 
 // Temporary
@@ -341,20 +341,20 @@ void R_GL_BufferMeshes()
 
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
-		mesh_data_pair.second.is_in_use = graphx::identifiers::mesh_data::NOT_IN_USE;
+		mesh_data_pair.second.is_in_use = graphx::identifiers::buffer_type::NOT_IN_USE;
 		if(used_mesh_data_names.contains(mesh_data_pair.first))
-			mesh_data_pair.second.is_in_use = graphx::identifiers::mesh_data::IN_USE;
+			mesh_data_pair.second.is_in_use = graphx::identifiers::buffer_type::IN_USE;
 	}
 
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
-		if(mesh_data_pair.second.is_in_use == graphx::identifiers::mesh_data::NOT_CHECKED)
+		if(mesh_data_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_CHECKED)
 		{
 			PRINTDEBUG("Uh... not checked got found for Mesh Data \"" << mesh_data_pair.first << "\"")
 			continue;
 		}
 
-		if(mesh_data_pair.second.is_in_use == graphx::identifiers::mesh_data::NOT_IN_USE)
+		if(mesh_data_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_IN_USE)
 		{
 			// Note: glIsBuffer will only work right if the unsigned int is a buffer name.
 			// Buffer names are created/assigned by doing one of two things:
@@ -488,7 +488,10 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform(which_light + "falloff", render_command.light_data->falloff);
 
 		if(render_command.renderDebugMesh())
+		{
+			T_BufferTexture(LIGHT_DEBUGGING);
 			R_BufferRenderCmd(RenderCmd(render_command, (render_command.light_data->color * render_command.light_data->strength)));
+		}
 
 		rendercmd_iterator = light_render_commands.erase(rendercmd_iterator);
 	}
@@ -553,15 +556,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 
-		// M_GL_BufferTexture(render_command.mesh_material.texture_diffuse, render_command.mesh_material.embedded_texture_diffuse);
-		// M_GL_BufferTexture(render_command.mesh_material.texture_specular, render_command.mesh_material.embedded_texture_specular);
-		// glBindTextureUnit(0, render_command.mesh_material.texture_diffuse);
-		// glBindTextureUnit(1, render_command.mesh_material.texture_specular);
-
-		T_GL_BufferTexture(render_command.mesh_material.diffuse_texture_name);
-		T_GL_BufferTexture(render_command.mesh_material.specular_texture_name);
-		// TODO:
-		// Replace the usage of std::map::get with an abstraction that safely returns an error Texture if the requested Texture doesn't exist
 		glBindTextureUnit(0, texture_storage.at(render_command.mesh_material.diffuse_texture_name).texture_id);
 		glBindTextureUnit(1, texture_storage.at(render_command.mesh_material.specular_texture_name).texture_id);
 
@@ -597,7 +591,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	// R_GL_RenderPrimitives();
 }
 
-void R_BufferMeshes()
+void R_BufferMeshesAndTextures()
 {
 	if(loading_new_main_theatre)
 		return;
@@ -606,6 +600,7 @@ void R_BufferMeshes()
 	{
 	case GRAPHX_OPENGL:
 		R_GL_BufferMeshes();
+		R_GL_BufferTextures();
 		break;
 	}
 
