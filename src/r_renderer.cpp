@@ -261,39 +261,6 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 	return mesh_data;
 }
 
-void T_BufferTexture(std::string texture_name)
-{
-	if(!texture_storage.contains(texture_name))
-	{
-		PRINTERR("T_BufferTexture(std::string texture_name) - texture_name not found in texture_storage")
-		return;
-	}
-
-	if(glIsBuffer(texture_storage.at(texture_name).texture_id))
-		return;
-
-	stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
-
-	glGenTextures(1, &texture_storage.at(texture_name).texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture_storage.at(texture_name).texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	int t_width, t_height, t_channels;
-	unsigned char *t_data = stbi_load_from_memory(texture_storage.at(texture_name).texture_data, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
-
-	if(!t_data)
-		PRINTERR("Failed to load texture!");
-
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	stbi_image_free(t_data);
-}
-
 void R_GL_BufferTextures()
 {
 	std::set<std::string> used_texture_names = getCurrentTheatre()->getTextureNames();
@@ -315,12 +282,34 @@ void R_GL_BufferTextures()
 
 		if(texture_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_IN_USE)
 		{
-			// if(texture_pair.second.texture_id != 0)
-				// glDeleteBuffers(1, &texture_pair.second.texture_id);
+			if(texture_pair.second.texture_id != 0)
+				glDeleteBuffers(1, &texture_pair.second.texture_id);
 			continue;
 		}
 
-		T_BufferTexture(texture_pair.first);
+		if(texture_pair.second.texture_id != 0)
+			return;
+
+		stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+
+		glGenTextures(1, &texture_pair.second.texture_id);
+		glBindTexture(GL_TEXTURE_2D, texture_pair.second.texture_id);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		int t_width, t_height, t_channels;
+		unsigned char *t_data = stbi_load_from_memory(texture_pair.second.texture_data, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+
+		if(!t_data)
+			PRINTERR("Failed to load texture!");
+
+		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(t_data);
 	}
 }
 
@@ -396,29 +385,25 @@ std::vector<PrimitiveRenderCmd> primitive_render_commands;
 /*void R_GL_RenderPrimitives()
 {
 	glBindVertexArray(VAOs[VAO_PRIMITIVES]);
-	glBindBuffer(GL_ARRAY_BUFFER, primitives_VBO);
-	unsigned int primitive_offset = 0;
-	for(auto rendercmd_iterator = primitive_render_commands.begin() ; rendercmd_iterator != primitive_render_commands.end() ; rendercmd_iterator++)
-	{
-		glBufferSubData(GL_ARRAY_BUFFER, primitive_offset, rendercmd_iterator.base()->numberOfVertices() * 11 * sizeof(float), rendercmd_iterator.base()->getVertices().data());
-		primitive_offset += rendercmd_iterator.base()->numberOfVertices() * 11 * sizeof(float);
-	}
-
-	glUseProgram(shaders[shader_index]->id);
+	glUseProgram(shaders[2]->id);
 
 	for(auto rendercmd_iterator = primitive_render_commands.begin() ; rendercmd_iterator != primitive_render_commands.end() ;)
 	{
 		PrimitiveRenderCmd *render_command = rendercmd_iterator.base();
-		std::vector<float> vertices = render_command->getVertices();
+		// std::vector<float> vertices = render_command->getVertices();
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
+		// unsigned int primitive_vbo;
+		// glGenBuffers(1, &primitive_vbo);
+		// glBindBuffer(GL_ARRAY_BUFFER, primitive_vbo);
+		// glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+		// glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+		// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+		// glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+		// glEnableVertexAttribArray(0);
+		// glEnableVertexAttribArray(1);
+		// glEnableVertexAttribArray(2);
+		// glEnableVertexAttribArray(3);
+		// glBufferData(GL_ARRAY_BUFFER, rendercmd_iterator.base()->numberOfVertices() * sizeof(float), rendercmd_iterator.base()->getVertices().data(), GL_STATIC_DRAW);
 
 		glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
 
@@ -438,7 +423,8 @@ std::vector<PrimitiveRenderCmd> primitive_render_commands;
 		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(glm::mat4(1.0f)))));
 
-		glDrawArrays(GL_LINES, render_command->array_offset, render_command->numberOfVertices());
+		// glDrawArrays(GL_LINES, 0, render_command->numberOfVertices());
+		// glDeleteBuffers(1, &primitive_vbo);
 
 		rendercmd_iterator = primitive_render_commands.erase(rendercmd_iterator);
 	}
@@ -489,7 +475,6 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 
 		if(render_command.renderDebugMesh())
 		{
-			T_BufferTexture(LIGHT_DEBUGGING);
 			R_BufferRenderCmd(RenderCmd(render_command, (render_command.light_data->color * render_command.light_data->strength)));
 		}
 

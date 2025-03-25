@@ -814,22 +814,17 @@ void LightTesterMover::callToStage(Theatre *parent_theatre)
 void LightTesterMover::takeABow()
 {}
 
-
-/*class Ramiel: public Actor
-{
-	glm::vec3 pivot_position = glm::vec3(0.0f);
-	float pivot_radius = 3.0f;
-	float pivot_speed = 1.0f;
-	float pivot_theta = 0.0f;
-
-	using Actor::Actor;
-
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-};*/
-
+//
+// Ramiel
+//
 void Ramiel::tick(int current_tick)
 {
+	if(movement_type == RAMIEL_APPROACH)
+	{
+		position_global += movement_speed * movement_direction_vector;
+		return;
+	}
+
 	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
 	position_global[1] = pivot_position[1];
 	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
@@ -843,7 +838,10 @@ void Ramiel::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
+	getSetting(movement_type, settings["MovementType"]);
 	getSetting(pivot_position, settings["PivotPosition"]);
 	getSetting(pivot_radius, settings["PivotRadius"]);
 	getSetting(pivot_speed, settings["PivotSpeed"]);
+	getSetting(movement_speed, settings["MovementSpeed"]);
+	getSetting(movement_direction_vector, settings["MovementDirection"]);
 }

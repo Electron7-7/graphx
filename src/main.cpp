@@ -71,7 +71,8 @@ int main()
 
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
-	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader});
+	GLShader primitive_shader(primitive_vertex_glsl, primitive_fragment_glsl);
+	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader, &primitive_shader});
 
 	R_InitializeRenderingAPI();
 

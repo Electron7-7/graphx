@@ -111,11 +111,6 @@ struct Material final : public Device
 	std::string diffuse_texture_name = MISSING_TEXTURE;
 	std::string specular_texture_name = MISSING_TEXTURE;
 
-	unsigned int texture_diffuse = 0;
-	unsigned int texture_specular = 0;
-	unsigned char* embedded_texture_diffuse = MISSING_TEXTURE_jpg;
-	unsigned char* embedded_texture_specular = FLAT_SPEC_jpg;
-
 	glm::vec3 color = glm::vec3(1.0f);
 	int specular_sharpness = 16;
 	float specular_strength = 1.0f;
@@ -124,7 +119,6 @@ struct Material final : public Device
 	Material();
 	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
-	// Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture = NO_TEXTURE_jpg, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
@@ -285,7 +279,6 @@ template<typename T> Device *createNewDevice() { return new T; }
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
 void        R_BufferMeshesAndTextures();
-void		T_BufferTexture(std::string texture_name);
 void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();
 void        R_Render(std::mutex &state_mutex, float interpolation_time);

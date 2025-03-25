@@ -230,7 +230,7 @@ uniform mat3 normal_matrix;
 
 void main()
 {
-	gl_Position = projection_matrix * view_matrix * model_matrix * vec4(_vertex_position, 1.0);
+	gl_Position = projection_matrix * view_matrix * model_matrix * vec4(_vertex_position, 1.0f);
 	texture_coordinate = _vertex_texture_coordinate;
 	fragment_position = vec3(model_matrix * vec4(_vertex_position, 1.0f)); // Transforming vertex position from local to global coordinates
 	normal = normal_matrix * _vertex_normal;
@@ -477,4 +477,19 @@ void main()
 	normal = normal_matrix * _vertex_normal;
 	vertex_colors = _vertex_colors;
 };
+)~";
+std::string primitive_fragment_glsl = R"~(
+#version 460 core
+
+)~";
+std::string primitive_vertex_glsl = R"~(
+#version 460 core
+
+uniform vec3 position;
+uniform mat4 model_matrix;
+
+void main()
+{
+	gl_Position = model_matrix * vec4(position, 1.0f);
+}
 )~";

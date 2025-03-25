@@ -79,6 +79,9 @@ std::set<std::string> Theatre::getTextureNames()
 	}
 
 	texture_names.insert(MISSING_TEXTURE);
+// #ifdef GRAPHX_DEBUG // I want light debug meshes to be visible even on the Production builds for now
+	texture_names.insert(LIGHT_DEBUGGING);
+// #endif
 	return texture_names;
 }
 

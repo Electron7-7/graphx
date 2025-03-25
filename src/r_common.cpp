@@ -223,19 +223,15 @@ Material::Material()
 }
 
 Material::Material(bool is_fullbright, glm::vec3 init_color)
-: embedded_texture_specular(NO_TEXTURE_jpg), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+: color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
 Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), embedded_texture_diffuse(MISSING_TEXTURE_jpg), embedded_texture_specular(NO_TEXTURE_jpg), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
-/*Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
-{}*/
-
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: embedded_texture_specular(FLAT_SPEC_jpg), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 void Material::loadSettings(graphx::gSettings new_settings)

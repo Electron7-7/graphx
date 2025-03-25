@@ -243,10 +243,17 @@ private:
 
 class Ramiel: public Actor
 {
+#define RAMIEL_CIRLE    0
+#define RAMIEL_APPROACH 1
+	int movement_type = 0;
+
 	glm::vec3 pivot_position = glm::vec3(0.0f);
 	float pivot_radius = 3.0f;
 	float pivot_speed = 1.0f;
 	float pivot_theta = 0.0f;
+
+	float movement_speed = 1.0f;
+	glm::vec3 movement_direction_vector = glm::vec3(0.0f, 0.0f, 1.0f);
 
 	using Actor::Actor;
 
