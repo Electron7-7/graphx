@@ -1885,3 +1885,6 @@ Kms.
 Yup, it works now.
 
 Seeing some weird bugs; could be because this laptop is so fucking slow that it's not reading the .gt files fast enough or some shit. Idk.
+
+[03/25/25]
+Big fucking issue: my redirection in the GLFW key callback function to Theatre::delegateKeyInput is being called by ImGui!! Fix that!!
