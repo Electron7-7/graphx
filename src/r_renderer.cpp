@@ -348,11 +348,6 @@ void R_GL_BufferMeshes()
 		index_buffer_size += mesh_data_pair.second.indices_size();
 	}
 
-	for(unsigned int index : all_indices)
-	{
-		std::cout << std::to_string(index) << std::endl;
-	}
-
 	glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, all_vertices.data(), GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, all_indices.data(), GL_STATIC_DRAW);
 
