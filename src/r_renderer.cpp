@@ -313,8 +313,11 @@ void R_GL_BufferMeshes()
 	long index_buffer_size_bytes = 0;
 	long vertex_buffer_offset = 0; // The start of the VBO's empty store, in bytes
 	long index_buffer_offset = 0;  // The start of the IBO's empty store, in bytes
-	long base_vertex = 0;
-	long debug_index_offset = 0;
+	unsigned int number_of_vertices = 0;
+	unsigned int number_of_indices = 0;
+
+	std::vector<float> all_vertices;
+	std::vector<unsigned int> all_indices;
 
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
@@ -344,17 +347,31 @@ void R_GL_BufferMeshes()
 		if(!used_mesh_data_names.contains(mesh_data_pair.first))
 			continue;
 
-		glBufferSubData(GL_ARRAY_BUFFER, vertex_buffer_offset, mesh_data_pair.second.vertices_size(), mesh_data_pair.second.vertices().data());
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_offset, mesh_data_pair.second.indices_size(), mesh_data_pair.second.indices().data());
+		// glBufferSubData(GL_ARRAY_BUFFER, vertex_buffer_offset, mesh_data_pair.second.vertices_size(), mesh_data_pair.second.vertices().data());
+		// glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_offset, mesh_data_pair.second.indices_size(), mesh_data_pair.second.indices().data());
 
-		mesh_data_pair.second.base_vertex = base_vertex;
-		mesh_data_pair.second.debug_offset = debug_index_offset;
+		std::vector<float> vertices = mesh_data_pair.second.vertices();
+		std::vector<unsigned int> indices = mesh_data_pair.second.indices();
 
-		debug_index_offset += mesh_data_pair.second.indices_size();
-		base_vertex += mesh_data_pair.second.vertices_count();
+		all_vertices.insert(all_vertices.end(), vertices.begin(), vertices.end());
+		all_indices.insert(all_indices.end(), indices.begin(), indices.end());
+
+		mesh_data_pair.second.base_vertex = number_of_vertices;
+		mesh_data_pair.second.base_index = number_of_indices;
+
+		number_of_vertices += mesh_data_pair.second.vertices_count();
+		number_of_indices += mesh_data_pair.second.indices_count();
 		vertex_buffer_offset += mesh_data_pair.second.vertices_size();
 		index_buffer_offset += mesh_data_pair.second.indices_size();
 	}
+
+	for(unsigned int index : all_indices)
+	{
+		std::cout << std::to_string(index) << std::endl;
+	}
+
+	glBufferData(GL_ARRAY_BUFFER, vertex_buffer_offset, all_vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_offset, all_indices.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -396,7 +413,7 @@ void OLD_R_GL_BufferMeshes()
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
 
-		if(mesh_data_pair.second.hasValidIndices())
+		// if(mesh_data_pair.second.hasValidIndices())
 		{
 			glGenBuffers(1, &mesh_data_pair.second.IBO);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data_pair.second.IBO);
@@ -540,7 +557,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("mat_fullbright", render_command.mesh_material.mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
-		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, nullptr, mesh_data.base_vertex);
+		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 
 		// if(mesh_data.hasValidIndices())
 		// {

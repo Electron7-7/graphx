@@ -128,8 +128,8 @@ struct Material final : public Device
 struct MeshData
 {
 	// Variables for new buffer format
-	long base_vertex = -1;
-	long debug_offset = 0;
+	unsigned int base_vertex = -1;
+	unsigned int base_index = -1;
 	// long indices_count = 0; // Use the function
 	std::string debug_name = "";
 
@@ -163,9 +163,10 @@ struct MeshData
 	void addIndex(gmath::uintvec3 indices);
 	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
 	void fixOBJData();
-	bool hasValidIndices();
-	std::vector<float> vertices();
-	std::vector<unsigned int> indices();
+	void fillVertices();
+	void fillIndices();
+	const std::vector<float> vertices();
+	const std::vector<unsigned int> indices();
 	size_t vertices_count();
 	size_t vertices_size();
 	size_t indices_count();

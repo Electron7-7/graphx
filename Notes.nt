@@ -1916,3 +1916,11 @@ bool MeshData::hasValidIndices()
 :::
 
 Because vertex_indices is a vector of gmath::uintvec3, not a vector of unsigned ints.
+
+At work; going to try and fix some problems with the new VBO implementation.
+
+The mesh indices are getting buffered correctly; I think the problem is the offset? Yep, I'm pretty sure it's because I'm not properly setting one or more arguments in glDrawElementsBaseVertex.
+
+I don't know why it's not working; it should. It might be the way I'm buffering the data. I'll try using glBufferData instead of glBufferSubData to test this.
+
+Turns out... I HAD THE BYTE OFFSET IN glBufferSubData WRONG BECAUSE YEAH glBufferData WORKED LIKE A FUCKING CHARM!!!

@@ -248,6 +248,201 @@ void Material::loadSettings(graphx::gSettings new_settings)
 	getSetting(mat_fullbright, settings["mat_fullbright"]);
 }
 
+
+//
+// MeshData
+//
+MeshData::MeshData()
+{}
+
+MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals, std::vector<glm::vec2> init_uvs, std::vector<glm::vec3> init_colors, std::vector<gmath::uintvec3> init_indices)
+{
+	// These for loops make sure that every vertex has normal, uv, and color data
+	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
+		init_normals.insert(init_normals.end(), glm::vec3(0.0f, 0.0f, 0.0f));
+
+	for(int i = init_uvs.size() ; i < init_positions.size() ; i++)
+		init_uvs.insert(init_uvs.end(), glm::vec2(0.0f, 0.0f));
+
+	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
+		init_colors.insert(init_colors.end(), glm::vec3(1.0f, 1.0f, 1.0f));
+
+	VAO_index = init_vao_index;
+	vertex_positions = init_positions;
+	vertex_normals = init_normals;
+	vertex_uvs = init_uvs;
+	vertex_colors = init_colors;
+
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
+	else
+		vertex_indices = init_indices;
+}
+
+MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors, std::vector<unsigned int> init_indices)
+{
+	// These for loops make sure that every vertex has normal, uv, and color data
+	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
+		init_normals.insert(init_normals.end(), 0.0f);
+
+	for(int i = init_uvs.size() ; i < (2 * init_positions.size() / 3) ; i++)
+		init_uvs.insert(init_uvs.end(), 0.0f);
+
+	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
+		init_colors.insert(init_colors.end(), 1.0f);
+
+	if(!init_indices.empty())
+		for(int i = init_indices.size() ; i < init_positions.size() ; i++)
+			init_colors.insert(init_colors.end(), 1.0f);
+
+	VAO_index = init_vao_index;
+	for(int it = 0,uv_it = 0 ; it < init_positions.size() ; it += 3,uv_it += 2)
+	{
+		vertex_positions.insert(vertex_positions.end(), glm::vec3(init_positions[it], init_positions[it + 1], init_positions[it + 2]));
+		vertex_normals.insert(vertex_normals.end(), glm::vec3(init_normals[it], init_normals[it + 1], init_normals[it + 2]));
+		vertex_uvs.insert(vertex_uvs.end(), glm::vec2(init_uvs[uv_it], init_uvs[uv_it + 1]));
+		vertex_colors.insert(vertex_colors.end(), glm::vec3(init_colors[it], init_colors[it + 1], init_colors[it + 2]));
+		if(!init_indices.empty())
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
+	}
+
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
+}
+
+const std::vector<float> MeshData::vertices()
+{
+	std::vector<float> vertices;
+	for(int i = 0 ; i < vertex_positions.size() ; i++)
+	{
+		vertices.insert(vertices.end(),
+		{
+			vertex_positions.at(i).x,
+			vertex_positions.at(i).y,
+			vertex_positions.at(i).z,
+			vertex_normals.at(i).x,
+			vertex_normals.at(i).y,
+			vertex_normals.at(i).z,
+			vertex_uvs.at(i).x,
+			vertex_uvs.at(i).y,
+			vertex_colors.at(i).x,
+			vertex_colors.at(i).y,
+			vertex_colors.at(i).z
+		});
+	}
+	return vertices;
+}
+
+const std::vector<unsigned int> MeshData::indices()
+{
+	std::vector<unsigned int> indices;
+	for(int i = 0 ; i < vertex_indices.size() ; i++)
+	{
+		indices.insert(indices.end(),
+		{
+			vertex_indices.at(i).x(),
+			vertex_indices.at(i).y(),
+			vertex_indices.at(i).z()
+		});
+	}
+	return indices;
+}
+
+size_t MeshData::vertices_count()
+{
+	return (vertex_positions.size());
+}
+
+size_t MeshData::vertices_size()
+{
+	return
+	(
+		(3 * sizeof(float) * vertex_positions.size()) +
+		(3 * sizeof(float) * vertex_normals.size())   +
+		(2 * sizeof(float) * vertex_uvs.size())       +
+		(3 * sizeof(float) * vertex_colors.size())
+	);
+}
+
+size_t MeshData::indices_count()
+{
+	return (vertex_indices.size() * 3);
+}
+
+size_t MeshData::indices_size()
+{
+	return (3 * sizeof(unsigned int) * vertex_indices.size());
+}
+
+void MeshData::addVertex(glm::vec3 position, glm::vec3 normal, glm::vec2 uv, glm::vec3 color)
+{
+	vertex_positions.insert(vertex_positions.end(), position);
+	vertex_normals.insert(vertex_normals.end(), normal);
+	vertex_uvs.insert(vertex_uvs.end(), uv);
+	vertex_colors.insert(vertex_colors.end(), color);
+}
+
+void MeshData::addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z)
+{
+	vertex_positions.insert(vertex_positions.end(), glm::vec3(position_x, position_y, position_z));
+	vertex_normals.insert(vertex_normals.end(), glm::vec3(normal_x, normal_y, normal_z));
+	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(uv_x, uv_y));
+	vertex_colors.insert(vertex_colors.end(), glm::vec3(color_x, color_y, color_z));
+}
+
+void MeshData::addVertex(std::vector<float> vertex)
+{
+	vertex_positions.insert(vertex_positions.end(), glm::vec3(vertex[0], vertex[1], vertex[2]));
+	vertex_normals.insert(vertex_normals.end(), glm::vec3(vertex[3], vertex[4], vertex[5]));
+	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(vertex[6], vertex[7]));
+	vertex_colors.insert(vertex_colors.end(), glm::vec3(vertex[8], vertex[9], vertex[10]));
+}
+
+void MeshData::addIndex(gmath::uintvec3 indices)
+{
+	vertex_indices.insert(vertex_indices.end(), indices);
+}
+
+void MeshData::addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3)
+{
+	vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(index_1, index_2, index_3));
+}
+
+void MeshData::fixOBJData()
+{
+	float max_coordinate = 0.0f;
+	float min_coordinate = 0.0f;
+
+	for(glm::vec3 vertex : vertex_positions)
+	{
+		if(std::abs(vertex.x) > 1 || std::abs(vertex.y) > 1 || std::abs(vertex.z) > 1)
+		{
+			float biggest_pos = glm::compMax(vertex);
+			float smallest_pos = glm::compMin(vertex);
+			if(biggest_pos > max_coordinate)
+				max_coordinate = biggest_pos;
+			if(smallest_pos < min_coordinate)
+				min_coordinate = smallest_pos;
+		}
+	}
+
+	for(glm::vec3 vertex : vertex_positions)
+	{
+		for(float component : vertex)
+		{
+			component = (component - min_coordinate) / (max_coordinate - min_coordinate);
+		}
+	}
+
+	vertex_indices.clear();
+	for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+	{
+		vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i + 1, i + 2));
+	}
+}
+
 //
 // Mesh
 //
@@ -397,210 +592,4 @@ unsigned int PrimitiveRenderCmd::numberOfVertices()
 	default:
 		return 0;
 	}
-}
-
-//
-// MeshData
-//
-MeshData::MeshData()
-{}
-
-MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals, std::vector<glm::vec2> init_uvs, std::vector<glm::vec3> init_colors, std::vector<gmath::uintvec3> init_indices)
-{
-	// These for loops make sure that every vertex has normal, uv, and color data
-	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
-		init_normals.insert(init_normals.end(), glm::vec3(0.0f, 0.0f, 0.0f));
-
-	for(int i = init_uvs.size() ; i < init_positions.size() ; i++)
-		init_uvs.insert(init_uvs.end(), glm::vec2(0.0f, 0.0f));
-
-	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
-		init_colors.insert(init_colors.end(), glm::vec3(1.0f, 1.0f, 1.0f));
-
-	VAO_index = init_vao_index;
-	vertex_positions = init_positions;
-	vertex_normals = init_normals;
-	vertex_uvs = init_uvs;
-	vertex_colors = init_colors;
-
-	if(init_indices.empty())
-		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
-			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
-	else
-		vertex_indices = init_indices;
-}
-
-MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors, std::vector<unsigned int> init_indices)
-{
-	// These for loops make sure that every vertex has normal, uv, and color data
-	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
-		init_normals.insert(init_normals.end(), 0.0f);
-
-	for(int i = init_uvs.size() ; i < (2 * init_positions.size() / 3) ; i++)
-		init_uvs.insert(init_uvs.end(), 0.0f);
-
-	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
-		init_colors.insert(init_colors.end(), 1.0f);
-
-	if(!init_indices.empty())
-		for(int i = init_indices.size() ; i < init_positions.size() ; i++)
-			init_colors.insert(init_colors.end(), 1.0f);
-
-	VAO_index = init_vao_index;
-	for(int it = 0,uv_it = 0 ; it < init_positions.size() ; it += 3,uv_it += 2)
-	{
-		vertex_positions.insert(vertex_positions.end(), glm::vec3(init_positions[it], init_positions[it + 1], init_positions[it + 2]));
-		vertex_normals.insert(vertex_normals.end(), glm::vec3(init_normals[it], init_normals[it + 1], init_normals[it + 2]));
-		vertex_uvs.insert(vertex_uvs.end(), glm::vec2(init_uvs[uv_it], init_uvs[uv_it + 1]));
-		vertex_colors.insert(vertex_colors.end(), glm::vec3(init_colors[it], init_colors[it + 1], init_colors[it + 2]));
-		if(!init_indices.empty())
-			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
-	}
-
-	if(init_indices.empty())
-		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
-			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
-}
-
-std::vector<float> MeshData::vertices()
-{
-	std::vector<float> vertices;
-	for(int i = 0 ; i < vertex_positions.size() ; i++)
-	{
-		vertices.insert(vertices.end(),
-		{
-			vertex_positions.at(i).x,
-			vertex_positions.at(i).y,
-			vertex_positions.at(i).z,
-			vertex_normals.at(i).x,
-			vertex_normals.at(i).y,
-			vertex_normals.at(i).z,
-			vertex_uvs.at(i).x,
-			vertex_uvs.at(i).y,
-			vertex_colors.at(i).x,
-			vertex_colors.at(i).y,
-			vertex_colors.at(i).z
-		});
-	}
-	return vertices;
-}
-
-std::vector<unsigned int> MeshData::indices()
-{
-	// All indices in vertex_indices must be grouped in pairs of 3 to be valid
-	if(!hasValidIndices())
-	{
-		PRINTDEBUG("MeshData::indices() called, but vertex_indices is either empty or not divisible by 3! Returning an empty std::vector<unsigned int>")
-		return std::vector<unsigned int>{};
-	}
-
-	std::vector<unsigned int> indices;
-	for(int i = 0 ; i < vertex_indices.size() ; i++)
-	{
-		indices.insert(indices.end(),
-		{
-			vertex_indices.at(i).x(),
-			vertex_indices.at(i).y(),
-			vertex_indices.at(i).z()
-		});
-	}
-	return indices;
-}
-
-size_t MeshData::vertices_count()
-{
-	return (vertex_positions.size());
-}
-
-size_t MeshData::vertices_size()
-{
-	return
-	(
-		(3 * sizeof(float) * vertex_positions.size()) +
-		(3 * sizeof(float) * vertex_normals.size())   +
-		(2 * sizeof(float) * vertex_uvs.size())       +
-		(3 * sizeof(float) * vertex_colors.size())
-	);
-}
-
-size_t MeshData::indices_count()
-{
-	return (vertex_indices.size() * 3);
-}
-
-size_t MeshData::indices_size()
-{
-	return (3 * sizeof(unsigned int) * vertex_indices.size());
-}
-
-void MeshData::addVertex(glm::vec3 position, glm::vec3 normal, glm::vec2 uv, glm::vec3 color)
-{
-	vertex_positions.insert(vertex_positions.end(), position);
-	vertex_normals.insert(vertex_normals.end(), normal);
-	vertex_uvs.insert(vertex_uvs.end(), uv);
-	vertex_colors.insert(vertex_colors.end(), color);
-}
-
-void MeshData::addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z)
-{
-	vertex_positions.insert(vertex_positions.end(), glm::vec3(position_x, position_y, position_z));
-	vertex_normals.insert(vertex_normals.end(), glm::vec3(normal_x, normal_y, normal_z));
-	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(uv_x, uv_y));
-	vertex_colors.insert(vertex_colors.end(), glm::vec3(color_x, color_y, color_z));
-}
-
-void MeshData::addVertex(std::vector<float> vertex)
-{
-	vertex_positions.insert(vertex_positions.end(), glm::vec3(vertex[0], vertex[1], vertex[2]));
-	vertex_normals.insert(vertex_normals.end(), glm::vec3(vertex[3], vertex[4], vertex[5]));
-	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(vertex[6], vertex[7]));
-	vertex_colors.insert(vertex_colors.end(), glm::vec3(vertex[8], vertex[9], vertex[10]));
-}
-
-void MeshData::addIndex(gmath::uintvec3 indices)
-{
-	vertex_indices.insert(vertex_indices.end(), indices);
-}
-
-void MeshData::addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3)
-{
-	vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(index_1, index_2, index_3));
-}
-
-void MeshData::fixOBJData()
-{
-	float max_coordinate = 0.0f;
-	float min_coordinate = 0.0f;
-
-	for(glm::vec3 vertex : vertex_positions)
-	{
-		if(std::abs(vertex.x) > 1 || std::abs(vertex.y) > 1 || std::abs(vertex.z) > 1)
-		{
-			float biggest_pos = glm::compMax(vertex);
-			float smallest_pos = glm::compMin(vertex);
-			if(biggest_pos > max_coordinate)
-				max_coordinate = biggest_pos;
-			if(smallest_pos < min_coordinate)
-				min_coordinate = smallest_pos;
-		}
-	}
-
-	for(glm::vec3 vertex : vertex_positions)
-	{
-		for(float component : vertex)
-		{
-			component = (component - min_coordinate) / (max_coordinate - min_coordinate);
-		}
-	}
-
-	vertex_indices.clear();
-	for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
-	{
-		vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i + 1, i + 2));
-	}
-}
-
-bool MeshData::hasValidIndices()
-{
-	return (!vertex_indices.empty());
 }
