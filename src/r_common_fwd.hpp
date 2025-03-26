@@ -66,6 +66,5 @@ void        R_InitializeRenderingAPI();
 std::string T_LoadImageFile(std::string file_path);
 void        M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
-std::string M_GetOBJName(std::string file_as_string);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);
 #endif

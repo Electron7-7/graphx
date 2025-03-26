@@ -1888,3 +1888,5 @@ Seeing some weird bugs; could be because this laptop is so fucking slow that it'
 
 [03/25/25]
 Big fucking issue: my redirection in the GLFW key callback function to Theatre::delegateKeyInput is being called by ImGui!! Fix that!!
+
+Weird bug: Ramiel's mesh gets fucked up when loading the first Theatre twice. Like, it's fine up until the very first Theatre is loaded again...

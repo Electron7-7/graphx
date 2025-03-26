@@ -484,12 +484,12 @@ std::string primitive_fragment_glsl = R"~(
 )~";
 std::string primitive_vertex_glsl = R"~(
 #version 460 core
+uniform (layout = 0) in vec3 _vertex_position;
 
-uniform vec3 position;
 uniform mat4 model_matrix;
 
 void main()
 {
-	gl_Position = model_matrix * vec4(position, 1.0f);
+	gl_Position = model_matrix * vec4(_vertex_position, 1.0f);
 }
 )~";

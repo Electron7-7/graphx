@@ -2,8 +2,6 @@
 #define GRAPHX_ACTORS
 #include "g_common.hpp"
 #include "g_jolt.hpp"
-#include "r_common.hpp"
-#include "t_settings.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
@@ -241,10 +239,12 @@ private:
 	int last_direction[2] = {0, 0};
 };
 
-class Ramiel: public Actor
-{
 #define RAMIEL_CIRLE    0
 #define RAMIEL_APPROACH 1
+
+class Ramiel: public Actor
+{
+public:
 	int movement_type = 0;
 
 	glm::vec3 pivot_position = glm::vec3(0.0f);
@@ -255,7 +255,7 @@ class Ramiel: public Actor
 	float movement_speed = 1.0f;
 	glm::vec3 movement_direction_vector = glm::vec3(0.0f, 0.0f, 1.0f);
 
-	using Actor::Actor;
+	Ramiel();
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;

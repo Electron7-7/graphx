@@ -255,7 +255,6 @@ Mesh::Mesh()
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
-	mesh_data_name = M_GetOBJName(ERROR_obj);
 }
 
 Mesh::Mesh(Material *new_material)
@@ -263,7 +262,6 @@ Mesh::Mesh(Material *new_material)
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
 	material = new_material;
-	mesh_data_name = M_GetOBJName(ERROR_obj);
 }
 
 void Mesh::prepForDestruction()

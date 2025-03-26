@@ -94,7 +94,7 @@ struct Environment final : public Device // Will be extended
 struct Texture final : public Device
 {
 public:
-	int is_in_use = graphx::identifiers::buffer_type::NOT_CHECKED;
+	bool is_in_use = false;
 	unsigned int texture_id = 0;
 	unsigned char *texture_data = MISSING_TEXTURE_jpg;
 
@@ -126,15 +126,14 @@ struct Material final : public Device
 
 struct Mesh : public Device
 {
-	std::string name = "Untitled Mesh";
-	// Material *material = new Material();
+	// std::string name = "Untitled Mesh";
 	Material *material = new Material();
 
 	unsigned int VBO = 0;
 	unsigned int IBO = 0;
 	bool is_buffered = false;
 	glm::vec3 mesh_scale = glm::vec3(1.0f);
-	std::string mesh_data_name = "";
+	std::string mesh_data_name = ERROR_MODEL;
 
 	Mesh();
 	Mesh(Material *new_material);
@@ -170,7 +169,7 @@ struct RenderCmd
 {
 public:
 	bool is_light_debug_mesh = false;
-	std::string mesh_data_name = M_GetOBJName(ERROR_obj);
+	std::string mesh_data_name = ERROR_MODEL;
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
 	Material mesh_material;
@@ -210,12 +209,10 @@ struct PrimitiveRenderCmd
 
 struct MeshData
 {
-	int is_in_use = graphx::identifiers::buffer_type::NOT_CHECKED;
+	bool is_in_use = false;
 	int VAO_index = VAO_DEFAULT;
 	unsigned int VBO;
 	unsigned int IBO;
-
-	std::string name = "";
 
 	std::vector<glm::vec3> vertex_positions;
 	std::vector<glm::vec3> vertex_normals;
@@ -291,6 +288,5 @@ void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
 void        R_InitializeRenderingAPI();
 std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
-std::string M_GetOBJName(std::string file_as_string);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);
 #endif

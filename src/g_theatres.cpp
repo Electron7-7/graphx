@@ -61,7 +61,7 @@ std::set<std::string> Theatre::getMeshDataNames()
 		if(device_pair.second->getType() == graphx::classes::MESH)
 			mesh_data_names.insert(static_cast<Mesh *>(device_pair.second)->mesh_data_name);
 
-	mesh_data_names.insert(M_GetOBJName(ERROR_obj));
+	mesh_data_names.insert(ERROR_MODEL);
 	return mesh_data_names;
 }
 
@@ -137,7 +137,7 @@ void Theatre::raiseCurtains()
 {
 	bool has_directional_light = false;
 
-	PRINTDEBUG("Raising Curtains for \"" << name << "\"")
+	// PRINTDEBUG("Raising Curtains for \"" << name << "\"")
 
 	for(auto &pair : devices)
 	{
@@ -171,7 +171,7 @@ void Theatre::raiseCurtains()
 
 void Theatre::dropCurtains()
 {
-	PRINTDEBUG("Dropping Curtains for \"" << name << "\"")
+	// PRINTDEBUG("Dropping Curtains for \"" << name << "\"")
 
 	for(auto &pair : devices)
 		pair.second->prepForDestruction();

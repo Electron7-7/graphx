@@ -323,5 +323,128 @@ LightTesterMover (test_light_2)
 	PivotPosition (8.4, 1.8, -3.0)
 	PivotRadius (2.0)
 	PivotSpeed (1.2)
+})~"}},{2, std::string{R"~(@RamielTheatre
+LightDirectional (Sun)
+{}
+LightFlashlight (Flashlight)
+{}
+GraphXPlayer (player)
+{
+	Position (0.0, 1.0, 170.0)
+	MouseSensitivity (0.1)
+}
+Material (Floor_Material)
+{
+	// Testing comments here
+	DiffuseTexture [DOOM_TEXTURE_DIFF]
+	SpecularTexture [DOOM_TEXTURE_SPEC]
+	SpecularStrength (0.4)
+	SpecularSharpness (8)
+}
+Material (Second_Material)
+{
+	DiffuseTexture <Floor_Material>
+	SpecularTexture <Floor_Material>
+	SpecularStrength (0.8)
+	SpecularSharpness (128)
+}
+Mesh (Floor_Mesh)
+{
+	MeshData [GRAPHX_CUBE]
+}
+StaticBodyActor (Floor)
+{
+	Mesh:Material <Floor_Mesh>:<Floor_Material>
+	Scale (200.0, 1.0, 200.0)
+	Position (0.0, -1.0, 0.0)
+}
+Mesh (TestMesh)
+{
+	// Testing external references.
+	// Both absolute and relative paths are accepted.
+	// Absolute paths are used as-is, but relative paths are made relative to the program's location, not the user's
+	// MeshData "../src/models/purely_for_testing.obj"
+	// MeshData "theatres/test.obj"
+	// MeshData "theatres/ramiel.obj"
+	MeshData [Ramiel]
+}
+Light (fix_light)
+{
+	Position (0.0, 10.0, -4.0)
+	Color (1.0, 1.0, 1.0)
+	Strength (1.0)
+	Range (200.0)
+	Intensity (0.2)
+}
+Light (fix_light_2)
+{
+	Position (0.0, 50.0, 50.0)
+	Color (1.0, 1.0, 1.0)
+	Strength (1.0)
+	Range (300.0)
+	Intensity (0.2)
+}
+Light (fix_light_3)
+{
+	Position (-10.0, 20.0, -20.0)
+	Color (1.0, 1.0, 1.0)
+	Strength (1.0)
+	Range (200.0)
+	Intensity (0.2)
+}
+Light (fix_light_4)
+{
+	Position (20.0, 25.0, 80.0)
+	Color (1.0, 1.0, 1.0)
+	Strength (1.0)
+	Range (200.0)
+	Intensity (0.2)
+}
+Material (Ramiel_Mat)
+{
+	DiffuseTexture [NO_TEXTURE]	
+	SpecularTexture [FLAT_SPEC]
+	SpecularStrength (0.9)
+	SpecularSharpness (256)
+	// Color (0.6, 0.9, 0.8)
+}
+Ramiel (Ramiel)
+{
+	Mesh:Material <TestMesh>:<Ramiel_Mat>
+	Scale (30.0, 30.0, 30.0)
+	MovementType (1)
+	MovementSpeed (0.1)
+	Position (0.0, 100.0, -120.0)
+	Rotation (0.0, 0.0, 0.0)
+	PivotPosition (0.0, 90.0, -20.0)
+	PivotRadius   (40.2)
+	PivotSpeed    (0.2)
+}
+Mesh (Cube_Mesh)
+{
+	MeshData [GRAPHX_CUBE]
+}
+RigidBodyActor (FallOnMe)
+{
+	Mesh <Cube_Mesh>
+	Position (0.0, 1.5, -4.0)
+	Scale (3.4, 0.3, 7.8)
+}
+RigidBodyActor (FallOnMe2)
+{
+	Mesh <Cube_Mesh>
+	Position (0.0, 3.0, -4.0)
+	Scale (5.1, 0.3, 3.2)
+}
+RigidBodyActor (FallOnMe3)
+{
+	Mesh <Cube_Mesh>
+	Position (0.0, 5.0, -5.0)
+	Scale (1.1, 3.3, 0.7)
+}
+Actor (fake_actor)
+{
+	Position (0.0, -100.0, 0.0)
+	Scale (20.0, 10.0, 3.0)
 })~"}}
 };

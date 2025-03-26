@@ -249,7 +249,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
 
-	// IMGUI IS CALLING THIS FUNCTION AND THAT MEANS ITS ALSO POTENTIALLY CALLING THIS/OTHER CALLBACK FUNCTIONS!!
+	// IMGUI IS CALLING THIS AND PROBABLY OTHER CALLBACK FUNCTIONS SO MAKE SURE NO SHENANIGANS HAPPEN (like, make sure ImGui doesn't get to this line)
 	getCurrentTheatre()->delegateKeyInput(window, key, scancode, action, mods);
 
 	if(key == GLFW_KEY_1 && action == GLFW_PRESS)

@@ -32,13 +32,6 @@ namespace graphx
 			static constexpr int TRIANGLE = 1;
 			static constexpr int TEXT     = -1; // Text not supported yet!
 		};
-
-		namespace buffer_type
-		{
-			static constexpr int IN_USE      =  1;
-			static constexpr int NOT_IN_USE  = -1;
-			static constexpr int NOT_CHECKED =  0;
-		};
 	};
 
 	namespace classes

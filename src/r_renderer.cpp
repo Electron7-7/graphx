@@ -35,9 +35,10 @@ std::map<std::string, MeshData> mesh_data_storage =
 	{GRAPHX_CUBE, MeshData(VAO_DEFAULT, CUBE_POSITIONS, CUBE_NORMALS, CUBE_UVS, CUBE_COLORS, CUBE_INDICES)},
 	{GRAPHX_PYRAMID, MeshData(VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_NORMALS, PYRAMID_UVS, PYRAMID_COLORS, PYRAMID_INDICES)},
 	{GRAPHX_QUAD, MeshData(VAO_DEFAULT, QUAD_POSITIONS, QUAD_NORMALS, QUAD_UVS, QUAD_COLORS, QUAD_INDICES)},
-	{M_GetOBJName(ERROR_obj), M_LoadOBJ(ERROR_obj)},
-	{M_GetOBJName(suzanne_obj), M_LoadOBJ(suzanne_obj)},
-	{M_GetOBJName(purely_for_testing_obj), M_LoadOBJ(purely_for_testing_obj)},
+	{ERROR_MODEL, M_LoadOBJ(ERROR_obj)},
+	{suzanne_MODEL, M_LoadOBJ(suzanne_obj)},
+	{ramiel_MODEL, M_LoadOBJ(ramiel_obj)},
+	{purely_for_testing_MODEL, M_LoadOBJ(purely_for_testing_obj)},
 };
 
 std::map<std::string, Texture> texture_storage =
@@ -117,23 +118,12 @@ std::string T_LoadImageFile(std::string file_path)
 	return texture_name;
 }
 
-std::string M_GetOBJName(std::string file_as_string)
-{
-	std::string buffer = "";
-	unsigned long i = file_as_string.find("\no ") + 3;
-		while(file_as_string[i] != '\n')
-			buffer += file_as_string[i++];
-	return buffer;
-}
-
 std::string M_LoadModelFile(std::string file_path, std::string file_extension)
 {
-	std::string mesh_data_name = M_GetOBJName(ERROR_obj);
-
 	if(valid_extensions.find(file_extension) == std::string::npos)
 	{
 		PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
-		return mesh_data_name;
+		return ERROR_MODEL;
 	}
 
 	// Last minute realization that I had to move this out of the header file "sanity.hpp"
@@ -153,20 +143,24 @@ std::string M_LoadModelFile(std::string file_path, std::string file_extension)
 	if(!model_file.is_open())
 	{
 		PRINTERR("M_LoadModelFile called but the file \"" << (binary_path + file_path) << "\" could not be opened/found! An error mesh will be returned!")
-		return mesh_data_name;
+		return ERROR_MODEL;
 	}
 
 	model_file.close();
 
 	if(!file_extension.compare("obj"))
 	{
-		mesh_data_name = M_GetOBJName(file_string_data.str());
+		std::string mesh_data_name = "";
+		unsigned long i = file_string_data.str().find("\no ") + 3;
+		while(file_string_data.str()[i] != '\n')
+			mesh_data_name += file_string_data.str()[i++];
 		if(!mesh_data_name.empty() && !mesh_data_storage.contains(mesh_data_name))
 			mesh_data_storage[mesh_data_name] = M_LoadOBJ(file_string_data.str());
+		return mesh_data_name;
 	}
 
 	PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
-	return mesh_data_name;
+	return ERROR_MODEL;
 }
 
 MeshData M_LoadOBJ(std::string embedded_obj_file)
@@ -267,20 +261,15 @@ void R_GL_BufferTextures()
 
 	for(auto &texture_pair : texture_storage)
 	{
-		texture_pair.second.is_in_use = graphx::identifiers::buffer_type::NOT_IN_USE;
 		if(used_texture_names.contains(texture_pair.first))
-			texture_pair.second.is_in_use = graphx::identifiers::buffer_type::IN_USE;
+			texture_pair.second.is_in_use = true;
+		else
+			texture_pair.second.is_in_use = false;
 	}
 
 	for(auto &texture_pair : texture_storage)
 	{
-		if(texture_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_CHECKED)
-		{
-			PRINTDEBUG("Uh... not checked got found for Texture \"" << texture_pair.first << "\"")
-			continue;
-		}
-
-		if(texture_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_IN_USE)
+		if(!texture_pair.second.is_in_use)
 		{
 			if(texture_pair.second.texture_id != 0)
 				glDeleteBuffers(1, &texture_pair.second.texture_id);
@@ -330,28 +319,25 @@ void R_GL_BufferMeshes()
 
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
-		mesh_data_pair.second.is_in_use = graphx::identifiers::buffer_type::NOT_IN_USE;
 		if(used_mesh_data_names.contains(mesh_data_pair.first))
-			mesh_data_pair.second.is_in_use = graphx::identifiers::buffer_type::IN_USE;
+			mesh_data_pair.second.is_in_use = true;
+		else
+			mesh_data_pair.second.is_in_use = false;
 	}
 
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
-		if(mesh_data_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_CHECKED)
-		{
-			PRINTDEBUG("Uh... not checked got found for Mesh Data \"" << mesh_data_pair.first << "\"")
-			continue;
-		}
-
-		if(mesh_data_pair.second.is_in_use == graphx::identifiers::buffer_type::NOT_IN_USE)
+		if(!mesh_data_pair.second.is_in_use)
 		{
 			// Note: glIsBuffer will only work right if the unsigned int is a buffer name.
 			// Buffer names are created/assigned by doing one of two things:
 			//   1. Creating a buffer using glCreateBuffers
 			//   2. Generating a buffer using glGenBuffers AND THEN binding it with glBindBuffer
-			if(glIsBuffer(mesh_data_pair.second.VBO))
+			// if(glIsBuffer(mesh_data_pair.second.VBO))
+			if(mesh_data_pair.second.VBO != 0)
 				glDeleteBuffers(1, &mesh_data_pair.second.VBO);
-			if(glIsBuffer(mesh_data_pair.second.IBO))
+			// if(glIsBuffer(mesh_data_pair.second.IBO))
+			if(mesh_data_pair.second.IBO != 0)
 				glDeleteBuffers(1, &mesh_data_pair.second.IBO);
 			continue;
 		}

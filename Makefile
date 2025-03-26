@@ -183,7 +183,7 @@ $(THEATRES_C): $(THEATRES_H)
 $(MODELS_H):
 	$(shell printf "#ifndef GRAPHX_MODELS\n#define GRAPHX_MODELS\n#include <string>\n" > $(MODELS_H))
 	$(foreach graphxmodel,$(wildcard $(M)/*.graphxmodel),$(shell printf "#include \"../$(M:$(SRC)/%=%)/$(graphxmodel:$(M)/%=%)\"\n" >> $(MODELS_H)))
-	$(foreach model,$(MDLS),$(shell printf "extern std::string $(subst .,_,$(model:$(M)/%=%));\n" >> $(MODELS_H)))
+	$(foreach model,$(MDLS),$(shell printf "\n#define $(basename $(model:$(M)/%=%))_MODEL std::string(\"$(subst .,_,$(model:$(M)/%=%))\")\nextern std::string $(subst .,_,$(model:$(M)/%=%));\n" >> $(MODELS_H)))
 	$(foreach material,$(MTLS),$(shell printf "extern std::string $(subst .,_,$(material:$(M)/%=%));\n" >> $(MODELS_H)))
 	$(shell printf "#endif" >> $(MODELS_H))
 

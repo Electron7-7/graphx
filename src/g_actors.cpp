@@ -1,7 +1,5 @@
 #include "g_actors.hpp"
-#include "t_settings.hpp"
-#include "g_jolt.hpp"
-// #include "sanity.hpp" // Included for the GLFW #include
+#include <models.hpp>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 #include <gmath.hpp>
@@ -817,6 +815,22 @@ void LightTesterMover::takeABow()
 //
 // Ramiel
 //
+Ramiel::Ramiel()
+: Actor("Ramiel")
+{}
+
+void Ramiel::youGotACallBack(graphx::gSettings new_settings)
+{
+	Actor::youGotACallBack(new_settings);
+
+	getSetting(movement_type, settings["MovementType"]);
+	getSetting(pivot_position, settings["PivotPosition"]);
+	getSetting(pivot_radius, settings["PivotRadius"]);
+	getSetting(pivot_speed, settings["PivotSpeed"]);
+	getSetting(movement_speed, settings["MovementSpeed"]);
+	getSetting(movement_direction_vector, settings["MovementDirection"]);
+}
+
 void Ramiel::tick(int current_tick)
 {
 	if(movement_type == RAMIEL_APPROACH)
@@ -832,16 +846,4 @@ void Ramiel::tick(int current_tick)
 	pivot_theta += pivot_speed;
 	if(pivot_theta >= 360.0f)
 		pivot_theta = 0.0f;
-}
-
-void Ramiel::youGotACallBack(graphx::gSettings new_settings)
-{
-	Actor::youGotACallBack(new_settings);
-
-	getSetting(movement_type, settings["MovementType"]);
-	getSetting(pivot_position, settings["PivotPosition"]);
-	getSetting(pivot_radius, settings["PivotRadius"]);
-	getSetting(pivot_speed, settings["PivotSpeed"]);
-	getSetting(movement_speed, settings["MovementSpeed"]);
-	getSetting(movement_direction_vector, settings["MovementDirection"]);
 }
