@@ -214,7 +214,7 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 
 				else
 				{
-					vertex.insert(vertex.end(), {0.0f, 0.0f, 0.0f});
+					vertex.insert(vertex.end(), {0.0f, 0.0f, -1.0f});
 				}
 
 				// Check if `texcoord_index` is zero or positive. negative = no texcoord data
@@ -311,6 +311,10 @@ void R_GL_BufferMeshes()
 	if(loading_new_main_theatre)
 		return;
 
+	glDeleteVertexArrays(VAOS_AMOUNT, &VAOs[VAO_DEFAULT]);
+	glGenVertexArrays(VAOS_AMOUNT, &VAOs[VAO_DEFAULT]);
+	glBindVertexArray(VAOs[VAO_DEFAULT]);
+
 	//
 	// Buffer big VBO for primitives up here
 	//
@@ -319,33 +323,14 @@ void R_GL_BufferMeshes()
 
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
-		if(used_mesh_data_names.contains(mesh_data_pair.first))
-			mesh_data_pair.second.is_in_use = true;
-		else
-			mesh_data_pair.second.is_in_use = false;
-	}
-
-	for(auto &mesh_data_pair : mesh_data_storage)
-	{
-		if(!mesh_data_pair.second.is_in_use)
+		if(!used_mesh_data_names.contains(mesh_data_pair.first))
 		{
-			// Note: glIsBuffer will only work right if the unsigned int is a buffer name.
-			// Buffer names are created/assigned by doing one of two things:
-			//   1. Creating a buffer using glCreateBuffers
-			//   2. Generating a buffer using glGenBuffers AND THEN binding it with glBindBuffer
-			// if(glIsBuffer(mesh_data_pair.second.VBO))
-			if(mesh_data_pair.second.VBO != 0)
-				glDeleteBuffers(1, &mesh_data_pair.second.VBO);
-			// if(glIsBuffer(mesh_data_pair.second.IBO))
-			if(mesh_data_pair.second.IBO != 0)
-				glDeleteBuffers(1, &mesh_data_pair.second.IBO);
+			mesh_data_pair.second.is_in_use = false;
 			continue;
 		}
 
-		if(glIsBuffer(mesh_data_pair.second.VBO)) // If the VBO is buffered, the IBO doesn't need to be checked
-			continue;
+		mesh_data_pair.second.is_in_use = true;
 
-		glBindVertexArray(VAOs[VAO_DEFAULT]);
 		glGenBuffers(1, &mesh_data_pair.second.VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh_data_pair.second.VBO);
 		glBufferData(GL_ARRAY_BUFFER, mesh_data_pair.second.vertices_size(), mesh_data_pair.second.vertices().data(), GL_STATIC_DRAW);
@@ -473,6 +458,8 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	if(loading_new_main_theatre)
 		return;
 
+	glBindVertexArray(VAOs[VAO_DEFAULT]);
+
 	R_GL_RenderLights(state_mutex, interpolation_time);
 
 	glUseProgram(shaders[shader_index]->id);
@@ -520,7 +507,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		MeshData mesh_data = mesh_data_storage.at(render_command.mesh_data_name);
 
-		glBindVertexArray(VAOs[VAO_DEFAULT]);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));

@@ -582,9 +582,6 @@ void MeshData::fixOBJData()
 		{
 			component = (component - min_coordinate) / (max_coordinate - min_coordinate);
 		}
-		// vertex.x = (vertex.x - min_coordinate) / (max_coordinate - min_coordinate);
-		// vertex.y = (vertex.y - min_coordinate) / (max_coordinate - min_coordinate);
-		// vertex.z = (vertex.z - min_coordinate) / (max_coordinate - min_coordinate);
 	}
 }
 

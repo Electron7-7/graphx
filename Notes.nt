@@ -1890,3 +1890,12 @@ Seeing some weird bugs; could be because this laptop is so fucking slow that it'
 Big fucking issue: my redirection in the GLFW key callback function to Theatre::delegateKeyInput is being called by ImGui!! Fix that!!
 
 Weird bug: Ramiel's mesh gets fucked up when loading the first Theatre twice. Like, it's fine up until the very first Theatre is loaded again...
+
+[03/26/25]
+I wanna try and work on that Ramiel bug. An interesting thing I noticed is that it doesn't seem to break when I use one of my meshes.
+
+Just tested it with Suzanne and it doesn't bug out. That's really weird...
+
+Wait! It happens with the penis model! What's the difference between these three?
+
+Hmm... using Nsight, it looks like Ramiel's buffer gets broken after loading the first Theatre and is either empty or filled with garbage data.
