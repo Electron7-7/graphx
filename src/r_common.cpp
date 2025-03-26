@@ -422,7 +422,12 @@ MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, st
 	vertex_normals = init_normals;
 	vertex_uvs = init_uvs;
 	vertex_colors = init_colors;
-	vertex_indices = init_indices;
+
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
+	else
+		vertex_indices = init_indices;
 }
 
 MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors, std::vector<unsigned int> init_indices)
@@ -451,6 +456,10 @@ MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::v
 		if(!init_indices.empty())
 			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
 	}
+
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
 }
 
 std::vector<float> MeshData::vertices()
@@ -583,9 +592,15 @@ void MeshData::fixOBJData()
 			component = (component - min_coordinate) / (max_coordinate - min_coordinate);
 		}
 	}
+
+	vertex_indices.clear();
+	for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+	{
+		vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i + 1, i + 2));
+	}
 }
 
 bool MeshData::hasValidIndices()
 {
-	return (!vertex_indices.empty() && !(vertex_indices.size() % 3));
+	return (!vertex_indices.empty());
 }

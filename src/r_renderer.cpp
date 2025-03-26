@@ -302,11 +302,71 @@ void R_GL_BufferTextures()
 	}
 }
 
-// Temporary
-/*unsigned int primitives_VBO;
-#define NUMBER_OF_PRIMITIVES_IN_ONE_VBO 500*/
+unsigned int VBO;
+unsigned int IBO;
 
 void R_GL_BufferMeshes()
+{
+	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
+
+	long vertex_buffer_size_bytes = 0;
+	long index_buffer_size_bytes = 0;
+	long vertex_buffer_offset = 0; // The start of the VBO's empty store, in bytes
+	long index_buffer_offset = 0;  // The start of the IBO's empty store, in bytes
+	long base_vertex = 0;
+	long debug_index_offset = 0;
+
+	for(auto &mesh_data_pair : mesh_data_storage)
+	{
+		if(used_mesh_data_names.contains(mesh_data_pair.first))
+		{
+			vertex_buffer_size_bytes += mesh_data_pair.second.vertices_size();
+			index_buffer_size_bytes += mesh_data_pair.second.indices_size();
+		}
+	}
+
+	glBindVertexArray(VAOs[VAO_DEFAULT]);
+
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &IBO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &IBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+
+	glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size_bytes, nullptr, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size_bytes, nullptr, GL_STATIC_DRAW);
+
+	for(auto &mesh_data_pair : mesh_data_storage)
+	{
+		mesh_data_pair.second.debug_name = mesh_data_pair.first; // Debugging shit
+
+		if(!used_mesh_data_names.contains(mesh_data_pair.first))
+			continue;
+
+		glBufferSubData(GL_ARRAY_BUFFER, vertex_buffer_offset, mesh_data_pair.second.vertices_size(), mesh_data_pair.second.vertices().data());
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_offset, mesh_data_pair.second.indices_size(), mesh_data_pair.second.indices().data());
+
+		mesh_data_pair.second.base_vertex = base_vertex;
+		mesh_data_pair.second.debug_offset = debug_index_offset;
+
+		debug_index_offset += mesh_data_pair.second.indices_size();
+		base_vertex += mesh_data_pair.second.vertices_count();
+		vertex_buffer_offset += mesh_data_pair.second.vertices_size();
+		index_buffer_offset += mesh_data_pair.second.indices_size();
+	}
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+}
+
+void OLD_R_GL_BufferMeshes()
 {
 	if(loading_new_main_theatre)
 		return;
@@ -314,10 +374,6 @@ void R_GL_BufferMeshes()
 	glDeleteVertexArrays(VAOS_AMOUNT, &VAOs[VAO_DEFAULT]);
 	glGenVertexArrays(VAOS_AMOUNT, &VAOs[VAO_DEFAULT]);
 	glBindVertexArray(VAOs[VAO_DEFAULT]);
-
-	//
-	// Buffer big VBO for primitives up here
-	//
 
 	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
 
@@ -352,57 +408,6 @@ void R_GL_BufferMeshes()
 std::vector<RenderCmd> render_commands;
 std::vector<LightRenderCmd> light_render_commands;
 std::vector<PrimitiveRenderCmd> primitive_render_commands;
-
-/*void R_GL_RenderPrimitives()
-{
-	glBindVertexArray(VAOs[VAO_PRIMITIVES]);
-	glUseProgram(shaders[2]->id);
-
-	for(auto rendercmd_iterator = primitive_render_commands.begin() ; rendercmd_iterator != primitive_render_commands.end() ;)
-	{
-		PrimitiveRenderCmd *render_command = rendercmd_iterator.base();
-		// std::vector<float> vertices = render_command->getVertices();
-
-		// unsigned int primitive_vbo;
-		// glGenBuffers(1, &primitive_vbo);
-		// glBindBuffer(GL_ARRAY_BUFFER, primitive_vbo);
-		// glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
-		// glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-		// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-		// glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-		// glEnableVertexAttribArray(0);
-		// glEnableVertexAttribArray(1);
-		// glEnableVertexAttribArray(2);
-		// glEnableVertexAttribArray(3);
-		// glBufferData(GL_ARRAY_BUFFER, rendercmd_iterator.base()->numberOfVertices() * sizeof(float), rendercmd_iterator.base()->getVertices().data(), GL_STATIC_DRAW);
-
-		glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
-
-		if(render_command->primitive_material_override != nullptr)
-		{
-			shaders[shader_index]->setUniform("material.texture_diffuse", 0);
-			shaders[shader_index]->setUniform("material.texture_specular", 1);
-			shaders[shader_index]->setUniform("material.color", render_command->primitive_material_override->color);
-			shaders[shader_index]->setUniform("material.specular_sharpness", render_command->primitive_material_override->specular_sharpness);
-			shaders[shader_index]->setUniform("material.specular_strength", render_command->primitive_material_override->specular_strength);
-			shaders[shader_index]->setUniform("mat_fullbright", render_command->primitive_material_override->mat_fullbright);
-		}
-
-		shaders[shader_index]->setUniform("is_primitive", true);
-		shaders[shader_index]->setUniform("model_matrix", glm::mat4(1.0f));
-		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
-		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
-		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(glm::mat4(1.0f)))));
-
-		// glDrawArrays(GL_LINES, 0, render_command->numberOfVertices());
-		// glDeleteBuffers(1, &primitive_vbo);
-
-		rendercmd_iterator = primitive_render_commands.erase(rendercmd_iterator);
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-}*/
 
 void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 {
@@ -459,6 +464,8 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		return;
 
 	glBindVertexArray(VAOs[VAO_DEFAULT]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 
 	R_GL_RenderLights(state_mutex, interpolation_time);
 
@@ -507,11 +514,12 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		MeshData mesh_data = mesh_data_storage.at(render_command.mesh_data_name);
 
-		glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+		// glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
+		// glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
+		// glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
+		// glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+		// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+		// glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 
 		glBindTextureUnit(0, texture_storage.at(render_command.mesh_material.diffuse_texture_name).texture_id);
 		glBindTextureUnit(1, texture_storage.at(render_command.mesh_material.specular_texture_name).texture_id);
@@ -532,15 +540,17 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("mat_fullbright", render_command.mesh_material.mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
-		if(mesh_data.hasValidIndices())
-		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data.IBO);
-			glDrawElements(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, 0);
-		}
-		else
-		{
-			glDrawArrays(GL_TRIANGLES, 0, mesh_data.vertices_count());
-		}
+		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, nullptr, mesh_data.base_vertex);
+
+		// if(mesh_data.hasValidIndices())
+		// {
+		// 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data.IBO);
+		// 	glDrawElements(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, 0);
+		// }
+		// else
+		// {
+		// 	glDrawArrays(GL_TRIANGLES, 0, mesh_data.vertices_count());
+		// }
 
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}

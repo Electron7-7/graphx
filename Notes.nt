@@ -1899,3 +1899,20 @@ Just tested it with Suzanne and it doesn't bug out. That's really weird...
 Wait! It happens with the penis model! What's the difference between these three?
 
 Hmm... using Nsight, it looks like Ramiel's buffer gets broken after loading the first Theatre and is either empty or filled with garbage data.
+
+Fixed it by just recreating every VBO when I load a new Theatre; I want to implement combining all the instance-able MeshData used in a Theatre into one large VBO+IBO because that will help performance and at this point just be fucking better.
+
+Okay here's how I wanna structure the data:
+MeshData will contain:
+  - base vertex 
+  - indices count
+
+Also, this might have been causing issues with rendering:
+:::C++
+bool MeshData::hasValidIndices()
+{
+    return (!vertex_indices.empty() /*This ->*/ && !(vertex_indices.size() % 3));
+}
+:::
+
+Because vertex_indices is a vector of gmath::uintvec3, not a vector of unsigned ints.

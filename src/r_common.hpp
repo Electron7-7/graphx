@@ -124,6 +124,54 @@ struct Material final : public Device
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
+
+struct MeshData
+{
+	// Variables for new buffer format
+	long base_vertex = -1;
+	long debug_offset = 0;
+	// long indices_count = 0; // Use the function
+	std::string debug_name = "";
+
+	bool is_in_use = false;
+	int VAO_index = VAO_DEFAULT;
+	unsigned int VBO;
+	unsigned int IBO;
+
+	std::vector<glm::vec3> vertex_positions;
+	std::vector<glm::vec3> vertex_normals;
+	std::vector<glm::vec2> vertex_uvs;
+	std::vector<glm::vec3> vertex_colors;
+	std::vector<gmath::uintvec3> vertex_indices;
+
+	MeshData();
+	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::uintvec3> init_indices = {});
+	MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {}, std::vector<float> init_uvs = {}, std::vector<float> init_colors = {}, std::vector<unsigned int> init_indices = {});
+
+	// This implementation of MeshData::addVertex assumes that the floats contained in the "vertex" argument are in this order:
+	//
+	//     vertex[0-2] : position (X, Y, Z)
+	//
+	//     vertex[3-5] : normal   (X, Y, X)
+	//
+	//     vertex[6-7] : uv       (X, Y)
+	//
+	//     vertex[8-10]: color    (R, G, B)
+	void addVertex(std::vector<float> vertex);
+	void addVertex(glm::vec3 position, glm::vec3 normal = glm::vec3(0.0f), glm::vec2 uv = glm::vec2(0.0f), glm::vec3 color = glm::vec3(1.0f));
+	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
+	void addIndex(gmath::uintvec3 indices);
+	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
+	void fixOBJData();
+	bool hasValidIndices();
+	std::vector<float> vertices();
+	std::vector<unsigned int> indices();
+	size_t vertices_count();
+	size_t vertices_size();
+	size_t indices_count();
+	size_t indices_size();
+};
+
 struct Mesh : public Device
 {
 	// std::string name = "Untitled Mesh";
@@ -205,47 +253,6 @@ struct PrimitiveRenderCmd
 
 	std::vector<float> getVertices();
 	unsigned int numberOfVertices();
-};
-
-struct MeshData
-{
-	bool is_in_use = false;
-	int VAO_index = VAO_DEFAULT;
-	unsigned int VBO;
-	unsigned int IBO;
-
-	std::vector<glm::vec3> vertex_positions;
-	std::vector<glm::vec3> vertex_normals;
-	std::vector<glm::vec2> vertex_uvs;
-	std::vector<glm::vec3> vertex_colors;
-	std::vector<gmath::uintvec3> vertex_indices;
-
-	MeshData();
-	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::uintvec3> init_indices = {});
-	MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {}, std::vector<float> init_uvs = {}, std::vector<float> init_colors = {}, std::vector<unsigned int> init_indices = {});
-
-	// This implementation of MeshData::addVertex assumes that the floats contained in the "vertex" argument are in this order:
-	//
-	//     vertex[0-2] : position (X, Y, Z)
-	//
-	//     vertex[3-5] : normal   (X, Y, X)
-	//
-	//     vertex[6-7] : uv       (X, Y)
-	//
-	//     vertex[8-10]: color    (R, G, B)
-	void addVertex(std::vector<float> vertex);
-	void addVertex(glm::vec3 position, glm::vec3 normal = glm::vec3(0.0f), glm::vec2 uv = glm::vec2(0.0f), glm::vec3 color = glm::vec3(1.0f));
-	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
-	void addIndex(gmath::uintvec3 indices);
-	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
-	void fixOBJData();
-	bool hasValidIndices();
-	std::vector<float> vertices();
-	std::vector<unsigned int> indices();
-	size_t vertices_count();
-	size_t vertices_size();
-	size_t indices_count();
-	size_t indices_size();
 };
 
 // Variables found in r_renderer.cpp
