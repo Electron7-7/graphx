@@ -309,24 +309,13 @@ void R_GL_BufferMeshes()
 {
 	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
 
-	long vertex_buffer_size_bytes = 0;
-	long index_buffer_size_bytes = 0;
-	long vertex_buffer_offset = 0; // The start of the VBO's empty store, in bytes
-	long index_buffer_offset = 0;  // The start of the IBO's empty store, in bytes
+	long vertex_buffer_size = 0; // The start of the VBO's empty store, in bytes
+	long index_buffer_size = 0;  // The start of the IBO's empty store, in bytes
 	unsigned int number_of_vertices = 0;
 	unsigned int number_of_indices = 0;
 
 	std::vector<float> all_vertices;
 	std::vector<unsigned int> all_indices;
-
-	for(auto &mesh_data_pair : mesh_data_storage)
-	{
-		if(used_mesh_data_names.contains(mesh_data_pair.first))
-		{
-			vertex_buffer_size_bytes += mesh_data_pair.second.vertices_size();
-			index_buffer_size_bytes += mesh_data_pair.second.indices_size();
-		}
-	}
 
 	glBindVertexArray(VAOs[VAO_DEFAULT]);
 
@@ -337,18 +326,12 @@ void R_GL_BufferMeshes()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 
-	glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size_bytes, nullptr, GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size_bytes, nullptr, GL_STATIC_DRAW);
-
 	for(auto &mesh_data_pair : mesh_data_storage)
 	{
 		mesh_data_pair.second.debug_name = mesh_data_pair.first; // Debugging shit
 
 		if(!used_mesh_data_names.contains(mesh_data_pair.first))
 			continue;
-
-		// glBufferSubData(GL_ARRAY_BUFFER, vertex_buffer_offset, mesh_data_pair.second.vertices_size(), mesh_data_pair.second.vertices().data());
-		// glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_offset, mesh_data_pair.second.indices_size(), mesh_data_pair.second.indices().data());
 
 		std::vector<float> vertices = mesh_data_pair.second.vertices();
 		std::vector<unsigned int> indices = mesh_data_pair.second.indices();
@@ -360,9 +343,9 @@ void R_GL_BufferMeshes()
 		mesh_data_pair.second.base_index = number_of_indices;
 
 		number_of_vertices += mesh_data_pair.second.vertices_count();
+		vertex_buffer_size += mesh_data_pair.second.vertices_size();
 		number_of_indices += mesh_data_pair.second.indices_count();
-		vertex_buffer_offset += mesh_data_pair.second.vertices_size();
-		index_buffer_offset += mesh_data_pair.second.indices_size();
+		index_buffer_size += mesh_data_pair.second.indices_size();
 	}
 
 	for(unsigned int index : all_indices)
@@ -370,8 +353,8 @@ void R_GL_BufferMeshes()
 		std::cout << std::to_string(index) << std::endl;
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, vertex_buffer_offset, all_vertices.data(), GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_offset, all_indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, all_vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, all_indices.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -381,45 +364,6 @@ void R_GL_BufferMeshes()
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
-}
-
-void OLD_R_GL_BufferMeshes()
-{
-	if(loading_new_main_theatre)
-		return;
-
-	glDeleteVertexArrays(VAOS_AMOUNT, &VAOs[VAO_DEFAULT]);
-	glGenVertexArrays(VAOS_AMOUNT, &VAOs[VAO_DEFAULT]);
-	glBindVertexArray(VAOs[VAO_DEFAULT]);
-
-	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
-
-	for(auto &mesh_data_pair : mesh_data_storage)
-	{
-		if(!used_mesh_data_names.contains(mesh_data_pair.first))
-		{
-			mesh_data_pair.second.is_in_use = false;
-			continue;
-		}
-
-		mesh_data_pair.second.is_in_use = true;
-
-		glGenBuffers(1, &mesh_data_pair.second.VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh_data_pair.second.VBO);
-		glBufferData(GL_ARRAY_BUFFER, mesh_data_pair.second.vertices_size(), mesh_data_pair.second.vertices().data(), GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-
-		// if(mesh_data_pair.second.hasValidIndices())
-		{
-			glGenBuffers(1, &mesh_data_pair.second.IBO);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data_pair.second.IBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh_data_pair.second.indices_size(), mesh_data_pair.second.indices().data(), GL_STATIC_DRAW);
-		}
-	}
 }
 
 std::vector<RenderCmd> render_commands;
@@ -531,13 +475,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		MeshData mesh_data = mesh_data_storage.at(render_command.mesh_data_name);
 
-		// glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
-		// glBindBuffer(GL_ARRAY_BUFFER, mesh_data.VBO);
-		// glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
-		// glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-		// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-		// glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-
 		glBindTextureUnit(0, texture_storage.at(render_command.mesh_material.diffuse_texture_name).texture_id);
 		glBindTextureUnit(1, texture_storage.at(render_command.mesh_material.specular_texture_name).texture_id);
 
@@ -558,16 +495,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
-
-		// if(mesh_data.hasValidIndices())
-		// {
-		// 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_data.IBO);
-		// 	glDrawElements(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, 0);
-		// }
-		// else
-		// {
-		// 	glDrawArrays(GL_TRIANGLES, 0, mesh_data.vertices_count());
-		// }
 
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
