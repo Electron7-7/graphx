@@ -1,8 +1,13 @@
-#version 330 core
-out vec2 v_uv;
+#version 460 core
+layout (location = 0) in vec3 _vertex;
+
+out vec3 texture_coordinates;
+
+uniform mat4 projection_matrix;
+uniform mat4 view_matrix;
+
 void main()
 {
-	uint idx = gl_VertexID;
-	gl_Position = vec4( idx & 1, idx >> 1, 0.0, 0.5 ) * 4.0 - 1.0;
-	v_uv = vec2( gl_Position.xy * 0.5 + 0.5 );
+	texture_coordinates = _vertex;
+	gl_Position = projection_matrix * view_matrix * vec4(_vertex, 1.0f);
 }

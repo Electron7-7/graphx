@@ -338,7 +338,7 @@ GraphXPlayer (player)
 }
 Environment (Default_Environment)
 {
-	AmbientLightingStrength (0.3)
+	AmbientLightingStrength (1.0)
 }
 Material (Floor_Material)
 {
@@ -409,11 +409,10 @@ Light (fix_light_4)
 }
 Material (Ramiel_Mat)
 {
-	DiffuseTexture [NO_TEXTURE]	
+	DiffuseTexture [NO_TEXTURE]
 	SpecularTexture [FLAT_SPEC]
 	SpecularStrength (0.9)
 	SpecularSharpness (256)
-	// Color (0.6, 0.9, 0.8)
 }
 Ramiel (Ramiel)
 {

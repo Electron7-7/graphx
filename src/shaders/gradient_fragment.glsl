@@ -1,10 +1,11 @@
-#version 330 core
-uniform vec4 top_color;
-uniform vec4 bottom_color;
-in vec2 v_uv;
+#version 460 core
 out vec4 FragColor;
+
+in vec3 texture_coordinates;
+
+uniform samplerCube skybox;
 
 void main()
 {
-	FragColor = bottom_color * (1 - uv.y) + top_color * uv.y;
+	FragColor = texture(skybox, texture_coordinates);
 }

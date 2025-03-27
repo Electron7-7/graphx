@@ -181,36 +181,42 @@ glm::vec3 Environment::getAmbientLight()
 //
 // Texture
 //
-Texture::Texture()
+Texture::Texture(bool init_is_cubemap)
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
+	is_cubemap = init_is_cubemap;
 }
 
-Texture::Texture(unsigned char *init_texture_data)
+Texture::Texture(unsigned char *init_texture_data, bool init_is_cubemap)
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
-	texture_data = init_texture_data;
+	texture_data = {init_texture_data};
+	is_cubemap = init_is_cubemap;
 }
 
-Texture::Texture(const char *init_texture_data)
+Texture::Texture(const char *init_texture_data, bool init_is_cubemap)
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
-	texture_data = reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data));
+	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data))};
+	is_cubemap = init_is_cubemap;
 }
 
-Texture::Texture(std::string init_texture_data)
+Texture::Texture(std::string init_texture_data, bool init_is_cubemap)
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
-	texture_data = reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()));
+	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
+	is_cubemap = init_is_cubemap;
 }
 
 void Texture::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
+
+	getSetting(is_cubemap, settings["IsCubemap"]);
 }
 
 //
@@ -238,14 +244,18 @@ void Material::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	// getSetting(embedded_texture_diffuse, settings["DiffuseTexture"]);
-	// getSetting(embedded_texture_specular, settings["SpecularTexture"]);
 	getSetting(diffuse_texture_name, settings["DiffuseTexture"]);
 	getSetting(specular_texture_name, settings["SpecularTexture"]);
 	getSetting(color, settings["Color"]);
 	getSetting(specular_sharpness, settings["SpecularSharpness"]);
 	getSetting(specular_strength, settings["SpecularStrength"]);
 	getSetting(mat_fullbright, settings["mat_fullbright"]);
+
+	if(mat_fullbright && diffuse_texture_name == MISSING_TEXTURE)
+		diffuse_texture_name = NO_TEXTURE;
+
+	if(specular_texture_name == NO_TEXTURE)
+		specular_strength = 0.0f;
 }
 
 

@@ -102,7 +102,7 @@ void main()
 
 	if(mat_fullbright)
 	{
-		FragColor = vec4(material.color, 1.0f);
+		FragColor = vec4(texture(material.texture_diffuse, texture_coordinate).rgb * material.color, 1.0f);
 		return;
 	}
 
@@ -193,15 +193,12 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 	vec3 reflect_direction = reflect(-light_direction, normalize(normal));
 	vec3 blinn_halfway_vector = normalize(light_direction + view_direction);
 
-	float diffuse = max(dot(normalize(normal), light_direction), (light.ambient_strength * environment.ambient_strength));
-	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), (light.ambient_strength * environment.ambient_strength)), material.specular_sharpness);
+	float diffuse = max(dot(normalize(normal), light_direction), (light.ambient_strength * directional_light.ambient_strength * environment.ambient_strength));
+	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), (light.ambient_strength * directional_light.ambient_strength * environment.ambient_strength)), material.specular_sharpness);
 
-	vec3 material_color = material.color;
-	if(shader_debug_value == DEBUG_VERTEX_COLORS)
-		material_color = vec3(1.0f);
-	vec3 this_diffuse  = light.strength * light.color * vertex_color * material_diffuse * material_color * diffuse;
+	vec3 this_diffuse  = light.strength * light.color * vertex_color * material_diffuse * material.color * diffuse;
 	vec3 this_specular = light.color * material_specular * material.color * material.specular_strength * specular;
-	vec3 this_ambient  = light.ambient_strength * light.color * material_diffuse * material_color * environment.ambient_light;
+	vec3 this_ambient  = light.ambient_strength * light.color * material_diffuse * material.color * environment.ambient_light;
 
 	return mat3x3(this_diffuse, this_specular, this_ambient);
 };
@@ -233,25 +230,31 @@ void main()
 };
 )~";
 std::string gradient_fragment_glsl = R"~(
-#version 330 core
-uniform vec4 top_color;
-uniform vec4 bottom_color;
-in vec2 v_uv;
+#version 460 core
 out vec4 FragColor;
+
+in vec3 texture_coordinates;
+
+uniform samplerCube skybox;
 
 void main()
 {
-	FragColor = bottom_color * (1 - uv.y) + top_color * uv.y;
+	FragColor = texture(skybox, texture_coordinates);
 }
 )~";
 std::string gradient_vertex_glsl = R"~(
-#version 330 core
-out vec2 v_uv;
+#version 460 core
+layout (location = 0) in vec3 _vertex;
+
+out vec3 texture_coordinates;
+
+uniform mat4 projection_matrix;
+uniform mat4 view_matrix;
+
 void main()
 {
-	uint idx = gl_VertexID;
-	gl_Position = vec4( idx & 1, idx >> 1, 0.0, 0.5 ) * 4.0 - 1.0;
-	v_uv = vec2( gl_Position.xy * 0.5 + 0.5 );
+	texture_coordinates = _vertex;
+	gl_Position = projection_matrix * view_matrix * vec4(_vertex, 1.0f);
 }
 )~";
 std::string phong_fragment_glsl = R"~(

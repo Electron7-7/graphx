@@ -1928,3 +1928,8 @@ Turns out... I HAD THE BYTE OFFSET IN glBufferSubData WRONG BECAUSE YEAH glBuffe
 Working on primitives... just realized I'm fucking stupid and it would be so much easier to just make a primitives VBO (or multiple VBOs) instead of trying to render shit without vertices.
 
 Working on gradient backgrounds.
+
+[03/27/25]
+Got some new medical and took a rip lmfao; forgot about wanting to focus. Shouldn't be too bad, bc I still have an hour and fourty minutes before I gotta leave for work. Anyways, gonna try and work on that background gradient before I eat and shit.
+
+Almost done; finish up the shitty little hard coded function later.

@@ -51,6 +51,7 @@ std::map<std::string, Texture> texture_storage =
 	{NO_TEXTURE, Texture(NO_TEXTURE_jpg)},
 	{SOURCE_LIGHT_GREY, Texture(SOURCE_LIGHT_GREY_png)},
 	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png)},
+	{SHIT_SKYBOX, Texture(SHIT_SKYBOX_png, true)},
 };
 
 
@@ -289,12 +290,11 @@ void R_GL_BufferTextures()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		int t_width, t_height, t_channels;
-		unsigned char *t_data = stbi_load_from_memory(texture_pair.second.texture_data, 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+		unsigned char *t_data = stbi_load_from_memory(texture_pair.second.texture_data[0], 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
 
 		if(!t_data)
 			PRINTERR("Failed to load texture!");
 
-		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 		stbi_image_free(t_data);
@@ -384,14 +384,97 @@ void R_GL_BufferMeshes()
 	glEnableVertexAttribArray(3);
 }
 
+/*stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+
+glGenTextures(1, &texture_pair.second.texture_id);
+if(texture_pair.second.is_cubemap)
+{
+	// TODO: merge this copied code shit
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_pair.second.texture_id);
+
+	int t_width, t_height, t_channels;
+	for(int i = 0 ; i < texture_pair.second.texture_data.size() ; i++)
+	{
+		unsigned char *t_data = stbi_load_from_memory(texture_pair.second.texture_data[i], 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+
+		if(!t_data)
+			PRINTERR("Failed to load texture!");
+		stbi_image_free(t_data);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY, 16);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	return;
+}*/
+
 void R_GradientBackground(glm::vec4 top, glm::vec4 bottom)
 {
-	glDisable(GL_DEPTH_TEST);
-
 	static unsigned int background_vao = 0;
+	static unsigned int background_vbo = 0;
+	static unsigned int background_ibo = 0;
+	Texture &skybox_texture = texture_storage.at(SHIT_SKYBOX);
+
+	if(skybox_texture.texture_id == 0)
+	{
+		stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
+		glGenTextures(1, &skybox_texture.texture_id);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
+
+		int t_width, t_height, t_channels;
+		for(int i = 0 ; i < skybox_texture.texture_data.size() ; i++)
+		{
+			unsigned char *t_data = stbi_load_from_memory(skybox_texture.texture_data[0], 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+
+			if(!t_data)
+				PRINTERR("Failed to load texture!");
+			stbi_image_free(t_data);
+		}
+
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY, 16);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	}
+
+	static float vertices[9] =
+	{
+		-1.0, -1.0, 0.0,
+		 1.0, -1.0, 0.0,
+		-1.0,  1.0, 0.0
+	};
 
 	if(background_vao == 0)
 		glGenVertexArrays(1, &background_vao);
+	if(background_vbo == 0)
+	{
+		MeshData &cube = mesh_data_storage.at(GRAPHX_CUBE);
+		glGenBuffers(1, &background_vbo);
+		glGenBuffers(1, &background_ibo);
+		glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, background_ibo);
+		glBufferData(GL_ARRAY_BUFFER, cube.vertices_size(), cube.vertices().data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, background_ibo, cube.indices().data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
 
 	glUseProgram(shaders[3]->id);
 
@@ -399,9 +482,11 @@ void R_GradientBackground(glm::vec4 top, glm::vec4 bottom)
 	shaders[3]->setUniform("bottom_color", bottom);
 
 	glBindVertexArray(background_vao);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
+	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -554,7 +639,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 		shaders[shader_index]->setUniform("material.specular_strength", render_command.mesh_material.specular_strength);
 		shaders[shader_index]->setUniform("mat_fullbright", render_command.mesh_material.mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
-		shaders[shader_index]->setUniform("environment.ambient_color", getCurrentEnvironment()->ambient_light_color * getCurrentEnvironment()->ambient_lighting_enabled);
+		shaders[shader_index]->setUniform("environment.ambient_color", getCurrentEnvironment()->ambient_light_color);
 		shaders[shader_index]->setUniform("environment.ambient_strength", getCurrentEnvironment()->ambient_light_strength * getCurrentEnvironment()->ambient_lighting_enabled);
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);

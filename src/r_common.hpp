@@ -95,14 +95,16 @@ struct Environment final : public Device // Will be extended
 struct Texture final : public Device
 {
 public:
+	bool is_cubemap = false;
 	bool is_in_use = false;
 	unsigned int texture_id = 0;
-	unsigned char *texture_data = MISSING_TEXTURE_jpg;
+	std::vector<unsigned char *> texture_data = {MISSING_TEXTURE_jpg};
 
-	Texture();
-	Texture(unsigned char *init_texture_data);
-	Texture(const char *init_texture_data);
-	Texture(std::string init_texture_data);
+	// TODO: remove "is_cubemap" and use the size of the texture_data vector to identify cubemaps (unless I use multiple textures for something else)
+	Texture(bool init_is_cubemap = false);
+	Texture(unsigned char *init_texture_data, bool init_is_cubemap = false);
+	Texture(const char *init_texture_data, bool init_is_cubemap = false);
+	Texture(std::string init_texture_data, bool init_is_cubemap = false);
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
@@ -116,6 +118,7 @@ struct Material final : public Device
 	int specular_sharpness = 16;
 	float specular_strength = 1.0f;
 	bool mat_fullbright = false;
+	bool use_texture = true;
 
 	Material();
 	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));

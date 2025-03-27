@@ -26,6 +26,10 @@ extern unsigned int MISSING_TEXTURE_jpg_len;
 extern unsigned char NO_TEXTURE_jpg[];
 extern unsigned int NO_TEXTURE_jpg_len;
 
+#define SHIT_SKYBOX std::string("SHIT_SKYBOX_png")
+extern unsigned char SHIT_SKYBOX_png[];
+extern unsigned int SHIT_SKYBOX_png_len;
+
 #define SOURCE_LIGHT_GREY std::string("SOURCE_LIGHT_GREY_png")
 extern unsigned char SOURCE_LIGHT_GREY_png[];
 extern unsigned int SOURCE_LIGHT_GREY_png_len;
