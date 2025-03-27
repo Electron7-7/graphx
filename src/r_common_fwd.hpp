@@ -1,5 +1,7 @@
 #ifndef GRAPHX_COMMON_RENDERING_FORWARD_DECLARATIONS
 #define GRAPHX_COMMON_RENDERING_FORWARD_DECLARATIONS
+#include <Jolt/Jolt.h>
+#include <Jolt/Renderer/DebugRendererSimple.h>
 #include <glfw_fwd.hpp>
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
@@ -53,11 +55,13 @@ template<typename T> Device *createNewDevice();
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color);
 void        R_BufferMeshesAndTextures();
+void        R_DrawPrimitive(PrimitiveRenderCmd primitive);
+void        R_GradientBackground(glm::vec4 top, glm::vec4 bottom);
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();
 void        R_GL_RenderPrimitives(RenderCmd *render_command);
-void        R_GL_Render(std::mutex &mutex, float interpolation_time);
+void        R_GL_Render(std::mutex &mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer);
 void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);

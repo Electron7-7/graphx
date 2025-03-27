@@ -145,7 +145,7 @@ vec3 calculateSpotLight(Light light)
 	this_specular *= light_attenuation * spotlight_radius * lighting_debug_switches[1];
 	this_ambient *= light_attenuation * spotlight_radius  * lighting_debug_switches[2];
 
-	return (this_diffuse + this_specular + this_ambient);
+	return (this_diffuse + this_specular);
 };
 
 vec3 calculatePointLight(Light light)
@@ -170,7 +170,7 @@ vec3 calculatePointLight(Light light)
 	this_specular *= light_attenuation * lighting_debug_switches[1];
 	this_ambient *= light_attenuation  * lighting_debug_switches[2];
 
-	return (this_diffuse + this_specular + this_ambient);
+	return (this_diffuse + this_specular);
 };
 
 vec3 calculateDirectionalLight(Light light)
@@ -182,7 +182,7 @@ vec3 calculateDirectionalLight(Light light)
 	vec3 this_specular = light_components[1] * lighting_debug_switches[1];
 	vec3 this_ambient = light_components[2]  * lighting_debug_switches[2];
 
-	return (this_diffuse + this_specular + this_ambient);
+	return (this_diffuse + this_specular);
 };
 
 mat3x3 calculateLight(Light light, vec3 light_direction)
@@ -191,8 +191,8 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 	vec3 reflect_direction = reflect(-light_direction, normalize(normal));
 	vec3 blinn_halfway_vector = normalize(light_direction + view_direction);
 
-	float diffuse = max(dot(normalize(normal), light_direction), 0.0f);
-	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), 0.0f), material.specular_sharpness);
+	float diffuse = max(dot(normalize(normal), light_direction), (light.ambient_strength * environment.ambient_strength));
+	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), (light.ambient_strength * environment.ambient_strength)), material.specular_sharpness);
 
 	vec3 material_color = material.color;
 	if(shader_debug_value == DEBUG_VERTEX_COLORS)
@@ -201,10 +201,5 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 	vec3 this_specular = light.color * material_specular * material.color * material.specular_strength * specular;
 	vec3 this_ambient  = light.ambient_strength * light.color * material_diffuse * material_color * environment.ambient_light;
 
-	mat3x3 light_components;
-	light_components[0] = this_diffuse;
-	light_components[1] = this_specular;
-	light_components[2] = this_ambient;
-
-	return light_components;
+	return mat3x3(this_diffuse, this_specular, this_ambient);
 };

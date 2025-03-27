@@ -147,7 +147,7 @@ vec3 calculateSpotLight(Light light)
 	this_specular *= light_attenuation * spotlight_radius * lighting_debug_switches[1];
 	this_ambient *= light_attenuation * spotlight_radius  * lighting_debug_switches[2];
 
-	return (this_diffuse + this_specular + this_ambient);
+	return (this_diffuse + this_specular);
 };
 
 vec3 calculatePointLight(Light light)
@@ -172,7 +172,7 @@ vec3 calculatePointLight(Light light)
 	this_specular *= light_attenuation * lighting_debug_switches[1];
 	this_ambient *= light_attenuation  * lighting_debug_switches[2];
 
-	return (this_diffuse + this_specular + this_ambient);
+	return (this_diffuse + this_specular);
 };
 
 vec3 calculateDirectionalLight(Light light)
@@ -184,7 +184,7 @@ vec3 calculateDirectionalLight(Light light)
 	vec3 this_specular = light_components[1] * lighting_debug_switches[1];
 	vec3 this_ambient = light_components[2]  * lighting_debug_switches[2];
 
-	return (this_diffuse + this_specular + this_ambient);
+	return (this_diffuse + this_specular);
 };
 
 mat3x3 calculateLight(Light light, vec3 light_direction)
@@ -193,8 +193,8 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 	vec3 reflect_direction = reflect(-light_direction, normalize(normal));
 	vec3 blinn_halfway_vector = normalize(light_direction + view_direction);
 
-	float diffuse = max(dot(normalize(normal), light_direction), 0.0f);
-	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), 0.0f), material.specular_sharpness);
+	float diffuse = max(dot(normalize(normal), light_direction), (light.ambient_strength * environment.ambient_strength));
+	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), (light.ambient_strength * environment.ambient_strength)), material.specular_sharpness);
 
 	vec3 material_color = material.color;
 	if(shader_debug_value == DEBUG_VERTEX_COLORS)
@@ -203,12 +203,7 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 	vec3 this_specular = light.color * material_specular * material.color * material.specular_strength * specular;
 	vec3 this_ambient  = light.ambient_strength * light.color * material_diffuse * material_color * environment.ambient_light;
 
-	mat3x3 light_components;
-	light_components[0] = this_diffuse;
-	light_components[1] = this_specular;
-	light_components[2] = this_ambient;
-
-	return light_components;
+	return mat3x3(this_diffuse, this_specular, this_ambient);
 };
 )~";
 std::string blinn_phong_vertex_glsl = R"~(
@@ -236,6 +231,28 @@ void main()
 	normal = normal_matrix * _vertex_normal;
 	vertex_color = _vertex_color;
 };
+)~";
+std::string gradient_fragment_glsl = R"~(
+#version 330 core
+uniform vec4 top_color;
+uniform vec4 bottom_color;
+in vec2 v_uv;
+out vec4 FragColor;
+
+void main()
+{
+	FragColor = bottom_color * (1 - uv.y) + top_color * uv.y;
+}
+)~";
+std::string gradient_vertex_glsl = R"~(
+#version 330 core
+out vec2 v_uv;
+void main()
+{
+	uint idx = gl_VertexID;
+	gl_Position = vec4( idx & 1, idx >> 1, 0.0, 0.5 ) * 4.0 - 1.0;
+	v_uv = vec2( gl_Position.xy * 0.5 + 0.5 );
+}
 )~";
 std::string phong_fragment_glsl = R"~(
 #version 460 core
@@ -480,16 +497,29 @@ void main()
 )~";
 std::string primitive_fragment_glsl = R"~(
 #version 460 core
+// in int vertex_id;
 
-)~";
-std::string primitive_vertex_glsl = R"~(
-#version 460 core
-uniform (layout = 0) in vec3 _vertex_position;
-
-uniform mat4 model_matrix;
+// uniform vec3 vertex_color[3];
 
 void main()
 {
-	gl_Position = model_matrix * vec4(_vertex_position, 1.0f);
+	FragColor = vec4(1.0f, 0.5f, 1.0f, 1.0f);
+}
+)~";
+std::string primitive_vertex_glsl = R"~(
+#version 460 core
+layout (location = 0) in vec3 _vertex_position;
+
+// uniform vec3 vertex_position[3];
+// out int vertex_id;
+// uniform mat4 model_matrix;
+// uniform mat4 view_matrix;
+// uniform mat4 projection_matrix;
+
+void main()
+{
+	// gl_Position = vec4(vertex_position[glVertexID], 1.0f);
+	gl_Position = vec4(_vertex_position, 1.0f);
+	// vertex_id = glVertexID;
 }
 )~";

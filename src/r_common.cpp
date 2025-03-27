@@ -558,38 +558,3 @@ PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg
 	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
 	colors_3 = gmath::convertMath<glm::vec3>(new_vertex_color);
 }
-
-std::vector<float> PrimitiveRenderCmd::getVertices()
-{
-	std::vector<float> vertex_data =
-	{
-		vertex_1.x, vertex_1.y, vertex_1.z,    normals_1.x, normals_1.y, normals_1.z,    uvs_1.x, uvs_1.y,    colors_1.x, colors_1.y, colors_1.z,
-		vertex_2.x, vertex_2.y, vertex_2.z,    normals_2.x, normals_2.y, normals_2.z,    uvs_2.x, uvs_2.y,    colors_2.x, colors_2.y, colors_2.z
-	};
-
-	if(primitive_type == graphx::identifiers::primitive::TRIANGLE)
-	{
-		vertex_data.insert(vertex_data.end(),
-		{
-			vertex_3.x, vertex_3.y, vertex_3.z,    normals_3.x, normals_3.y, normals_3.z,    uvs_3.x, uvs_3.y,    colors_3.x, colors_3.y, colors_3.z
-		});
-
-	}
-
-	return vertex_data;
-}
-
-unsigned int PrimitiveRenderCmd::numberOfVertices()
-{
-	switch(primitive_type)
-	{
-	case graphx::identifiers::primitive::LINE:
-		return 2;
-	case graphx::identifiers::primitive::TRIANGLE:
-		return 3;
-	case graphx::identifiers::primitive::TEXT:
-		return 0; // Text not supported yet
-	default:
-		return 0;
-	}
-}

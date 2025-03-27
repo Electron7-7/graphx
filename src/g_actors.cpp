@@ -828,14 +828,13 @@ void Ramiel::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(pivot_radius, settings["PivotRadius"]);
 	getSetting(pivot_speed, settings["PivotSpeed"]);
 	getSetting(movement_speed, settings["MovementSpeed"]);
-	getSetting(movement_direction_vector, settings["MovementDirection"]);
 }
 
 void Ramiel::tick(int current_tick)
 {
 	if(movement_type == RAMIEL_APPROACH)
 	{
-		position_global += movement_speed * movement_direction_vector;
+		position_global += movement_speed * orientation_front;
 		return;
 	}
 

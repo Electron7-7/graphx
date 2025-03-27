@@ -45,6 +45,30 @@ void testGameTick(GLFWwindow *window);
 #define TICKLENGTH (1.0f / TICKRATE)
 #define PER_SECOND(interval) (current_tick_since_second % (TICKRATE/interval) == 0)
 
+// The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
+#include "jolt_boilerplate.hpp"
+
+class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
+{
+public:
+    virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
+    {
+        R_DrawPrimitive(PrimitiveRenderCmd(inFrom, inTo, inColor));
+    }
+
+    virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override
+    {
+        R_DrawPrimitive(PrimitiveRenderCmd(inV1, inV2, inV3, inColor));
+    }
+
+    virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view &inString, JPH::ColorArg inColor, float inHeight) override
+    {
+        return;
+    }
+};
+
+GraphXDeadSimpleDebugRenderer *debug_renderer = nullptr;
+
 int main()
 {
 	graphx_api = GRAPHX_OPENGL;
@@ -72,7 +96,8 @@ int main()
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	GLShader primitive_shader(primitive_vertex_glsl, primitive_fragment_glsl);
-	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader, &primitive_shader});
+	GLShader gradient_background_shader(gradient_vertex_glsl, gradient_fragment_glsl);
+	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader, &primitive_shader, &gradient_background_shader});
 
 	R_InitializeRenderingAPI();
 
@@ -99,7 +124,10 @@ int main()
 	while(!glfwWindowShouldClose(main_window))
 	{
 		glm::vec3 swap_color = current_theatre.getSwapColor();
-		W_SwapAndClear(main_window, swap_color);
+		// W_SwapAndClear(main_window, swap_color);
+		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		R_GradientBackground(glm::vec4(swap_color, 1.0f));
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -117,11 +145,12 @@ int main()
 		if(time_to_render)
 		{
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
-			R_Render(actor_state_mutex, interpolation_time);
+			R_Render(actor_state_mutex, interpolation_time, debug_renderer);
 		}
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		glfwSwapBuffers(main_window);
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
@@ -131,28 +160,6 @@ int main()
 	glfwTerminate();
 	return 0;
 }
-
-// The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
-#include "jolt_boilerplate.hpp"
-
-/*class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
-{
-public:
-    virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
-    {
-        R_BufferRenderCmd(PrimitiveRenderCmd(inFrom, inTo, inColor));
-    }
-
-    virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override
-    {
-        R_BufferRenderCmd(PrimitiveRenderCmd(inV1, inV2, inV3, inColor));
-    }
-
-    virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view &inString, JPH::ColorArg inColor, float inHeight) override
-    {
-        return;
-    }
-};*/
 
 void testGameTick(GLFWwindow *main_window)
 {
@@ -169,17 +176,12 @@ void testGameTick(GLFWwindow *main_window)
 
 	GraphXContactListener contact_listener;
 	jolt_physics_system.SetContactListener(&contact_listener);
-
-	// GraphXDeadSimpleDebugRenderer debug_renderer;
+	GraphXDeadSimpleDebugRenderer jolt_debug_renderer;
+	debug_renderer = &jolt_debug_renderer;
 #endif
 
 	JPH::TempAllocatorImpl jolt_temp_allocator(10 * 1024 * 1024);
 	JPH::JobSystemThreadPool jolt_job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
-	JPH::BodyManager::DrawSettings jolt_draw_settings;
-
-	jolt_draw_settings.mDrawShape = true;
-	jolt_draw_settings.mDrawShapeWireframe = true;
-	jolt_draw_settings.mDrawBoundingBox = true;
 
 	const JPH::uint cMaxBodies = 2048;
 	const JPH::uint cNumBodyMutexes = 0;
@@ -207,8 +209,6 @@ void testGameTick(GLFWwindow *main_window)
 		now_time = glfwGetTime();
 		current_tick_length += (now_time - last_time) / TICKLENGTH;
 		last_time = now_time;
-
-		// jolt_physics_system.DrawBodies(jolt_draw_settings, &debug_renderer); // THIS WILL FUCKING FREEZE THE APPLICATION LMFAO UNFUCK MY CODE FIRST
 
 		while(current_tick_length >= 1.0f && !loading_new_main_theatre)
 		{
@@ -270,16 +270,16 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			PRINTNOTE("Specular Lighting Component: Disabled")
 	}
 
-	if(key == GLFW_KEY_3 && action == GLFW_PRESS)
+	/*if(key == GLFW_KEY_3 && action == GLFW_PRESS)
 	{
 		lighting_switch_ambient = !lighting_switch_ambient;
 		if(lighting_switch_ambient)
 			PRINTNOTE("Ambient Lighting Component: Enabled")
 		else
 			PRINTNOTE("Ambient Lighting Component: Disabled")
-	}
+	}*/
 
-	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
+	if(key == GLFW_KEY_3 && action == GLFW_PRESS)
 	{
 		if(shader_debug_value != SHADER_DEBUG_NORMALS)
 		{
@@ -291,7 +291,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
 	}
 
-	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
+	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
 	{
 		if(shader_debug_value != SHADER_DEBUG_VERTEX_COLORS)
 		{
@@ -303,7 +303,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
 	}
 
-	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
+	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
 	{
 		is_wireframe = !is_wireframe;
 		if(is_wireframe)

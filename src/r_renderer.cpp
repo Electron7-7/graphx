@@ -24,7 +24,7 @@ int shader_debug_value = 4;
 unsigned int shader_index = SHADER_BLINN_PHONG;
 glm::vec2 main_window_size(1280.0f, 720.0f);
 float camera_near = 0.1f;
-float camera_far = 1000.0f;
+float camera_far = 10000.0f;
 bool jolt_debug_render = false;
 bool lighting_switch_diffuse = true;
 bool lighting_switch_specular = true;
@@ -79,7 +79,6 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 
 void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
 {
-	glfwSwapBuffers(w_window);
 	glClearColor(w_clear_color[0], w_clear_color[1], w_clear_color[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -302,11 +301,35 @@ void R_GL_BufferTextures()
 	}
 }
 
+unsigned int PrimitivesVBO;
 unsigned int VBO;
 unsigned int IBO;
 
 void R_GL_BufferMeshes()
 {
+	//------------//
+	// Primitives //
+	//------------//
+	std::vector<float> primitive_verts = 
+	{
+		-1.0f, 0.0f, -1.0f,
+		 1.0f, 0.0f, -1.0f,
+		 0.0f, 3.0f, -1.0f
+	};
+
+	glBindVertexArray(VAOs[VAO_PRIMITIVES]);
+	glDeleteBuffers(1, &PrimitivesVBO);
+	glGenBuffers(1, &PrimitivesVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, PrimitivesVBO);
+	glBufferData(GL_ARRAY_BUFFER, primitive_verts.size() * sizeof(float), primitive_verts.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(0));
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	//-------------------//
+	// ...Not Primitives //
+	//-------------------//
 	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
 
 	long vertex_buffer_size = 0; // The start of the VBO's empty store, in bytes
@@ -361,9 +384,54 @@ void R_GL_BufferMeshes()
 	glEnableVertexAttribArray(3);
 }
 
+void R_GradientBackground(glm::vec4 top, glm::vec4 bottom)
+{
+	glDisable(GL_DEPTH_TEST);
+
+	static unsigned int background_vao = 0;
+
+	if(background_vao == 0)
+		glGenVertexArrays(1, &background_vao);
+
+	glUseProgram(shaders[3]->id);
+
+	shaders[3]->setUniform("top_color", top);
+	shaders[3]->setUniform("bottom_color", bottom);
+
+	glBindVertexArray(background_vao);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindVertexArray(0);
+
+	glEnable(GL_DEPTH_TEST);
+}
+
 std::vector<RenderCmd> render_commands;
 std::vector<LightRenderCmd> light_render_commands;
 std::vector<PrimitiveRenderCmd> primitive_render_commands;
+
+void R_DrawPrimitive(PrimitiveRenderCmd primitive)
+{
+	if(loading_new_main_theatre)
+		return;
+
+	glBindVertexArray(VAOs[VAO_PRIMITIVES]);
+
+	glUseProgram(shaders[2]->id);
+	shaders[2]->setUniform("vertex_position[0]", primitive.vertex_1);
+	shaders[2]->setUniform("vertex_position[1]", primitive.vertex_2);
+	shaders[2]->setUniform("vertex_color[0]", primitive.colors_1);
+	shaders[2]->setUniform("vertex_color[1]", primitive.colors_2);
+
+	if(primitive.primitive_type == graphx::identifiers::primitive::LINE)
+		glDrawArrays(GL_LINE, 0, 2);
+
+	else if(primitive.primitive_type == graphx::identifiers::primitive::TRIANGLE)
+	{
+		shaders[2]->setUniform("vertex_position[2]", primitive.vertex_3);
+		shaders[2]->setUniform("vertex_color[2]", primitive.colors_3);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+	}
+}
 
 void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 {
@@ -414,22 +482,20 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 	}
 }
 
-void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
+void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer)
 {
 	if(loading_new_main_theatre)
 		return;
 
 	glBindVertexArray(VAOs[VAO_DEFAULT]);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-
-	R_GL_RenderLights(state_mutex, interpolation_time);
 
 	glUseProgram(shaders[shader_index]->id);
 	shaders[shader_index]->setUniform("shader_debug_value", shader_debug_value);
 	shaders[shader_index]->setUniform("lighting_debug_switches", glm::bvec3(lighting_switch_diffuse, lighting_switch_specular, lighting_switch_ambient));
 	shaders[shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
 	shaders[shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
+
+	R_GL_RenderLights(state_mutex, interpolation_time);
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
@@ -488,13 +554,20 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[shader_index]->setUniform("material.specular_strength", render_command.mesh_material.specular_strength);
 		shaders[shader_index]->setUniform("mat_fullbright", render_command.mesh_material.mat_fullbright);
 		shaders[shader_index]->setUniform("environment.ambient_light", getCurrentEnvironment()->getAmbientLight());
+		shaders[shader_index]->setUniform("environment.ambient_color", getCurrentEnvironment()->ambient_light_color * getCurrentEnvironment()->ambient_lighting_enabled);
+		shaders[shader_index]->setUniform("environment.ambient_strength", getCurrentEnvironment()->ambient_light_strength * getCurrentEnvironment()->ambient_lighting_enabled);
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
 
-	// R_GL_RenderPrimitives();
+	// R_DrawPrimitive(PrimitiveRenderCmd(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(-3.0f, 1.0f, 0.0f), glm::vec3(3.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.5f, 1.0f)));
+	// JPH::BodyManager::DrawSettings jolt_draw_settings;
+	// jolt_draw_settings.mDrawShape = true;
+	// jolt_draw_settings.mDrawShapeWireframe = true;
+	// jolt_draw_settings.mDrawBoundingBox = false;
+	// jolt_physics_system.DrawBodies(jolt_draw_settings, debug_renderer);
 }
 
 void R_BufferMeshesAndTextures()
@@ -529,7 +602,7 @@ void R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command)
 	primitive_render_commands.insert(primitive_render_commands.end(), primitive_render_command);
 }
 
-void R_Render(std::mutex &state_mutex, float interpolation_time)
+void R_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer)
 {
 	if(loading_new_main_theatre)
 		return;
@@ -539,7 +612,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time)
 	switch(graphx_api)
 	{
 	case GRAPHX_OPENGL:
-		R_GL_Render(state_mutex, interpolation_time);
+		R_GL_Render(state_mutex, interpolation_time, debug_renderer);
 		break;
 	}
 }

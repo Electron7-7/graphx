@@ -8,6 +8,7 @@
 #include <glfw_fwd.hpp>
 #include <Jolt/Jolt.h>
 #include <Jolt/Core/Color.h>
+#include <Jolt/Renderer/DebugRendererSimple.h>
 #include <array>
 #include <mutex>
 
@@ -231,17 +232,16 @@ public:
 
 struct PrimitiveRenderCmd
 {
-	unsigned int array_offset;
 	int primitive_type = graphx::identifiers::primitive::FOO;
 	glm::vec3 vertex_1 = glm::vec3(0.0f);
 	glm::vec3 vertex_2 = glm::vec3(0.0f);
 	glm::vec3 vertex_3 = glm::vec3(0.0f);
-	glm::vec3 normals_1 = glm::vec3(0.0f);
-	glm::vec3 normals_2 = glm::vec3(0.0f);
-	glm::vec3 normals_3 = glm::vec3(0.0f);
-	glm::vec2 uvs_1 = glm::vec2(0.0f);
-	glm::vec2 uvs_2 = glm::vec2(0.0f);
-	glm::vec2 uvs_3 = glm::vec2(0.0f);
+	// glm::vec3 normals_1 = glm::vec3(0.0f);
+	// glm::vec3 normals_2 = glm::vec3(0.0f);
+	// glm::vec3 normals_3 = glm::vec3(0.0f);
+	// glm::vec2 uvs_1 = glm::vec2(0.0f);
+	// glm::vec2 uvs_2 = glm::vec2(0.0f);
+	// glm::vec2 uvs_3 = glm::vec2(0.0f);
 	glm::vec3 colors_1 = glm::vec3(0.0f);
 	glm::vec3 colors_2 = glm::vec3(0.0f);
 	glm::vec3 colors_3 = glm::vec3(0.0f);
@@ -251,9 +251,6 @@ struct PrimitiveRenderCmd
 	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
-
-	std::vector<float> getVertices();
-	unsigned int numberOfVertices();
 };
 
 // Variables found in r_renderer.cpp
@@ -286,8 +283,9 @@ void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::
 void        R_BufferMeshesAndTextures();
 void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();
-void        R_Render(std::mutex &state_mutex, float interpolation_time);
-void        R_GL_RenderPrimitives(RenderCmd *render_command);
+void        R_DrawPrimitive(PrimitiveRenderCmd primitive);
+void        R_GradientBackground(glm::vec4 top = glm::vec4(0.2f), glm::vec4 bottom = glm::vec4(0.0f));
+void        R_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer);
 void        R_GL_Render(std::mutex &mutex, float interpolation_time);
 void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void        R_BufferRenderCmd(RenderCmd render_command);

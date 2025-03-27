@@ -1924,3 +1924,7 @@ The mesh indices are getting buffered correctly; I think the problem is the offs
 I don't know why it's not working; it should. It might be the way I'm buffering the data. I'll try using glBufferData instead of glBufferSubData to test this.
 
 Turns out... I HAD THE BYTE OFFSET IN glBufferSubData WRONG BECAUSE YEAH glBufferData WORKED LIKE A FUCKING CHARM!!!
+
+Working on primitives... just realized I'm fucking stupid and it would be so much easier to just make a primitives VBO (or multiple VBOs) instead of trying to render shit without vertices.
+
+Working on gradient backgrounds.

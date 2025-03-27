@@ -253,7 +253,6 @@ public:
 	float pivot_theta = 0.0f;
 
 	float movement_speed = 1.0f;
-	glm::vec3 movement_direction_vector = glm::vec3(0.0f, 0.0f, 1.0f);
 
 	Ramiel();
 

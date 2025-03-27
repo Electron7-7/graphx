@@ -325,13 +325,20 @@ LightTesterMover (test_light_2)
 	PivotSpeed (1.2)
 })~"}},{2, std::string{R"~(@RamielTheatre
 LightDirectional (Sun)
-{}
+{
+	Strength (0.5)
+	Direction (0.2, -0.2, -0.1)
+}
 LightFlashlight (Flashlight)
 {}
 GraphXPlayer (player)
 {
 	Position (0.0, 1.0, 170.0)
 	MouseSensitivity (0.1)
+}
+Environment (Default_Environment)
+{
+	AmbientLightingStrength (0.3)
 }
 Material (Floor_Material)
 {
@@ -411,14 +418,14 @@ Material (Ramiel_Mat)
 Ramiel (Ramiel)
 {
 	Mesh:Material <TestMesh>:<Ramiel_Mat>
-	Scale (30.0, 30.0, 30.0)
+	Scale (300.0, 300.0, 300.0)
+	Position (600.0, 465.0, -800.0)
+	Rotation (0.0, 148.0, 0.0)
 	MovementType (1)
-	MovementSpeed (0.1)
-	Position (0.0, 100.0, -120.0)
-	Rotation (0.0, 0.0, 0.0)
-	PivotPosition (0.0, 90.0, -20.0)
-	PivotRadius   (40.2)
-	PivotSpeed    (0.2)
+	MovementSpeed (0.5)
+	// PivotPosition (0.0, 90.0, -20.0)
+	// PivotRadius   (40.2)
+	// PivotSpeed    (0.2)
 }
 Mesh (Cube_Mesh)
 {
