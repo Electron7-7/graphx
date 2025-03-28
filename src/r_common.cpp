@@ -181,42 +181,67 @@ glm::vec3 Environment::getAmbientLight()
 //
 // Texture
 //
-Texture::Texture(bool init_is_cubemap)
+Texture::Texture()
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
-	is_cubemap = init_is_cubemap;
 }
 
-Texture::Texture(unsigned char *init_texture_data, bool init_is_cubemap)
+Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_data = init_texture_data;
+	texture_size = init_texture_size;
+}
+
+Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_size = init_texture_size;
+	texture_data.clear();
+	for(const char *some_texture_data : init_texture_data)
+		texture_data.insert(texture_data.end(), reinterpret_cast<unsigned char *>(const_cast<char *>(some_texture_data)));
+}
+
+Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_size = init_texture_size;
+	texture_data.clear();
+	for(std::string some_texture_data : init_texture_data)
+		texture_data.insert(texture_data.end(), reinterpret_cast<unsigned char *>(const_cast<char *>(some_texture_data.c_str())));
+}
+
+Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_size)
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_data = {init_texture_data};
-	is_cubemap = init_is_cubemap;
+	texture_size = {init_texture_size};
 }
 
-Texture::Texture(const char *init_texture_data, bool init_is_cubemap)
+Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
+	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data))};
-	is_cubemap = init_is_cubemap;
 }
 
-Texture::Texture(std::string init_texture_data, bool init_is_cubemap)
+Texture::Texture(std::string init_texture_data, unsigned int init_texture_size)
 {
 	my_type = graphx::classes::TEXTURE;
 	name = "Untitled Texture";
+	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
-	is_cubemap = init_is_cubemap;
 }
 
 void Texture::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
-
-	getSetting(is_cubemap, settings["IsCubemap"]);
 }
 
 //

@@ -43,15 +43,14 @@ std::map<std::string, MeshData> mesh_data_storage =
 
 std::map<std::string, Texture> texture_storage =
 {
-	{COMP04_5, Texture(COMP04_5_png)},
-	{COMP04_5_SPECULAR, Texture(COMP04_5_SPECULAR_jpg)},
-	{FLAT_SPEC, Texture(FLAT_SPEC_jpg)},
-	{LIGHT_DEBUGGING, Texture(LIGHT_DEBUGGING_jpg)},
-	{MISSING_TEXTURE, Texture(MISSING_TEXTURE_jpg)},
-	{NO_TEXTURE, Texture(NO_TEXTURE_jpg)},
-	{SOURCE_LIGHT_GREY, Texture(SOURCE_LIGHT_GREY_png)},
-	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png)},
-	{SHIT_SKYBOX, Texture(SHIT_SKYBOX_png, true)},
+	{COMP04_5, Texture(COMP04_5_png, COMP04_5_png_len)},
+	{COMP04_5_SPECULAR, Texture(COMP04_5_SPECULAR_jpg, COMP04_5_SPECULAR_jpg_len)},
+	{FLAT_SPEC, Texture(FLAT_SPEC_jpg, FLAT_SPEC_jpg_len)},
+	{LIGHT_DEBUGGING, Texture(LIGHT_DEBUGGING_jpg, LIGHT_DEBUGGING_jpg_len)},
+	{MISSING_TEXTURE, Texture(MISSING_TEXTURE_jpg, MISSING_TEXTURE_jpg_len)},
+	{NO_TEXTURE, Texture(NO_TEXTURE_jpg, NO_TEXTURE_jpg_len)},
+	{SOURCE_LIGHT_GREY, Texture(SOURCE_LIGHT_GREY_png, SOURCE_LIGHT_GREY_png_len)},
+	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png, SOURCE_ORANGE_png_len)},
 };
 
 
@@ -78,9 +77,10 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 	return new_window;
 }
 
-void W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color)
+void W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color)
 {
-	glClearColor(w_clear_color[0], w_clear_color[1], w_clear_color[2], 1.0f);
+	glfwSwapBuffers(w_window);
+	glClearColor(w_clear_color[0], w_clear_color[1], w_clear_color[2], w_clear_color[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -110,7 +110,12 @@ std::string T_LoadImageFile(std::string file_path)
 		return MISSING_TEXTURE;
 	}
 
-	Texture new_texture(file_string_data.str());
+	int image_x;
+	int image_y;
+	int image_channels;
+	stbi_info(file_path_checked.c_str(), &image_x, &image_y, &image_channels);
+
+	Texture new_texture(file_string_data.str(), 1600*1600);
 
 	texture_storage[texture_name] = new_texture;
 
@@ -290,7 +295,7 @@ void R_GL_BufferTextures()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		int t_width, t_height, t_channels;
-		unsigned char *t_data = stbi_load_from_memory(texture_pair.second.texture_data[0], 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
+		unsigned char *t_data = stbi_load_from_memory(texture_pair.second.texture_data[0], texture_pair.second.texture_size[0], &t_width, &t_height, &t_channels, STBI_rgb);
 
 		if(!t_data)
 			PRINTERR("Failed to load texture!");
@@ -384,55 +389,52 @@ void R_GL_BufferMeshes()
 	glEnableVertexAttribArray(3);
 }
 
-/*stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
-
-glGenTextures(1, &texture_pair.second.texture_id);
-if(texture_pair.second.is_cubemap)
+glm::mat4 R_GL_GetProjectionMatrix()
 {
-	// TODO: merge this copied code shit
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_pair.second.texture_id);
+	return glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
+}
 
-	int t_width, t_height, t_channels;
-	for(int i = 0 ; i < texture_pair.second.texture_data.size() ; i++)
-	{
-		unsigned char *t_data = stbi_load_from_memory(texture_pair.second.texture_data[i], 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
-
-		if(!t_data)
-			PRINTERR("Failed to load texture!");
-		stbi_image_free(t_data);
-	}
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY, 16);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-	return;
-}*/
-
-void R_GradientBackground(glm::vec4 top, glm::vec4 bottom)
+void R_GL_DrawSkybox()
 {
 	static unsigned int background_vao = 0;
 	static unsigned int background_vbo = 0;
-	static unsigned int background_ibo = 0;
-	Texture &skybox_texture = texture_storage.at(SHIT_SKYBOX);
+
+	static GLShader skybox_shader(skybox_vertex_glsl, skybox_fragment_glsl);
+	static Texture skybox_texture(
+	{
+		SHIT_SKYBOX_XPOS_png,
+		SHIT_SKYBOX_XNEG_png,
+		SHIT_SKYBOX_YPOS_png,
+		SHIT_SKYBOX_YNEG_png,
+		SHIT_SKYBOX_ZPOS_png,
+		SHIT_SKYBOX_ZNEG_png,
+	},
+	{
+		SHIT_SKYBOX_XPOS_png_len,
+		SHIT_SKYBOX_XNEG_png_len,
+		SHIT_SKYBOX_YPOS_png_len,
+		SHIT_SKYBOX_YNEG_png_len,
+		SHIT_SKYBOX_ZPOS_png_len,
+		SHIT_SKYBOX_ZNEG_png_len,
+	});
 
 	if(skybox_texture.texture_id == 0)
 	{
-		stbi_set_flip_vertically_on_load(true); // Obviously, automate this to flip relevant textures (when Y-Axis 0.0 is not on the bottom of the image)
 		glGenTextures(1, &skybox_texture.texture_id);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
 
-		int t_width, t_height, t_channels;
-		for(int i = 0 ; i < skybox_texture.texture_data.size() ; i++)
+		for(int i = 0 ; i < 6 ; i++)
 		{
-			unsigned char *t_data = stbi_load_from_memory(skybox_texture.texture_data[0], 1600*1600, &t_width, &t_height, &t_channels, STBI_rgb);
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+			stbi_set_flip_vertically_on_load(true);
+
+			int t_width, t_height, t_channels;
+			unsigned char *t_data = stbi_load_from_memory(skybox_texture.texture_data[i], skybox_texture.texture_size[i], &t_width, &t_height, &t_channels, STBI_rgb);
 
 			if(!t_data)
 				PRINTERR("Failed to load texture!");
+
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB_ALPHA, t_width, t_height, 0, GL_RGB, GL_UNSIGNED_BYTE, t_data);
+
 			stbi_image_free(t_data);
 		}
 
@@ -444,50 +446,75 @@ void R_GradientBackground(glm::vec4 top, glm::vec4 bottom)
 		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 	}
 
-	static float vertices[9] =
-	{
-		-1.0, -1.0, 0.0,
-		 1.0, -1.0, 0.0,
-		-1.0,  1.0, 0.0
-	};
-
 	if(background_vao == 0)
-		glGenVertexArrays(1, &background_vao);
-	if(background_vbo == 0)
 	{
-		MeshData &cube = mesh_data_storage.at(GRAPHX_CUBE);
+		float skybox_vertices[] =
+		{
+		    -1.0f,  1.0f, -1.0f,
+		    -1.0f, -1.0f, -1.0f,
+		     1.0f, -1.0f, -1.0f,
+		     1.0f, -1.0f, -1.0f,
+		     1.0f,  1.0f, -1.0f,
+		    -1.0f,  1.0f, -1.0f,
+
+		    -1.0f, -1.0f,  1.0f,
+		    -1.0f, -1.0f, -1.0f,
+		    -1.0f,  1.0f, -1.0f,
+		    -1.0f,  1.0f, -1.0f,
+		    -1.0f,  1.0f,  1.0f,
+		    -1.0f, -1.0f,  1.0f,
+
+		     1.0f, -1.0f, -1.0f,
+		     1.0f, -1.0f,  1.0f,
+		     1.0f,  1.0f,  1.0f,
+		     1.0f,  1.0f,  1.0f,
+		     1.0f,  1.0f, -1.0f,
+		     1.0f, -1.0f, -1.0f,
+
+		    -1.0f, -1.0f,  1.0f,
+		    -1.0f,  1.0f,  1.0f,
+		     1.0f,  1.0f,  1.0f,
+		     1.0f,  1.0f,  1.0f,
+		     1.0f, -1.0f,  1.0f,
+		    -1.0f, -1.0f,  1.0f,
+
+		    -1.0f,  1.0f, -1.0f,
+		     1.0f,  1.0f, -1.0f,
+		     1.0f,  1.0f,  1.0f,
+		     1.0f,  1.0f,  1.0f,
+		    -1.0f,  1.0f,  1.0f,
+		    -1.0f,  1.0f, -1.0f,
+
+		    -1.0f, -1.0f, -1.0f,
+		    -1.0f, -1.0f,  1.0f,
+		     1.0f, -1.0f, -1.0f,
+		     1.0f, -1.0f, -1.0f,
+		    -1.0f, -1.0f,  1.0f,
+		     1.0f, -1.0f,  1.0f
+		};
+
+		glGenVertexArrays(1, &background_vao);
 		glGenBuffers(1, &background_vbo);
-		glGenBuffers(1, &background_ibo);
+
+		glBindVertexArray(background_vao);
 		glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, background_ibo);
-		glBufferData(GL_ARRAY_BUFFER, cube.vertices_size(), cube.vertices().data(), GL_STATIC_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, background_ibo, cube.indices().data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+		glBufferData(GL_ARRAY_BUFFER, sizeof(skybox_vertices), &skybox_vertices, GL_STATIC_DRAW);
+
 		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(0));
+
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
-
-	glUseProgram(shaders[3]->id);
-
-	shaders[3]->setUniform("top_color", top);
-	shaders[3]->setUniform("bottom_color", bottom);
-
+	glDepthFunc(GL_LEQUAL);
+	glUseProgram(skybox_shader.id);
+	skybox_shader.setUniform("skybox_view_matrix", glm::mat4(glm::mat3(getCurrentPlayer()->getViewMatrix())));
+	skybox_shader.setUniform("skybox_projection_matrix", R_GL_GetProjectionMatrix());
 	glBindVertexArray(background_vao);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
-
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 }
 
 std::vector<RenderCmd> render_commands;
@@ -593,7 +620,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 		}
 
 		glm::mat4 model_matrix = glm::mat4(1.0f);
-		glm::mat4 projection_matrix = glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), main_window_size[0] / main_window_size[1], camera_near, camera_far);
 
 		std::lock_guard guard(state_mutex);
 
@@ -626,7 +652,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 
 		shaders[shader_index]->setUniform("model_matrix", model_matrix);
 		shaders[shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
-		shaders[shader_index]->setUniform("projection_matrix", projection_matrix);
+		shaders[shader_index]->setUniform("projection_matrix", R_GL_GetProjectionMatrix());
 		shaders[shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
 		shaders[shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
 
@@ -646,6 +672,8 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 
 		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
 	}
+
+	R_GL_DrawSkybox();
 
 	// R_DrawPrimitive(PrimitiveRenderCmd(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(-3.0f, 1.0f, 0.0f), glm::vec3(3.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.5f, 1.0f)));
 	// JPH::BodyManager::DrawSettings jolt_draw_settings;

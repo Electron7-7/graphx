@@ -229,34 +229,6 @@ void main()
 	vertex_color = _vertex_color;
 };
 )~";
-std::string gradient_fragment_glsl = R"~(
-#version 460 core
-out vec4 FragColor;
-
-in vec3 texture_coordinates;
-
-uniform samplerCube skybox;
-
-void main()
-{
-	FragColor = texture(skybox, texture_coordinates);
-}
-)~";
-std::string gradient_vertex_glsl = R"~(
-#version 460 core
-layout (location = 0) in vec3 _vertex;
-
-out vec3 texture_coordinates;
-
-uniform mat4 projection_matrix;
-uniform mat4 view_matrix;
-
-void main()
-{
-	texture_coordinates = _vertex;
-	gl_Position = projection_matrix * view_matrix * vec4(_vertex, 1.0f);
-}
-)~";
 std::string phong_fragment_glsl = R"~(
 #version 460 core
 #define MAX_NUMBER_OF_LIGHTS 20
@@ -524,5 +496,34 @@ void main()
 	// gl_Position = vec4(vertex_position[glVertexID], 1.0f);
 	gl_Position = vec4(_vertex_position, 1.0f);
 	// vertex_id = glVertexID;
+}
+)~";
+std::string skybox_fragment_glsl = R"~(
+#version 460 core
+out vec4 FragColor;
+
+in vec3 skybox_uv;
+
+uniform samplerCube skybox;
+
+void main()
+{
+	FragColor = texture(skybox, -skybox_uv);
+}
+)~";
+std::string skybox_vertex_glsl = R"~(
+#version 460 core
+layout (location = 0) in vec3 _skybox_vertex_position;
+
+out vec3 skybox_uv;
+
+uniform mat4 skybox_projection_matrix;
+uniform mat4 skybox_view_matrix;
+
+void main()
+{
+	skybox_uv = _skybox_vertex_position;
+	vec4 position = skybox_projection_matrix * skybox_view_matrix * vec4(_skybox_vertex_position, 1.0f);
+	gl_Position = position.xyww;
 }
 )~";

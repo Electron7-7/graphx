@@ -53,10 +53,10 @@ extern std::map<int, Device*(*)()> device_map;
 template<typename T> Device *createNewDevice();
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current);
-void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color);
+void        W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color);
 void        R_BufferMeshesAndTextures();
 void        R_DrawPrimitive(PrimitiveRenderCmd primitive);
-void        R_GradientBackground(glm::vec4 top, glm::vec4 bottom);
+void        R_GL_DrawSkybox();
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();

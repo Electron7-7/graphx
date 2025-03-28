@@ -95,16 +95,18 @@ struct Environment final : public Device // Will be extended
 struct Texture final : public Device
 {
 public:
-	bool is_cubemap = false;
 	bool is_in_use = false;
 	unsigned int texture_id = 0;
 	std::vector<unsigned char *> texture_data = {MISSING_TEXTURE_jpg};
+	std::vector<unsigned int> texture_size = {MISSING_TEXTURE_jpg_len};
 
-	// TODO: remove "is_cubemap" and use the size of the texture_data vector to identify cubemaps (unless I use multiple textures for something else)
-	Texture(bool init_is_cubemap = false);
-	Texture(unsigned char *init_texture_data, bool init_is_cubemap = false);
-	Texture(const char *init_texture_data, bool init_is_cubemap = false);
-	Texture(std::string init_texture_data, bool init_is_cubemap = false);
+	Texture();
+	Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size);
+	Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size);
+	Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size);
+	Texture(unsigned char * init_texture_data, unsigned int init_texture_size);
+	Texture(const char * init_texture_data, unsigned int init_texture_size);
+	Texture(std::string  init_texture_data, unsigned int init_texture_size);
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
@@ -282,12 +284,12 @@ extern std::map<int, Device*(*)()> device_map;
 template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec3(0.0f));
+void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 void        R_BufferMeshesAndTextures();
 void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();
 void        R_DrawPrimitive(PrimitiveRenderCmd primitive);
-void        R_GradientBackground(glm::vec4 top = glm::vec4(0.2f), glm::vec4 bottom = glm::vec4(0.0f));
+void        R_GL_DrawSkybox();
 void        R_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer);
 void        R_GL_Render(std::mutex &mutex, float interpolation_time);
 void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);

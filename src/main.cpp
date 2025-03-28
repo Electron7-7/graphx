@@ -96,8 +96,7 @@ int main()
 	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
 	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
 	GLShader primitive_shader(primitive_vertex_glsl, primitive_fragment_glsl);
-	GLShader gradient_background_shader(gradient_vertex_glsl, gradient_fragment_glsl);
-	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader, &primitive_shader, &gradient_background_shader});
+	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader, &primitive_shader});
 
 	R_InitializeRenderingAPI();
 
@@ -123,11 +122,8 @@ int main()
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		glm::vec3 swap_color = current_theatre.getSwapColor();
-		// W_SwapAndClear(main_window, swap_color);
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		W_SwapAndClear(main_window, glm::vec4(1.0f, 0.0f, 0.0f, 0.5f));
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		R_GradientBackground(glm::vec4(swap_color, 1.0f));
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -150,7 +146,6 @@ int main()
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		glfwSwapBuffers(main_window);
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
