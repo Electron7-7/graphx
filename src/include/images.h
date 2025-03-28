@@ -26,10 +26,6 @@ extern unsigned int MISSING_TEXTURE_jpg_len;
 extern unsigned char NO_TEXTURE_jpg[];
 extern unsigned int NO_TEXTURE_jpg_len;
 
-#define SHIT_SKYBOX_UNWRAPPED std::string("SHIT_SKYBOX_UNWRAPPED_png")
-extern unsigned char SHIT_SKYBOX_UNWRAPPED_png[];
-extern unsigned int SHIT_SKYBOX_UNWRAPPED_png_len;
-
 #define SHIT_SKYBOX_XNEG std::string("SHIT_SKYBOX_XNEG_png")
 extern unsigned char SHIT_SKYBOX_XNEG_png[];
 extern unsigned int SHIT_SKYBOX_XNEG_png_len;
