@@ -10,22 +10,6 @@ glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 
-std::map<int, Actor*(*)()> actor_map =
-{
-	{graphx::classes::ACTOR, &createNewActor<Actor>},
-	{graphx::classes::PHYSICSACTOR, &createNewActor<PhysicsActor>},
-	{graphx::classes::RIGIDBODYACTOR, &createNewActor<RigidBodyActor>},
-	{graphx::classes::STATICBODYACTOR, &createNewActor<StaticBodyActor>},
-	{graphx::classes::CAMERA, &createNewActor<Camera>},
-	{graphx::classes::GRAPHXPLAYER, &createNewActor<GraphXPlayer>},
-	{graphx::classes::LIGHT, &createNewActor<Light>},
-	{graphx::classes::LIGHTDIRECTIONAL, &createNewActor<LightDirectional>},
-	{graphx::classes::LIGHTSPOT, &createNewActor<LightSpot>},
-	{graphx::classes::LIGHTFLASHLIGHT, &createNewActor<LightFlashlight>},
-	{graphx::classes::LIGHTTESTERMOVER, &createNewActor<LightTesterMover>},
-	{graphx::classes::RAMIEL, &createNewActor<Ramiel>},
-};
-
 //
 // Actor
 //
@@ -42,7 +26,7 @@ Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm
 	updateVectors();
 }
 
-long Actor::getType()
+graphx::gClass &Actor::getType()
 {
 	return my_type;
 }
@@ -622,12 +606,12 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	mesh->mesh_data_name = GRAPHX_CUBE;
 }
 
-bool Light::isLightType(int light_type)
+bool Light::isLightType(graphx::gClass light_type)
 {
 	return light_type == my_light_type;
 }
 
-int Light::getLightType()
+graphx::gClass Light::getLightType()
 {
 	return my_light_type;
 }
@@ -787,7 +771,7 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	pivot_point.mesh->setUID(4815 + UID);
 	graphx::gSettings pivot_settings
 	{
-		{"Name", graphx::gSetting(RAW_DATA, graphx::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
+		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
 		{"MeshData", settings["MeshData"]},
 	};
 	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);

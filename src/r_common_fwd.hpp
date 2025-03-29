@@ -17,6 +17,8 @@ struct Texture;
 struct Material;
 struct Mesh;
 struct Sprite;
+// Collider declared here too, despite being in g_jolt.hpp
+struct Collider;
 
 // RenderCmds (none of these are derived)
 struct RenderCmd;
@@ -28,7 +30,7 @@ struct MeshData;
 struct GLShader;
 
 // Variables
-// extern std::array<unsigned int, VAOS_AMOUNT> VAOs;
+// extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Commented out bc can't be assed to make VAOS_AMOUNT not a #define
 extern std::vector<GLShader *> shaders;
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
@@ -47,11 +49,8 @@ extern bool jolt_debug_render;
 extern bool lighting_switch_diffuse;
 extern bool lighting_switch_specular;
 extern bool lighting_switch_ambient;
-extern std::map<int, Device*(*)()> device_map;
 
 // Functions
-template<typename T> Device *createNewDevice();
-
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color);
 void        R_BufferMeshesAndTextures();

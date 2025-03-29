@@ -1,104 +1,161 @@
 #ifndef GRAPHX_NAMESPACE
 #define GRAPHX_NAMESPACE
-#include <glm/glm.hpp>
+#include "g_common_fwd.hpp"
+#include "r_common_fwd.hpp"
 #include <map>
 #include <any>
 #include <string>
-#include <vector>
-#include <unordered_map>
 
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 
 namespace graphx
 {
-	namespace error
+	struct gClass
 	{
-		namespace rendercmd
+	private:
+		static constexpr int INVALID_TYPE_ID = -481516;
+		int _id = INVALID_TYPE_ID; // `_id` is usually more important than `_name`... usually...
+		static constexpr unsigned int NAME_MAX_SIZE_IN_BYTES = 80; // Feel free to change this... at your memory's peril
+		char _name[NAME_MAX_SIZE_IN_BYTES] = "INVALID_TYPE"; // `name` is only used by the interpreter (and for debugging)
+		static std::vector<gClass> valid_classes; // This could probably be a `std::array`, but I'd rather not think about the overhead...
+		inline void updateValidClasses()
 		{
-			static constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
-			static constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
-			static constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
-			static constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
+			if(_id == INVALID_TYPE_ID) // This is an invalid class
+				return;
+			for(gClass &valid_class : valid_classes)
+				if(valid_class == *this) // This is already a valid class
+					return;
+			valid_classes.insert(valid_classes.end(), *this); // Add this gClass to the list
+		}
+	public:
+		inline gClass() = default;
+		inline gClass(const char *init_name, int init_type, Actor*(*new_actor_function)())      : _id(init_type), _name(*init_name)        , create_new_actor(new_actor_function)   {}
+		inline gClass(std::string init_name, int init_type, Actor*(*new_actor_function)())      : _id(init_type), _name(*init_name.c_str()), create_new_actor(new_actor_function)   {}
+		inline gClass(const char *init_name, int init_type, Device*(*new_device_function)())    : _id(init_type), _name(*init_name)        , create_new_device(new_device_function) {}
+		inline gClass(std::string init_name, int init_type, Device*(*new_device_function)())    : _id(init_type), _name(*init_name.c_str()), create_new_device(new_device_function) {}
 
-		};
-	};
-
-	namespace identifiers
-	{
-		namespace primitive
+		inline gClass(std::string init_name) : _name(*init_name.c_str())
 		{
-			static constexpr int FOO      = -1;
-			static constexpr int LINE     = 0;
-			static constexpr int TRIANGLE = 1;
-			static constexpr int TEXT     = -1; // Text not supported yet!
+			for(gClass &valid_class : valid_classes)
+				if(valid_class == _name)
+					_id = valid_class.id();
 		};
+
+		inline const int id() const { return _id; }
+		inline const std::string name() const { return const_cast<char *>(_name); }
+		inline static bool isValidClass(gClass type)
+		{
+			if(type != INVALID_TYPE_ID)
+				for(gClass &valid_class : valid_classes)
+					if(valid_class == type)
+						return true;
+			return false;
+		}
+		inline static gClass &getClassType(gClass type)
+		{
+			for(gClass &valid_class : valid_classes)
+				if(valid_class == type)
+					return valid_class;
+		}
+
+		Actor *(*create_new_actor)() = nullptr;
+		Device *(*create_new_device)() = nullptr;
+
+		// Overloading Comparison Operators
+		//---------------------------------
+		// 1: Comparing gClass to gClass
+		inline const bool operator==(const gClass &compare_against) const { return (_id == compare_against.id()); }
+		inline const bool operator!=(const gClass &compare_against) const { return !(*this == compare_against);       }
+		inline const bool operator< (const gClass &compare_against) const { return (_id < compare_against.id());  }
+		inline const bool operator> (const gClass &compare_against) const { return (_id > compare_against.id());  }
+		inline const bool operator<=(const gClass &compare_against) const { return !(*this > compare_against);        }
+		inline const bool operator>=(const gClass &compare_against) const { return !(*this < compare_against);        }
+		// 2: Comparing gClass to int
+		inline const bool operator==(const int &compare_against) const { return (_id == compare_against);  }
+		inline const bool operator!=(const int &compare_against) const { return !(*this == compare_against); }
+		inline const bool operator< (const int &compare_against) const { return (_id < compare_against);   }
+		inline const bool operator> (const int &compare_against) const { return (_id > compare_against);   }
+		inline const bool operator<=(const int &compare_against) const { return !(*this > compare_against);  }
+		inline const bool operator>=(const int &compare_against) const { return !(*this < compare_against);  }
+		// 4: Comparing gClass to std::string
+		inline const bool operator==(const std::string &compare_against) const { return (_name == compare_against);  }
+		inline const bool operator!=(const std::string &compare_against) const { return !(*this == compare_against); }
+		inline const bool operator< (const std::string &compare_against) const { return (_name < compare_against);   }
+		inline const bool operator> (const std::string &compare_against) const { return (_name > compare_against);   }
+		inline const bool operator<=(const std::string &compare_against) const { return !(*this > compare_against);  }
+		inline const bool operator>=(const std::string &compare_against) const { return !(*this < compare_against);  }
+
+		// Overloading Conversion Operators
+		//---------------------------------
+		// 1: Conversion from gClass to int
+		inline constexpr operator int() const { return _id; }
+		// 2: Conversion from gClass to long
+		inline constexpr operator long() const { return static_cast<long>(_id); }
+		// 3: Conversion from gClass to std::string
+		inline constexpr operator std::string() const { return static_cast<std::string>(_name); }
 	};
 
 	namespace classes
 	{
-		static constexpr int INVALID_TYPE       = -481516;
+		template<typename T> Actor *createNewActor();   // FORWARD DECLARATION
+		template<typename T> Device *createNewDevice(); // FORWARD DECLARATION
 
-		static constexpr int THEATRE			= 0;
-		static constexpr int ACTOR				= 1;
-		static constexpr int PHYSICSACTOR		= 2;
-		static constexpr int STATICBODYACTOR	= 3;
-		static constexpr int RIGIDBODYACTOR		= 4;
-		static constexpr int CAMERA				= 5;
-		static constexpr int GRAPHXPLAYER		= 6;
-		static constexpr int RAMIEL				= 7;
-		// ALL LIGHT DERIVED CLASS IDS MUST BE NEGATIVE IN ORDER FOR graphx::classes::isLight TO WORK
-		static constexpr int LIGHT				= -1;
-		static constexpr int LIGHTDIRECTIONAL	= -2;
-		static constexpr int LIGHTSPOT			= -3;
-		static constexpr int LIGHTFLASHLIGHT	= -4;
-		static constexpr int LIGHTTESTERMOVER	= -5;
+		inline const gClass INVALID_TYPE; // The default constructor for `gClass` is `INVALID_TYPE`
 
-		static constexpr int DEVICE				= 1000;
-		static constexpr int ENVIRONMENT		= 1001;
-		static constexpr int MATERIAL			= 1002;
-		static constexpr int MESH				= 1003;
-		static constexpr int SPRITE				= 1004;
-		static constexpr int COLLIDER			= 1005;
-		static constexpr int TEXTURE			= 1006;
+		inline const gClass ACTOR            ( "Actor",               1, &createNewActor<Actor>            );
+		inline const gClass PHYSICSACTOR     ( "PhysicsActor",        2, &createNewActor<PhysicsActor>     );
+		inline const gClass STATICBODYACTOR  ( "StaticBodyActor",     3, &createNewActor<RigidBodyActor>   );
+		inline const gClass RIGIDBODYACTOR   ( "RigidBodyActor",      4, &createNewActor<StaticBodyActor>  );
+		inline const gClass CAMERA           ( "Camera",              5, &createNewActor<Camera>           );
+		inline const gClass GRAPHXPLAYER     ( "GraphXPlayer",        6, &createNewActor<GraphXPlayer>     );
+		inline const gClass RAMIEL           ( "Ramiel",              7, &createNewActor<Light>            );
+
+		// ALL LIGHT DERIVED CLASSES MUST USE NEGATIVE TYPE IDS IN ORDER FOR graphx::classes::isLight TO WORK
+		inline const gClass LIGHT            ( "Light",              -1, &createNewActor<LightDirectional> );
+		inline const gClass LIGHTDIRECTIONAL ( "LightDirectional",   -2, &createNewActor<LightSpot>        );
+		inline const gClass LIGHTSPOT        ( "LightSpot",          -3, &createNewActor<LightFlashlight>  );
+		inline const gClass LIGHTFLASHLIGHT  ( "LightFlashlight",    -4, &createNewActor<LightTesterMover> );
+		inline const gClass LIGHTTESTERMOVER ( "LightTesterMover",   -5, &createNewActor<Ramiel>           );
+
+		inline const gClass DEVICE           ( "Device",           1000, &createNewDevice<Device>          );
+		inline const gClass ENVIRONMENT      ( "Environment",      1001, &createNewDevice<Environment>     );
+		inline const gClass MATERIAL         ( "Material",         1002, &createNewDevice<Material>        );
+		inline const gClass MESH             ( "Mesh",             1003, &createNewDevice<Mesh>            );
+		inline const gClass SPRITE           ( "Sprite",           1004, &createNewDevice<Sprite>          );
+		inline const gClass COLLIDER         ( "Collider",         1005, &createNewDevice<Collider>        );
+		inline const gClass TEXTURE          ( "Texture",          1006, &createNewDevice<Texture>         );
 
 		// Feel free to expand these limits if needed; just remember to update the above values accordingly
-		static constexpr int ACTOR_ID_LIMIT    = 999;
-		static constexpr int DEVICE_ID_LIMIT   = 1999;
+		inline const int ACTOR_ID_LIMIT    = 999;
+		inline const int DEVICE_ID_LIMIT   = 1999;
 
-		// Don't forget to add new classes to this map after giving them an ID!
-		static inline const std::map<std::string, int> classnames =
+		inline std::map<gClass, Actor*(*)()> actor_map =
 		{
-			{ "Theatre",          THEATRE          },
-
-			{ "Actor",            ACTOR            },
-			{ "PhysicsActor",     PHYSICSACTOR     },
-			{ "StaticBodyActor",  STATICBODYACTOR  },
-			{ "RigidBodyActor",   RIGIDBODYACTOR   },
-			{ "Camera",           CAMERA           },
-			{ "GraphXPlayer",     GRAPHXPLAYER     },
-			{ "Ramiel",           RAMIEL           },
-			{ "Light",            LIGHT            },
-			{ "LightDirectional", LIGHTDIRECTIONAL },
-			{ "LightSpot",        LIGHTSPOT        },
-			{ "LightFlashlight",  LIGHTFLASHLIGHT  },
-			{ "LightTesterMover", LIGHTTESTERMOVER },
-
-			{ "Device",           DEVICE           },
-			{ "Environment",      ENVIRONMENT      },
-			{ "Material",         MATERIAL         },
-			{ "Mesh",             MESH             },
-			{ "Sprite",           SPRITE           },
-			{ "Collider",         COLLIDER         },
-			{ "Texture",          TEXTURE          },
+			{ ACTOR,            &createNewActor<Actor>            },
+			{ PHYSICSACTOR,     &createNewActor<PhysicsActor>     },
+			{ RIGIDBODYACTOR,   &createNewActor<RigidBodyActor>   },
+			{ STATICBODYACTOR,  &createNewActor<StaticBodyActor>  },
+			{ CAMERA,           &createNewActor<Camera>           },
+			{ GRAPHXPLAYER,     &createNewActor<GraphXPlayer>     },
+			{ LIGHT,            &createNewActor<Light>            },
+			{ LIGHTDIRECTIONAL, &createNewActor<LightDirectional> },
+			{ LIGHTSPOT,        &createNewActor<LightSpot>        },
+			{ LIGHTFLASHLIGHT,  &createNewActor<LightFlashlight>  },
+			{ LIGHTTESTERMOVER, &createNewActor<LightTesterMover> },
+			{ RAMIEL,           &createNewActor<Ramiel>           },
 		};
 
-		static inline constexpr int getBaseType(int type) noexcept
+		inline std::map<gClass, Device*(*)()> device_map =
 		{
-			type = std::abs(type);
+			{ ENVIRONMENT,      &createNewDevice<Environment> },
+			{ MATERIAL,         &createNewDevice<Material>    },
+			{ MESH,             &createNewDevice<Mesh>        },
+			{ SPRITE,           &createNewDevice<Sprite>      },
+			{ COLLIDER,         &createNewDevice<Collider>    },
+		};
 
-			if(type == THEATRE)
-				return THEATRE;
-
+		inline const gClass getBaseType(gClass type) noexcept
+		{
 			if(type <= ACTOR_ID_LIMIT && type >= ACTOR)
 				return ACTOR;
 
@@ -108,7 +165,7 @@ namespace graphx
 			return INVALID_TYPE;
 		}
 
-		static inline constexpr bool isLight(int type) noexcept
+		inline const bool isLight(gClass type) noexcept
 		{
 			if(type == INVALID_TYPE || getBaseType(type) != ACTOR)
 				return false;
@@ -120,28 +177,30 @@ namespace graphx
 		}
 	};
 
-	typedef std::map<int, std::pair<std::string, std::string>> gObjectStore;
-	typedef std::multimap<int, std::pair<std::string, std::string>> gSourceRefStore;
-	typedef std::multimap<int, std::pair<std::string, int>> gTheatreRefStore;
-	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
-	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
-	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
-	typedef std::pair<int, std::string> gSandwichPair;
-	typedef std::vector<std::string> gRawData;
+	namespace error
+	{
+		namespace rendercmd
+		{
+			inline constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
+			inline constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
+			inline constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
+			inline constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
 
-	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only
-	// and shouldn't be used by anything else (except for Theatre::graphx_theatre_settings)
-	typedef std::string gKey;
-	typedef std::pair<int, std::string> gValue;
-	typedef std::pair<gKey, gValue> gStringSetting;
-	typedef std::vector<std::vector<gStringSetting>> gStringSettings;
+		};
+	};
 
-	// The int in gSetting identifies the type (found in t_common.hpp); the four types are:
-	// 1: RAW_DATA (a vector of strings, using the typedef "gRawData")
-	// 2: CPP_REFERENCE (see "cpp_definitions" in "t_interpreter.cpp")
-	// 3: THEATRE_REFERENCE (a pointer to a pre-existing Actor/Device in the current Theatre)
-	// 4: EXTERNAL_REFERENCE (an external file's pathname, passed via string)
-	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
+	namespace identifiers
+	{
+		namespace primitive
+		{
+			inline constexpr int FOO      = -1;
+			inline constexpr int LINE     =  0;
+			inline constexpr int TRIANGLE =  1;
+			inline constexpr int TEXT     = -1; //< Text not supported yet!
+		};
+	};
+
+	/// The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`.
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;
 }

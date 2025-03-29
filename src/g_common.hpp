@@ -32,12 +32,6 @@ public:
 	glm::vec3 orientation_right;
 	glm::vec3 world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	// RenderState current_state;
-	// RenderState current_state_copy;
-
-	// RenderState previous_state;
-	// RenderState previous_state_copy;
-
 	std::vector<RenderState> current_state_buffer;
 	std::vector<RenderState> previous_state_buffer;
 
@@ -58,17 +52,7 @@ public:
 
 	long getUID();
 	void setUID(long manual_uid);
-/*	bool isType(int class_type);
-	bool isType(std::initializer_list<int> const &class_types);
-	// I have to define this in the header file, unfortunately
-	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types)
-	{
-		for(int type : class_types)
-			if(my_type == type)
-				return true;
-		return false;
-	}*/
-	long getType();
+	graphx::gClass &getType();
 	void setName(std::string new_name);
 	void setName(char *new_name);
 	std::string getName();
@@ -85,7 +69,7 @@ public:
 	virtual bool wantsToBeRendered();
 
 protected:
-	int my_type;
+	graphx::gClass my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	std::string name = "Untitled Actor";
 	glm::vec3 position_global = glm::vec3(0.0f);
@@ -117,7 +101,8 @@ struct Theatre
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 
-	graphx::gStringSettings graphx_theatre_settings;
+	// This abomination is what a "gStringSettings" typedef actually is...
+	std::vector<std::vector<std::pair<std::string, std::pair<int, std::string>>>> graphx_theatre_settings;
 	std::string theatre_file_data_printout = "";
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
@@ -142,8 +127,8 @@ struct Theatre
 	void removeDevice(Device *old_device);
 	void removeDevice(long uid);
 
-	void createActor(int actor_type, long uid, graphx::gSettings new_settings = empty_settings);
-	void createDevice(int device_type, long uid, graphx::gSettings new_settings  = empty_settings);
+	void createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings = empty_settings);
+	void createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings  = empty_settings);
 
 	glm::vec3 getSwapColor();
 
@@ -177,7 +162,7 @@ private:
 };
 
 extern Theatre current_theatre;
-extern std::map<int, Actor*(*)()> actor_map;
+// extern std::map<int, Actor*(*)()> actor_map;
 
 // Use with CAUTION!!
 // Wants to return static_cast<T>(current_theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
@@ -200,10 +185,7 @@ template<typename T> T iKnowWhatDeviceIWant(auto identifier)
 	return static_cast<T>(current_theatre.getDevice(identifier));
 }
 
-template<typename T> Actor *createNewActor()
-{
-	return new T;
-}
+// template<typename T> Actor *createNewActor() { return new T; }
 
 Theatre *getCurrentTheatre(bool print_note = true);
 Environment *getCurrentEnvironment();

@@ -1937,3 +1937,26 @@ Almost done; finish up the shitty little hard coded function later.
 At work; time to finish the shitty little hard coded function, lmfao.
 
 Fucking... had some bugs and just found out it's the fucking texture filter mode for the skybox cubemap LMFAOOOO.
+
+[03/28/25]
+Aight, I wanna clean up and de-shit-ify the skybox code and try to slim down the whole process for adding new resources and classes to the engine code. I also wanna maybe create interfaces for certain things like MeshData and Texture that are a little more... organized. I might fucking bite the bullet and create a renderer class. Maybe. I still don't like it, though. Honestly, no, I really don't wanna do that. The renderer should (in my opinion) be a solid, tangible set of functions and not an abstracted class that needs to be "created" and "instantiated". All a renderer really does is send information to the GPU in a loop. That's something that not only doesn't need to be in a class but honestly (in my opinion) should be handled by a function that could never be accidentally deleted or created in too local of a scope or whatever. Aight, rant over, you can all return to your desks.
+
+Oh, and mental note: don't forget to take another crack at the Jolt debug renderer shit again.
+
+I'm thinking of taking all the code that needs to be modified to add a new class/resource to the engine and putting it in its own file.
+
+Actually, I think I'll make them a part of the graphx namespace (or at least in the file).
+
+Aight, I got a bit carried away and started cleaning up the namespace and interpreter files. They needed a good dusting, tbh. Considering moving "cpp_definitions" into the namespace file since that's another map you need to be aware of, even if it is just for the graphxtheatre files.
+
+I keep getting distracted with making documentation and comments... fucking hell.
+
+Spotted a super crazy hidden bug in `g_theatres.cpp` in `Theatre::countLights()`:
+This line would always send "0" to `graphx::classes::isLight`:
+:::C++
+if(graphx::classes::isLight(!actor->getType()))
+:::
+It should be like this instead:
+:::C++
+if(!graphx::classes::isLight(actor->getType()))
+:::

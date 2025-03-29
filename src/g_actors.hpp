@@ -108,13 +108,13 @@ public:
 	Light(std::string init_name = "UNTITLED LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f));
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	bool isLightType(int light_type);
-	int getLightType();
+	bool isLightType(graphx::gClass light_type);
+	graphx::gClass getLightType();
 
 	virtual LightData getLightData();
 
 protected:
-	int my_light_type;
+	graphx::gClass my_light_type;
 };
 
 class LightDirectional: public Light

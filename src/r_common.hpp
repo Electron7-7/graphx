@@ -1,4 +1,4 @@
-// r_common.hpp - rendering declarations
+// r_common.hpp - rendering
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "graphx_namespace.hpp"
@@ -32,11 +32,6 @@
 #define SHADER_PHONG		1
 
 
-// Le secret dev texture
-#define DOOM_TEXTURE_DIFF   COMP04_5_png
-#define DOOM_TEXTURE_SPEC   COMP04_5_SPECULAR_jpg
-
-
 #define VAOS_AMOUNT			2
 //---------------------------
 #define VAO_DEFAULT         0
@@ -61,7 +56,7 @@ struct Device
 	Device();
 	virtual ~Device() = default;
 
-	long getType();
+	graphx::gClass &getType();
 	void setName(std::string new_name);
 	void setName(char *new_name);
 	std::string getName();
@@ -75,7 +70,7 @@ struct Device
 	std::string name = "Untitled Device";
 
 protected:
-	int my_type;
+	graphx::gClass my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	bool ready_to_destroy = false;
 };
@@ -133,16 +128,10 @@ struct Material final : public Device
 
 struct MeshData
 {
-	// Variables for new buffer format
 	unsigned int base_vertex = -1;
 	unsigned int base_index = -1;
-	// long indices_count = 0; // Use the function
-	std::string debug_name = "";
-
+	std::string debug_name = ""; // Debugging variable; remove later (watch me forget this)
 	bool is_in_use = false;
-	int VAO_index = VAO_DEFAULT;
-	unsigned int VBO;
-	unsigned int IBO;
 
 	std::vector<glm::vec3> vertex_positions;
 	std::vector<glm::vec3> vertex_normals;
@@ -154,25 +143,24 @@ struct MeshData
 	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::uintvec3> init_indices = {});
 	MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {}, std::vector<float> init_uvs = {}, std::vector<float> init_colors = {}, std::vector<unsigned int> init_indices = {});
 
-	// This implementation of MeshData::addVertex assumes that the floats contained in the "vertex" argument are in this order:
+	// This implementation of `MeshData::addVertex` assumes that the floats contained in `vertex` are in this order:
 	//
-	//     vertex[0-2] : position (X, Y, Z)
+	//   `vertex[0-2]`  - position - (X, Y, Z)
 	//
-	//     vertex[3-5] : normal   (X, Y, X)
+	//   `vertex[3-5]`  - normal   - (X, Y, X)
 	//
-	//     vertex[6-7] : uv       (X, Y)
+	//   `vertex[6-7]`  - uv       - (X, Y)
 	//
-	//     vertex[8-10]: color    (R, G, B)
+	//   `vertex[8-10]` - color    - (R, G, B)
 	void addVertex(std::vector<float> vertex);
 	void addVertex(glm::vec3 position, glm::vec3 normal = glm::vec3(0.0f), glm::vec2 uv = glm::vec2(0.0f), glm::vec3 color = glm::vec3(1.0f));
 	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
 	void addIndex(gmath::uintvec3 indices);
 	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
 	void fixOBJData();
-	void fillVertices();
-	void fillIndices();
 	const std::vector<float> vertices();
 	const std::vector<unsigned int> indices();
+	// Simple functions to abstract simple math that I always fuck up (I still end up using the wrong function, anyways)
 	size_t vertices_count();
 	size_t vertices_size();
 	size_t indices_count();
@@ -215,7 +203,7 @@ public:
 	LightData *light_data = nullptr;
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
-	int light_type = graphx::classes::LIGHT;
+	graphx::gClass light_type = graphx::classes::LIGHT;
 
 	bool renderDebugMesh();
 };
@@ -258,7 +246,6 @@ struct PrimitiveRenderCmd
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
 };
 
-// Variables found in r_renderer.cpp
 extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
 extern std::vector<GLShader *> shaders; // Same for shaders
 extern std::map<std::string, MeshData> mesh_data_storage;
@@ -278,10 +265,6 @@ extern bool jolt_debug_render;
 extern bool lighting_switch_diffuse;
 extern bool lighting_switch_specular;
 extern bool lighting_switch_ambient;
-// Variables found in r_common.cpp
-extern std::map<int, Device*(*)()> device_map;
-
-template<typename T> Device *createNewDevice() { return new T; }
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));

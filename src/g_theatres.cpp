@@ -1,3 +1,4 @@
+#include "graphx_namespace.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
@@ -103,18 +104,14 @@ void Theatre::probeActorsForRenderCommands()
 
             light_render_command.light_type = static_cast<Light *>(pair.second)->getLightType();
 
-            switch(light_render_command.light_type)
-            {
-            case graphx::classes::LIGHT:
+            if(light_render_command.light_type == graphx::classes::LIGHT)
                 light_render_command.light_data = new LightData(static_cast<Light *>(pair.second)->getLightData());
-                break;
-            case graphx::classes::LIGHTSPOT:
+
+            else if(light_render_command.light_type == graphx::classes::LIGHTSPOT)
                 light_render_command.light_data = new LightData(static_cast<LightSpot *>(pair.second)->getLightData());
-                break;
-            case graphx::classes::LIGHTDIRECTIONAL:
+
+            else if(light_render_command.light_type == graphx::classes::LIGHTDIRECTIONAL)
                 light_render_command.light_data = new LightData(static_cast<LightDirectional *>(pair.second)->getLightData());
-                break;
-            }
 
             R_BufferRenderCmd(light_render_command);
             continue;
@@ -248,10 +245,10 @@ std::string getSettingName(graphx::gSetting setting)
 
         return "Unknown Theatre Reference setting";
     case RAW_DATA:
-        if(setting.second.type() == typeid(graphx::gRawData))
+        if(setting.second.type() == typeid(graphx::interpreter::gRawData))
         {
             std::string buffer = "";
-            graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(setting.second);
+            graphx::interpreter::gRawData raw_data = std::any_cast<graphx::interpreter::gRawData>(setting.second);
             for(int i = 0 ; i < raw_data.size() ; i++)
             {
                 buffer += raw_data[i];
@@ -280,73 +277,6 @@ std::string getSettingName(graphx::gSetting setting)
     }
 }
 
-#ifdef GRAPHX_DEBUG
-std::string getTypeName(int type)
-{
-    using namespace graphx::classes;
-    switch(type)
-    {
-        case THEATRE:
-            return std::string("Theatre");
-        case ACTOR:
-            return std::string("Actor");
-        case PHYSICSACTOR:
-            return std::string("PhysicsActor");
-        case STATICBODYACTOR:
-            return std::string("StaticBodyActor");
-        case RIGIDBODYACTOR:
-            return std::string("RigidBodyActor");
-        case CAMERA:
-            return std::string("Camera");
-        case GRAPHXPLAYER:
-            return std::string("GraphXPlayer");
-        case RAMIEL:
-            return std::string("Ramiel");
-        case LIGHT:
-            return std::string("Light");
-        case LIGHTDIRECTIONAL:
-            return std::string("LightDirectional");
-        case LIGHTSPOT:
-            return std::string("LightSpot");
-        case LIGHTFLASHLIGHT:
-            return std::string("LightFlashlight");
-        case LIGHTTESTERMOVER:
-            return std::string("LightTesterMover");
-        case DEVICE:
-            return std::string("Device");
-        case ENVIRONMENT:
-            return std::string("Environment");
-        case MATERIAL:
-            return std::string("Material");
-        case MESH:
-            return std::string("Mesh");
-        case SPRITE:
-            return std::string("Sprite");
-        case COLLIDER:
-            return std::string("Collider");
-        case TEXTURE:
-            return std::string("Texture");
-        default:
-            return std::string("Unknown Type!");
-    }
-}
-#else
-std::string getTypeName(int type)
-{
-    switch(graphx::classes::getBaseType(type))
-    {
-    case ACTOR:
-        return std::string("Actor");
-    case DEVICE:
-        return std::string("Device");
-    case THEATRE:
-        return std::string("Theatre");
-    default:
-        return std::string("Unknown/Invalid Class!");
-    }
-}
-#endif
-
 std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
 {
     std::string buffer = "";
@@ -356,7 +286,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
     {
         for(auto &pair : objects)
         {
-            buffer += getTypeName(pair.second->getType()) + " \"" + pair.second->getName() + "\"";
+            buffer += pair.second->getType().name() + " \"" + pair.second->getName() + "\"";
             buffer += uid_string + std::to_string(pair.second->getUID());
             for(auto &setting : pair.second->settings)
             {
@@ -372,7 +302,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
     {
         for(auto &pair : devices)
         {
-            buffer += getTypeName(pair.second->getType()) + " \"" + pair.second->getName() + "\"";
+            buffer += pair.second->getType().name() + " \"" + pair.second->getName() + "\"";
             buffer += uid_string + std::to_string(pair.second->getUID());
             for(auto &setting : pair.second->settings)
             {
@@ -475,7 +405,7 @@ void Theatre::refreshTroupe()
     countLights();
 }
 
-void Theatre::createActor(int actor_type, long uid, graphx::gSettings new_settings)
+void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings)
 {
     if(objects.contains(uid))
     {
@@ -486,7 +416,7 @@ void Theatre::createActor(int actor_type, long uid, graphx::gSettings new_settin
     if(actor_type == graphx::classes::GRAPHXPLAYER)
         player_uid = uid;
 
-    objects[uid] = actor_map[actor_type]();
+    objects[uid] = graphx::classes::actor_map[actor_type]();
     objects.at(uid)->setUID(uid);
     objects.at(uid)->youGotACallBack(new_settings);
 
@@ -501,7 +431,7 @@ void Theatre::createActor(int actor_type, long uid, graphx::gSettings new_settin
     time_to_store_buffers = time_to_render;
 }
 
-void Theatre::createDevice(int device_type, long uid, graphx::gSettings new_settings)
+void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings)
 {
     if(devices.contains(uid))
     {
@@ -512,7 +442,7 @@ void Theatre::createDevice(int device_type, long uid, graphx::gSettings new_sett
     if(device_type == graphx::classes::ENVIRONMENT)
         environment_uid = uid;
 
-    devices[uid] = device_map[device_type]();
+    devices[uid] = graphx::classes::device_map[device_type]();
     devices.at(uid)->setUID(uid);
     devices.at(uid)->loadSettings(new_settings);
 }
@@ -793,7 +723,7 @@ void Theatre::countLights()
 {
     for(Actor *actor : troupe)
     {
-        if(graphx::classes::isLight(!actor->getType()))
+        if(!graphx::classes::isLight(actor->getType())) // Keep an eye on this... (see notes @ [03/28/25])
             continue;
 
         if(static_cast<Light *>(actor)->isLightType(graphx::classes::LIGHTSPOT))
