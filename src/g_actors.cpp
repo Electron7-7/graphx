@@ -1,8 +1,9 @@
 #include "g_actors.hpp"
+#include "graphx_classes_namespace.hpp"
+#include <gmath.hpp>
 #include <models.hpp>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
-#include <gmath.hpp>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 

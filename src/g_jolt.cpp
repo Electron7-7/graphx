@@ -1,5 +1,6 @@
 #include "g_jolt.hpp"
 #include "t_settings.hpp"
+#include "graphx_classes_namespace.hpp"
 #include <gmath.hpp>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSettings.h>

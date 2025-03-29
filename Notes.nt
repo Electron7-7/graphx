@@ -1960,3 +1960,6 @@ It should be like this instead:
 :::C++
 if(!graphx::classes::isLight(actor->getType()))
 :::
+
+[03/29/25]
+Finished up my code; I'm getting a weird error with graphx::gClass, but it shouldn't be too hard to solve.

@@ -4,8 +4,8 @@
 #include "sanity.hpp"
 // #include "r_common.hpp"
 // #include "g_common.hpp"
-#include "graphx_function_templates_soup.tpp" // Yeah, yeah, clang-tidy throws a fit, but DONT REMOVE THIS
 #include "graphx_namespace.hpp"
+#include "graphx_classes_namespace.hpp"
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"

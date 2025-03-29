@@ -1,4 +1,4 @@
-#include "graphx_namespace.hpp"
+#include "graphx_classes_namespace.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
@@ -416,7 +416,7 @@ void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings
     if(actor_type == graphx::classes::GRAPHXPLAYER)
         player_uid = uid;
 
-    objects[uid] = graphx::classes::actor_map[actor_type]();
+    objects[uid] = graphx::gClass::getClassType(actor_type).create_new_actor();
     objects.at(uid)->setUID(uid);
     objects.at(uid)->youGotACallBack(new_settings);
 
@@ -442,7 +442,7 @@ void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettin
     if(device_type == graphx::classes::ENVIRONMENT)
         environment_uid = uid;
 
-    devices[uid] = graphx::classes::device_map[device_type]();
+    devices[uid] = graphx::gClass::getClassType(device_type).create_new_device();
     devices.at(uid)->setUID(uid);
     devices.at(uid)->loadSettings(new_settings);
 }

@@ -1,6 +1,6 @@
 #include "t_common.hpp"
 #include "sanity.hpp"
-#include "graphx_namespace.hpp"
+#include "graphx_classes_namespace.hpp"
 #include "g_jolt.hpp"
 #include "g_common.hpp"
 #include "r_common.hpp"
@@ -532,14 +532,14 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 
 	if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
 	{
-		Actor *sandwich_bun = actor_map[class_hash]();
+		Actor *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_actor();
 		sandwich_bun->youGotACallBack(sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
 	else if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::DEVICE)
 	{
-		Device *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).createActor;
+		Device *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_device();
 		sandwich_bun->loadSettings(sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
@@ -592,11 +592,9 @@ Theatre loadTheatre(long theatre_uid)
 			}
 		}
 
-		int class_hash = getClassHash(theatre_settings[i][0].first);
-
-		if(graphx::classes::getBaseType(class_hash) == graphx::classes::ACTOR)
+		if(graphx::classes::getBaseType(theatre_settings[i][0].first) == graphx::classes::ACTOR)
 		{
-			new_theatre.createActor(class_hash, i, current_object_settings);
+			new_theatre.createActor(theatre_settings[i][0].first, i, current_object_settings);
 			continue;
 		}
 
@@ -609,7 +607,7 @@ Theatre loadTheatre(long theatre_uid)
 			continue;
 		}
 
-		new_theatre.createDevice(class_hash, i, current_object_settings);
+		new_theatre.createDevice(theatre_settings[i][0].first, i, current_object_settings);
 	}
 
 	return new_theatre;

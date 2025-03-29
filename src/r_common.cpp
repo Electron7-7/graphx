@@ -1,5 +1,6 @@
 #include "r_common.hpp"
 #include "sanity.hpp"
+#include "graphx_classes_namespace.hpp"
 #include <gmath.hpp>
 #include <glm/gtx/component_wise.hpp>
 

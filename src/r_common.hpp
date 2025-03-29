@@ -203,7 +203,7 @@ public:
 	LightData *light_data = nullptr;
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
-	graphx::gClass light_type = graphx::classes::LIGHT;
+	graphx::gClass light_type;
 
 	bool renderDebugMesh();
 };
@@ -283,4 +283,6 @@ void        R_InitializeRenderingAPI();
 std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);
+
+template<typename T> Device *createNewDevice() { return new T; }
 #endif

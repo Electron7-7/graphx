@@ -3,7 +3,7 @@
 #include "g_actors.hpp"
 #include "sanity.hpp"
 #include "t_common.hpp"
-#include "graphx_namespace.hpp"
+#include "graphx_classes_namespace.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT
