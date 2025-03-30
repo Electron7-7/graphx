@@ -36,7 +36,7 @@ namespace graphx
 		inline const int ACTOR_ID_LIMIT    = 999;
 		inline const int DEVICE_ID_LIMIT   = 1999;
 
-		inline const gClass getBaseType(gClass type) noexcept
+		inline const gClass &getBaseType(const gClass &type) noexcept
 		{
 			if(type <= ACTOR_ID_LIMIT && type >= ACTOR)
 				return ACTOR;
@@ -47,7 +47,7 @@ namespace graphx
 			return INVALID_TYPE;
 		}
 
-		inline const bool isLight(gClass type) noexcept
+		inline const bool isLight(const gClass &type) noexcept
 		{
 			if(type == INVALID_TYPE || getBaseType(type) != ACTOR)
 				return false;

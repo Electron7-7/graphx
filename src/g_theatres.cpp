@@ -180,7 +180,7 @@ void Theatre::dropCurtains()
     troupe.clear();
 }
 
-std::vector<Actor *> Theatre::getAllActorsOfType(int type_name)
+std::vector<Actor *> Theatre::getAllActorsOfType(graphx::gClass type_name)
 {
     std::vector<Actor *> found_actors;
 
@@ -191,7 +191,7 @@ std::vector<Actor *> Theatre::getAllActorsOfType(int type_name)
     return found_actors;
 }
 
-std::vector<Device *> Theatre::getAllDevicesOfType(int type_name)
+std::vector<Device *> Theatre::getAllDevicesOfType(graphx::gClass type_name)
 {
     std::vector<Device *> found_devices;
 
@@ -286,7 +286,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
     {
         for(auto &pair : objects)
         {
-            buffer += pair.second->getType().name() + " \"" + pair.second->getName() + "\"";
+            buffer += pair.second->getType().name + " \"" + pair.second->getName() + "\"";
             buffer += uid_string + std::to_string(pair.second->getUID());
             for(auto &setting : pair.second->settings)
             {
@@ -302,7 +302,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
     {
         for(auto &pair : devices)
         {
-            buffer += pair.second->getType().name() + " \"" + pair.second->getName() + "\"";
+            buffer += pair.second->getType().name + " \"" + pair.second->getName() + "\"";
             buffer += uid_string + std::to_string(pair.second->getUID());
             for(auto &setting : pair.second->settings)
             {
@@ -329,12 +329,11 @@ void Theatre::setUID(long new_uid)
     UID = new_uid;
 }
 
-Actor *Theatre::getFirstActorOfType(int type_name)
+Actor *Theatre::getFirstActorOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::ACTOR)
     {
         PRINTERR("Theatre::getFirstActorOfType - Supplied type is not derived from Actor! Returning nullptr!")
-        // return new Actor();
         return nullptr;
     }
 
@@ -342,57 +341,51 @@ Actor *Theatre::getFirstActorOfType(int type_name)
         if(pair.second->getType() == type_name)
             return pair.second;
 
-    PRINTERR("Theatre::getFirstActorOfType could not find an Actor of type id: " << type_name << "! This function will return a nullptr!")
-    // return new Actor();
+    PRINTERR("Theatre::getFirstActorOfType could not find an Actor of type: " << type_name.name << "! This function will return a nullptr!")
     return nullptr;
 }
 
-Device *Theatre::getFirstDeviceOfType(int type_name)
+Device *Theatre::getFirstDeviceOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::DEVICE)
     {
         PRINTERR("Theatre::getFirstDeviceOfType - Supplied type is not derived from Device! Returning nullptr!")
-        // return new Device();
         return nullptr;
     }
 
     for(auto &pair : devices)
         if(pair.second->getType() == type_name)
             return pair.second;
-    PRINTERR("Theatre::getFirstDeviceOfType could not find a Device of type id: " << type_name << "! This function will return a nullptr!")
-    // return new Device();
+
+    PRINTERR("Theatre::getFirstDeviceOfType could not find a Device of type: " << type_name.name << "! This function will return a nullptr!")
     return nullptr;
 }
 
-Actor *Theatre::unsafeGetFirstActorOfType(int type_name)
+Actor *Theatre::unsafeGetFirstActorOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::ACTOR)
     {
         PRINTDEBUG("Theatre::getFirstActorOfType - Supplied type is not derived from Actor! Returning nullptr!")
-        // return new Actor();
         return nullptr;
     }
 
     for(auto &pair : objects)
         if(pair.second->getType() == type_name)
             return pair.second;
-
     return nullptr;
 }
 
-Device *Theatre::unsafeGetFirstDeviceOfType(int type_name)
+Device *Theatre::unsafeGetFirstDeviceOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::DEVICE)
     {
         PRINTDEBUG("Theatre::getFirstDeviceOfType - Supplied type is not derived from Device! Returning nullptr!")
-        // return new Device();
         return nullptr;
     }
 
     for(auto &pair : devices)
         if(pair.second->getType() == type_name)
             return pair.second;
-
     return nullptr;
 }
 

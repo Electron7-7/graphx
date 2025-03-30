@@ -1,5 +1,5 @@
-#ifndef GRAPHX_NAMESPACE
-#define GRAPHX_NAMESPACE
+#ifndef GRAPHXnameSPACE
+#define GRAPHXnameSPACE
 #include "g_common_fwd.hpp"
 #include "r_common_fwd.hpp"
 #include <set>
@@ -15,54 +15,86 @@ namespace graphx
 	private:
 		inline static std::set<gClass> valid_classes; // This could probably be a `std::array`, but I'd rather not think about the overhead...
 		static constexpr int INVALID_TYPE_ID = -481516;
-		int _id = INVALID_TYPE_ID; // `_id` is usually more important than `_name`... usually...
-		const char *_name = "INVALID_TYPE"; // `name` is only used by the interpreter (and for debugging)
 		inline void updateValidClasses()
 		{
-			if(_id == INVALID_TYPE_ID) // This is an invalid class
+			if(id == INVALID_TYPE_ID) // This is an invalid class
 				return;
 			if(valid_classes.contains(*this)) // This is already a valid class
 				return;
 			valid_classes.insert(*this); // Add this gClass to the list
 		}
 	public:
-		inline gClass() = default;
-		inline gClass(std::string init_name, int init_id, Actor*(*new_actor_function)())   : _id(init_id), _name(init_name.c_str()), create_new_actor(new_actor_function)   {}
-		inline gClass(std::string init_name, int init_id, Device*(*new_device_function)()) : _id(init_id), _name(init_name.c_str()), create_new_device(new_device_function) {}
+		int id = INVALID_TYPE_ID; // `id` is usually more important than `name`... usually...
+		std::string name = "INVALID_TYPE"; // `name` is only used by the interpreter (and for debugging)
 
-		inline gClass(std::string init_name) : _name(const_cast<char *>(init_name.c_str()))
+		inline gClass() = default;
+		inline gClass(std::string init_name, int init_id, Actor*(*new_actor_function)())   : id(init_id), name(init_name), create_new_actor(new_actor_function)   {}
+		inline gClass(std::string init_name, int init_id, Device*(*new_device_function)()) : id(init_id), name(init_name), create_new_device(new_device_function) {}
+
+		inline gClass(const gClass &to_copy)
+		{
+			if(valid_classes.contains(to_copy))
+			{
+				name = valid_classes.find(to_copy)->name;
+				id = valid_classes.find(to_copy)->id;
+				create_new_actor = valid_classes.find(to_copy)->create_new_actor;
+				create_new_device = valid_classes.find(to_copy)->create_new_device;
+			}
+			else
+			{
+				id = INVALID_TYPE_ID;
+				name = "INVALID_TYPE";
+				create_new_actor = nullptr;
+				create_new_device = nullptr;
+			}
+		}
+
+		inline gClass(std::string init_name)
 		{
 			if(valid_classes.contains(init_name))
 			{
-				_id = valid_classes.find(init_name)->_id;
+				name = init_name;
+				id = valid_classes.find(init_name)->id;
 				create_new_actor = valid_classes.find(init_name)->create_new_actor;
 				create_new_device = valid_classes.find(init_name)->create_new_device;
 			}
-		}
-		inline gClass(int init_id) : _id(init_id)
-		{
-			if(valid_classes.contains(init_id))
+			else
 			{
-				_name = valid_classes.find(init_id)->_name;
-				create_new_actor = valid_classes.find(init_id)->create_new_actor;
-				create_new_device = valid_classes.find(init_id)->create_new_device;
+				id = INVALID_TYPE_ID;
+				name = "INVALID_TYPE";
+				create_new_actor = nullptr;
+				create_new_device = nullptr;
 			}
 		}
 
-		inline const int id() const { return _id; }
-		inline const std::string name() const { return const_cast<char *>(_name); }
+		inline gClass(int init_id)
+		{
+			if(valid_classes.contains(init_id))
+			{
+				id = init_id;
+				name = valid_classes.find(init_id)->name;
+				create_new_actor = valid_classes.find(init_id)->create_new_actor;
+				create_new_device = valid_classes.find(init_id)->create_new_device;
+			}
+			else
+			{
+				id = INVALID_TYPE_ID;
+				name = "INVALID_TYPE";
+				create_new_actor = nullptr;
+				create_new_device = nullptr;
+			}
+		}
+
 		inline static bool isValidClass(gClass type)
 		{
-			if(type != INVALID_TYPE_ID)
-				return valid_classes.contains(type);
-			return false;
+			return valid_classes.contains(type);
 		}
+
 		inline static const gClass &getClassType(gClass type)
 		{
-			if(valid_classes.contains(type))
-				return *valid_classes.find(type);
-			else
+			if(!valid_classes.contains(type))
 				return *valid_classes.find(INVALID_TYPE_ID);
+			return *valid_classes.find(type);
 		}
 
 		Actor *(*create_new_actor)() = nullptr;
@@ -71,42 +103,42 @@ namespace graphx
 		// Overloading Comparison Operators
 		//---------------------------------
 		// 1: Comparing gClass to gClass
-		inline const bool operator==(const gClass &compare_against) const { return (_id == compare_against.id()); }
+		inline const bool operator==(const gClass &compare_against) const { return (id == compare_against.id); }
 		inline const bool operator!=(const gClass &compare_against) const { return !(*this == compare_against);       }
-		inline const bool operator< (const gClass &compare_against) const { return (_id < compare_against.id());  }
-		inline const bool operator> (const gClass &compare_against) const { return (_id > compare_against.id());  }
+		inline const bool operator< (const gClass &compare_against) const { return (id < compare_against.id);  }
+		inline const bool operator> (const gClass &compare_against) const { return (id > compare_against.id);  }
 		inline const bool operator<=(const gClass &compare_against) const { return !(*this > compare_against);        }
 		inline const bool operator>=(const gClass &compare_against) const { return !(*this < compare_against);        }
 		// 2: Comparing gClass to int
-		inline const bool operator==(const int &compare_against) const { return (_id == compare_against);  }
+		inline const bool operator==(const int &compare_against) const { return (id == compare_against);  }
 		inline const bool operator!=(const int &compare_against) const { return !(*this == compare_against); }
-		inline const bool operator< (const int &compare_against) const { return (_id < compare_against);   }
-		inline const bool operator> (const int &compare_against) const { return (_id > compare_against);   }
+		inline const bool operator< (const int &compare_against) const { return (id < compare_against);   }
+		inline const bool operator> (const int &compare_against) const { return (id > compare_against);   }
 		inline const bool operator<=(const int &compare_against) const { return !(*this > compare_against);  }
 		inline const bool operator>=(const int &compare_against) const { return !(*this < compare_against);  }
 		// 4: Comparing gClass to std::string
-		inline const bool operator==(const std::string &compare_against) const { return (_name == compare_against);  }
+		inline const bool operator==(const std::string &compare_against) const { return (name == compare_against);  }
 		inline const bool operator!=(const std::string &compare_against) const { return !(*this == compare_against); }
-		inline const bool operator< (const std::string &compare_against) const { return (_name < compare_against);   }
-		inline const bool operator> (const std::string &compare_against) const { return (_name > compare_against);   }
+		inline const bool operator< (const std::string &compare_against) const { return (name < compare_against);   }
+		inline const bool operator> (const std::string &compare_against) const { return (name > compare_against);   }
 		inline const bool operator<=(const std::string &compare_against) const { return !(*this > compare_against);  }
 		inline const bool operator>=(const std::string &compare_against) const { return !(*this < compare_against);  }
 
 		// Overloading Conversion Operators
 		//---------------------------------
 		// 1: Conversion from gClass to int
-		inline constexpr operator int() const { return _id; }
+		// inline constexpr operator int() const { return id; }
 		// 2: Conversion from gClass to long
-		inline constexpr operator long() const { return static_cast<long>(_id); }
+		// inline constexpr operator long() const { return static_cast<long>(id); }
 		// 3: Conversion from gClass to std::string
-		inline constexpr operator std::string() const { return static_cast<std::string>(_name); }
+		// inline constexpr operator std::string() const { return name; }
 	};
 
 	namespace error
 	{
 		namespace rendercmd
 		{
-			inline constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
+			inline constexpr int MISSING_VBOname           = 1 << 0; // 1
 			inline constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
 			inline constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
 			inline constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8

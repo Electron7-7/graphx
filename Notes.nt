@@ -1963,3 +1963,14 @@ if(!graphx::classes::isLight(actor->getType()))
 
 [03/29/25]
 Finished up my code; I'm getting a weird error with graphx::gClass, but it shouldn't be too hard to solve.
+
+Oh my god, I think I have a fucking stack overflow... the funny...
+
+It's a function in the interpreter that calls graphx::classes::getBaseType. I think that bc graphx::classes::getBaseType has a gClass argument and is given a string instead, my code is fucked up and throws itself into a fucking infinite loop...
+
+[03/30/25]
+Found where the segmentation fault is happening; it's in `graphx::gClass(std::string init_name)` right here:
+:::C++
+if(valid_classes.contains(init_name))
+:::
+I'm pretty sure that any time `valid_classes` is iterated on or otherwise interacted with (i.e: `.contains` in this case), one of the operations in std::set (I'm assuming a constructor or destructor) starts an infinite loop of graphx::gClass constructors.

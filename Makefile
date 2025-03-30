@@ -83,12 +83,9 @@ MODELS_H = $(SRC)/include/models.hpp
 MDLS = $(wildcard $(M)/*.obj)
 MTLS = $(wildcard $(M)/*.mtl)
 
-PHONY = obj_testing all clean dirty_clean clean_resources clean_theatres embed_resources compile_commands debug release linux windows test build
+PHONY = obj_testing all clean dirty_clean clean_resources clean_theatres embed_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models compile_commands debug release linux windows test build
 
 all: release linux windows
-
-clean: clean_resources embed_resources
-	-rm -f build/*
 
 clean_windows_files:
 	-rm -f build/*.wo
@@ -117,6 +114,9 @@ clean_resources:
 
 embed_resources:
 	-make -s $(IMAGES_C) $(SHADERS_C) $(THEATRES_C) $(MODELS_C)
+
+clean: clean_resources embed_resources
+	-rm -f build/*
 
 rebuild_images:
 	-rm -f $(IMAGES_C) $(IMAGES_H)

@@ -132,15 +132,15 @@ struct Theatre
 
 	glm::vec3 getSwapColor();
 
-	std::vector<Actor *> getAllActorsOfType(int type_name);
-	std::vector<Device *> getAllDevicesOfType(int type_name);
+	std::vector<Actor *> getAllActorsOfType(graphx::gClass type_name);
+	std::vector<Device *> getAllDevicesOfType(graphx::gClass type_name);
 
-	Actor *getFirstActorOfType(int type_name);
-	Device *getFirstDeviceOfType(int type_name);
+	Actor *getFirstActorOfType(graphx::gClass type_name);
+	Device *getFirstDeviceOfType(graphx::gClass type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
-	Actor *unsafeGetFirstActorOfType(int type_name);
+	Actor *unsafeGetFirstActorOfType(graphx::gClass type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO DEVICE MATCHING type_name IS FOUND!!
-	Device *unsafeGetFirstDeviceOfType(int type_name);
+	Device *unsafeGetFirstDeviceOfType(graphx::gClass type_name);
 
 	Actor *getActor(long uid);
 	Actor *getActor(std::string actor_name);
