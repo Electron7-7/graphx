@@ -1974,3 +1974,7 @@ Found where the segmentation fault is happening; it's in `graphx::gClass(std::st
 if(valid_classes.contains(init_name))
 :::
 I'm pretty sure that any time `valid_classes` is iterated on or otherwise interacted with (i.e: `.contains` in this case), one of the operations in std::set (I'm assuming a constructor or destructor) starts an infinite loop of graphx::gClass constructors.
+
+I think it's to do with the conversion operators; `.contains()` expects a reference to an object of the same type as the set contains, but since I pass it either a string or an int, it needs to create a new object using that string or int. Since that constructor is the same one, however, it results in a feedback loop and a stack overflow.
+
+Oh god... is it because I forgot to make sure that the constructors add items to the set??? Is it because the set is empty???? No, that can't be the real reason...

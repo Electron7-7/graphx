@@ -5,51 +5,50 @@
 #include "r_common.hpp"
 namespace graphx
 {
+	inline const gClass gClass::INVALID_TYPE = gClass(); // The default constructor for `gClass` is `INVALID_TYPE`
+
 	namespace classes
 	{
-		inline const gClass INVALID_TYPE; // The default constructor for `gClass` is `INVALID_TYPE`
-
-		inline const gClass ACTOR            ( "Actor",               1, &createNewActor<Actor>            );
-		inline const gClass PHYSICSACTOR     ( "PhysicsActor",        2, &createNewActor<PhysicsActor>     );
-		inline const gClass STATICBODYACTOR  ( "StaticBodyActor",     3, &createNewActor<RigidBodyActor>   );
-		inline const gClass RIGIDBODYACTOR   ( "RigidBodyActor",      4, &createNewActor<StaticBodyActor>  );
-		inline const gClass CAMERA           ( "Camera",              5, &createNewActor<Camera>           );
-		inline const gClass GRAPHXPLAYER     ( "GraphXPlayer",        6, &createNewActor<GraphXPlayer>     );
-		inline const gClass RAMIEL           ( "Ramiel",              7, &createNewActor<Light>            );
+		inline constexpr gClass ACTOR            ( "Actor",               1, &createNewActor<Actor>            );
+		inline constexpr gClass PHYSICSACTOR     ( "PhysicsActor",        2, &createNewActor<PhysicsActor>     );
+		inline constexpr gClass STATICBODYACTOR  ( "StaticBodyActor",     3, &createNewActor<RigidBodyActor>   );
+		inline constexpr gClass RIGIDBODYACTOR   ( "RigidBodyActor",      4, &createNewActor<StaticBodyActor>  );
+		inline constexpr gClass CAMERA           ( "Camera",              5, &createNewActor<Camera>           );
+		inline constexpr gClass GRAPHXPLAYER     ( "GraphXPlayer",        6, &createNewActor<GraphXPlayer>     );
+		inline constexpr gClass RAMIEL           ( "Ramiel",              7, &createNewActor<Light>            );
 
 		// ALL LIGHT DERIVED CLASSES MUST USE NEGATIVE TYPE IDS IN ORDER FOR graphx::classes::isLight TO WORK
-		inline const gClass LIGHT            ( "Light",              -1, &createNewActor<LightDirectional> );
-		inline const gClass LIGHTDIRECTIONAL ( "LightDirectional",   -2, &createNewActor<LightSpot>        );
-		inline const gClass LIGHTSPOT        ( "LightSpot",          -3, &createNewActor<LightFlashlight>  );
-		inline const gClass LIGHTFLASHLIGHT  ( "LightFlashlight",    -4, &createNewActor<LightTesterMover> );
-		inline const gClass LIGHTTESTERMOVER ( "LightTesterMover",   -5, &createNewActor<Ramiel>           );
+		inline constexpr gClass LIGHT            ( "Light",              -1, &createNewActor<LightDirectional> );
+		inline constexpr gClass LIGHTDIRECTIONAL ( "LightDirectional",   -2, &createNewActor<LightSpot>        );
+		inline constexpr gClass LIGHTSPOT        ( "LightSpot",          -3, &createNewActor<LightFlashlight>  );
+		inline constexpr gClass LIGHTFLASHLIGHT  ( "LightFlashlight",    -4, &createNewActor<LightTesterMover> );
+		inline constexpr gClass LIGHTTESTERMOVER ( "LightTesterMover",   -5, &createNewActor<Ramiel>           );
 
-		inline const gClass DEVICE           ( "Device",           1000, &createNewDevice<Device>          );
-		inline const gClass ENVIRONMENT      ( "Environment",      1001, &createNewDevice<Environment>     );
-		inline const gClass MATERIAL         ( "Material",         1002, &createNewDevice<Material>        );
-		inline const gClass MESH             ( "Mesh",             1003, &createNewDevice<Mesh>            );
-		inline const gClass SPRITE           ( "Sprite",           1004, &createNewDevice<Sprite>          );
-		inline const gClass COLLIDER         ( "Collider",         1005, &createNewDevice<Collider>        );
-		inline const gClass TEXTURE          ( "Texture",          1006, &createNewDevice<Texture>         );
-
-		// Feel free to expand these limits if needed; just remember to update the above values accordingly
-		inline const int ACTOR_ID_LIMIT    = 999;
-		inline const int DEVICE_ID_LIMIT   = 1999;
+		inline constexpr gClass DEVICE           ( "Device",           1000, &createNewDevice<Device>          );
+		inline constexpr gClass ENVIRONMENT      ( "Environment",      1001, &createNewDevice<Environment>     );
+		inline constexpr gClass MATERIAL         ( "Material",         1002, &createNewDevice<Material>        );
+		inline constexpr gClass MESH             ( "Mesh",             1003, &createNewDevice<Mesh>            );
+		inline constexpr gClass SPRITE           ( "Sprite",           1004, &createNewDevice<Sprite>          );
+		inline constexpr gClass COLLIDER         ( "Collider",         1005, &createNewDevice<Collider>        );
+		inline constexpr gClass TEXTURE          ( "Texture",          1006, &createNewDevice<Texture>         );
 
 		inline const gClass &getBaseType(const gClass &type) noexcept
 		{
-			if(type <= ACTOR_ID_LIMIT && type >= ACTOR)
+			if(type == gClass::INVALID_TYPE)
+				return gClass::INVALID_TYPE;
+
+			if(type <= gClass::ACTOR_ID_LIMIT && type >= ACTOR)
 				return ACTOR;
 
-			if(type <= DEVICE_ID_LIMIT && type >= DEVICE)
+			if(type <= gClass::DEVICE_ID_LIMIT && type >= DEVICE)
 				return DEVICE;
 
-			return INVALID_TYPE;
+			return gClass::INVALID_TYPE;
 		}
 
 		inline const bool isLight(const gClass &type) noexcept
 		{
-			if(type == INVALID_TYPE || getBaseType(type) != ACTOR)
+			if(getBaseType(type) != ACTOR)
 				return false;
 
 			if(type > 0)

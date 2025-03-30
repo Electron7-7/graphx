@@ -37,28 +37,37 @@ SRC := src
 
 O = build
 
-OBJS =                           \
-	$(O)/glad.o                  \
-	$(O)/imgui.opp               \
-	$(O)/imgui_draw.opp          \
-	$(O)/imgui_impl_glfw.opp     \
-	$(O)/imgui_impl_opengl3.opp  \
-	$(O)/imgui_stdlib.opp        \
-	$(O)/imgui_tables.opp        \
-	$(O)/imgui_widgets.opp       \
-	$(O)/imgui_demo.opp          \
-	$(O)/images.o                \
-	$(O)/shaders.opp             \
-	$(O)/theatres.opp            \
-	$(O)/models.opp              \
-	$(O)/g_math.opp              \
-	$(O)/r_common.opp            \
-	$(O)/g_jolt.opp              \
-	$(O)/g_actors.opp            \
-	$(O)/g_imgui.opp             \
-	$(O)/r_renderer.opp          \
-	$(O)/t_interpreter.opp       \
+EXT_OBJS =                      \
+	$(O)/glad.o                 \
+	$(O)/imgui.opp              \
+	$(O)/imgui_draw.opp         \
+	$(O)/imgui_impl_glfw.opp    \
+	$(O)/imgui_impl_opengl3.opp \
+	$(O)/imgui_stdlib.opp       \
+	$(O)/imgui_tables.opp       \
+	$(O)/imgui_widgets.opp      \
+	$(O)/imgui_demo.opp
+
+EMBED_OBJS =          \
+	$(O)/images.o     \
+	$(O)/shaders.opp  \
+	$(O)/theatres.opp \
+	$(O)/models.opp
+
+GRAPHX_OBJS =              \
+	$(O)/g_math.opp        \
+	$(O)/r_common.opp      \
+	$(O)/g_jolt.opp        \
+	$(O)/g_actors.opp      \
+	$(O)/g_imgui.opp       \
+	$(O)/r_renderer.opp    \
+	$(O)/t_interpreter.opp \
 	$(O)/g_theatres.opp
+
+OBJS =             \
+	$(EXT_OBJS)    \
+	$(EMBED_OBJS)  \
+	$(GRAPHX_OBJS) \
 
 WOBJS = $(subst .o,.wo,$(OBJS))
 
@@ -87,33 +96,15 @@ PHONY = obj_testing all clean dirty_clean clean_resources clean_theatres embed_r
 
 all: release linux windows
 
-clean_windows_files:
-	-rm -f build/*.wo
-	-rm -f build/*.wopp
-	-rm -f build/*.tmp
-	-rm -f build/GraphXDebug
-	-rm -f build/GraphXDebug.exe
-
-dirty_clean:
-	-mkdir build/backup/
-	-mv build/imgui* build/glad.o build/backup/
-	-rm -f build/*.o
-	-rm -f build/*.opp
-	-rm -f build/*.wo
-	-rm -f build/*.wopp
-	-rm -f build/*.tmp
-	-rm -f build/GraphXDebug
-	-rm -f build/GraphXDebug.exe
-	-rm -f build/$(LINUX)
-	-rm -f build/$(WINDOWS)
-	-mv build/backup/* build/
-	-rmdir build/backup/
+embed_resources:
+	-make -s $(IMAGES_C) $(SHADERS_C) $(THEATRES_C) $(MODELS_C)
 
 clean_resources:
 	-rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H) $(MODELS_H) $(MODELS_C)
 
-embed_resources:
-	-make -s $(IMAGES_C) $(SHADERS_C) $(THEATRES_C) $(MODELS_C)
+dirty_clean:
+	-rm -f $(O)/*.tmp
+	-rm -f $(GRAPHX_OBJS)
 
 clean: clean_resources embed_resources
 	-rm -f build/*
