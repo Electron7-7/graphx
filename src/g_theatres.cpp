@@ -286,7 +286,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
     {
         for(auto &pair : objects)
         {
-            buffer += pair.second->getType().name + " \"" + pair.second->getName() + "\"";
+            buffer += std::string(pair.second->getType().name) + " \"" + pair.second->getName() + "\"";
             buffer += uid_string + std::to_string(pair.second->getUID());
             for(auto &setting : pair.second->settings)
             {
@@ -302,7 +302,7 @@ std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
     {
         for(auto &pair : devices)
         {
-            buffer += pair.second->getType().name + " \"" + pair.second->getName() + "\"";
+            buffer += std::string(pair.second->getType().name) + " \"" + pair.second->getName() + "\"";
             buffer += uid_string + std::to_string(pair.second->getUID());
             for(auto &setting : pair.second->settings)
             {

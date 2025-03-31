@@ -1978,3 +1978,12 @@ I'm pretty sure that any time `valid_classes` is iterated on or otherwise intera
 I think it's to do with the conversion operators; `.contains()` expects a reference to an object of the same type as the set contains, but since I pass it either a string or an int, it needs to create a new object using that string or int. Since that constructor is the same one, however, it results in a feedback loop and a stack overflow.
 
 Oh god... is it because I forgot to make sure that the constructors add items to the set??? Is it because the set is empty???? No, that can't be the real reason...
+
+[03/31/25]
+I got it to compile and run, but now there's weird issues with resources not being created/assigned properly (I'm assuming it's to do with type checks and such). Mainly, Colliders not being created by StaticBodyActors.
+
+Turns out the gClass objects I made in `graphx_classes_namespace.hpp` had the wrong function pointers. Don't know how that happened but it should be an easy fix.
+
+IT FUCKIGN WORKS!!!!
+
+Side note: I do like the new shader more than the old version with ambient lighting, but I don't like the shadows going to pure darkness (0.0f), so implementing either a dynamic minimal brightness (similar to ambient lighting but without the shitty look of it) or the advanced lighting in LearnOpenGL.com is what I wanna do next.

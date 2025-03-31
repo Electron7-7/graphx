@@ -19,31 +19,26 @@ namespace graphx
 	private:
 		inline static constexpr int INVALID_TYPE_ID = -481516;
 		inline static constexpr char INVALID_TYPE_NAME[13] = "INVALID_TYPE";
-		inline static constexpr std::array<gClass, ACTOR_ID_LIMIT + DEVICE_ID_LIMIT> *classes = nullptr;
-		inline static constexpr void updateClassList(gClass &new_class)
-		{
-			if(classes == nullptr)
-				return;
-			for(int i = 0 ; i < classes->size() ; i++)
-				if(classes->at(i) == INVALID_TYPE)
-				{
-					classes->at(i) = new_class;
-					return;
-				}
-		}
+		inline static constexpr int NAME_MAX_SIZE_BYTES = 80; // Raise this at your memory's peril
+		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)> *classes;
 	public:
 		static const gClass INVALID_TYPE;      // Defined in `graphx_classes_namespace.hpp`
 		int id = INVALID_TYPE_ID;              // `id` is usually more important than `name`... usually...
-		std::string name = INVALID_TYPE_NAME;  // `name` is only really used by the interpreter (and for debugging)
+		const char *name = INVALID_TYPE_NAME;  // `name` is only really used by the interpreter (and for debugging)
 
 		inline gClass() = default;
-		inline constexpr gClass(std::string init_name, int init_id, Actor*(*new_actor_function)())   : id(init_id), name(init_name), create_new_actor(new_actor_function)   { updateClassList(*this); }
-		inline constexpr gClass(std::string init_name, int init_id, Device*(*new_device_function)()) : id(init_id), name(init_name), create_new_device(new_device_function) { updateClassList(*this); }
-		inline gClass(const gClass &to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device) {}
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)())   : id(init_id), name(init_name), create_new_actor(new_actor_function)   {}
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Device*(*new_device_function)()) : id(init_id), name(init_name), create_new_device(new_device_function) {}
+		inline constexpr gClass(const gClass &to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device) {}
 
 		inline gClass(std::string init_name)
 		{
-			for(gClass &valid_class : *classes)
+			/*if(classes->contains(init_name))
+			{
+				*this = *classes->find(init_name);
+				return;
+			}*/
+			for(const gClass &valid_class : *classes)
 				if(valid_class == init_name)
 				{
 					*this = valid_class;
@@ -54,7 +49,12 @@ namespace graphx
 
 		inline gClass(int init_id)
 		{
-			for(gClass &valid_class : *classes)
+			/*if(classes->contains(init_id))
+			{
+				*this = *classes->find(init_id);
+				return;
+			}*/
+			for(const gClass &valid_class : *classes)
 				if(valid_class == init_id)
 				{
 					*this = valid_class;
@@ -65,17 +65,25 @@ namespace graphx
 
 		inline static bool isValidClass(gClass type)
 		{
-			for(gClass &valid_class : *classes)
-				if(valid_class == type && valid_class != INVALID_TYPE)
+			/*if(classes->contains(type) && type != INVALID_TYPE)
+				return true;*/
+			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
+				if(*valid_class == type)
+				{
 					return true;
+				}
 			return false;
 		}
 
 		inline static const gClass &getClassType(gClass type)
 		{
-			for(gClass &valid_class : *classes)
-				if(valid_class == type)
-					return valid_class;
+			/*if(classes->contains(type))
+				return *classes->find(type);*/
+			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
+				if(*valid_class == type)
+				{
+					return *valid_class;
+				}
 			return INVALID_TYPE;
 		}
 
@@ -113,7 +121,7 @@ namespace graphx
 		// 2: Conversion from gClass to long
 		constexpr operator long() const { return static_cast<long>(id); }
 		// 3: Conversion from gClass to std::string
-		constexpr operator std::string() const { return name; }
+		constexpr operator std::string() const { return std::string(name); }
 	};
 
 	namespace error
