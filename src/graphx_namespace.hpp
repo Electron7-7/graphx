@@ -14,17 +14,20 @@ namespace graphx
 	{
 	public:
 		// Feel free to expand these limits if needed; just remember to update the values in graphx::classes accordingly
-		inline static constexpr int ACTOR_ID_LIMIT  = 999;
-		inline static constexpr int DEVICE_ID_LIMIT = 1999;
+		static constexpr int ACTOR_ID_LIMIT  = 999;
+		static constexpr int DEVICE_ID_LIMIT = 1999;
 	private:
 		inline static constexpr int INVALID_TYPE_ID = -481516;
 		inline static constexpr char INVALID_TYPE_NAME[13] = "INVALID_TYPE";
 		inline static constexpr int NAME_MAX_SIZE_BYTES = 80; // Raise this at your memory's peril
-		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)> *classes;
+		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)> *classes; // Defined in `graphx_classes_namespace.hpp`
 	public:
 		static const gClass INVALID_TYPE;      // Defined in `graphx_classes_namespace.hpp`
+
 		int id = INVALID_TYPE_ID;              // `id` is usually more important than `name`... usually...
 		const char *name = INVALID_TYPE_NAME;  // `name` is only really used by the interpreter (and for debugging)
+		Actor *(*create_new_actor)() = nullptr;
+		Device *(*create_new_device)() = nullptr;
 
 		inline gClass() = default;
 		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)())   : id(init_id), name(init_name), create_new_actor(new_actor_function)   {}
@@ -33,11 +36,6 @@ namespace graphx
 
 		inline gClass(std::string init_name)
 		{
-			/*if(classes->contains(init_name))
-			{
-				*this = *classes->find(init_name);
-				return;
-			}*/
 			for(const gClass &valid_class : *classes)
 				if(valid_class == init_name)
 				{
@@ -49,11 +47,6 @@ namespace graphx
 
 		inline gClass(int init_id)
 		{
-			/*if(classes->contains(init_id))
-			{
-				*this = *classes->find(init_id);
-				return;
-			}*/
 			for(const gClass &valid_class : *classes)
 				if(valid_class == init_id)
 				{
@@ -65,30 +58,19 @@ namespace graphx
 
 		inline static bool isValidClass(gClass type)
 		{
-			/*if(classes->contains(type) && type != INVALID_TYPE)
-				return true;*/
 			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
 				if(*valid_class == type)
-				{
 					return true;
-				}
 			return false;
 		}
 
 		inline static const gClass &getClassType(gClass type)
 		{
-			/*if(classes->contains(type))
-				return *classes->find(type);*/
 			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
 				if(*valid_class == type)
-				{
 					return *valid_class;
-				}
 			return INVALID_TYPE;
 		}
-
-		Actor *(*create_new_actor)() = nullptr;
-		Device *(*create_new_device)() = nullptr;
 
 		// Overloading Comparison Operators
 		//---------------------------------
