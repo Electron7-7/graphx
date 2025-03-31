@@ -1990,4 +1990,4 @@ Side note: I do like the new shader more than the old version with ambient light
 
 At work now; I'm gonna spend at most an hour on the shader stuff.
 
-I removed ambient lighting; will add in something to replace it later.
+I removed ambient lighting; will add in something to replace it later. Personal note: vec2 doesn't fucking exist, stop trying to use it in your shaders LMFAO.
