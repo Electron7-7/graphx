@@ -1,5 +1,5 @@
 #include <string>
-std::string blinn_phong_fragment_glsl = R"~(
+std::string blinn_phong_frag = R"~(
 #version 460 core
 #define MAX_NUMBER_OF_LIGHTS 50
 out vec4 FragColor;
@@ -21,19 +21,17 @@ struct Material
 
 struct Environment
 {
-	vec3 ambient_light;
-	vec3 ambient_color;
 	float ambient_strength;
 };
 
 struct Light
 {
 	float strength;
-	float ambient_strength;
 
-	vec3 color;
+	vec3 diffuse;
+	vec3 specular;
+
 	vec3 position;
-	vec3 direction;
 
 	float range;
 	float intensity;
@@ -41,6 +39,7 @@ struct Light
 
 	float inner_cutoff;
 	float outer_cutoff;
+	vec3 direction;
 };
 
 uniform Material material;
@@ -60,7 +59,8 @@ uniform bool is_primitive;
 #define DEBUG_NORMALS       1
 #define DEBUG_VERTEX_COLORS 2
 
-uniform vec3 lighting_debug_switches; // Switches for Diffuse, Specular, and Ambient light output
+uniform float enable_diffuse;
+uniform float enable_specular;
 uniform int shader_debug_value; // Show Normals or Vertex Colors?
 
 vec3 material_diffuse;
@@ -70,7 +70,7 @@ vec3 view_direction;
 vec3 calculateSpotLight(Light light);
 vec3 calculatePointLight(Light light);
 vec3 calculateDirectionalLight(Light light);
-mat3x3 calculateLight(Light light, vec3 light_direction);
+mat2x3 calculateLight(Light light, vec3 light_direction);
 
 void main()
 {
@@ -89,7 +89,6 @@ void main()
 
 	if(shader_debug_value == DEBUG_NORMALS)
 	{
-		// FragColor = vec4(normalize(normal), 1.0f);
 		FragColor = vec4((normalize(normal) + vec3(1.0f)) / vec3(2.0f), 1.0f);
 		return;
 	}
@@ -119,13 +118,13 @@ void main()
 		output_color += calculateSpotLight(spot_lights[i]);
 
 	FragColor = vec4(output_color, 1.0f);
-};
+}
 
 vec3 calculateSpotLight(Light light)
 {
 	vec3 light_direction = normalize(light.position - fragment_position);
 	float light_distance = length(light.position - fragment_position);
-	mat3x3 light_components = calculateLight(light, light_direction);
+	mat2x3 light_components = calculateLight(light, light_direction);
 
 	// How I got the numbers in this attenuation calculation:
 	// 		https://www.desmos.com/calculator/vtbqukgvgp
@@ -141,20 +140,18 @@ vec3 calculateSpotLight(Light light)
 
 	vec3 this_diffuse = light_components[0];
 	vec3 this_specular = light_components[1];
-	vec3 this_ambient = light_components[2];
 
-	this_diffuse *= light_attenuation * spotlight_radius  * lighting_debug_switches[0];
-	this_specular *= light_attenuation * spotlight_radius * lighting_debug_switches[1];
-	this_ambient *= light_attenuation * spotlight_radius  * lighting_debug_switches[2];
+	this_diffuse *= light_attenuation * spotlight_radius  * enable_diffuse;
+	this_specular *= light_attenuation * spotlight_radius * enable_specular;
 
 	return (this_diffuse + this_specular);
-};
+}
 
 vec3 calculatePointLight(Light light)
 {
 	float light_distance = length(light.position - fragment_position);
 	vec3 light_direction = normalize(light.position - fragment_position);
-	mat3x3 light_components = calculateLight(light, light_direction);
+	mat2x3 light_components = calculateLight(light, light_direction);
 
 	// How I got the numbers in this attenuation calculation:
 	// 		https://www.desmos.com/calculator/vtbqukgvgp
@@ -166,44 +163,40 @@ vec3 calculatePointLight(Light light)
 
 	vec3 this_diffuse = light_components[0];
 	vec3 this_specular = light_components[1];
-	vec3 this_ambient = light_components[2];
 
-	this_diffuse *= light_attenuation  * lighting_debug_switches[0];
-	this_specular *= light_attenuation * lighting_debug_switches[1];
-	this_ambient *= light_attenuation  * lighting_debug_switches[2];
+	this_diffuse *= light_attenuation  * enable_diffuse;
+	this_specular *= light_attenuation * enable_specular;
 
 	return (this_diffuse + this_specular);
-};
+}
 
 vec3 calculateDirectionalLight(Light light)
 {
 	vec3 light_direction = normalize(-light.direction);
-	mat3x3 light_components = calculateLight(light, light_direction);
+	mat2x3 light_components = calculateLight(light, light_direction);
 
-	vec3 this_diffuse = light_components[0]  * lighting_debug_switches[0];
-	vec3 this_specular = light_components[1] * lighting_debug_switches[1];
-	vec3 this_ambient = light_components[2]  * lighting_debug_switches[2];
+	vec3 this_diffuse = light_components[0]  * enable_diffuse;
+	vec3 this_specular = light_components[1] * enable_specular;
 
 	return (this_diffuse + this_specular);
-};
+}
 
-mat3x3 calculateLight(Light light, vec3 light_direction)
+mat2x3 calculateLight(Light light, vec3 light_direction)
 {
 	float light_distance = length(light.position - fragment_position);
 	vec3 reflect_direction = reflect(-light_direction, normalize(normal));
 	vec3 blinn_halfway_vector = normalize(light_direction + view_direction);
 
-	float diffuse = max(dot(normalize(normal), light_direction), (light.ambient_strength * directional_light.ambient_strength * environment.ambient_strength));
-	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), (light.ambient_strength * directional_light.ambient_strength * environment.ambient_strength)), material.specular_sharpness);
+	float diffuse = max(dot(normalize(normal), light_direction), 0.0f/* environment.ambient_strength */);
+	float specular = pow(max(dot(normalize(normal), blinn_halfway_vector), 0.0f/* environment.ambient_strength */), material.specular_sharpness);
 
-	vec3 this_diffuse  = light.strength * light.color * vertex_color * material_diffuse * material.color * diffuse;
-	vec3 this_specular = light.color * material_specular * material.color * material.specular_strength * specular;
-	vec3 this_ambient  = light.ambient_strength * light.color * material_diffuse * material.color * environment.ambient_light;
+	vec3 this_diffuse  = light.strength * light.diffuse * vertex_color * material_diffuse * material.color * diffuse;
+	vec3 this_specular = light.strength * light.specular * material_specular * material.specular_strength * specular;
 
-	return mat3x3(this_diffuse, this_specular, this_ambient);
-};
+	return mat2x3(this_diffuse, this_specular);
+}
 )~";
-std::string blinn_phong_vertex_glsl = R"~(
+std::string blinn_phong_vert = R"~(
 #version 460 core
 layout (location = 0) in vec3 _vertex_position;
 layout (location = 1) in vec3 _vertex_normal;
@@ -227,12 +220,11 @@ void main()
 	fragment_position = vec3(model_matrix * vec4(_vertex_position, 1.0f)); // Transforming vertex position from local to global coordinates
 	normal = normal_matrix * _vertex_normal;
 	vertex_color = _vertex_color;
-};
+}
 )~";
-std::string phong_fragment_glsl = R"~(
+std::string phong_frag = R"~(
 #version 460 core
 #define MAX_NUMBER_OF_LIGHTS 20
-out vec4 FragColor;
 
 in vec2 texture_coordinate;
 in vec3 fragment_position;
@@ -444,7 +436,7 @@ mat3x3 calculateLight(Light light, vec3 light_direction)
 	return light_components;
 };
 )~";
-std::string phong_vertex_glsl = R"~(
+std::string phong_vert = R"~(
 #version 460 core
 layout (location = 0) in vec3 _vertex_position;
 layout (location = 1) in vec3 _vertex_normal;
@@ -470,35 +462,7 @@ void main()
 	vertex_colors = _vertex_colors;
 };
 )~";
-std::string primitive_fragment_glsl = R"~(
-#version 460 core
-// in int vertex_id;
-
-// uniform vec3 vertex_color[3];
-
-void main()
-{
-	FragColor = vec4(1.0f, 0.5f, 1.0f, 1.0f);
-}
-)~";
-std::string primitive_vertex_glsl = R"~(
-#version 460 core
-layout (location = 0) in vec3 _vertex_position;
-
-// uniform vec3 vertex_position[3];
-// out int vertex_id;
-// uniform mat4 model_matrix;
-// uniform mat4 view_matrix;
-// uniform mat4 projection_matrix;
-
-void main()
-{
-	// gl_Position = vec4(vertex_position[glVertexID], 1.0f);
-	gl_Position = vec4(_vertex_position, 1.0f);
-	// vertex_id = glVertexID;
-}
-)~";
-std::string skybox_fragment_glsl = R"~(
+std::string skybox_frag = R"~(
 #version 460 core
 out vec4 FragColor;
 
@@ -511,7 +475,7 @@ void main()
 	FragColor = texture(skybox, -skybox_uv);
 }
 )~";
-std::string skybox_vertex_glsl = R"~(
+std::string skybox_vert = R"~(
 #version 460 core
 layout (location = 0) in vec3 _skybox_vertex_position;
 

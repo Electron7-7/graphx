@@ -129,6 +129,39 @@ namespace graphx
 		};
 	};
 
+	namespace rendering
+	{
+		inline constexpr unsigned int SHADER_DEBUG_NORMALS       = 1;
+		inline constexpr unsigned int SHADER_DEBUG_VERTEX_COLORS = 2;
+
+		inline constexpr unsigned int GRAPHX_OPENGL = 917; // API identifier (more to be added)
+
+
+		inline constexpr unsigned int SHADERS_AMOUNT     = 1;
+		//---------------------------------------------------
+		inline constexpr unsigned int SHADER_BLINN_PHONG = 0;
+		inline constexpr unsigned int SHADER_PHONG       = 1;
+
+
+		inline constexpr unsigned int VAOS_AMOUNT        = 2;
+		//---------------------------------------------------
+		inline constexpr unsigned int VAO_DEFAULT        = 0;
+		inline constexpr unsigned int VAO_PRIMITIVES     = 1;
+
+
+		inline bool  do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
+		inline int   graphx_api = GRAPHX_OPENGL;
+		inline int   shader_debug_value = 0;
+		inline int   shader_index = SHADER_BLINN_PHONG;
+		inline float main_window_width = 1280.0f;
+		inline float main_window_height = 720.0f;
+		inline float camera_near = 0.1f;
+		inline float camera_far = 10000.0f;
+		inline bool  jolt_debug_render = false;
+		inline bool  lighting_switch_diffuse = true;
+		inline bool  lighting_switch_specular = true;
+	};
+
 	/// The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`.
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;

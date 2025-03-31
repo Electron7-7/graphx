@@ -34,21 +34,8 @@ struct GLShader;
 extern std::vector<GLShader *> shaders;
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
-extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
-extern bool do_interpolation;
-extern int shader_debug_value;
-extern unsigned int shader_index;
-extern glm::vec2 main_window_size;
-extern float camera_near;
-extern float camera_far;
-extern int shader_debug_value;
-extern unsigned int shader_index;
-extern bool jolt_debug_render;
-extern bool lighting_switch_diffuse;
-extern bool lighting_switch_specular;
-extern bool lighting_switch_ambient;
 
 // Functions
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current);

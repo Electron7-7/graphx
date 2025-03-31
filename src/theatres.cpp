@@ -326,7 +326,7 @@ LightTesterMover (test_light_2)
 })~"}},{2, std::string{R"~(@RamielTheatre
 LightDirectional (Sun)
 {
-	Strength (0.5)
+	Strength (0.05)
 	Direction (0.2, -0.2, -0.1)
 }
 LightFlashlight (Flashlight)
@@ -337,9 +337,7 @@ GraphXPlayer (player)
 	MouseSensitivity (0.1)
 }
 Environment (Default_Environment)
-{
-	AmbientLightingStrength (1.0)
-}
+{}
 Material (Floor_Material)
 {
 	// Testing comments here

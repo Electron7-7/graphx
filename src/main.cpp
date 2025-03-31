@@ -2,10 +2,8 @@
 // :3
 
 #include "sanity.hpp"
-// #include "r_common.hpp"
-// #include "g_common.hpp"
 #include "graphx_namespace.hpp"
-#include "graphx_classes_namespace.hpp"
+#include "graphx_classes_namespace.hpp" // NOLINT
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
@@ -73,16 +71,16 @@ GraphXDeadSimpleDebugRenderer *debug_renderer = nullptr;
 
 int main()
 {
-	graphx_api = GRAPHX_OPENGL;
+	graphx::rendering::graphx_api = graphx::rendering::GRAPHX_OPENGL;
 
 	// OpenGL/GLFW Setup (MOVE ALL OF THIS INTO R_GL_Initialize AT SOME POINT)
 	glfwInit();
-	GLFWwindow *main_window = W_CreateWindow(main_window_size[0], main_window_size[1]);
+	GLFWwindow *main_window = W_CreateWindow(graphx::rendering::main_window_width, graphx::rendering::main_window_height);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	int primary_monitor_xposition = 0;
 	int primary_monitor_yposition = 0;
 	glfwGetMonitorPos(glfwGetPrimaryMonitor(), &primary_monitor_xposition, &primary_monitor_yposition);
-	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - main_window_size[0]) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - main_window_size[1]) / 2) + primary_monitor_yposition));
+	glfwSetWindowPos(main_window, static_cast<int>(((primary_monitor_video_mode->width - graphx::rendering::main_window_width) / 2) + primary_monitor_xposition), static_cast<int>(((primary_monitor_video_mode->height - graphx::rendering::main_window_height) / 2) + primary_monitor_yposition));
 #ifdef GRAPHX_DEBUG
 	glfwSetInputMode(main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // When using lldb, I enable this line to keep the mouse cursor from getting stuck disabled
 #else
@@ -95,10 +93,9 @@ int main()
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	GLShader blinn_phong_shader(blinn_phong_vertex_glsl, blinn_phong_fragment_glsl);
-	GLShader phong_shader(phong_vertex_glsl, phong_fragment_glsl);
-	GLShader primitive_shader(primitive_vertex_glsl, primitive_fragment_glsl);
-	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader, &primitive_shader});
+	GLShader blinn_phong_shader(blinn_phong_vert, blinn_phong_frag);
+	GLShader phong_shader(phong_vert, phong_frag);
+	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader});
 
 	R_InitializeRenderingAPI();
 
@@ -124,7 +121,7 @@ int main()
 
 	while(!glfwWindowShouldClose(main_window))
 	{
-		W_SwapAndClear(main_window, glm::vec4(1.0f, 0.0f, 0.0f, 0.5f));
+		W_SwapAndClear(main_window, glm::vec4(0.7f, 0.5f, 0.5f, 1.0f));
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
 
@@ -251,8 +248,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_1 && action == GLFW_PRESS)
 	{
-		lighting_switch_diffuse = !lighting_switch_diffuse;
-		if(lighting_switch_diffuse)
+		graphx::rendering::lighting_switch_diffuse = !graphx::rendering::lighting_switch_diffuse;
+		if(graphx::rendering::lighting_switch_diffuse)
 			PRINTNOTE("Diffuse Lighting Component: Enabled")
 		else
 			PRINTNOTE("Diffuse Lighting Component: Disabled")
@@ -260,44 +257,35 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_2 && action == GLFW_PRESS)
 	{
-		lighting_switch_specular = !lighting_switch_specular;
-		if(lighting_switch_specular)
+		graphx::rendering::lighting_switch_specular = !graphx::rendering::lighting_switch_specular;
+		if(graphx::rendering::lighting_switch_specular)
 			PRINTNOTE("Specular Lighting Component: Enabled")
 		else
 			PRINTNOTE("Specular Lighting Component: Disabled")
 	}
 
-	/*if(key == GLFW_KEY_3 && action == GLFW_PRESS)
-	{
-		lighting_switch_ambient = !lighting_switch_ambient;
-		if(lighting_switch_ambient)
-			PRINTNOTE("Ambient Lighting Component: Enabled")
-		else
-			PRINTNOTE("Ambient Lighting Component: Disabled")
-	}*/
-
 	if(key == GLFW_KEY_3 && action == GLFW_PRESS)
 	{
-		if(shader_debug_value != SHADER_DEBUG_NORMALS)
+		if(graphx::rendering::shader_debug_value != graphx::rendering::SHADER_DEBUG_NORMALS)
 		{
-			shader_debug_value = SHADER_DEBUG_NORMALS;
+			graphx::rendering::shader_debug_value = graphx::rendering::SHADER_DEBUG_NORMALS;
 			PRINTNOTE("Shader Debug Focus Lighting Component: Normals")
 			return;
 		}
-		shader_debug_value = 0;
+		graphx::rendering::shader_debug_value = 0;
 		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
 	}
 
 	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
 	{
-		if(shader_debug_value != SHADER_DEBUG_VERTEX_COLORS)
+		if(graphx::rendering::shader_debug_value != graphx::rendering::SHADER_DEBUG_VERTEX_COLORS)
 		{
-			shader_debug_value = SHADER_DEBUG_VERTEX_COLORS;
-			PRINTNOTE("Shader replacing textures with vertex colors")
+			graphx::rendering::shader_debug_value = graphx::rendering::SHADER_DEBUG_VERTEX_COLORS;
+			PRINTNOTE("Shader Debug Focus Vertex Colors: On")
 			return;
 		}
-		shader_debug_value = 0;
-		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
+		graphx::rendering::shader_debug_value = 0;
+		PRINTNOTE("Shader Debug Focus Vertex Colors: Off")
 	}
 
 	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
@@ -316,8 +304,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_0 && action == GLFW_PRESS)
 	{
-		jolt_debug_render = !jolt_debug_render;
-		if(jolt_debug_render)
+		graphx::rendering::jolt_debug_render = !graphx::rendering::jolt_debug_render;
+		if(graphx::rendering::jolt_debug_render)
 			PRINTNOTE("Jolt Debug Renderer: Enabled")
 		else
 			PRINTNOTE("Jolt Debug Renderer: Disabled")
@@ -325,17 +313,17 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)
 	{
-		if(shader_index >= (shaders.size() - 1))
-			shader_index = 0;
+		if(graphx::rendering::shader_index >= (shaders.size() - 1))
+			graphx::rendering::shader_index = 0;
 		else
-			shader_index++;
+			graphx::rendering::shader_index++;
 
-		switch(shader_index)
+		switch(graphx::rendering::shader_index)
 		{
-		case SHADER_BLINN_PHONG:
+		case graphx::rendering::SHADER_BLINN_PHONG:
 			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
-		case SHADER_PHONG:
+		case graphx::rendering::SHADER_PHONG:
 			PRINTNOTE("Using Shader: Phong")
 			break;
 		}
@@ -343,17 +331,17 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS)
 	{
-		if(shader_index <= 0)
-			shader_index = shaders.size() - 1;
+		if(graphx::rendering::shader_index <= 0)
+			graphx::rendering::shader_index = shaders.size() - 1;
 		else
-			shader_index--;
+			graphx::rendering::shader_index--;
 
-		switch(shader_index)
+		switch(graphx::rendering::shader_index)
 		{
-		case SHADER_BLINN_PHONG:
+		case graphx::rendering::SHADER_BLINN_PHONG:
 			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
-		case SHADER_PHONG:
+		case graphx::rendering::SHADER_PHONG:
 			PRINTNOTE("Using Shader: Phong")
 			break;
 		}
@@ -456,8 +444,8 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 
 void frameBufferSizeCallback(GLFWwindow *window, int width, int height)
 {
-	main_window_size[0] = width;
-	main_window_size[1] = height;
+	graphx::rendering::main_window_width = width;
+	graphx::rendering::main_window_height = height;
 
 	glViewport(0, 0, width, height);
 }

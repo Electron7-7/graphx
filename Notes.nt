@@ -1987,3 +1987,7 @@ Turns out the gClass objects I made in `graphx_classes_namespace.hpp` had the wr
 IT FUCKIGN WORKS!!!!
 
 Side note: I do like the new shader more than the old version with ambient lighting, but I don't like the shadows going to pure darkness (0.0f), so implementing either a dynamic minimal brightness (similar to ambient lighting but without the shitty look of it) or the advanced lighting in LearnOpenGL.com is what I wanna do next.
+
+At work now; I'm gonna spend at most an hour on the shader stuff.
+
+I removed ambient lighting; will add in something to replace it later.

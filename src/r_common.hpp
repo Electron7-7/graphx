@@ -12,31 +12,9 @@
 #include <array>
 #include <mutex>
 
-
-#define SHADER_DEBUG_NORMALS       1
-#define SHADER_DEBUG_VERTEX_COLORS 2
-
-
-// Rendering APIs (When I support other APIs, more of these will be added)
-#define GRAPHX_OPENGL 917
-
-
-#define GLSHADER_TYPE_VERTEX	0
-#define GLSHADER_TYPE_FRAGMENT	1
-#define GLSHADER_TYPE_PROGRAM	2
-
-
-#define SHADERS_AMOUNT		1
-//---------------------------
-#define SHADER_BLINN_PHONG	0
-#define SHADER_PHONG		1
-
-
-#define VAOS_AMOUNT			2
-//---------------------------
-#define VAO_DEFAULT         0
-#define VAO_PRIMITIVES      1
-
+#define GLSHADER_TYPE_VERTEX   0
+#define GLSHADER_TYPE_FRAGMENT 1
+#define GLSHADER_TYPE_PROGRAM  2
 
 struct GLShader
 {
@@ -45,12 +23,12 @@ struct GLShader
 	GLShader(std::string vertex_shader_code, std::string fragment_shader_code);
 
 	template<typename T> void setUniform(const std::string &name, T value) const;
-
 	void buildShader(std::string vertex_shader_code, std::string fragment_shader_code);
 };
 
 struct Device
 {
+	std::string name = "Untitled Device";
 	graphx::gSettings settings = empty_settings;
 
 	Device();
@@ -67,8 +45,6 @@ struct Device
 	virtual long getUID();
 	virtual void setUID(long manual_uid);
 
-	std::string name = "Untitled Device";
-
 protected:
 	graphx::gClass my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
@@ -78,12 +54,11 @@ protected:
 struct Environment final : public Device // Will be extended
 {
 	bool ambient_lighting_enabled = true;
-	glm::vec3 ambient_light_color = glm::vec3(1.0f);
 	float ambient_light_strength = 0.05f;
 
-	Environment(bool enable_ambient_lighting = true, glm::vec3 init_ambient_color = glm::vec3(1.0f), float init_ambient_strength = 0.05f);
+	Environment(bool enable_ambient_lighting = true, float init_ambient_strength = 0.05f);
 
-	glm::vec3 getAmbientLight();
+	float getAmbientLight();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
@@ -169,7 +144,6 @@ struct MeshData
 
 struct Mesh : public Device
 {
-	// std::string name = "Untitled Mesh";
 	Material *material = new Material();
 
 	unsigned int VBO = 0;
@@ -246,25 +220,12 @@ struct PrimitiveRenderCmd
 	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
 };
 
-extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Only one VAO for now but I expect to need more down the line
-extern std::vector<GLShader *> shaders; // Same for shaders
+extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector? (would make the forward declarations nicer)
+extern std::vector<GLShader *> shaders;
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
-extern int graphx_api;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
-extern bool do_interpolation;
-extern int shader_debug_value;
-extern unsigned int shader_index;
-extern glm::vec2 main_window_size;
-extern float camera_near;
-extern float camera_far;
-extern int shader_debug_value;
-extern unsigned int shader_index;
-extern bool jolt_debug_render;
-extern bool lighting_switch_diffuse;
-extern bool lighting_switch_specular;
-extern bool lighting_switch_ambient;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -130,8 +130,6 @@ struct Theatre
 	void createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings = empty_settings);
 	void createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings  = empty_settings);
 
-	glm::vec3 getSwapColor();
-
 	std::vector<Actor *> getAllActorsOfType(graphx::gClass type_name);
 	std::vector<Device *> getAllDevicesOfType(graphx::gClass type_name);
 

@@ -21,4 +21,4 @@ void main()
 	fragment_position = vec3(model_matrix * vec4(_vertex_position, 1.0f)); // Transforming vertex position from local to global coordinates
 	normal = normal_matrix * _vertex_normal;
 	vertex_color = _vertex_color;
-};
+}

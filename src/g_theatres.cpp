@@ -211,15 +211,6 @@ void Theatre::loadStageSettings(graphx::gSettings stage_settings)
     stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
 }
 
-glm::vec3 Theatre::getSwapColor()
-{
-    LightDirectional *sun = static_cast<LightDirectional *>(current_theatre.unsafeGetFirstActorOfType(graphx::classes::LIGHTDIRECTIONAL));
-    if(sun == nullptr)
-        return getCurrentEnvironment()->getAmbientLight();
-
-    return getCurrentEnvironment()->getAmbientLight() + (/*0.2f * */sun->light_color * sun->light_strength);
-}
-
 void Theatre::delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     for(auto &pair : objects)

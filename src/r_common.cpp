@@ -12,6 +12,21 @@ GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_c
 	buildShader(vertex_shader_code, fragment_shader_code);
 }
 
+void glshader_error_handler(unsigned int shader_id)
+{
+	// https://stackoverflow.com/a/63420289
+	int v_result = GL_FALSE;
+	int info_log_length;
+	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &v_result);
+	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	if(info_log_length > 0)
+	{
+		std::vector<char> shader_error_message(info_log_length + 1);
+		glGetShaderInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
+		PRINTERR("GLSL Shader Compilation Error(s):\n" << shader_error_message.data())
+	}
+}
+
 void GLShader::buildShader(std::string vertex_shader_string, std::string fragment_shader_string)
 {
 	const char *v_shader_code = vertex_shader_string.c_str();
@@ -21,10 +36,12 @@ void GLShader::buildShader(std::string vertex_shader_string, std::string fragmen
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &v_shader_code, NULL);
 	glCompileShader(vertex);
+	glshader_error_handler(vertex);
 
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment, 1, &f_shader_code, NULL);
 	glCompileShader(fragment);
+	glshader_error_handler(fragment);
 
 	id = glCreateProgram();
 	glAttachShader(id, vertex);
@@ -50,19 +67,14 @@ template<> void GLShader::setUniform<float>(const std::string &name, float value
 	glUniform1f(glGetUniformLocation(id, name.c_str()), value);
 }
 
-template<> void GLShader::setUniform<glm::vec2>(const std::string &name, glm::vec2 value) const
-{
-	glUniform2fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
-}
-
 template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const
 {
 	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
 }
 
-template<> void GLShader::setUniform<glm::bvec3>(const std::string &name, glm::bvec3 value) const
+template<> void GLShader::setUniform<glm::bvec2>(const std::string &name, glm::bvec2 value) const
 {
-	glm::vec3 bool_as_float((float)value.x, (float)value.y, (float)value.z);
+	glm::vec3 bool_as_float((float)value.x, (float)value.y, 1.0f);
 	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(bool_as_float));
 }
 
@@ -143,8 +155,8 @@ long Device::getUID()
 //
 // Environment
 //
-Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color, float init_ambient_strength)
-: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
+Environment::Environment(bool enable_ambient_lighting, float init_ambient_strength)
+: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_strength(init_ambient_strength)
 {
 	my_type = graphx::classes::ENVIRONMENT;
 	name = "Untitled Environment";
@@ -155,14 +167,13 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 	Device::loadSettings(new_settings);
 
 	getSetting(ambient_lighting_enabled, settings["AmbientLightingEnabled"]);
-	getSetting(ambient_light_color, settings["AmbientLightingColor"]);
 	getSetting(ambient_light_strength, settings["AmbientLightingStrength"]);
 }
 
 
-glm::vec3 Environment::getAmbientLight()
+float Environment::getAmbientLight()
 {
-	return ambient_light_color * ambient_light_strength * (int)ambient_lighting_enabled;
+	return ambient_light_strength * ambient_lighting_enabled;
 }
 
 //
