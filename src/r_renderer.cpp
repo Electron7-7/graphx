@@ -595,6 +595,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 	shaders[graphx::rendering::shader_index]->setUniform("enable_specular", static_cast<float>(graphx::rendering::lighting_switch_specular));
 	shaders[graphx::rendering::shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
 	shaders[graphx::rendering::shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
+	shaders[graphx::rendering::shader_index]->setUniform("directional_lights_count", getCurrentTheatre()->directional_lights_count);
 
 	R_GL_RenderLights(state_mutex, interpolation_time);
 
@@ -653,7 +654,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 		shaders[graphx::rendering::shader_index]->setUniform("material.specular_sharpness", render_command.mesh_material.specular_sharpness);
 		shaders[graphx::rendering::shader_index]->setUniform("material.specular_strength", render_command.mesh_material.specular_strength);
 		shaders[graphx::rendering::shader_index]->setUniform("mat_fullbright", render_command.mesh_material.mat_fullbright);
-		shaders[graphx::rendering::shader_index]->setUniform("environment.ambient_strength", getCurrentEnvironment()->ambient_light_strength * getCurrentEnvironment()->ambient_lighting_enabled);
+		// shaders[graphx::rendering::shader_index]->setUniform("environment.ambient_strength", getCurrentEnvironment()->ambient_light_strength * getCurrentEnvironment()->ambient_lighting_enabled);
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 

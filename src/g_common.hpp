@@ -100,6 +100,7 @@ struct Theatre
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
+	int directional_lights_count = 0;
 
 	// This abomination is what a "gStringSettings" typedef actually is...
 	std::vector<std::vector<std::pair<std::string, std::pair<int, std::string>>>> graphx_theatre_settings;

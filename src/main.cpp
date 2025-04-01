@@ -93,9 +93,10 @@ int main()
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	GLShader blinn_phong_shader(blinn_phong_vert, blinn_phong_frag);
 	GLShader phong_shader(phong_vert, phong_frag);
-	shaders.insert(shaders.end(), {&blinn_phong_shader, &phong_shader});
+	GLShader blinn_phong_shader(blinn_phong_vert, blinn_phong_frag);
+	GLShader new_blinn_phong_shader(new_blinn_phong_vert, new_blinn_phong_frag);
+	shaders.insert(shaders.end(), {&phong_shader, &blinn_phong_shader, &new_blinn_phong_shader});
 
 	R_InitializeRenderingAPI();
 
@@ -338,11 +339,14 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 		switch(graphx::rendering::shader_index)
 		{
+		case graphx::rendering::SHADER_PHONG:
+			PRINTNOTE("Using Shader: Phong")
+			break;
 		case graphx::rendering::SHADER_BLINN_PHONG:
 			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
-		case graphx::rendering::SHADER_PHONG:
-			PRINTNOTE("Using Shader: Phong")
+		case graphx::rendering::SHADER_NEW_BLINN_PHONG:
+			PRINTNOTE("Using Shader: New Blinn-Phong")
 			break;
 		}
 	}

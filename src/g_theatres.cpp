@@ -716,6 +716,12 @@ void Theatre::countLights()
             continue;
         }
 
+        else if(static_cast<Light *>(actor)->isLightType(graphx::classes::LIGHTDIRECTIONAL))
+        {
+            directional_lights_count++;
+            continue;
+        }
+
         point_lights_count++;
     }
 }

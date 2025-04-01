@@ -137,10 +137,11 @@ namespace graphx
 		inline constexpr unsigned int GRAPHX_OPENGL = 917; // API identifier (more to be added)
 
 
-		inline constexpr unsigned int SHADERS_AMOUNT     = 1;
-		//---------------------------------------------------
-		inline constexpr unsigned int SHADER_BLINN_PHONG = 0;
-		inline constexpr unsigned int SHADER_PHONG       = 1;
+		inline constexpr unsigned int SHADERS_AMOUNT         = 3;
+		//-------------------------------------------------------
+		inline constexpr unsigned int SHADER_PHONG           = 0;
+		inline constexpr unsigned int SHADER_BLINN_PHONG     = 1;
+		inline constexpr unsigned int SHADER_NEW_BLINN_PHONG = 2;
 
 
 		inline constexpr unsigned int VAOS_AMOUNT        = 2;

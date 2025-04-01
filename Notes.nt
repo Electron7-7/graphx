@@ -1991,3 +1991,79 @@ Side note: I do like the new shader more than the old version with ambient light
 At work now; I'm gonna spend at most an hour on the shader stuff.
 
 I removed ambient lighting; will add in something to replace it later. Personal note: vec2 doesn't fucking exist, stop trying to use it in your shaders LMFAO.
+
+[04/01/25]
+Working on the shader; ambient lighting is actually necessary, I was just doing it poorly. I'm gonna re-implement it. I would also like to flesh out the GLShader class some more so I can directly do comparison and shit with it instead of relying on some integer values of the position of a shader in a vector in the main function LMFAO.
+
+I wanna restructure my resources (and steal from Godot):
+  - Light
+    - color
+    - specular
+    - ambient
+    - distance fade
+      - begin
+      - length
+      - shadow (cutoff for shadow rendering)
+      - enabled
+    - energy
+      - indirect energy (SDFGI)
+    - size (maybe)
+    - projection texture
+    - shadow
+      - enabled
+      - opacity
+      - blur
+    - LightSpot
+      - angle
+      - angle attenuation
+      - attenuation
+      - range
+
+  - Environment
+    - ambient light contribution
+    - various post processing
+      - bloom
+      - hdr
+
+  - Material
+    - diffuse
+      - color
+      - texture
+    - various texture options
+      - force srgb
+      - filter mode
+      - anisotropy
+      - texture repeat
+    - metallic
+      - texture
+      - strength
+    - roughness
+      - texture
+      - strength
+    - specular mode
+
+  - Mesh
+    - Primitive Mesh types
+      - Box
+      - Sphere
+      - Pyramid
+      - Cone
+      - Cylinder
+      - Capsule
+    - Array Mesh type
+      - Different types of array data representation
+    - Separate vertex attributes into separate containers for automatic generation/detection of VAOs
+
+  - Texture
+    - Static Texture
+      - Get properties
+        - Height
+        - Width
+        - Alpha
+        - File size in bytes(?)
+    - Dynamic Texture
+      - Get properties
+      - Set properties
+        - Somehow notify rendering API of changes
+
+I want to keep these API agnostic as best as I can. Maybe I'll make a section of the graphx namespace for the different rendering APIs and their variables (e.g: graphx::OpenGL::VAOs, graphx::OpenGL::TextureIDs, etc).
