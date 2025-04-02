@@ -1,21 +1,8 @@
 #include "r_common.hpp"
-#include "g_common.hpp"
-#include "t_settings.hpp"
-#include "g_jolt.hpp"
+#include "sanity.hpp"
+#include "graphx_classes_namespace.hpp"
 #include <gmath.hpp>
 #include <glm/gtx/component_wise.hpp>
-
-using namespace graphx;
-using namespace graphx::classes;
-
-std::map<int, Device*(*)()> device_map =
-{
-	{graphx::classes::ENVIRONMENT, &createNewDevice<Environment>},
-	{graphx::classes::MATERIAL, &createNewDevice<Material>},
-	{graphx::classes::MESH, &createNewDevice<Mesh>},
-	{graphx::classes::SPRITE, &createNewDevice<Sprite>},
-	{graphx::classes::COLLIDER, &createNewDevice<Collider>},
-};
 
 //
 // GLShader
@@ -23,6 +10,21 @@ std::map<int, Device*(*)()> device_map =
 GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
 {
 	buildShader(vertex_shader_code, fragment_shader_code);
+}
+
+void glshader_error_handler(unsigned int shader_id)
+{
+	// https://stackoverflow.com/a/63420289
+	int v_result = GL_FALSE;
+	int info_log_length;
+	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &v_result);
+	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	if(info_log_length > 0)
+	{
+		std::vector<char> shader_error_message(info_log_length + 1);
+		glGetShaderInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
+		PRINTERR("GLSL Shader Compilation Error(s):\n" << shader_error_message.data())
+	}
 }
 
 void GLShader::buildShader(std::string vertex_shader_string, std::string fragment_shader_string)
@@ -34,10 +36,12 @@ void GLShader::buildShader(std::string vertex_shader_string, std::string fragmen
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &v_shader_code, NULL);
 	glCompileShader(vertex);
+	glshader_error_handler(vertex);
 
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment, 1, &f_shader_code, NULL);
 	glCompileShader(fragment);
+	glshader_error_handler(fragment);
 
 	id = glCreateProgram();
 	glAttachShader(id, vertex);
@@ -50,48 +54,37 @@ void GLShader::buildShader(std::string vertex_shader_string, std::string fragmen
 
 template<> void GLShader::setUniform<bool>(const std::string &name, bool value) const
 {
-	glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
+	glProgramUniform1i(id, glGetUniformLocation(id, name.c_str()), static_cast<int>(value));
 }
 
 template<> void GLShader::setUniform<int>(const std::string &name, int value) const
 {
-	glUniform1i(glGetUniformLocation(id, name.c_str()), value);
+	glProgramUniform1i(id, glGetUniformLocation(id, name.c_str()), value);
 }
 
 template<> void GLShader::setUniform<float>(const std::string &name, float value) const
 {
-	glUniform1f(glGetUniformLocation(id, name.c_str()), value);
-}
-
-template<> void GLShader::setUniform<glm::vec2>(const std::string &name, glm::vec2 value) const
-{
-	glUniform2fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+	glProgramUniform1f(id, glGetUniformLocation(id, name.c_str()), value);
 }
 
 template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const
 {
-	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
-}
-
-template<> void GLShader::setUniform<glm::bvec3>(const std::string &name, glm::bvec3 value) const
-{
-	glm::vec3 bool_as_float((float)value.x, (float)value.y, (float)value.z);
-	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(bool_as_float));
+	glProgramUniform3fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
 }
 
 template<> void GLShader::setUniform<glm::vec4>(const std::string &name, glm::vec4 value) const
 {
-	glUniform4fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+	glProgramUniform4fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
 }
 
 template<> void GLShader::setUniform<glm::mat3>(const std::string &name, glm::mat3 value) const
 {
-	glUniformMatrix3fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	glProgramUniformMatrix3fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::mat4 value) const
 {
-	glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	glProgramUniformMatrix4fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 //
@@ -102,17 +95,7 @@ Device::Device()
 	my_type = graphx::classes::DEVICE;
 }
 
-bool Device::isType(int class_type)
-{
-	return class_type == my_type;
-}
-
-std::string Device::getTypeName()
-{
-	return graphx::classnames.at(my_type);
-}
-
-long Device::getType()
+graphx::gClass &Device::getType()
 {
 	return my_type;
 }
@@ -143,15 +126,12 @@ void Device::loadSettings(graphx::gSettings new_settings)
 }
 
 void Device::initialize()
-{
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
-}
+{}
 
 void Device::prepForDestruction()
 {
 	if(ready_to_destroy)
 		return;
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 	ready_to_destroy = true;
 }
 
@@ -169,27 +149,87 @@ long Device::getUID()
 //
 // Environment
 //
-Environment::Environment(bool enable_ambient_lighting, glm::vec3 init_ambient_color, float init_ambient_strength)
-: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_color(init_ambient_color), ambient_light_strength(init_ambient_strength)
+Environment::Environment(std::string init_name, bool enable_ambient_light, float init_ambient_light_amount, glm::vec3 init_ambient_light_color)
+: ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount * enable_ambient_light)
 {
+	name = init_name;
 	my_type = graphx::classes::ENVIRONMENT;
-	name = "Untitled Environment";
 }
 
 void Environment::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	getSetting(ambient_lighting_enabled, settings["AmbientLightingEnabled"]);
-	getSetting(ambient_light_color, settings["AmbientLightingColor"]);
-	getSetting(ambient_light_strength, settings["AmbientLightingStrength"]);
+	getSetting(ambient_light_amount, settings["AmbientLightAmount"]);
+	getSetting(ambient_light_color, settings["AmbientLightColor"]);
 }
 
-
-glm::vec3 Environment::getAmbientLight()
+//
+// Texture
+//
+Texture::Texture()
 {
-	return ambient_light_color * ambient_light_strength * (int)ambient_lighting_enabled;
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
 }
+
+Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_data = init_texture_data;
+	texture_size = init_texture_size;
+}
+
+Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_size = init_texture_size;
+	texture_data.clear();
+	for(const char *some_texture_data : init_texture_data)
+		texture_data.insert(texture_data.end(), reinterpret_cast<unsigned char *>(const_cast<char *>(some_texture_data)));
+}
+
+Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_size = init_texture_size;
+	texture_data.clear();
+	for(std::string some_texture_data : init_texture_data)
+		texture_data.insert(texture_data.end(), reinterpret_cast<unsigned char *>(const_cast<char *>(some_texture_data.c_str())));
+}
+
+Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_data = {init_texture_data};
+	texture_size = {init_texture_size};
+}
+
+Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_size = {init_texture_size};
+	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data))};
+}
+
+Texture::Texture(std::string init_texture_data, unsigned int init_texture_size)
+{
+	my_type = graphx::classes::TEXTURE;
+	name = "Untitled Texture";
+	texture_size = {init_texture_size};
+	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
+}
+
+void Texture::loadSettings(graphx::gSettings new_settings)
+{
+	Device::loadSettings(new_settings);
+}
+
 //
 // Material
 //
@@ -200,181 +240,35 @@ Material::Material()
 }
 
 Material::Material(bool is_fullbright, glm::vec3 init_color)
-: embedded_texture_specular(NO_TEXTURE_jpg), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+: color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
-Material::Material(unsigned char *init_diffuse_texture, unsigned char *init_specular_texture, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: embedded_texture_diffuse(init_diffuse_texture), embedded_texture_specular(init_specular_texture), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
+: diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: embedded_texture_specular(FLAT_SPEC_jpg), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 void Material::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	getSetting(embedded_texture_diffuse, settings["DiffuseTexture"]);
-	getSetting(embedded_texture_specular, settings["SpecularTexture"]);
+	getSetting(diffuse_texture_name, settings["DiffuseTexture"]);
+	getSetting(specular_texture_name, settings["SpecularTexture"]);
 	getSetting(color, settings["Color"]);
 	getSetting(specular_sharpness, settings["SpecularSharpness"]);
 	getSetting(specular_strength, settings["SpecularStrength"]);
 	getSetting(mat_fullbright, settings["mat_fullbright"]);
+
+	if(mat_fullbright && diffuse_texture_name == MISSING_TEXTURE)
+		diffuse_texture_name = NO_TEXTURE;
+
+	if(specular_texture_name == NO_TEXTURE)
+		specular_strength = 0.0f;
 }
 
-//
-// Mesh
-//
-Mesh::Mesh()
-{
-	my_type = graphx::classes::MESH;
-	name = "Untitled Mesh";
-	mesh_data_name = M_GetOBJName(ERROR_obj);
-}
-
-Mesh::Mesh(Material *new_material)
-{
-	my_type = graphx::classes::MESH;
-	name = "Untitled Mesh";
-	material = new_material;
-	mesh_data_name = M_GetOBJName(ERROR_obj);
-}
-
-void Mesh::prepForDestruction()
-{
-	Device::prepForDestruction();
-
-	if(material != nullptr)
-		material->prepForDestruction();
-
-	material = nullptr;
-	delete material;
-}
-
-void Mesh::loadSettings(graphx::gSettings new_settings)
-{
-	Device::loadSettings(new_settings);
-
-	getSetting(material, settings["Material"]);
-	getSetting(mesh_data_name, settings["MeshData"]);
-}
-
-//
-// Sprite
-//
-Sprite::Sprite()
-: Mesh()
-{
-	my_type = graphx::classes::SPRITE;
-	name = "Untitled Sprite";
-	mesh_data_name = GRAPHX_QUAD;
-}
-
-void Sprite::loadSettings(graphx::gSettings new_settings)
-{
-	Mesh::loadSettings(new_settings);
-}
-
-//
-// RenderCmd
-//
-RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color)
-{
-	is_light_debug_mesh = true;
-	current_render_state = light_render_command.current_render_state;
-	previous_render_state = light_render_command.previous_render_state;
-	mesh_material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 8, 0.0f, light_debug_material_color);
-	mesh_data_name = GRAPHX_CUBE;
-}
-
-bool RenderCmd::isRenderable()
-{
-	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
-}
-
-//
-// LightRenderCmd
-//
-bool LightRenderCmd::renderDebugMesh()
-{
-	return ((current_render_state != nullptr || previous_render_state != nullptr));
-}
-
-//
-// PrimitiveRenderCmd
-//
-PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::LINE;
-	vertex_1 = new_vertex_1;
-	vertex_2 = new_vertex_2;
-	colors_1 = new_vertex_color;
-	colors_2 = new_vertex_color;
-}
-PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::TRIANGLE;
-	vertex_1 = new_vertex_1;
-	vertex_2 = new_vertex_2;
-	vertex_3 = new_vertex_3;
-	colors_1 = new_vertex_color;
-	colors_2 = new_vertex_color;
-	colors_3 = new_vertex_color;
-}
-PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::LINE;
-	vertex_1 = gmath::convertMath<glm::vec3>(new_vertex_1);
-	vertex_2 = gmath::convertMath<glm::vec3>(new_vertex_2);
-	colors_1 = gmath::convertMath<glm::vec3>(new_vertex_color);
-	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
-}
-PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::TRIANGLE;
-	vertex_1 = gmath::convertMath<glm::vec3>(new_vertex_1);
-	vertex_2 = gmath::convertMath<glm::vec3>(new_vertex_2);
-	vertex_3 = gmath::convertMath<glm::vec3>(new_vertex_3);
-	colors_1 = gmath::convertMath<glm::vec3>(new_vertex_color);
-	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
-	colors_3 = gmath::convertMath<glm::vec3>(new_vertex_color);
-}
-
-std::vector<float> PrimitiveRenderCmd::getVertices()
-{
-	std::vector<float> vertex_data =
-	{
-		vertex_1.x, vertex_1.y, vertex_1.z,    normals_1.x, normals_1.y, normals_1.z,    uvs_1.x, uvs_1.y,    colors_1.x, colors_1.y, colors_1.z,
-		vertex_2.x, vertex_2.y, vertex_2.z,    normals_2.x, normals_2.y, normals_2.z,    uvs_2.x, uvs_2.y,    colors_2.x, colors_2.y, colors_2.z
-	};
-
-	if(primitive_type == graphx::identifiers::primitive::TRIANGLE)
-	{
-		vertex_data.insert(vertex_data.end(),
-		{
-			vertex_3.x, vertex_3.y, vertex_3.z,    normals_3.x, normals_3.y, normals_3.z,    uvs_3.x, uvs_3.y,    colors_3.x, colors_3.y, colors_3.z
-		});
-
-	}
-
-	return vertex_data;
-}
-
-unsigned int PrimitiveRenderCmd::numberOfVertices()
-{
-	switch(primitive_type)
-	{
-	case graphx::identifiers::primitive::LINE:
-		return 2;
-	case graphx::identifiers::primitive::TRIANGLE:
-		return 3;
-	case graphx::identifiers::primitive::TEXT:
-		return 0; // Text not supported yet
-	default:
-		return 0;
-	}
-}
 
 //
 // MeshData
@@ -394,12 +288,16 @@ MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, st
 	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
 		init_colors.insert(init_colors.end(), glm::vec3(1.0f, 1.0f, 1.0f));
 
-	VAO_index = init_vao_index;
 	vertex_positions = init_positions;
 	vertex_normals = init_normals;
 	vertex_uvs = init_uvs;
 	vertex_colors = init_colors;
-	vertex_indices = init_indices;
+
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
+	else
+		vertex_indices = init_indices;
 }
 
 MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors, std::vector<unsigned int> init_indices)
@@ -418,7 +316,6 @@ MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::v
 		for(int i = init_indices.size() ; i < init_positions.size() ; i++)
 			init_colors.insert(init_colors.end(), 1.0f);
 
-	VAO_index = init_vao_index;
 	for(int it = 0,uv_it = 0 ; it < init_positions.size() ; it += 3,uv_it += 2)
 	{
 		vertex_positions.insert(vertex_positions.end(), glm::vec3(init_positions[it], init_positions[it + 1], init_positions[it + 2]));
@@ -428,77 +325,10 @@ MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::v
 		if(!init_indices.empty())
 			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
 	}
-}
 
-std::vector<float> MeshData::vertices()
-{
-	std::vector<float> vertices;
-	for(int i = 0 ; i < vertex_positions.size() ; i++)
-	{
-		vertices.insert(vertices.end(),
-		{
-			vertex_positions.at(i).x,
-			vertex_positions.at(i).y,
-			vertex_positions.at(i).z,
-			vertex_normals.at(i).x,
-			vertex_normals.at(i).y,
-			vertex_normals.at(i).z,
-			vertex_uvs.at(i).x,
-			vertex_uvs.at(i).y,
-			vertex_colors.at(i).x,
-			vertex_colors.at(i).y,
-			vertex_colors.at(i).z
-		});
-	}
-	return vertices;
-}
-
-std::vector<unsigned int> MeshData::indices()
-{
-	// All indices in vertex_indices must be grouped in pairs of 3 to be valid
-	if(!hasValidIndices())
-	{
-		PRINTDEBUG("MeshData::indices() called, but vertex_indices is either empty or not divisible by 3! Returning an empty std::vector<unsigned int>")
-		return std::vector<unsigned int>{};
-	}
-
-	std::vector<unsigned int> indices;
-	for(int i = 0 ; i < vertex_indices.size() ; i++)
-	{
-		indices.insert(indices.end(),
-		{
-			vertex_indices.at(i).x(),
-			vertex_indices.at(i).y(),
-			vertex_indices.at(i).z()
-		});
-	}
-	return indices;
-}
-
-size_t MeshData::vertices_count()
-{
-	return (vertex_positions.size());
-}
-
-size_t MeshData::vertices_size()
-{
-	return
-	(
-		(3 * sizeof(float) * vertex_positions.size()) +
-		(3 * sizeof(float) * vertex_normals.size())   +
-		(2 * sizeof(float) * vertex_uvs.size())       +
-		(3 * sizeof(float) * vertex_colors.size())
-	);
-}
-
-size_t MeshData::indices_count()
-{
-	return (vertex_indices.size() * 3);
-}
-
-size_t MeshData::indices_size()
-{
-	return (3 * sizeof(unsigned int) * vertex_indices.size());
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
 }
 
 void MeshData::addVertex(glm::vec3 position, glm::vec3 normal, glm::vec2 uv, glm::vec3 color)
@@ -559,13 +389,158 @@ void MeshData::fixOBJData()
 		{
 			component = (component - min_coordinate) / (max_coordinate - min_coordinate);
 		}
-		// vertex.x = (vertex.x - min_coordinate) / (max_coordinate - min_coordinate);
-		// vertex.y = (vertex.y - min_coordinate) / (max_coordinate - min_coordinate);
-		// vertex.z = (vertex.z - min_coordinate) / (max_coordinate - min_coordinate);
+	}
+
+	vertex_indices.clear();
+	for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+	{
+		vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i + 1, i + 2));
 	}
 }
 
-bool MeshData::hasValidIndices()
+const std::vector<float> MeshData::vertices()
 {
-	return (!vertex_indices.empty() && !(vertex_indices.size() % 3));
+	std::vector<float> vertices;
+	for(int i = 0 ; i < vertex_positions.size() ; i++)
+	{
+		vertices.insert(vertices.end(),
+		{
+			vertex_positions.at(i).x,
+			vertex_positions.at(i).y,
+			vertex_positions.at(i).z,
+			vertex_normals.at(i).x,
+			vertex_normals.at(i).y,
+			vertex_normals.at(i).z,
+			vertex_uvs.at(i).x,
+			vertex_uvs.at(i).y,
+			vertex_colors.at(i).x,
+			vertex_colors.at(i).y,
+			vertex_colors.at(i).z
+		});
+	}
+	return vertices;
+}
+
+const std::vector<unsigned int> MeshData::indices()
+{
+	std::vector<unsigned int> indices;
+	for(int i = 0 ; i < vertex_indices.size() ; i++)
+	{
+		indices.insert(indices.end(),
+		{
+			vertex_indices.at(i).x(),
+			vertex_indices.at(i).y(),
+			vertex_indices.at(i).z()
+		});
+	}
+	return indices;
+}
+
+size_t MeshData::vertices_count()
+{
+	return (vertex_positions.size());
+}
+
+size_t MeshData::vertices_size()
+{
+	return
+	(
+		(3 * sizeof(float) * vertex_positions.size()) +
+		(3 * sizeof(float) * vertex_normals.size())   +
+		(2 * sizeof(float) * vertex_uvs.size())       +
+		(3 * sizeof(float) * vertex_colors.size())
+	);
+}
+
+size_t MeshData::indices_count()
+{
+	return (vertex_indices.size() * 3);
+}
+
+size_t MeshData::indices_size()
+{
+	return (3 * sizeof(unsigned int) * vertex_indices.size());
+}
+
+//
+// Mesh
+//
+Mesh::Mesh()
+{
+	my_type = graphx::classes::MESH;
+	name = "Untitled Mesh";
+}
+
+Mesh::Mesh(Material *new_material, std::string init_mesh_data_name)
+{
+	my_type = graphx::classes::MESH;
+	name = "Untitled Mesh";
+	material = new_material;
+}
+
+Mesh::Mesh(std::string init_mesh_data_name)
+{
+	my_type = graphx::classes::MESH;
+	name = "Untitled Mesh";
+	mesh_data_name = init_mesh_data_name;
+}
+
+void Mesh::prepForDestruction()
+{
+	Device::prepForDestruction();
+
+	if(material != nullptr)
+		material->prepForDestruction();
+
+	material = nullptr;
+	delete material;
+}
+
+void Mesh::loadSettings(graphx::gSettings new_settings)
+{
+	Device::loadSettings(new_settings);
+
+	getSetting(material, settings["Material"]);
+	getSetting(mesh_data_name, settings["MeshData"]);
+}
+
+//
+// Sprite
+//
+Sprite::Sprite()
+: Mesh()
+{
+	my_type = graphx::classes::SPRITE;
+	name = "Untitled Sprite";
+	mesh_data_name = GRAPHX_QUAD;
+}
+
+void Sprite::loadSettings(graphx::gSettings new_settings)
+{
+	Mesh::loadSettings(new_settings);
+}
+
+//
+// LightRenderCmd
+//
+bool LightRenderCmd::renderDebugMesh()
+{
+	return ((current_render_state != nullptr || previous_render_state != nullptr));
+}
+
+//
+// RenderCmd
+//
+RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color)
+{
+	is_light_debug_mesh = true;
+	current_render_state = light_render_command.current_render_state;
+	previous_render_state = light_render_command.previous_render_state;
+	mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_debug_material_color);
+	mesh_data_name = GRAPHX_CUBE;
+}
+
+bool RenderCmd::isRenderable()
+{
+	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
 }

@@ -55,9 +55,15 @@ Actor (Suzanne_Tester)
 }
 Actor (Pyramid_Tester)
 {
-	Mesh:Material <Pyramid>:<Doom_Shiny>
-	Scale (1.0, 1.0, 1.0)
-	Position (8.0, 2.0, -4.0)
+	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 4.0, -4.0)
+}
+Actor (Pyramid_Tester_2)
+{
+	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 1.0, -8.0)
 }
 StaticBodyActor (Floor)
 {
@@ -73,13 +79,13 @@ StaticBodyActor (Wall)
 }
 Environment (environment)
 {
-	AmbientLightingColor (1.0, 1.0, 1.0)
-	AmbientLightingStrength (0.2)
+	AmbientLightColor (1.0, 1.0, 1.0)
+	AmbientLightAmount (0.2)
 }
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
-	Strength  (0.2)
+	Energy    (0.5)
 	Color     (0.8, 0.9, 1.0)
 }
 LightTesterMover (spinny_light)
@@ -88,7 +94,7 @@ LightTesterMover (spinny_light)
 	PivotRadius   (1.2)
 	PivotSpeed    (1.8)
 	Color         (1.0, 0.15, 0.3)
-	Strength      (1.0)
+	Energy        (0.7)
 }
 LightTesterMover (spinny_light_2)
 {
@@ -145,5 +151,4 @@ GraphXPlayer (main_player)
 	MovementAcceleration (2.0)
 }
 LightFlashlight (Player_Flashlight)
-{
-}
+{}

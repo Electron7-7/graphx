@@ -132,13 +132,13 @@ std::string toStringNice(float number)
 	buffer += "VBO: " + std::to_string(mesh_data_pair.second.VBO) + "\n";
 	buffer += "Vertex Data (Postion | Normal | UV | Color):\n";
 
-	/*for(int it = 0,uv_it = 0 ; it < mesh_data_pair.second.vertex_positions.size() ; it+=3,uv_it+=2)
-	{
-		buffer += "\t" + toStringNice(mesh_data_pair.second.vertex_positions[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+2]) + " | ";
-		buffer += toStringNice(mesh_data_pair.second.vertex_normals[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_normals[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_normals[it+2]) + " | ";
-		buffer += toStringNice(mesh_data_pair.second.vertex_uvs[uv_it]) + ", " + toStringNice(mesh_data_pair.second.vertex_uvs[uv_it+1]) + " | ";
-		buffer += toStringNice(mesh_data_pair.second.vertex_colors[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_colors[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_colors[it+2]) + "\n";
-	}*//*
+	// for(int it = 0,uv_it = 0 ; it < mesh_data_pair.second.vertex_positions.size() ; it+=3,uv_it+=2)
+	// {
+		// buffer += "\t" + toStringNice(mesh_data_pair.second.vertex_positions[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+2]) + " | ";
+		// buffer += toStringNice(mesh_data_pair.second.vertex_normals[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_normals[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_normals[it+2]) + " | ";
+		// buffer += toStringNice(mesh_data_pair.second.vertex_uvs[uv_it]) + ", " + toStringNice(mesh_data_pair.second.vertex_uvs[uv_it+1]) + " | ";
+		// buffer += toStringNice(mesh_data_pair.second.vertex_colors[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_colors[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_colors[it+2]) + "\n";
+	// }
 	for(int it = 0 ; it < mesh_data_pair.second.getVertexDataSize() ; it+=11)
 	{
 		buffer += "\t" + toStringNice(mesh_data_pair.second.vertex_positions[it]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+1]) + ", " + toStringNice(mesh_data_pair.second.vertex_positions[it+2]) + " | ";

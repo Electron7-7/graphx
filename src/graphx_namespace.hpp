@@ -1,25 +1,119 @@
-#ifndef GRAPHX_NAMESPACE
-#define GRAPHX_NAMESPACE
-#include <glm/glm.hpp>
-#include <map>
-#include <any>
+#ifndef GRAPHXnameSPACE
+#define GRAPHXnameSPACE
+#include "g_common_fwd.hpp"
+#include "r_common_fwd.hpp"
 #include <array>
+#include <any>
 #include <string>
-#include <vector>
-#include <unordered_map>
 
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 
 namespace graphx
 {
+	struct gClass
+	{
+	public:
+		// Feel free to expand these limits if needed; just remember to update the values in graphx::classes accordingly
+		static constexpr int ACTOR_ID_LIMIT  = 999;
+		static constexpr int DEVICE_ID_LIMIT = 1999;
+	private:
+		inline static constexpr int INVALID_TYPE_ID = -481516;
+		inline static constexpr char INVALID_TYPE_NAME[13] = "INVALID_TYPE";
+		inline static constexpr int NAME_MAX_SIZE_BYTES = 80; // Raise this at your memory's peril
+		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)> *classes; // Defined in `graphx_classes_namespace.hpp`
+	public:
+		static const gClass INVALID_TYPE;      // Defined in `graphx_classes_namespace.hpp`
+
+		int id = INVALID_TYPE_ID;              // `id` is usually more important than `name`... usually...
+		const char *name = INVALID_TYPE_NAME;  // `name` is only really used by the interpreter (and for debugging)
+		Actor *(*create_new_actor)() = nullptr;
+		Device *(*create_new_device)() = nullptr;
+
+		inline gClass() = default;
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)())   : id(init_id), name(init_name), create_new_actor(new_actor_function)   {}
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Device*(*new_device_function)()) : id(init_id), name(init_name), create_new_device(new_device_function) {}
+		inline constexpr gClass(const gClass &to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device) {}
+
+		inline gClass(std::string init_name)
+		{
+			for(const gClass &valid_class : *classes)
+				if(valid_class == init_name)
+				{
+					*this = valid_class;
+					return;
+				}
+			*this = INVALID_TYPE;
+		}
+
+		inline gClass(int init_id)
+		{
+			for(const gClass &valid_class : *classes)
+				if(valid_class == init_id)
+				{
+					*this = valid_class;
+					return;
+				}
+			*this = INVALID_TYPE;
+		}
+
+		inline static bool isValidClass(gClass type)
+		{
+			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
+				if(*valid_class == type)
+					return true;
+			return false;
+		}
+
+		inline static const gClass &getClassType(gClass type)
+		{
+			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
+				if(*valid_class == type)
+					return *valid_class;
+			return INVALID_TYPE;
+		}
+
+		// Overloading Comparison Operators
+		//---------------------------------
+		// 1: Comparing gClass to gClass
+		const bool operator==(const gClass &compare_against) const { return (id == compare_against.id);  }
+		const bool operator!=(const gClass &compare_against) const { return !(*this == compare_against); }
+		const bool operator< (const gClass &compare_against) const { return (id < compare_against.id);   }
+		const bool operator> (const gClass &compare_against) const { return (id > compare_against.id);   }
+		const bool operator<=(const gClass &compare_against) const { return !(*this > compare_against);  }
+		const bool operator>=(const gClass &compare_against) const { return !(*this < compare_against);  }
+		// 2: Comparing gClass to int
+		const bool operator==(const int &compare_against) const { return (id == compare_against);     }
+		const bool operator!=(const int &compare_against) const { return !(*this == compare_against); }
+		const bool operator< (const int &compare_against) const { return (id < compare_against);      }
+		const bool operator> (const int &compare_against) const { return (id > compare_against);      }
+		const bool operator<=(const int &compare_against) const { return !(*this > compare_against);  }
+		const bool operator>=(const int &compare_against) const { return !(*this < compare_against);  }
+		// 4: Comparing gClass to std::string
+		const bool operator==(const std::string &compare_against) const { return (name == compare_against);   }
+		const bool operator!=(const std::string &compare_against) const { return !(*this == compare_against); }
+		const bool operator< (const std::string &compare_against) const { return (name < compare_against);    }
+		const bool operator> (const std::string &compare_against) const { return (name > compare_against);    }
+		const bool operator<=(const std::string &compare_against) const { return !(*this > compare_against);  }
+		const bool operator>=(const std::string &compare_against) const { return !(*this < compare_against);  }
+
+		// Overloading Conversion Operators
+		//---------------------------------
+		// 1: Conversion from gClass to int
+		constexpr operator int() const { return id; }
+		// 2: Conversion from gClass to long
+		constexpr operator long() const { return static_cast<long>(id); }
+		// 3: Conversion from gClass to std::string
+		constexpr operator std::string() const { return std::string(name); }
+	};
+
 	namespace error
 	{
 		namespace rendercmd
 		{
-			static constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
-			static constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
-			static constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
-			static constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
+			inline constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
+			inline constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
+			inline constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
+			inline constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
 
 		};
 	};
@@ -28,103 +122,44 @@ namespace graphx
 	{
 		namespace primitive
 		{
-			static constexpr int FOO      = -1;
-			static constexpr int LINE     = 0;
-			static constexpr int TRIANGLE = 1;
-			static constexpr int TEXT     = -1; // Text not supported yet!
-		};
-
-		namespace mesh_data
-		{
-			static constexpr int IN_USE      =  1;
-			static constexpr int NOT_IN_USE  = -1;
-			static constexpr int NOT_CHECKED =  0;
+			inline constexpr int FOO      = -1;
+			inline constexpr int LINE     =  0;
+			inline constexpr int TRIANGLE =  1;
+			inline constexpr int TEXT     = -1; //< Text not supported yet!
 		};
 	};
 
-	namespace classes
+	namespace rendering
 	{
-		static constexpr int THEATRE			= 0;
-		static constexpr int ACTOR				= 1;
-		static constexpr int PHYSICSACTOR		= 2;
-		static constexpr int RIGIDBODYACTOR		= 3;
-		static constexpr int STATICBODYACTOR	= 11;
-		static constexpr int CAMERA				= 4;
-		static constexpr int GRAPHXPLAYER		= 5;
-		static constexpr int LIGHT				= 6; // The base Light class is also used as a point light
-		static constexpr int LIGHTDIRECTIONAL	= 7;
-		static constexpr int LIGHTSPOT			= 8;
-		static constexpr int LIGHTFLASHLIGHT	= 9;
-		static constexpr int LIGHTTESTERMOVER	= 10;
-		static constexpr int RAMIEL				= 12;
+		inline constexpr unsigned int GRAPHX_OPENGL = 917; // API identifier (more to be added)
 
-		static constexpr int DEVICE				= 500;
-		static constexpr int ENVIRONMENT		= 501;
-		static constexpr int MATERIAL			= 502;
-		static constexpr int MESH				= 503;
-		static constexpr int SPRITE				= 504;
-		static constexpr int COLLIDER			= 505;
+		inline GLShader *SHADER_DEFAULT             = nullptr;
+		inline GLShader *SHADER_DEBUG_FULLBRIGHT    = nullptr;
+		inline GLShader *SHADER_DEBUG_NORMALS       = nullptr;
+		inline GLShader *SHADER_DEBUG_VERTEX_COLORS = nullptr;
+		inline GLShader *SHADER_SKYBOX              = nullptr;
 
-		static constexpr int ACTORS[2] = {0, 499};
-		static constexpr int DEVICES[2] = {500, 999};
-		static constexpr int LIGHT_TYPES_AMOUNT = 5;
-		static constexpr std::array<int, LIGHT_TYPES_AMOUNT> LIGHTS =
-		{
-			LIGHT,
-			LIGHTSPOT,
-			LIGHTFLASHLIGHT,
-			LIGHTDIRECTIONAL,
-			LIGHTTESTERMOVER,
-		};
-	}
+		inline constexpr unsigned int VAOS_AMOUNT        = 2;
+		//---------------------------------------------------
+		inline constexpr unsigned int VAO_DEFAULT        = 0;
+		inline constexpr unsigned int VAO_PRIMITIVES     = 1;
 
-	typedef std::map<int, std::pair<std::string, std::string>> gObjectStore;
-	typedef std::multimap<int, std::pair<std::string, std::string>> gSourceRefStore;
-	typedef std::multimap<int, std::pair<std::string, int>> gTheatreRefStore;
-	typedef std::multimap<int, std::pair<std::string, std::string>> gRawDataStore;
-	typedef std::multimap<int, std::pair<std::pair<std::string, int>, std::vector<std::pair<std::string, int>>>> gSandwichStore;
-	typedef std::tuple<std::string, gObjectStore, gSourceRefStore, gTheatreRefStore, gRawDataStore, gSandwichStore> gTheatreStorage;
-	typedef std::pair<int, std::string> gSandwichPair;
-	typedef std::vector<std::string> gRawData;
 
-	// gKey, gValue, gStringSetting, and gStringSettings are for the interpreter/parser only
-	// and shouldn't be used by anything else (except for Theatre::graphx_theatre_settings)
-	typedef std::string gKey;
-	typedef std::pair<int, std::string> gValue;
-	typedef std::pair<gKey, gValue> gStringSetting;
-	typedef std::vector<std::vector<gStringSetting>> gStringSettings;
+		inline bool  do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
+		inline int   graphx_api = GRAPHX_OPENGL;
+		inline GLShader *current_shader = nullptr;
+		inline float main_window_width = 1280.0f;
+		inline float main_window_height = 720.0f;
+		inline float camera_near = 0.1f;
+		inline float camera_far = 10000.0f;
+		inline bool  jolt_debug_render = false;
+		inline bool  lighting_switch_diffuse = true;
+		inline bool  lighting_switch_specular = true;
+		inline bool  lighting_switch_ambient = true;
+	};
 
-	// The int in gSetting identifies the type (found in t_common.hpp); the four types are:
-	// 1: RAW_DATA (a vector of strings, using the typedef "gRawData")
-	// 2: CPP_REFERENCE (see "cpp_definitions" in "t_interpreter.cpp")
-	// 3: THEATRE_REFERENCE (a pointer to a pre-existing Actor/Device in the current Theatre)
-	// 4: EXTERNAL_REFERENCE (an external file's pathname, passed via string)
-	// 5: SANDWICH_BUN (a unique copy of a pre-existing Actor/Device in the current Theatre)
+	/// The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`.
 	typedef std::pair<int, std::any> gSetting;
 	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	static std::map<int, std::string> classnames =
-	{
-		{classes::THEATRE, "Theatre"},
-		{classes::ACTOR, "Actor"},
-		{classes::PHYSICSACTOR, "PhysicsActor"},
-		{classes::RIGIDBODYACTOR, "RigidBodyActor"},
-		{classes::STATICBODYACTOR, "StaticBodyActor"},
-		{classes::CAMERA, "Camera"},
-		{classes::GRAPHXPLAYER, "GraphXPlayer"},
-		{classes::LIGHT, "Light"},
-		{classes::LIGHTDIRECTIONAL, "LightDirectional"},
-		{classes::LIGHTSPOT, "LightSpot"},
-		{classes::LIGHTFLASHLIGHT, "LightFlashlight"},
-		{classes::LIGHTTESTERMOVER, "LightTesterMover"},
-		{classes::RAMIEL, "Ramiel"},
-
-		{classes::DEVICE, "Device"},
-		{classes::ENVIRONMENT, "Environment"},
-		{classes::MATERIAL, "Material"},
-		{classes::MESH, "Mesh"},
-		{classes::SPRITE, "Sprite"},
-		{classes::COLLIDER, "Collider"}
-	};
 }
 #endif

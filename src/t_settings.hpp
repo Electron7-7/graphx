@@ -1,17 +1,15 @@
 #ifndef GRAPHX_SETTINGS
 #define GRAPHX_SETTINGS
-#include "sanity.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "sanity_printouts.hpp"
 #include "graphx_namespace.hpp"
+#include "g_common_fwd.hpp"
+#include "r_common_fwd.hpp"
 #include "t_common.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <algorithm>
 #include <Jolt/Jolt.h>
-
-// Forward Declarations
-class Actor;
-struct Device;
-
-extern std::string empty_settings_identifier;
-extern graphx::gSettings empty_settings;
 
 #define GRAB_SETTING_ERR_DEVICE_POINTER     -4
 #define GRAB_SETTING_ERR_ACTOR_POINTER      -8
@@ -25,20 +23,20 @@ extern graphx::gSettings empty_settings;
 
 #define GRAB_SETTING_ERR_MSG_TEMPLATE std::string("getSetting called with non-matching variable and setting!")
 
+extern std::string empty_settings_identifier;
+extern graphx::gSettings empty_settings;
+
 template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 {
 	std::any set_value = setting.second;
 	int setting_type = setting.first;
 
 	if((setting_type == -1 || setting_type == 0) || (!set_value.has_value() || set_value.type() == typeid(void) || set_value.type() == typeid(nullptr)))
-	{
-		// No setting to get
-		return 0;
-	}
+		return 0; // No setting to get
 
 	if(setting_type == RAW_DATA)
 	{
-		graphx::gRawData raw_data = std::any_cast<graphx::gRawData>(set_value);
+		graphx::interpreter::gRawData raw_data = std::any_cast<graphx::interpreter::gRawData>(set_value);
 		std::string raw_data_lower = raw_data[0];
 		std::transform(raw_data_lower.begin(), raw_data_lower.end(), raw_data_lower.begin(), [](unsigned char c)
 		{
@@ -54,8 +52,8 @@ template<typename T> int getSetting(T &variable, graphx::gSetting setting)
 				return 0;
 			}
 
-			else if constexpr(std::is_arithmetic_v<T>) // Should only fire if T is number, since the previous if will fire when T is a bool
-			{
+			else if constexpr(std::is_arithmetic_v<T>)
+			{ // Should only fire if T is number, since the previous if statmenet will fire when T is a bool
 				variable = std::stod(raw_data[0]);
 				return 0;
 			}

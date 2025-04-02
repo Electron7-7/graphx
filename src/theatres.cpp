@@ -58,9 +58,15 @@ Actor (Suzanne_Tester)
 }
 Actor (Pyramid_Tester)
 {
-	Mesh:Material <Pyramid>:<Doom_Shiny>
-	Scale (1.0, 1.0, 1.0)
-	Position (8.0, 2.0, -4.0)
+	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 4.0, -4.0)
+}
+Actor (Pyramid_Tester_2)
+{
+	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 1.0, -8.0)
 }
 StaticBodyActor (Floor)
 {
@@ -76,13 +82,13 @@ StaticBodyActor (Wall)
 }
 Environment (environment)
 {
-	AmbientLightingColor (1.0, 1.0, 1.0)
-	AmbientLightingStrength (0.2)
+	AmbientLightColor (1.0, 1.0, 1.0)
+	AmbientLightAmount (0.2)
 }
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
-	Strength  (0.2)
+	Energy    (0.5)
 	Color     (0.8, 0.9, 1.0)
 }
 LightTesterMover (spinny_light)
@@ -91,7 +97,7 @@ LightTesterMover (spinny_light)
 	PivotRadius   (1.2)
 	PivotSpeed    (1.8)
 	Color         (1.0, 0.15, 0.3)
-	Strength      (1.0)
+	Energy        (0.7)
 }
 LightTesterMover (spinny_light_2)
 {
@@ -148,8 +154,7 @@ GraphXPlayer (main_player)
 	MovementAcceleration (2.0)
 }
 LightFlashlight (Player_Flashlight)
-{
-})~"}},{1, std::string{R"~(@CollisionTesting
+{})~"}},{1, std::string{R"~(@CollisionTesting
 GraphXPlayer (main_player)
 {
 	Position             (0.0, 3.0, 6.0)
@@ -301,7 +306,7 @@ RigidBodyActor (Falling_Actor_5)
 LightDirectional (Sun)
 {
 	Direction (-0.1, -1.0, -0.3)
-	Strength  (0.05)
+	Energy    (0.05)
 	Color     (1.0, 1.0, 1.0)
 }
 LightTesterMover (test_light_1)
@@ -317,5 +322,132 @@ LightTesterMover (test_light_2)
 	PivotPosition (8.4, 1.8, -3.0)
 	PivotRadius (2.0)
 	PivotSpeed (1.2)
+})~"}},{2, std::string{R"~(@RamielTheatre
+LightDirectional (Sun)
+{
+	Energy (0.05)
+	Direction (0.3, -0.7, -0.2)
+}
+LightFlashlight (Flashlight)
+{}
+GraphXPlayer (player)
+{
+	Position (0.0, 1.0, 170.0)
+	MouseSensitivity (0.1)
+}
+Environment (Default_Environment)
+{}
+Material (Floor_Material)
+{
+	// Testing comments here
+	DiffuseTexture [DOOM_TEXTURE_DIFF]
+	SpecularTexture [DOOM_TEXTURE_SPEC]
+	SpecularStrength (0.4)
+	SpecularSharpness (8)
+}
+Material (Second_Material)
+{
+	DiffuseTexture <Floor_Material>
+	SpecularTexture <Floor_Material>
+	SpecularStrength (0.8)
+	SpecularSharpness (128)
+}
+Mesh (Floor_Mesh)
+{
+	MeshData [GRAPHX_CUBE]
+}
+StaticBodyActor (Floor)
+{
+	Mesh:Material <Floor_Mesh>:<Floor_Material>
+	Scale (200.0, 1.0, 200.0)
+	Position (0.0, -1.0, 0.0)
+}
+Mesh (TestMesh)
+{
+	// Testing external references.
+	// Both absolute and relative paths are accepted.
+	// Absolute paths are used as-is, but relative paths are made relative to the program's location, not the user's
+	// MeshData "../src/models/purely_for_testing.obj"
+	// MeshData "theatres/test.obj"
+	// MeshData "theatres/ramiel.obj"
+	MeshData [Ramiel]
+}
+Light (fix_light)
+{
+	Position (250.0, 300.0, -400.0)
+	Color (1.0, 1.0, 1.0)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
+}
+Light (fix_light_2)
+{
+	Position (320.0, 250.0, -350.0)
+	Color (1.0, 1.0, 1.0)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
+}
+Light (fix_light_3)
+{
+	Position (200.0, 420.0, -700.0)
+	Color (1.0, 1.0, 1.0)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
+}
+Light (fix_light_4)
+{
+	Position (280.0, 225.0, -150.0)
+	Color (1.0, 1.0, 1.0)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
+}
+Material (Ramiel_Mat)
+{
+	DiffuseTexture [NO_TEXTURE]
+	SpecularTexture [FLAT_SPEC]
+	SpecularStrength (0.9)
+	SpecularSharpness (256)
+}
+Ramiel (Ramiel)
+{
+	Mesh:Material <TestMesh>:<Ramiel_Mat>
+	Scale (300.0, 300.0, 300.0)
+	Position (600.0, 465.0, -800.0)
+	Rotation (0.0, 148.0, 0.0)
+	MovementType (1)
+	MovementSpeed (0.5)
+	// PivotPosition (0.0, 90.0, -20.0)
+	// PivotRadius   (40.2)
+	// PivotSpeed    (0.2)
+}
+Mesh (Cube_Mesh)
+{
+	MeshData [GRAPHX_CUBE]
+}
+RigidBodyActor (FallOnMe)
+{
+	Mesh <Cube_Mesh>
+	Position (0.0, 1.5, -4.0)
+	Scale (3.4, 0.3, 7.8)
+}
+RigidBodyActor (FallOnMe2)
+{
+	Mesh <Cube_Mesh>
+	Position (0.0, 3.0, -4.0)
+	Scale (5.1, 0.3, 3.2)
+}
+RigidBodyActor (FallOnMe3)
+{
+	Mesh <Cube_Mesh>
+	Position (0.0, 5.0, -5.0)
+	Scale (1.1, 3.3, 0.7)
+}
+Actor (fake_actor)
+{
+	Position (0.0, -100.0, 0.0)
+	Scale (20.0, 10.0, 3.0)
 })~"}}
 };

@@ -1,7 +1,9 @@
 #include "g_actors.hpp"
-#include "t_settings.hpp"
-#include "g_jolt.hpp"
+#include "graphx_classes_namespace.hpp"
 #include <gmath.hpp>
+#include <models.hpp>
+#include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
@@ -9,47 +11,22 @@ glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 
-std::map<int, Actor*(*)()> actor_map =
-{
-	{graphx::classes::ACTOR, &createNewActor<Actor>},
-	{graphx::classes::PHYSICSACTOR, &createNewActor<PhysicsActor>},
-	{graphx::classes::RIGIDBODYACTOR, &createNewActor<RigidBodyActor>},
-	{graphx::classes::STATICBODYACTOR, &createNewActor<StaticBodyActor>},
-	{graphx::classes::CAMERA, &createNewActor<Camera>},
-	{graphx::classes::GRAPHXPLAYER, &createNewActor<GraphXPlayer>},
-	{graphx::classes::LIGHT, &createNewActor<Light>},
-	{graphx::classes::LIGHTDIRECTIONAL, &createNewActor<LightDirectional>},
-	{graphx::classes::LIGHTSPOT, &createNewActor<LightSpot>},
-	{graphx::classes::LIGHTFLASHLIGHT, &createNewActor<LightFlashlight>},
-	{graphx::classes::LIGHTTESTERMOVER, &createNewActor<LightTesterMover>},
-	{graphx::classes::RAMIEL, &createNewActor<Ramiel>},
-};
-
 //
 // Actor
 //
-Actor::Actor(std::string new_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : mesh(init_mesh), scale(init_scale), position_global(init_position)
 {
 	my_type = graphx::classes::ACTOR;
-	name = new_name;
-	mesh = new Mesh();
+	name = init_name;
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	RenderState render_state = RenderState(init_position, quaternion, init_scale);
-	// current_state_copy = current_state;
-	// previous_state = current_state;
-	// previous_state_copy = current_state;
 	current_state_buffer = { render_state, render_state };
 	previous_state_buffer = { render_state, render_state };
 	updateVectors();
 }
 
-std::string Actor::getTypeName()
-{
-	return graphx::classnames.at(my_type);
-}
-
-long Actor::getType()
+graphx::gClass &Actor::getType()
 {
 	return my_type;
 }
@@ -189,19 +166,6 @@ void Actor::youGotACallBack(graphx::gSettings new_settings)
 	updateVectors();
 }
 
-bool Actor::isType(int class_type)
-{
-	return class_type == my_type;
-}
-
-bool Actor::isType(std::initializer_list<int> const &class_types)
-{
-	for(int type : class_types)
-		if(my_type == type)
-			return true;
-	return false;
-}
-
 void Actor::setUID(long manual_uid)
 {
 	if(manual_uid != -1)
@@ -250,21 +214,17 @@ void Actor::tick(int current_tick)
 {}
 
 void Actor::callToStage(Theatre *parent_theatre)
-{
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
-}
+{}
 
 void Actor::takeABow()
 {
 	if(mesh != nullptr)
 		mesh->prepForDestruction();
-
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 bool Actor::wantsToBeRendered()
 {
-	return (mesh != nullptr && visible && !isType(graphx::classes::GRAPHXPLAYER));
+	return (mesh != nullptr && visible && !(my_type == graphx::classes::GRAPHXPLAYER));
 }
 
 //
@@ -609,12 +569,13 @@ void GraphXPlayer::takeABow()
 //
 // Light
 //
-Light::Light(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, glm::vec3 init_position, glm::vec3 init_rotation, glm::vec3 init_scale)
-: Actor(init_name, &temporary_light_mesh, init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
+Light::Light(std::string init_name)
+: Actor(init_name)
 {
 	my_type = graphx::classes::LIGHT;
 	my_light_type = graphx::classes::LIGHT;
-	scale = glm::vec3(0.2f);
+	debug_visible = true;
+	scale = glm::vec3(0.25f);
 }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
@@ -622,32 +583,28 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	Actor::youGotACallBack(new_settings);
 
 	getSetting(light_color, settings["Color"]);
-	getSetting(light_strength, settings["Strength"]);
+	getSetting(light_energy, settings["Energy"]);
 	getSetting(light_ambient_strength, settings["AmbientStrength"]);
-	getSetting(range, settings["Range"]);
-	getSetting(intensity, settings["Intensity"]);
-	getSetting(falloff, settings["Falloff"]);
+	getSetting(light_specular_strength, settings["SpecularStrength"]);
+	getSetting(light_attenuation, settings["FadeIntensity"]);
+	getSetting(light_attenuation, settings["Attenuation"]);
+	getSetting(light_range, settings["Range"]);
 
+	// Just to be safe...
 	if(mesh != nullptr)
 	{
 		mesh->prepForDestruction();
 		mesh = nullptr;
 		delete mesh;
 	}
-
-	// temporary_light_mesh.material = new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color);
-	// temporary_light_mesh.mesh_data_name = GRAPHX_CUBE; // For some reason, this causes a crash because the floor's VBO doesn't get buffered I think(?????)
-	// mesh = &temporary_light_mesh;
-	mesh = new Mesh(new Material(LIGHT_jpg, NO_TEXTURE_jpg, 4, 0.0f, light_color));
-	mesh->mesh_data_name = GRAPHX_CUBE;
 }
 
-bool Light::isLightType(int light_type)
+bool Light::isLightType(graphx::gClass light_type)
 {
 	return light_type == my_light_type;
 }
 
-int Light::getLightType()
+graphx::gClass const &Light::getLightType()
 {
 	return my_light_type;
 }
@@ -656,13 +613,13 @@ LightData Light::getLightData()
 {
 	LightData light_data;
 
-	light_data.strength = light_strength;
+	light_data.energy = light_energy;
 	light_data.ambient_strength = light_ambient_strength;
+	light_data.specular_strength = light_specular_strength;
 	light_data.color = light_color;
 	light_data.position = getPosition<glm::vec3>();
-	light_data.range = range;
-	light_data.intensity = intensity;
-	light_data.falloff = falloff;
+	light_data.attenuation = light_attenuation;
+	light_data.range = light_range;
 
 	return light_data;
 }
@@ -670,19 +627,21 @@ LightData Light::getLightData()
 //
 // LightDirectional
 //
-LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_direction, float init_strength, glm::vec3 init_color)
-: Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color), direction(init_direction)
+LightDirectional::LightDirectional(std::string init_name)
+: Light(init_name)
 {
 	my_type = graphx::classes::LIGHTDIRECTIONAL;
 	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
+	debug_visible = false;
 }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	getSetting(direction, settings["Direction"]);
+	getSetting(directional_direction, settings["Direction"]);
 
+	// LightDirectional doesn't really need a debug mesh, since it's physical orientation doesn't matter
 	if(mesh != nullptr)
 		mesh->prepForDestruction();
 	mesh = nullptr;
@@ -692,35 +651,37 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 LightData LightDirectional::getLightData()
 {
 	LightData directional_light_data = Light::getLightData();
-	directional_light_data.direction = direction;
+	directional_light_data.direction = directional_direction;
 	return directional_light_data;
 }
 
 //
 // LightSpot
 //
-LightSpot::LightSpot(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, float init_inner_cutoff_angle, float init_outer_cutoff_angle, glm::vec3 init_direction, glm::vec3 init_position, glm::vec3 init_rotation)
-: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
+LightSpot::LightSpot(std::string init_name)
+: Light(init_name)
 {
 	my_type = graphx::classes::LIGHTSPOT;
 	my_light_type = graphx::classes::LIGHTSPOT;
+	debug_visible = true;
+	scale = glm::vec3(0.25f);
 }
 
 void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	getSetting(inner_cutoff_angle, settings["InnerCutoffAngle"]);
-	getSetting(outer_cutoff_angle, settings["OuterCutoffAngle"]);
-	getSetting(direction, settings["Direction"]);
+	getSetting(spot_direction, settings["Direction"]);
+	getSetting(spot_angle, settings["Angle"]);
+	getSetting(spot_angle_fade, settings["AngleFadeIntensity"]);
 }
 
 LightData LightSpot::getLightData()
 {
 	LightData spot_light_data = Light::getLightData();
-	spot_light_data.direction = direction;
-	spot_light_data.inner_cutoff = glm::cos(glm::radians(inner_cutoff_angle));
-	spot_light_data.outer_cutoff = glm::cos(glm::radians(outer_cutoff_angle));
+	spot_light_data.direction = spot_direction;
+	spot_light_data.spot_cutoff = glm::cos(glm::radians(spot_angle));
+	spot_light_data.spot_cutoff_fade = glm::cos(glm::radians(spot_angle - spot_angle_fade));
 
 	return spot_light_data;
 }
@@ -728,12 +689,16 @@ LightData LightSpot::getLightData()
 //
 // LightFlashlight
 //
-LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, float init_inner_cutoff_angle, float init_outer_cutoff_angle, glm::vec3 init_position_offset, glm::vec3 init_rotation_offset)
-: LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset)
+LightFlashlight::LightFlashlight(std::string init_name)
+: LightSpot(init_name)
 {
 	my_type = graphx::classes::LIGHTFLASHLIGHT;
 	my_light_type = graphx::classes::LIGHTSPOT;
-	_color = light_color;
+	debug_visible = false;
+	light_ambient_strength = 0.0f;
+	light_range = 120.f;
+	light_attenuation = 0.5f;
+	light_energy = 2.0f;
 }
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
@@ -756,14 +721,14 @@ void LightFlashlight::tick(int current_tick)
 	if(getCurrentTheatre()->getPlayer() == nullptr)
 		return;
 
-	position_global = getCurrentTheatre()->getPlayer()->player_camera.getPosition<glm::vec3>() + position_offset;
-	quaternion = getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset));
-	direction = quaternion * vector3_front;
+	setGlobalPosition(getCurrentTheatre()->getPlayer()->player_camera.getPosition<glm::vec3>() + position_offset);
+	setGlobalRotation(getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset)));
+	spot_direction = quaternion * vector3_front;
 }
 
 void LightFlashlight::setLight(bool is_on)
 {
-	light_color = _color * is_on;
+	light_color = _color * (float)is_on;
 }
 
 void LightFlashlight::setLightColor(glm::vec3 color)
@@ -786,11 +751,12 @@ void LightFlashlight::setLightColor(bool color_toggle)
 //
 // LightTesterMover
 //
-LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color)
-: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
+LightTesterMover::LightTesterMover(std::string init_name)
+: Light(init_name)
 {
 	my_type = graphx::classes::LIGHTTESTERMOVER;
 	my_light_type = graphx::classes::LIGHT;
+	debug_visible = true;
 }
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
@@ -807,7 +773,7 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	pivot_point.mesh->setUID(4815 + UID);
 	graphx::gSettings pivot_settings
 	{
-		{"Name", graphx::gSetting(RAW_DATA, graphx::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
+		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
 		{"MeshData", settings["MeshData"]},
 	};
 	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);
@@ -832,22 +798,32 @@ void LightTesterMover::callToStage(Theatre *parent_theatre)
 void LightTesterMover::takeABow()
 {}
 
+//
+// Ramiel
+//
+Ramiel::Ramiel()
+: Actor("Ramiel")
+{}
 
-/*class Ramiel: public Actor
+void Ramiel::youGotACallBack(graphx::gSettings new_settings)
 {
-	glm::vec3 pivot_position = glm::vec3(0.0f);
-	float pivot_radius = 3.0f;
-	float pivot_speed = 1.0f;
-	float pivot_theta = 0.0f;
+	Actor::youGotACallBack(new_settings);
 
-	using Actor::Actor;
-
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-};*/
+	getSetting(movement_type, settings["MovementType"]);
+	getSetting(pivot_position, settings["PivotPosition"]);
+	getSetting(pivot_radius, settings["PivotRadius"]);
+	getSetting(pivot_speed, settings["PivotSpeed"]);
+	getSetting(movement_speed, settings["MovementSpeed"]);
+}
 
 void Ramiel::tick(int current_tick)
 {
+	if(movement_type == RAMIEL_APPROACH)
+	{
+		position_global += movement_speed * orientation_front;
+		return;
+	}
+
 	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
 	position_global[1] = pivot_position[1];
 	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
@@ -855,13 +831,4 @@ void Ramiel::tick(int current_tick)
 	pivot_theta += pivot_speed;
 	if(pivot_theta >= 360.0f)
 		pivot_theta = 0.0f;
-}
-
-void Ramiel::youGotACallBack(graphx::gSettings new_settings)
-{
-	Actor::youGotACallBack(new_settings);
-
-	getSetting(pivot_position, settings["PivotPosition"]);
-	getSetting(pivot_radius, settings["PivotRadius"]);
-	getSetting(pivot_speed, settings["PivotSpeed"]);
 }

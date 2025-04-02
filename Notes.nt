@@ -1849,3 +1849,283 @@ Okay, today I have an extra hour to work, so here's some things to work on:
   - Find and fix memory leaks (in a new branch)
 
 I wanna start with the memory leaks, tbh, because that's more important and also will take the most work I assume (or at least I wanna make a new branch for that work)
+
+Aight, let's get to work on finding those memory leaks! I assume that's what causes the major slowdown after a few minutes of runtime. Even if it is just the laptop, I'm sure my abuse of raw pointers has caused a lot of memory leaks and I wanna fix as many of those as I can.
+
+
+I think that in order to fix the memory leaks, I need to first re-factor my code and change how Mesh, Material, and other classes are used and stored.
+
+First off, I want to make a Texture struct that I can store similarly to MeshData since textures are another thing that OpenGL buffers and uses (and iirc can contribute heavily to performance)
+
+Hmm... I've come face to face with graphx::classnames and I really wanna fucking attack the whole problem of adding new classes to the interpreter. It's a pain in the ass, spread over multiple files, and can totally be slimmed down. I'm thinking of generating the classnames map instead of having it be static and pre-made. I think I'm going to just get rid of graphx::classnames alltogether as it's main purpose is debugging-related and it's more of a headache to try and solve than to just replace it.
+
+God, I wanna fucking change UIDs and the Theatre maps and everything... it's so clunky. Fucking... okay, one thing at a time.
+
+Okay, I refactored a lot of shit related to the classnames. I wasn't able to remove any of the places you need to add code to for new classes, but I did refactor, and make more efficient, certain functionalities like checking if an Actor is a Light , checking if a class is an Actor or Device, etc. Now, I'm gonna continue taking a stab at making a Texture struct that acts like MeshData.
+
+I've almost fully implemented Texture, it just doesn't seem to be working / loading any textures. It doesn't crash the engine, though, so that's good! I'll figure it out tomorrow.
+
+[03/22/25]
+At the airport, sitting at my gate rn; gonna dick around with the Texture class some more.
+
+In the air now. Found the problem with the textures not rendering; it's actually not that the textures aren't rendering, it's that the Theatre isn't creating LightRenderCmds for the Lights. I'm assuming that graphx::classes::isLight is broken.
+
+Fucking...
+This:
+:::C++
+if(type == INVALID_TYPE || getBaseType(type != ACTOR))
+:::
+Was supposed to be this:
+:::C++
+if(type == INVALID_TYPE || getBaseType(type) != ACTOR)
+:::
+
+Kms.
+
+Yup, it works now.
+
+Seeing some weird bugs; could be because this laptop is so fucking slow that it's not reading the .gt files fast enough or some shit. Idk.
+
+[03/25/25]
+Big fucking issue: my redirection in the GLFW key callback function to Theatre::delegateKeyInput is being called by ImGui!! Fix that!!
+
+Weird bug: Ramiel's mesh gets fucked up when loading the first Theatre twice. Like, it's fine up until the very first Theatre is loaded again...
+
+[03/26/25]
+I wanna try and work on that Ramiel bug. An interesting thing I noticed is that it doesn't seem to break when I use one of my meshes.
+
+Just tested it with Suzanne and it doesn't bug out. That's really weird...
+
+Wait! It happens with the penis model! What's the difference between these three?
+
+Hmm... using Nsight, it looks like Ramiel's buffer gets broken after loading the first Theatre and is either empty or filled with garbage data.
+
+Fixed it by just recreating every VBO when I load a new Theatre; I want to implement combining all the instance-able MeshData used in a Theatre into one large VBO+IBO because that will help performance and at this point just be fucking better.
+
+Okay here's how I wanna structure the data:
+MeshData will contain:
+  - base vertex 
+  - indices count
+
+Also, this might have been causing issues with rendering:
+:::C++
+bool MeshData::hasValidIndices()
+{
+    return (!vertex_indices.empty() /*This ->*/ && !(vertex_indices.size() % 3));
+}
+:::
+
+Because vertex_indices is a vector of gmath::uintvec3, not a vector of unsigned ints.
+
+At work; going to try and fix some problems with the new VBO implementation.
+
+The mesh indices are getting buffered correctly; I think the problem is the offset? Yep, I'm pretty sure it's because I'm not properly setting one or more arguments in glDrawElementsBaseVertex.
+
+I don't know why it's not working; it should. It might be the way I'm buffering the data. I'll try using glBufferData instead of glBufferSubData to test this.
+
+Turns out... I HAD THE BYTE OFFSET IN glBufferSubData WRONG BECAUSE YEAH glBufferData WORKED LIKE A FUCKING CHARM!!!
+
+Working on primitives... just realized I'm fucking stupid and it would be so much easier to just make a primitives VBO (or multiple VBOs) instead of trying to render shit without vertices.
+
+Working on gradient backgrounds.
+
+[03/27/25]
+Got some new medical and took a rip lmfao; forgot about wanting to focus. Shouldn't be too bad, bc I still have an hour and fourty minutes before I gotta leave for work. Anyways, gonna try and work on that background gradient before I eat and shit.
+
+Almost done; finish up the shitty little hard coded function later.
+
+At work; time to finish the shitty little hard coded function, lmfao.
+
+Fucking... had some bugs and just found out it's the fucking texture filter mode for the skybox cubemap LMFAOOOO.
+
+[03/28/25]
+Aight, I wanna clean up and de-shit-ify the skybox code and try to slim down the whole process for adding new resources and classes to the engine code. I also wanna maybe create interfaces for certain things like MeshData and Texture that are a little more... organized. I might fucking bite the bullet and create a renderer class. Maybe. I still don't like it, though. Honestly, no, I really don't wanna do that. The renderer should (in my opinion) be a solid, tangible set of functions and not an abstracted class that needs to be "created" and "instantiated". All a renderer really does is send information to the GPU in a loop. That's something that not only doesn't need to be in a class but honestly (in my opinion) should be handled by a function that could never be accidentally deleted or created in too local of a scope or whatever. Aight, rant over, you can all return to your desks.
+
+Oh, and mental note: don't forget to take another crack at the Jolt debug renderer shit again.
+
+I'm thinking of taking all the code that needs to be modified to add a new class/resource to the engine and putting it in its own file.
+
+Actually, I think I'll make them a part of the graphx namespace (or at least in the file).
+
+Aight, I got a bit carried away and started cleaning up the namespace and interpreter files. They needed a good dusting, tbh. Considering moving "cpp_definitions" into the namespace file since that's another map you need to be aware of, even if it is just for the graphxtheatre files.
+
+I keep getting distracted with making documentation and comments... fucking hell.
+
+Spotted a super crazy hidden bug in `g_theatres.cpp` in `Theatre::countLights()`:
+This line would always send "0" to `graphx::classes::isLight`:
+:::C++
+if(graphx::classes::isLight(!actor->getType()))
+:::
+It should be like this instead:
+:::C++
+if(!graphx::classes::isLight(actor->getType()))
+:::
+
+[03/29/25]
+Finished up my code; I'm getting a weird error with graphx::gClass, but it shouldn't be too hard to solve.
+
+Oh my god, I think I have a fucking stack overflow... the funny...
+
+It's a function in the interpreter that calls graphx::classes::getBaseType. I think that bc graphx::classes::getBaseType has a gClass argument and is given a string instead, my code is fucked up and throws itself into a fucking infinite loop...
+
+[03/30/25]
+Found where the segmentation fault is happening; it's in `graphx::gClass(std::string init_name)` right here:
+:::C++
+if(valid_classes.contains(init_name))
+:::
+I'm pretty sure that any time `valid_classes` is iterated on or otherwise interacted with (i.e: `.contains` in this case), one of the operations in std::set (I'm assuming a constructor or destructor) starts an infinite loop of graphx::gClass constructors.
+
+I think it's to do with the conversion operators; `.contains()` expects a reference to an object of the same type as the set contains, but since I pass it either a string or an int, it needs to create a new object using that string or int. Since that constructor is the same one, however, it results in a feedback loop and a stack overflow.
+
+Oh god... is it because I forgot to make sure that the constructors add items to the set??? Is it because the set is empty???? No, that can't be the real reason...
+
+<interjecting on 04/02/25>
+I forgot to write more notes, but it turns out that I just really didn't know what I wanted from graphx::gClass and was just going down rabbit hole after rabbit hole. In the end, `valid_classes` was renamed to graphx::gClasses::classes bc... no reason, honestly, but more importantly, it's defined in `graphx_classes_namespace.hpp` after all the gClass objects in graphx::classes are. This means that while it's not automatically filled in by each object when they're created (which I couldn't realistically do, anyways, due to how and why I created the gClass objects in the first place), it's only one extra line of code (really just copying a variable name and pasting it into a vector), and it's right below where you'd define the valid gClass objects. These are also now the only two places that need to be updated in order for the engine to recognize a new Actor/Device, which is a far far FAR cry (haha) better than before, where you'd need to write up to four completely unique lines of code in three/four completely different files. Total nightmare turned super easy task, and all with a custom type that can be compared against an integer/float or a string; not too bad if I do say so myself.
+
+[03/31/25]
+I got it to compile and run, but now there's weird issues with resources not being created/assigned properly (I'm assuming it's to do with type checks and such). Mainly, Colliders not being created by StaticBodyActors.
+
+Turns out the gClass objects I made in `graphx_classes_namespace.hpp` had the wrong function pointers. Don't know how that happened but it should be an easy fix.
+
+IT FUCKIGN WORKS!!!!
+
+Side note: I do like the new shader more than the old version with ambient lighting, but I don't like the shadows going to pure darkness (0.0f), so implementing either a dynamic minimal brightness (similar to ambient lighting but without the shitty look of it) or the advanced lighting in LearnOpenGL.com is what I wanna do next.
+
+At work now; I'm gonna spend at most an hour on the shader stuff.
+
+I removed ambient lighting; will add in something to replace it later. Personal note: vec2 doesn't fucking exist, stop trying to use it in your shaders LMFAO.
+
+[04/01/25]
+Working on the shader; ambient lighting is actually necessary, I was just doing it poorly. I'm gonna re-implement it. I would also like to flesh out the GLShader class some more so I can directly do comparison and shit with it instead of relying on some integer values of the position of a shader in a vector in the main function LMFAO.
+
+I wanna restructure my resources (and steal from Godot):
+  - Light
+    - color
+    - specular
+    - ambient
+    - distance fade
+      - begin
+      - length
+      - shadow (cutoff for shadow rendering)
+      - enabled
+    - energy
+      - indirect energy (SDFGI)
+    - size (maybe)
+    - projection texture
+    - shadow
+      - enabled
+      - opacity
+      - blur
+    - LightSpot
+      - angle
+      - angle attenuation
+      - attenuation
+      - range
+
+  - Environment
+    - ambient light contribution
+    - various post processing
+      - bloom
+      - hdr
+
+  - Material
+    - diffuse
+      - color
+      - texture
+    - various texture options
+      - force srgb
+      - filter mode
+      - anisotropy
+      - texture repeat
+    - metallic
+      - texture
+      - strength
+    - roughness
+      - texture
+      - strength
+    - specular mode
+
+  - Mesh
+    - Primitive Mesh types
+      - Box
+      - Sphere
+      - Pyramid
+      - Cone
+      - Cylinder
+      - Capsule
+    - Array Mesh type
+      - Different types of array data representation
+    - Separate vertex attributes into separate containers for automatic generation/detection of VAOs
+
+  - Texture
+    - Static Texture
+      - Get properties
+        - Height
+        - Width
+        - Alpha
+        - File size in bytes(?)
+    - Dynamic Texture
+      - Get properties
+      - Set properties
+        - Somehow notify rendering API of changes
+
+I want to keep these API agnostic as best as I can. Maybe I'll make a section of the graphx namespace for the different rendering APIs and their variables (e.g: graphx::OpenGL::VAOs, graphx::OpenGL::TextureIDs, etc).
+
+Found a memory leak in the Actor::Actor constructor:
+:::C++
+Actor::Actor(std::string init_name, Mesh *init_mesh, ...)
+: mesh(init_mesh), ...
+{
+    ...
+    mesh = new Mesh(); // Memory leak!
+    ...
+}
+:::
+
+Well, maybe not technically a memory leak if Actor always deletes this before getting destroyed (which it definitely doesn't), but still pretty stupid. The renderer shouldn't crash if the mesh is null, so this is either forgetfullness or paranoia lmfao.
+
+[04/02/25]
+At work; cleaned up the code from yesterday. This includes removing the `shaders` vector and instead using the graphx::rendering namespace to store my shaders. Currently, it's hard-coded to OpenGL but I intend on making it more streamlined and API-agnostic in the future. For now, though, some global variables should do.
+
+All right, then, what's next? I might want to clean up and get ready for a release, but I'd like to add some more functionality to the engine (or at least a new feature) before I do, since most of these changes have been under-the-hood, unseen stuff.
+
+Aight, found some bugs... time to squash.
+
+Hmm... it looks like there's at least two bugs:
+  1. The flashlight doesn't follow the player
+  2. LightDirectional and/or Environment aren't given/don't use proper default values
+Pretty sure these are both issues with how I send data (and what data I send) to the shader, so I'll look in `r_renderer.cpp` first.
+
+Turns out it was because I had changed Light::getLightData to this:
+:::C++
+virtual const LightData getLightData();
+:::
+Yeah, that `const` was causing the issues, lmfao. I assume it's because all derived Light classes use Light::getLightData to populate a new LightData object with values from Light, but since it's `const` none of the values can be changed/set. Woops.
+
+Aight, referencing my notes on 03/21/25:
+"
+Okay, today I have an extra hour to work, so here's some things to work on:
+  - Use that macro for getting variable names in the interpreter
+  - Reduce number of lines I need to write in order to add a new class to the interpreter:
+    - graphx::classes (graphx_namespace.hpp)
+    - graphx::classnames (graphx_namespace.hpp)
+    - actor_map (g_actors.cpp) / device_map (r_common.cpp)
+  - Give debug menu more functionality
+    - Implement way to interface with classes and change values directly (raycast?)
+  - Find and fix memory leaks (in a new branch)
+"
+
+So far I've made adding new Actors/Devices to the engine much easier by taking the process from this:
+  1: Create integer type identifier inside graphx::classes, in graphx_namespace.hpp
+  2: Add that identifier with a string key to the graphx::classnames map, in graphx_namespace.hpp
+  3: Add that identifier with a function pointer to either actor_map in g_actors.cpp or device_map in r_common.cpp
+
+To this:
+  1: Create graphx::gClass type identifier inside graphx::classes, in graphx_classes_namespace.hpp
+  2: Add that identifier to graphx::gClass::classes, defined in graphx_classes_namespace.hpp
+
+The process has gone from three completely different lines of code in two completely separate files to two simple lines of code (one of which is just copying a variable name into a vector) which are both in the same file (as well as conveniently right next to eachother).
+
+I've also used Heaptrack to find and fix a few of the worst memory leaks (I'm talking MB of memory...); while there are still quite a few leaks to plug up, the largest ones only get to ~200kb and are from instantiation/setup functions (meaning, memory isn't leaking every frame), so it's no longer a huge priority, although it will be a continued, consistent thing I'll try and maintain (like spring cleaning).
+
+All this to say, I think I can merge this branch and move on to implementing some minor features that I could easily get done tonight (i.e: simple debug menu interaction?).

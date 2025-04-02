@@ -1,6 +1,5 @@
 #version 460 core
 #define MAX_NUMBER_OF_LIGHTS 20
-out vec4 FragColor;
 
 in vec2 texture_coordinate;
 in vec3 fragment_position;

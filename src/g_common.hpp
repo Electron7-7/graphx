@@ -2,18 +2,11 @@
 #define GRAPHX_ENGINE_COMMON
 #include "t_settings.hpp"
 #include "graphx_namespace.hpp"
+#include "r_common_fwd.hpp"
+#include "g_common_fwd.hpp"
 #include <glm/fwd.hpp>
-#include <GLFW/glfw3.h>
 #include <mutex>
 #include <set>
-
-// Forward Declarations
-struct Theatre; // For Actor
-class GraphXPlayer;
-struct Device;
-struct Environment;
-struct Material;
-struct Mesh;
 
 extern bool loading_new_main_theatre;
 
@@ -39,12 +32,6 @@ public:
 	glm::vec3 orientation_right;
 	glm::vec3 world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	// RenderState current_state;
-	// RenderState current_state_copy;
-
-	// RenderState previous_state;
-	// RenderState previous_state_copy;
-
 	std::vector<RenderState> current_state_buffer;
 	std::vector<RenderState> previous_state_buffer;
 
@@ -52,7 +39,7 @@ public:
 
 	graphx::gSettings settings = empty_settings;
 
-	Actor(std::string new_name = "Untitled Actor", Mesh *init_mesh = nullptr, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	Actor(std::string init_name = "Untitled Actor", Mesh *init_mesh = nullptr, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 	virtual ~Actor() = default;
 
 	template<typename T> T getPosition();
@@ -65,18 +52,7 @@ public:
 
 	long getUID();
 	void setUID(long manual_uid);
-	bool isType(int class_type);
-	bool isType(std::initializer_list<int> const &class_types);
-	// I have to define this in the header file, unfortunately
-	template<std::size_t array_size> bool isType(std::array<int, array_size> class_types)
-	{
-		for(int type : class_types)
-			if(my_type == type)
-				return true;
-		return false;
-	}
-	std::string getTypeName();
-	long getType();
+	graphx::gClass &getType();
 	void setName(std::string new_name);
 	void setName(char *new_name);
 	std::string getName();
@@ -93,7 +69,7 @@ public:
 	virtual bool wantsToBeRendered();
 
 protected:
-	int my_type;
+	graphx::gClass my_type;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	std::string name = "Untitled Actor";
 	glm::vec3 position_global = glm::vec3(0.0f);
@@ -124,14 +100,17 @@ struct Theatre
 	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
+	int directional_lights_count = 0;
 
-	graphx::gStringSettings graphx_theatre_settings;
+	// This abomination is what a "gStringSettings" typedef actually is...
+	std::vector<std::vector<std::pair<std::string, std::pair<int, std::string>>>> graphx_theatre_settings;
 	std::string theatre_file_data_printout = "";
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
 	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
 	std::set<std::string> getMeshDataNames();
+	std::set<std::string> getTextureNames();
 	void probeActorsForRenderCommands();
 	void loadStageSettings(graphx::gSettings stage_settings);
 	void raiseCurtains();
@@ -149,20 +128,18 @@ struct Theatre
 	void removeDevice(Device *old_device);
 	void removeDevice(long uid);
 
-	void createActor(int actor_type, long uid, graphx::gSettings new_settings = empty_settings);
-	void createDevice(int device_type, long uid, graphx::gSettings new_settings  = empty_settings);
+	void createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings = empty_settings);
+	void createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings  = empty_settings);
 
-	glm::vec3 getSwapColor();
+	std::vector<Actor *> getAllActorsOfType(graphx::gClass type_name);
+	std::vector<Device *> getAllDevicesOfType(graphx::gClass type_name);
 
-	std::vector<Actor *> getAllActorsOfType(int type_name);
-	std::vector<Device *> getAllDevicesOfType(int type_name);
-
-	Actor *getFirstActorOfType(int type_name);
-	Device *getFirstDeviceOfType(int type_name);
+	Actor *getFirstActorOfType(graphx::gClass type_name);
+	Device *getFirstDeviceOfType(graphx::gClass type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
-	Actor *unsafeGetFirstActorOfType(int type_name);
+	Actor *unsafeGetFirstActorOfType(graphx::gClass type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO DEVICE MATCHING type_name IS FOUND!!
-	Device *unsafeGetFirstDeviceOfType(int type_name);
+	Device *unsafeGetFirstDeviceOfType(graphx::gClass type_name);
 
 	Actor *getActor(long uid);
 	Actor *getActor(std::string actor_name);
@@ -184,7 +161,7 @@ private:
 };
 
 extern Theatre current_theatre;
-extern std::map<int, Actor*(*)()> actor_map;
+// extern std::map<int, Actor*(*)()> actor_map;
 
 // Use with CAUTION!!
 // Wants to return static_cast<T>(current_theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
@@ -207,10 +184,7 @@ template<typename T> T iKnowWhatDeviceIWant(auto identifier)
 	return static_cast<T>(current_theatre.getDevice(identifier));
 }
 
-template<typename T> Actor *createNewActor()
-{
-	return new T;
-}
+// template<typename T> Actor *createNewActor() { return new T; }
 
 Theatre *getCurrentTheatre(bool print_note = true);
 Environment *getCurrentEnvironment();
