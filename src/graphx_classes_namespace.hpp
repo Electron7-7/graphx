@@ -3,13 +3,20 @@
 #include "graphx_namespace.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
+/**
+ * Yeah, it's a bit finnicky to put a whole bunch of static constexpr global indentifier variables in a header file, BUT
+ * I have two (relatively) good reasons for doing this:
+ * 
+ * 1. I wanted the process of adding a new Actor/Device to the engine to be as easy and simple as possible, so I made sure
+ * that any code you'd have to write would be isolated to one file.
+ * 
+ * 2. I wanted to keep my header files relatively bloat-free, and since `createNewActor` & `createNewDevice` needed to be in
+ * `g_actors.hpp` & `r_common.hpp` instead of the forward-declaration headers, I opted to move all this code into it's own
+ * separate header file (I don't give a fuck about the source files, those bastards can be as big and round as they please).
+*/
 namespace graphx
 {
-	inline const gClass gClass::INVALID_TYPE = gClass(); // The default constructor for `gClass` is `INVALID_TYPE`
-
-	// If you need more than 1000 IDs for Actors and/or Devices (or you want to change the ranges),
-	// you'll need to change gClass::ACTOR_ID_LIMIT & gClass::DEVICE_ID_LIMIT.
-
+	// If you need more than 1000 IDs for Actors and/or Devices (or you want to change the ranges), you'll need to change gClass::ACTOR_ID_LIMIT & gClass::DEVICE_ID_LIMIT
 	namespace classes
 	{
 		//                             variable            name                  ID    class constructor function
@@ -37,7 +44,8 @@ namespace graphx
 		inline static constexpr gClass COLLIDER         ( "Collider",         1005,    &createNewDevice<Collider>        );
 		inline static constexpr gClass TEXTURE          ( "Texture",          1006,    &createNewDevice<Texture>         );
 
-		inline static constexpr std::array<gClass, (gClass::ACTOR_ID_LIMIT + gClass::DEVICE_ID_LIMIT)> classes =
+		// Don't forget to add your gClass variable to the `valid_classes` array!
+		inline static constexpr std::array<gClass, (gClass::ACTOR_ID_LIMIT + gClass::DEVICE_ID_LIMIT)> valid_classes =
 		{
 			ACTOR,
 			PHYSICSACTOR,
@@ -59,8 +67,6 @@ namespace graphx
 			COLLIDER,
 			TEXTURE,
 		};
-
-		inline static constexpr gClass const &LIGHTPOINT = LIGHT; // Just for clarity's sake; might remove later bc it's kinda unnecessary
 
 		inline const gClass &getBaseType(const gClass &type) noexcept
 		{
@@ -90,6 +96,7 @@ namespace graphx
 		}
 	};
 
-	inline const std::array<gClass, (gClass::ACTOR_ID_LIMIT + gClass::DEVICE_ID_LIMIT)> *gClass::classes = &classes::classes;
+	inline const gClass gClass::INVALID_TYPE = gClass(); // The default constructor for `gClass` is `INVALID_TYPE`
+	inline const std::array<gClass, (gClass::ACTOR_ID_LIMIT + gClass::DEVICE_ID_LIMIT)> &gClass::classes = classes::valid_classes;
 }
 #endif

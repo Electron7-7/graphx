@@ -101,6 +101,7 @@ struct Theatre
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 	int directional_lights_count = 0;
+	bool dropping_curtains = false;
 
 	// This abomination is what a "gStringSettings" typedef actually is...
 	std::vector<std::vector<std::pair<std::string, std::pair<int, std::string>>>> graphx_theatre_settings;
@@ -108,7 +109,8 @@ struct Theatre
 
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
-	std::string giveMeAPrettyListOfAllActorsOrDevices(bool show_actors);
+	std::vector<long> dumpActorIDs();
+
 	std::set<std::string> getMeshDataNames();
 	std::set<std::string> getTextureNames();
 	void probeActorsForRenderCommands();
@@ -119,7 +121,6 @@ struct Theatre
 	void setUID(long new_uid);
 	void delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods);
 	void delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in);
-	void refreshTroupe();
 	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
 	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = empty_settings);
 	void actorLeave(Actor *old_actor);

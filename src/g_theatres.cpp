@@ -2,6 +2,7 @@
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
+#include "g_imgui.hpp"
 #include <algorithm>
 #include <set>
 
@@ -37,7 +38,6 @@ GraphXPlayer *getCurrentPlayer()
     {
         PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069 (in Theatre \"" << current_theatre.name << "\")")
         current_theatre.createActor(graphx::classes::GRAPHXPLAYER, 42069);
-        current_theatre.refreshTroupe();
     }
 
     return static_cast<GraphXPlayer *>(current_theatre.getFirstActorOfType(graphx::classes::GRAPHXPLAYER));
@@ -52,6 +52,17 @@ Theatre::Theatre(std::string init_name, long new_uid)
     stage_material = new Material(false, glm::vec3(0.5, 0.1, 0.4));
     stage_mesh = new Mesh(stage_material);
     stage_mesh->setName("Stage Mesh for Theatre (" + name + ")");
+}
+
+std::vector<long> Theatre::dumpActorIDs()
+{
+    std::vector<long> actor_ids;
+    for(auto &actor_pair : objects)
+    {
+        actor_ids.insert(actor_ids.end(), actor_pair.first);
+    }
+
+    return actor_ids;
 }
 
 std::set<std::string> Theatre::getMeshDataNames()
@@ -132,9 +143,8 @@ void Theatre::probeActorsForRenderCommands()
 
 void Theatre::raiseCurtains()
 {
+    dropping_curtains = false;
     bool has_directional_light = false;
-
-    // PRINTDEBUG("Raising Curtains for \"" << name << "\"")
 
     for(auto &pair : devices)
     {
@@ -170,7 +180,7 @@ void Theatre::raiseCurtains()
 
 void Theatre::dropCurtains()
 {
-    // PRINTDEBUG("Dropping Curtains for \"" << name << "\"")
+    dropping_curtains = true;
 
     for(auto &pair : devices)
         pair.second->prepForDestruction();
@@ -270,46 +280,6 @@ std::string getSettingName(graphx::gSetting setting)
     }
 }
 
-std::string Theatre::giveMeAPrettyListOfAllActorsOrDevices(bool show_actors)
-{
-    std::string buffer = "";
-    std::string uid_string = "\n\tUID: ";
-
-    if(show_actors)
-    {
-        for(auto &pair : objects)
-        {
-            buffer += std::string(pair.second->getType().name) + " \"" + pair.second->getName() + "\"";
-            buffer += uid_string + std::to_string(pair.second->getUID());
-            for(auto &setting : pair.second->settings)
-            {
-                if(!setting.first.compare("Name") || setting.second.first <= 0)
-                    continue;
-                buffer += std::string("\n\t") + setting.first + ": " + getSettingName(setting.second);
-            }
-            buffer += "\n\n";
-        }
-    }
-
-    else
-    {
-        for(auto &pair : devices)
-        {
-            buffer += std::string(pair.second->getType().name) + " \"" + pair.second->getName() + "\"";
-            buffer += uid_string + std::to_string(pair.second->getUID());
-            for(auto &setting : pair.second->settings)
-            {
-                if(!setting.first.compare("Name") || setting.second.first <= 0)
-                    continue;
-                buffer += std::string("\n\t") + setting.first + ": " + getSettingName(setting.second);
-            }
-            buffer += "\n\n";
-        }
-    }
-
-    return buffer;
-}
-
 long Theatre::getUID()
 {
     return UID;
@@ -382,15 +352,6 @@ Device *Theatre::unsafeGetFirstDeviceOfType(graphx::gClass type_name)
     return nullptr;
 }
 
-void Theatre::refreshTroupe()
-{
-    troupe.clear();
-    for(auto &pair : objects)
-        troupe.insert(troupe.end(), pair.second);
-    sortTroupe();
-    countLights();
-}
-
 void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings)
 {
     if(objects.contains(uid))
@@ -405,6 +366,8 @@ void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings
     objects[uid] = graphx::gClass::getClassType(actor_type).create_new_actor();
     objects.at(uid)->setUID(uid);
     objects.at(uid)->youGotACallBack(new_settings);
+
+    troupe.insert(troupe.end(), objects.at(uid));
 
     sortTroupe();
     countLights();

@@ -4,7 +4,7 @@
 #include "imgui_impl_glfw.h"
 #include <glm/fwd.hpp>
 #include <string>
-#include <map>
+#include <vector>
 
 // Forward Declarations
 struct Theatre;
@@ -15,7 +15,6 @@ struct GraphXConsole
 	bool active;
 	bool secondary_active;
 	bool tertiary_active;
-	bool fourth_active;
 
 	ImGuiKey toggle_activation_key;
 	std::string name;
@@ -28,11 +27,10 @@ struct GraphXConsole
 	void displayTheatreData();
 	void displayMeshData();
 	bool justClosed();
-	// std::string getMeshData(std::pair<const std::string, MeshData> &mesh_data);
 
 private:
-	// std::map<std::string, MeshData> mesh_data_store;
-	std::map<std::string, std::string> mesh_data_printouts;
+	std::vector<long> actor_id_dump;
+	std::string theatre_name;
 	bool was_active;
 };
 

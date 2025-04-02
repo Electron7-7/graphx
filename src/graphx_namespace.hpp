@@ -20,7 +20,7 @@ namespace graphx
 		inline static constexpr int INVALID_TYPE_ID = -481516;
 		inline static constexpr char INVALID_TYPE_NAME[13] = "INVALID_TYPE";
 		inline static constexpr int NAME_MAX_SIZE_BYTES = 80; // Raise this at your memory's peril
-		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)> *classes; // Defined in `graphx_classes_namespace.hpp`
+		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)> &classes; // Defined in `graphx_classes_namespace.hpp`
 	public:
 		static const gClass INVALID_TYPE;      // Defined in `graphx_classes_namespace.hpp`
 
@@ -36,7 +36,7 @@ namespace graphx
 
 		inline gClass(std::string init_name)
 		{
-			for(const gClass &valid_class : *classes)
+			for(const gClass &valid_class : classes)
 				if(valid_class == init_name)
 				{
 					*this = valid_class;
@@ -47,7 +47,7 @@ namespace graphx
 
 		inline gClass(int init_id)
 		{
-			for(const gClass &valid_class : *classes)
+			for(const gClass &valid_class : classes)
 				if(valid_class == init_id)
 				{
 					*this = valid_class;
@@ -58,7 +58,7 @@ namespace graphx
 
 		inline static bool isValidClass(gClass type)
 		{
-			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
+			for(auto valid_class = classes.begin() ; *valid_class != INVALID_TYPE ; valid_class++)
 				if(*valid_class == type)
 					return true;
 			return false;
@@ -66,7 +66,7 @@ namespace graphx
 
 		inline static const gClass &getClassType(gClass type)
 		{
-			for(auto valid_class = classes->begin() ; *valid_class != INVALID_TYPE ; valid_class++)
+			for(auto valid_class = classes.begin() ; *valid_class != INVALID_TYPE ; valid_class++)
 				if(*valid_class == type)
 					return *valid_class;
 			return INVALID_TYPE;

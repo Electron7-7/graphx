@@ -411,7 +411,7 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	if(loading_new_main_theatre)
 		return;
 
-	getCurrentTheatre()->delegateMouseInput(window, x_position_in, y_position_in);
+	getCurrentTheatre(false)->delegateMouseInput(window, x_position_in, y_position_in);
 }
 
 //----------------------------------------------
