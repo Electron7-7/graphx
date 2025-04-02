@@ -1979,6 +1979,9 @@ I think it's to do with the conversion operators; `.contains()` expects a refere
 
 Oh god... is it because I forgot to make sure that the constructors add items to the set??? Is it because the set is empty???? No, that can't be the real reason...
 
+<interjecting on 04/02/25>
+I forgot to write more notes, but it turns out that I just really didn't know what I wanted from graphx::gClass and was just going down rabbit hole after rabbit hole. In the end, `valid_classes` was renamed to graphx::gClasses::classes bc... no reason, honestly, but more importantly, it's defined in `graphx_classes_namespace.hpp` after all the gClass objects in graphx::classes are. This means that while it's not automatically filled in by each object when they're created (which I couldn't realistically do, anyways, due to how and why I created the gClass objects in the first place), it's only one extra line of code (really just copying a variable name and pasting it into a vector), and it's right below where you'd define the valid gClass objects. These are also now the only two places that need to be updated in order for the engine to recognize a new Actor/Device, which is a far far FAR cry (haha) better than before, where you'd need to write up to four completely unique lines of code in three/four completely different files. Total nightmare turned super easy task, and all with a custom type that can be compared against an integer/float or a string; not too bad if I do say so myself.
+
 [03/31/25]
 I got it to compile and run, but now there's weird issues with resources not being created/assigned properly (I'm assuming it's to do with type checks and such). Mainly, Colliders not being created by StaticBodyActors.
 
@@ -2098,3 +2101,31 @@ Turns out it was because I had changed Light::getLightData to this:
 virtual const LightData getLightData();
 :::
 Yeah, that `const` was causing the issues, lmfao. I assume it's because all derived Light classes use Light::getLightData to populate a new LightData object with values from Light, but since it's `const` none of the values can be changed/set. Woops.
+
+Aight, referencing my notes on 03/21/25:
+"
+Okay, today I have an extra hour to work, so here's some things to work on:
+  - Use that macro for getting variable names in the interpreter
+  - Reduce number of lines I need to write in order to add a new class to the interpreter:
+    - graphx::classes (graphx_namespace.hpp)
+    - graphx::classnames (graphx_namespace.hpp)
+    - actor_map (g_actors.cpp) / device_map (r_common.cpp)
+  - Give debug menu more functionality
+    - Implement way to interface with classes and change values directly (raycast?)
+  - Find and fix memory leaks (in a new branch)
+"
+
+So far I've made adding new Actors/Devices to the engine much easier by taking the process from this:
+  1: Create integer type identifier inside graphx::classes, in graphx_namespace.hpp
+  2: Add that identifier with a string key to the graphx::classnames map, in graphx_namespace.hpp
+  3: Add that identifier with a function pointer to either actor_map in g_actors.cpp or device_map in r_common.cpp
+
+To this:
+  1: Create graphx::gClass type identifier inside graphx::classes, in graphx_classes_namespace.hpp
+  2: Add that identifier to graphx::gClass::classes, defined in graphx_classes_namespace.hpp
+
+The process has gone from three completely different lines of code in two completely separate files to two simple lines of code (one of which is just copying a variable name into a vector) which are both in the same file (as well as conveniently right next to eachother).
+
+I've also used Heaptrack to find and fix a few of the worst memory leaks (I'm talking MB of memory...); while there are still quite a few leaks to plug up, the largest ones only get to ~200kb and are from instantiation/setup functions (meaning, memory isn't leaking every frame), so it's no longer a huge priority, although it will be a continued, consistent thing I'll try and maintain (like spring cleaning).
+
+All this to say, I think I can merge this branch and move on to implementing some minor features that I could easily get done tonight (i.e: simple debug menu interaction?).
