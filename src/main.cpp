@@ -3,7 +3,6 @@
 
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
-// #include "graphx_classes_namespace.hpp" // NOLINT
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
@@ -18,8 +17,6 @@
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
-#include <Jolt/Renderer/DebugRendererSimple.h>
-#include <cstdarg>
 #include <thread>
 #include <mutex>
 
@@ -31,7 +28,6 @@ int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
 bool do_jolt_assert = false;
-bool debug_console_open = false;
 bool is_wireframe = false;
 
 double cursor_last_x = 0.0;
@@ -40,34 +36,13 @@ double cursor_last_y = 0.0;
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
-void testGameTick(GLFWwindow *window);
+void gameTick(GLFWwindow *window);
 
+// Quick helper macro for getting the length of one game tick
 #define TICKLENGTH (1.0f / TICKRATE)
-#define PER_SECOND(interval) (current_tick_since_second % (TICKRATE/interval) == 0)
 
 // The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
 #include "jolt_boilerplate.hpp"
-
-/*class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
-{
-public:
-    virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
-    {
-        R_DrawPrimitive(PrimitiveRenderCmd(inFrom, inTo, inColor));
-    }
-
-    virtual void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override
-    {
-        R_DrawPrimitive(PrimitiveRenderCmd(inV1, inV2, inV3, inColor));
-    }
-
-    virtual void DrawText3D(JPH::RVec3Arg inPosition, const JPH::string_view &inString, JPH::ColorArg inColor, float inHeight) override
-    {
-        return;
-    }
-};
-
-GraphXDeadSimpleDebugRenderer *debug_renderer = nullptr;*/
 
 int main()
 {
@@ -95,9 +70,11 @@ int main()
 
 	R_InitializeRenderingAPI();
 
-	std::thread game_logic_main_thread(testGameTick, main_window);
+	std::thread game_logic_main_thread(gameTick, main_window);
 
+	//------------
 	// ImGui Setup
+	//------------
 	GraphXConsole graphx_debug_console;
 
 	graphx_debug_console.active = (glfwGetInputMode(main_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL);
@@ -115,6 +92,9 @@ int main()
 	ImGui_ImplGlfw_InitForOpenGL(main_window, true);
 	ImGui_ImplOpenGL3_Init();
 
+	//----------
+	// Main Loop
+	//----------
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window, glm::vec4(0.7f, 0.5f, 0.5f, 1.0f));
@@ -143,6 +123,9 @@ int main()
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 
+	//------------------------------------------------------------------
+	// Sparse and malnourished cleanup code (it barely does anything...)
+	//------------------------------------------------------------------
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -151,8 +134,14 @@ int main()
 	return 0;
 }
 
-void testGameTick(GLFWwindow *main_window)
+//------------------
+// GameTick Function
+//------------------
+void gameTick(GLFWwindow *main_window)
 {
+	//-----------
+	// Jolt Setup
+	//-----------
 	JPH::RegisterDefaultAllocator();
 	JPH::Factory::sInstance = new JPH::Factory();
 	JPH::RegisterTypes();
@@ -166,8 +155,6 @@ void testGameTick(GLFWwindow *main_window)
 
 	GraphXContactListener contact_listener;
 	jolt_physics_system.SetContactListener(&contact_listener);
-	// GraphXDeadSimpleDebugRenderer jolt_debug_renderer;
-	// debug_renderer = &jolt_debug_renderer;
 #endif
 
 	JPH::TempAllocatorImpl jolt_temp_allocator(10 * 1024 * 1024);
@@ -184,16 +171,24 @@ void testGameTick(GLFWwindow *main_window)
 
 	jolt_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
 
+	//--------------------
+	// GraphXTheatre Setup
+	//--------------------
 	checkForAndLoadExternalTheatres();
 
-	// Hard-coded first Theatre loading, for now
-	// Eventually, Theatre loading won't rely on this function and the arrow key callbacks
+	// Hard-coded first Theatre loading, for now. Eventually, Theatre loading won't rely on this function, or the arrow key callbacks
 	loadMainTheatre(0);
 
+	//---------------
+	// Tickrate Setup
+	//---------------
 	double last_time = glfwGetTime();
 	double current_tick_length = 0;
 	double now_time = 0;
 
+	//---------------
+	// Game Tick Loop
+	//---------------
 	while(!glfwWindowShouldClose(main_window))
 	{
 		now_time = glfwGetTime();
@@ -231,6 +226,9 @@ void testGameTick(GLFWwindow *main_window)
 	JPH::Factory::sInstance = nullptr;
 }
 
+//--------------------------------
+// Main GLFW Key Callback Function
+//--------------------------------
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -239,7 +237,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
 
-	// IMGUI IS CALLING THIS AND PROBABLY OTHER CALLBACK FUNCTIONS SO MAKE SURE NO SHENANIGANS HAPPEN (like, make sure ImGui doesn't get to this line)
 	getCurrentTheatre()->delegateKeyInput(window, key, scancode, action, mods);
 
 	if(key == GLFW_KEY_1 && action == GLFW_PRESS)
@@ -385,6 +382,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 }
 
+//----------------------------
+// Cursor/ImGui Focus Toggling
+//----------------------------
 void toggleCursor(GLFWwindow *window, bool show_cursor)
 {
 	if(!show_cursor)
@@ -400,6 +400,9 @@ void toggleCursor(GLFWwindow *window, bool show_cursor)
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
+//----------------------------------
+// Main GLFW Mouse Callback Function
+//----------------------------------
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in)
 {
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL || ImGui::GetIO().WantCaptureMouse)
@@ -411,6 +414,9 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	getCurrentTheatre()->delegateMouseInput(window, x_position_in, y_position_in);
 }
 
+//----------------------------------------------
+// Main GLFW Frame-Buffer Size Callback Function
+//----------------------------------------------
 void frameBufferSizeCallback(GLFWwindow *window, int width, int height)
 {
 	graphx::rendering::main_window_width = width;

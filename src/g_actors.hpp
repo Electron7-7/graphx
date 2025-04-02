@@ -69,185 +69,6 @@ public:
 	void takeABow() override;
 };
 
-// Idea for later:
-// Instead of using a struct to send data to a LightRenderCmd,
-// what if I just used a float vector/data stream instead? I could
-// access specific data like how OpenGL access vertex attributes!
-// Pretty over-engineered, but a cool idea I think.
-struct LightData
-{
-	glm::vec3 color = glm::vec3(0.0f);
-	float specular_strength = 0.0f;
-	float ambient_strength = 0.0f;
-	float energy = 0.0f;
-
-	float attenuation = 0.0f;
-	float range = 0.0f;
-	// float range;
-	// float intensity;
-	// float falloff;
-
-	glm::vec3 position = glm::vec3(0.0f);
-	glm::vec3 direction = glm::vec3(0.0f);
-
-	float spot_cutoff = 0.0f;
-	float spot_cutoff_fade = 0.0f;
-
-	// Texture *projection_texture;
-};
-
-/*class Light: public Actor
-{
-public:
-	Mesh temporary_light_mesh = Mesh();
-
-	glm::vec3 light_color = glm::vec3(1.0f);
-	float light_strength = 0.5f; // A more direct "brightness" value than just changing Attenuation values
-	float light_ambient_strength = 0.2f;
-
-	// Attenuation values
-	float range = 100.0f;
-	float intensity = 1.0f;		// negative scale: 0.0 is brightest and it gets dimmer as it increases
-	float falloff = 0.0f;		// increasing causes light to fade more quickly with distance (multiplied by 0.01 in shader)
-
-	Light(std::string init_name = "UNTITLED LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(0.5f));
-
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	bool isLightType(graphx::gClass light_type);
-	graphx::gClass getLightType();
-
-	virtual LightData getLightData();
-
-protected:
-	graphx::gClass my_light_type;
-};
-
-class LightDirectional: public Light
-{
-public:
-	glm::vec3 direction = glm::vec3(0.0f, -1.0f, 0.0f);
-
-	LightDirectional(std::string init_name = "UNTITLED DIRECTIONAL LIGHT", glm::vec3 init_direction = glm::vec3(0.0f, -1.0f, 0.0f), float init_strength = 0.4f, glm::vec3 init_color = glm::vec3(1.0f));
-
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	LightData getLightData() override;
-};
-
-class LightSpot: public Light
-{
-public:
-	glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
-	float inner_cutoff_angle = 12.5f;
-	float outer_cutoff_angle = 17.5f;
-
-	LightSpot(std::string init_name = "UNTITLED SPOT LIGHT", float init_intensity = 1.0f, float init_range = 100.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_direction = glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3 init_position = glm::vec3(1.0f), glm::vec3 init_rotation = glm::vec3(0.0f));
-
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	LightData getLightData() override;
-};*/
-
-class Light : public Actor
-{
-public:
-	bool debug_visible = false;
-
-	// Basic Properties
-	glm::vec3 light_color = glm::vec3(1.0f);
-	float light_specular_strength = 1.0f;
-	float light_ambient_strength = 0.05f;
-	float light_energy = 0.8f;
-
-	// Attenuation
-	float light_attenuation = 1.0f; // Keep this between 0 and 10 for best results. Setting it to 2 results in the proper inverse square attenuation (for physically accurate lights/realism)
-	float light_range = 100.0f;
-
-	// Attenuation
-	// float range = 100.0f;
-	// float intensity = 1.0f;
-	// float falloff = 0.0f;
-
-	// Other
-	// Texture *texture_projection = nullptr;
-
-	Light(std::string init_name = "UNTITLED_LIGHT");
-
-	bool isLightType(graphx::gClass light_type);
-	graphx::gClass const &getLightType();
-
-	virtual LightData getLightData();
-
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-
-protected:
-	graphx::gClass my_light_type;
-};
-
-class LightDirectional : public Light
-{
-public:
-	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
-
-	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
-
-	LightData getLightData() override;
-
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-};
-
-class LightSpot : public Light
-{
-public:
-	glm::vec3 spot_direction = glm::vec3(0.1f, -0.5f, 0.8f);
-	float spot_angle = 17.5f;
-	float spot_angle_fade = 5.0f;
-
-	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
-
-	LightData getLightData() override;
-
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-};
-
-class LightFlashlight: public LightSpot
-{
-public:
-	GraphXPlayer *parent = nullptr;
-	glm::vec3 position_offset = glm::vec3(0.0f);
-	glm::vec3 rotation_offset = glm::vec3(0.0f);
-
-	LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
-
-	void setLight(bool is_on);
-	void setLightColor(glm::vec3 color);
-	void setLightColor(bool color_toggle);
-
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-
-private:
-	glm::vec3 _color = light_color;
-};
-
-class LightTesterMover : public Light
-{
-public:
-	glm::vec3 pivot_position = glm::vec3(0.0f);
-	float pivot_radius = 3.0f;
-	float pivot_speed = 1.0f;
-	float pivot_theta = 0.0f;
-
-	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
-	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
-	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
-
-	LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
-
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	void callToStage(Theatre *parent_theatre) override;
-	void takeABow() override;
-};
-
 class Camera : public Actor
 {
 public:
@@ -304,6 +125,103 @@ private:
 	JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
+};
+
+class Light : public Actor
+{
+public:
+	bool debug_visible = false;
+
+	// Basic Properties
+	glm::vec3 light_color = glm::vec3(1.0f);
+	float light_specular_strength = 1.0f;
+	float light_ambient_strength = 0.05f;
+	float light_energy = 0.8f;
+
+	// Attenuation
+	float light_attenuation = 1.0f; // Keep this between 0 and 10 for best results. Setting it to 2 results in the proper inverse square attenuation (for physically accurate lights/realism)
+	float light_range = 100.0f;
+
+	// Other
+	// Texture *texture_projection = nullptr;
+
+	Light(std::string init_name = "UNTITLED_LIGHT");
+
+	bool isLightType(graphx::gClass light_type);
+	graphx::gClass const &getLightType();
+
+	virtual const LightData getLightData();
+
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+
+protected:
+	graphx::gClass my_light_type;
+};
+
+class LightDirectional : public Light
+{
+public:
+	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
+
+	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
+
+	const LightData getLightData() override;
+
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+};
+
+class LightSpot : public Light
+{
+public:
+	glm::vec3 spot_direction = glm::vec3(0.1f, -0.5f, 0.8f);
+	float spot_angle = 17.5f;
+	float spot_angle_fade = 5.0f;
+
+	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
+
+	const LightData getLightData() override;
+
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+};
+
+class LightFlashlight: public LightSpot
+{
+public:
+	GraphXPlayer *parent = nullptr;
+	glm::vec3 position_offset = glm::vec3(0.0f);
+	glm::vec3 rotation_offset = glm::vec3(0.0f);
+
+	LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
+
+	void setLight(bool is_on);
+	void setLightColor(glm::vec3 color);
+	void setLightColor(bool color_toggle);
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+
+private:
+	glm::vec3 _color = light_color;
+};
+
+class LightTesterMover : public Light
+{
+public:
+	glm::vec3 pivot_position = glm::vec3(0.0f);
+	float pivot_radius = 3.0f;
+	float pivot_speed = 1.0f;
+	float pivot_theta = 0.0f;
+
+	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
+	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
+	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
+
+	LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void callToStage(Theatre *parent_theatre) override;
+	void takeABow() override;
 };
 
 #define RAMIEL_CIRLE    0

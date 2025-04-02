@@ -2083,3 +2083,7 @@ Well, maybe not technically a memory leak if Actor always deletes this before ge
 
 [04/02/25]
 At work; cleaned up the code from yesterday. This includes removing the `shaders` vector and instead using the graphx::rendering namespace to store my shaders. Currently, it's hard-coded to OpenGL but I intend on making it more streamlined and API-agnostic in the future. For now, though, some global variables should do.
+
+All right, then, what's next? I might want to clean up and get ready for a release, but I'd like to add some more functionality to the engine (or at least a new feature) before I do, since most of these changes have been under-the-hood, unseen stuff.
+
+Aight, found some bugs... time to squash.

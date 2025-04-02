@@ -105,13 +105,13 @@ void Theatre::probeActorsForRenderCommands()
             light_render_command.light_type = static_cast<Light *>(pair.second)->getLightType();
 
             if(light_render_command.light_type == graphx::classes::LIGHT)
-                light_render_command.light_data = new LightData(static_cast<Light *>(pair.second)->getLightData());
+                light_render_command.light_data = static_cast<Light *>(pair.second)->getLightData();
 
             else if(light_render_command.light_type == graphx::classes::LIGHTSPOT)
-                light_render_command.light_data = new LightData(static_cast<LightSpot *>(pair.second)->getLightData());
+                light_render_command.light_data = static_cast<LightSpot *>(pair.second)->getLightData();
 
             else if(light_render_command.light_type == graphx::classes::LIGHTDIRECTIONAL)
-                light_render_command.light_data = new LightData(static_cast<LightDirectional *>(pair.second)->getLightData());
+                light_render_command.light_data = static_cast<LightDirectional *>(pair.second)->getLightData();
 
             R_BufferRenderCmd(light_render_command);
             continue;

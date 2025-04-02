@@ -5,7 +5,6 @@
 #include <glfw_fwd.hpp>
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
-#include <vector>
 #include <string>
 #include <mutex>
 #include <map>
@@ -17,21 +16,18 @@ struct Texture;
 struct Material;
 struct Mesh;
 struct Sprite;
-// Collider declared here too, despite being in g_jolt.hpp
-struct Collider;
+struct Collider; // Collider declared here too, despite being in g_jolt.hpp (mainly bc it's a Device)
 
 // RenderCmds (none of these are derived)
 struct RenderCmd;
 struct LightRenderCmd;
-struct PrimitiveRenderCmd;
 
 // Other
 struct MeshData;
 struct GLShader;
+struct LightData;
 
 // Variables
-// extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Commented out bc can't be assed to make VAOS_AMOUNT not a #define
-// extern std::vector<GLShader *> shaders;
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern bool time_to_render;
@@ -41,20 +37,11 @@ extern bool time_to_store_buffers;
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color);
 void        R_BufferMeshesAndTextures();
-void        R_DrawPrimitive(PrimitiveRenderCmd primitive);
-void        R_GL_DrawSkybox();
-void        R_Render(std::mutex &state_mutex, float interpolation_time);
-void        R_GL_BufferTextures();
-void        R_GL_BufferMeshes();
-void        R_GL_RenderPrimitives(RenderCmd *render_command);
-void        R_GL_Render(std::mutex &mutex, float interpolation_time);
-void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+void        R_InitializeRenderingAPI();
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
-// void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
-void        R_InitializeRenderingAPI();
+void        R_Render(std::mutex &state_mutex, float interpolation_time);
 std::string T_LoadImageFile(std::string file_path);
-void        M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);
 #endif

@@ -1,4 +1,3 @@
-// r_common.hpp - rendering
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "graphx_namespace.hpp"
@@ -51,16 +50,13 @@ protected:
 	bool ready_to_destroy = false;
 };
 
-struct Environment final : public Device // Will be extended
+struct Environment final : public Device // Will be extended in the future
 {
 	glm::vec3 ambient_light_color = glm::vec3(1.0f);
 	float ambient_light_amount = 0.0f;
-	// bool ambient_lighting_enabled = true;
-	// float ambient_light_strength = 0.05f;
 
 	Environment(std::string init_name = "UNTITLED_ENVIRONMENT", bool enable_ambient_light = false, float init_ambient_light_amount = 0.05f, glm::vec3 init_ambient_light_color = glm::vec3(1.0f));
 
-	// float getAmbientLight();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
@@ -110,6 +106,7 @@ struct MeshData
 	std::string debug_name = ""; // Debugging variable; remove later (watch me forget this)
 	bool is_in_use = false;
 
+	// Todo: Find a better/more efficient way of holding these values
 	std::vector<glm::vec3> vertex_positions;
 	std::vector<glm::vec3> vertex_normals;
 	std::vector<glm::vec2> vertex_uvs;
@@ -170,14 +167,34 @@ struct Sprite : public Mesh
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
-struct RenderState;                                   // Forward Declaration
-struct LightData;                                     // Forward Declaration
-std::string M_GetOBJName(std::string file_as_string); // Forward Declaration
+// Idea for later:
+// Instead of using a struct to send data to a LightRenderCmd,
+// what if I just used a float vector/data stream instead? I could
+// access specific data like how OpenGL access vertex attributes!
+// Pretty over-engineered, but could be a cool idea, I think
+struct LightData
+{
+	glm::vec3 color = glm::vec3(0.0f);
+	float specular_strength = 0.0f;
+	float ambient_strength = 0.0f;
+	float energy = 0.0f;
+
+	float attenuation = 0.0f;
+	float range = 0.0f;
+
+	glm::vec3 position = glm::vec3(0.0f);
+	glm::vec3 direction = glm::vec3(0.0f);
+
+	float spot_cutoff = 0.0f;
+	float spot_cutoff_fade = 0.0f;
+
+	// Texture *projection_texture; // For later...
+};
 
 struct LightRenderCmd
 {
 public:
-	LightData *light_data = nullptr;
+	LightData light_data;
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
 	graphx::gClass light_type;
@@ -200,31 +217,7 @@ public:
 	bool isRenderable();
 };
 
-struct PrimitiveRenderCmd
-{
-	int primitive_type = graphx::identifiers::primitive::FOO;
-	glm::vec3 vertex_1 = glm::vec3(0.0f);
-	glm::vec3 vertex_2 = glm::vec3(0.0f);
-	glm::vec3 vertex_3 = glm::vec3(0.0f);
-	// glm::vec3 normals_1 = glm::vec3(0.0f);
-	// glm::vec3 normals_2 = glm::vec3(0.0f);
-	// glm::vec3 normals_3 = glm::vec3(0.0f);
-	// glm::vec2 uvs_1 = glm::vec2(0.0f);
-	// glm::vec2 uvs_2 = glm::vec2(0.0f);
-	// glm::vec2 uvs_3 = glm::vec2(0.0f);
-	glm::vec3 colors_1 = glm::vec3(0.0f);
-	glm::vec3 colors_2 = glm::vec3(0.0f);
-	glm::vec3 colors_3 = glm::vec3(0.0f);
-	Material *primitive_material_override = nullptr; // In case you want something other than vertex colors
-
-	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color = glm::vec3(0.0f));
-	PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color = glm::vec3(0.0f));
-	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color = JPH::ColorArg());
-	PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color = JPH::ColorArg());
-};
-
-extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector? (would make the forward declarations nicer)
-// extern std::vector<GLShader *> shaders;
+extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern bool time_to_render;
@@ -233,17 +226,10 @@ extern bool time_to_store_buffers;
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 void        R_BufferMeshesAndTextures();
-void        R_GL_BufferTextures();
-void        R_GL_BufferMeshes();
-void        R_DrawPrimitive(PrimitiveRenderCmd primitive);
-void        R_GL_DrawSkybox();
-void        R_Render(std::mutex &state_mutex, float interpolation_time);
-void        R_GL_Render(std::mutex &mutex, float interpolation_time);
-void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
+void        R_InitializeRenderingAPI();
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
-// void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
-void        R_InitializeRenderingAPI();
+void        R_Render(std::mutex &state_mutex, float interpolation_time);
 std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);

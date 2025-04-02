@@ -48,7 +48,8 @@ Mesh (Pyramid)
 }
 Mesh (OBJ_Mesh)
 {
-	MeshData [OBJ_SUZANNE]
+	// MeshData [OBJ_SUZANNE]
+	MeshData [OBJ_ERROR]
 }
 Actor (Suzanne_Tester)
 {

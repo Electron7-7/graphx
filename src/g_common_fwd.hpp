@@ -16,7 +16,6 @@ class Camera;
 class GraphXPlayer;
 class Ramiel;
 // Light Actors
-struct LightData;
 class Light;
 class LightDirectional;
 class LightSpot;

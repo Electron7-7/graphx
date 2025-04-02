@@ -54,37 +54,37 @@ void GLShader::buildShader(std::string vertex_shader_string, std::string fragmen
 
 template<> void GLShader::setUniform<bool>(const std::string &name, bool value) const
 {
-	glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
+	glProgramUniform1i(id, glGetUniformLocation(id, name.c_str()), static_cast<int>(value));
 }
 
 template<> void GLShader::setUniform<int>(const std::string &name, int value) const
 {
-	glUniform1i(glGetUniformLocation(id, name.c_str()), value);
+	glProgramUniform1i(id, glGetUniformLocation(id, name.c_str()), value);
 }
 
 template<> void GLShader::setUniform<float>(const std::string &name, float value) const
 {
-	glUniform1f(glGetUniformLocation(id, name.c_str()), value);
+	glProgramUniform1f(id, glGetUniformLocation(id, name.c_str()), value);
 }
 
 template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const
 {
-	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+	glProgramUniform3fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
 }
 
 template<> void GLShader::setUniform<glm::vec4>(const std::string &name, glm::vec4 value) const
 {
-	glUniform4fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
+	glProgramUniform4fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
 }
 
 template<> void GLShader::setUniform<glm::mat3>(const std::string &name, glm::mat3 value) const
 {
-	glUniformMatrix3fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	glProgramUniformMatrix3fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::mat4 value) const
 {
-	glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+	glProgramUniformMatrix4fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 //
@@ -160,8 +160,6 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	// getSetting(ambient_lighting_enabled, settings["AmbientLightingEnabled"]);
-	// getSetting(ambient_light_strength, settings["AmbientLightingStrength"]);
 	getSetting(ambient_light_amount, settings["AmbientLightAmount"]);
 	getSetting(ambient_light_color, settings["AmbientLightColor"]);
 }
@@ -523,6 +521,14 @@ void Sprite::loadSettings(graphx::gSettings new_settings)
 }
 
 //
+// LightRenderCmd
+//
+bool LightRenderCmd::renderDebugMesh()
+{
+	return ((current_render_state != nullptr || previous_render_state != nullptr));
+}
+
+//
 // RenderCmd
 //
 RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color)
@@ -537,52 +543,4 @@ RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug
 bool RenderCmd::isRenderable()
 {
 	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
-}
-
-//
-// LightRenderCmd
-//
-bool LightRenderCmd::renderDebugMesh()
-{
-	return ((current_render_state != nullptr || previous_render_state != nullptr));
-}
-
-//
-// PrimitiveRenderCmd
-//
-PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::LINE;
-	vertex_1 = new_vertex_1;
-	vertex_2 = new_vertex_2;
-	colors_1 = new_vertex_color;
-	colors_2 = new_vertex_color;
-}
-PrimitiveRenderCmd::PrimitiveRenderCmd(glm::vec3 new_vertex_1, glm::vec3 new_vertex_2, glm::vec3 new_vertex_3, glm::vec3 new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::TRIANGLE;
-	vertex_1 = new_vertex_1;
-	vertex_2 = new_vertex_2;
-	vertex_3 = new_vertex_3;
-	colors_1 = new_vertex_color;
-	colors_2 = new_vertex_color;
-	colors_3 = new_vertex_color;
-}
-PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::ColorArg new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::LINE;
-	vertex_1 = gmath::convertMath<glm::vec3>(new_vertex_1);
-	vertex_2 = gmath::convertMath<glm::vec3>(new_vertex_2);
-	colors_1 = gmath::convertMath<glm::vec3>(new_vertex_color);
-	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
-}
-PrimitiveRenderCmd::PrimitiveRenderCmd(JPH::RVec3Arg new_vertex_1, JPH::RVec3Arg new_vertex_2, JPH::RVec3Arg new_vertex_3, JPH::ColorArg new_vertex_color)
-{
-	primitive_type = graphx::identifiers::primitive::TRIANGLE;
-	vertex_1 = gmath::convertMath<glm::vec3>(new_vertex_1);
-	vertex_2 = gmath::convertMath<glm::vec3>(new_vertex_2);
-	vertex_3 = gmath::convertMath<glm::vec3>(new_vertex_3);
-	colors_1 = gmath::convertMath<glm::vec3>(new_vertex_color);
-	colors_2 = gmath::convertMath<glm::vec3>(new_vertex_color);
-	colors_3 = gmath::convertMath<glm::vec3>(new_vertex_color);
 }

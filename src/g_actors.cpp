@@ -19,7 +19,6 @@ Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, gl
 {
 	my_type = graphx::classes::ACTOR;
 	name = init_name;
-	// mesh = new Mesh(); // Memory leak!
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	RenderState render_state = RenderState(init_position, quaternion, init_scale);
 	current_state_buffer = { render_state, render_state };
@@ -215,16 +214,12 @@ void Actor::tick(int current_tick)
 {}
 
 void Actor::callToStage(Theatre *parent_theatre)
-{
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
-}
+{}
 
 void Actor::takeABow()
 {
 	if(mesh != nullptr)
 		mesh->prepForDestruction();
-
-	// PRINTLN("\t- Name: " << name << "\n\t- UID: " << UID << "\n\t- Type: " << std::to_string(my_type))
 }
 
 bool Actor::wantsToBeRendered()
@@ -574,14 +569,6 @@ void GraphXPlayer::takeABow()
 //
 // Light
 //
-/*Light::Light(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, glm::vec3 init_position, glm::vec3 init_rotation, glm::vec3 init_scale)
-: Actor(init_name, &temporary_light_mesh, init_position, init_rotation, init_scale), light_color(init_color), light_strength(init_strength), range(init_range), intensity(init_intensity), falloff(init_falloff)
-{
-	my_type = graphx::classes::LIGHT;
-	my_light_type = graphx::classes::LIGHT;
-	scale = glm::vec3(0.2f);
-}*/
-
 Light::Light(std::string init_name)
 : Actor(init_name)
 {
@@ -602,18 +589,14 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(light_attenuation, settings["FadeIntensity"]);
 	getSetting(light_attenuation, settings["Attenuation"]);
 	getSetting(light_range, settings["Range"]);
-	// getSetting(intensity, settings["Intensity"]);
-	// getSetting(falloff, settings["Falloff"]);
 
+	// Just to be safe...
 	if(mesh != nullptr)
 	{
 		mesh->prepForDestruction();
 		mesh = nullptr;
 		delete mesh;
 	}
-
-	// mesh = new Mesh(new Material(LIGHT_DEBUGGING, NO_TEXTURE, 4, 0.0f, light_color));
-	// mesh->mesh_data_name = GRAPHX_CUBE;
 }
 
 bool Light::isLightType(graphx::gClass light_type)
@@ -626,11 +609,10 @@ graphx::gClass const &Light::getLightType()
 	return my_light_type;
 }
 
-LightData Light::getLightData()
+const LightData Light::getLightData()
 {
 	LightData light_data;
 
-	// light_data.strength = light_strength;
 	light_data.energy = light_energy;
 	light_data.ambient_strength = light_ambient_strength;
 	light_data.specular_strength = light_specular_strength;
@@ -638,8 +620,6 @@ LightData Light::getLightData()
 	light_data.position = getPosition<glm::vec3>();
 	light_data.attenuation = light_attenuation;
 	light_data.range = light_range;
-	// light_data.intensity = intensity;
-	// light_data.falloff = falloff;
 
 	return light_data;
 }
@@ -647,13 +627,6 @@ LightData Light::getLightData()
 //
 // LightDirectional
 //
-/*LightDirectional::LightDirectional(std::string init_name, glm::vec3 init_direction, float init_strength, glm::vec3 init_color)
-: Light(init_name, 1.0f, 100.0f, 0.0f, init_strength, init_color), direction(init_direction)
-{
-	my_type = graphx::classes::LIGHTDIRECTIONAL;
-	my_light_type = graphx::classes::LIGHTDIRECTIONAL;
-}*/
-
 LightDirectional::LightDirectional(std::string init_name)
 : Light(init_name)
 {
@@ -666,21 +639,18 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	// getSetting(direction, settings["Direction"]);
 	getSetting(directional_direction, settings["Direction"]);
 
-	// LightDirectional doesn't really need a debug mesh since it acts
-	// like a "sun" (and the mesh would just be at (0, 0, 0) anyways)
+	// LightDirectional doesn't really need a debug mesh, since it's physical orientation doesn't matter
 	if(mesh != nullptr)
 		mesh->prepForDestruction();
 	mesh = nullptr;
 	delete mesh;
 }
 
-LightData LightDirectional::getLightData()
+const LightData LightDirectional::getLightData()
 {
 	LightData directional_light_data = Light::getLightData();
-	// directional_light_data.direction = direction;
 	directional_light_data.direction = directional_direction;
 	return directional_light_data;
 }
@@ -688,13 +658,6 @@ LightData LightDirectional::getLightData()
 //
 // LightSpot
 //
-/*LightSpot::LightSpot(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, float init_inner_cutoff_angle, float init_outer_cutoff_angle, glm::vec3 init_direction, glm::vec3 init_position, glm::vec3 init_rotation)
-: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_position, init_rotation), direction(init_direction), inner_cutoff_angle(init_inner_cutoff_angle), outer_cutoff_angle(init_outer_cutoff_angle)
-{
-	my_type = graphx::classes::LIGHTSPOT;
-	my_light_type = graphx::classes::LIGHTSPOT;
-}*/
-
 LightSpot::LightSpot(std::string init_name)
 : Light(init_name)
 {
@@ -708,22 +671,17 @@ void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
-	// getSetting(inner_cutoff_angle, settings["InnerCutoffAngle"]);
-	// getSetting(outer_cutoff_angle, settings["OuterCutoffAngle"]);
-	// getSetting(direction, settings["Direction"]);
 	getSetting(spot_direction, settings["Direction"]);
 	getSetting(spot_angle, settings["Angle"]);
 	getSetting(spot_angle_fade, settings["AngleFadeIntensity"]);
 }
 
-LightData LightSpot::getLightData()
+const LightData LightSpot::getLightData()
 {
 	LightData spot_light_data = Light::getLightData();
 	spot_light_data.direction = spot_direction;
 	spot_light_data.spot_cutoff = glm::cos(glm::radians(spot_angle));
 	spot_light_data.spot_cutoff_fade = glm::cos(glm::radians(spot_angle - spot_angle_fade));
-	// spot_light_data.inner_cutoff = glm::cos(glm::radians(inner_cutoff_angle));
-	// spot_light_data.outer_cutoff = glm::cos(glm::radians(outer_cutoff_angle));
 
 	return spot_light_data;
 }
@@ -731,14 +689,6 @@ LightData LightSpot::getLightData()
 //
 // LightFlashlight
 //
-/*LightFlashlight::LightFlashlight(std::string init_name, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color, float init_inner_cutoff_angle, float init_outer_cutoff_angle, glm::vec3 init_position_offset, glm::vec3 init_rotation_offset)
-: LightSpot(init_name, init_intensity, init_range, init_falloff, init_strength, init_color, init_inner_cutoff_angle, init_outer_cutoff_angle), position_offset(init_position_offset), rotation_offset(init_rotation_offset)
-{
-	my_type = graphx::classes::LIGHTFLASHLIGHT;
-	my_light_type = graphx::classes::LIGHTSPOT;
-	_color = light_color;
-}*/
-
 LightFlashlight::LightFlashlight(std::string init_name)
 : LightSpot(init_name)
 {
@@ -801,13 +751,6 @@ void LightFlashlight::setLightColor(bool color_toggle)
 //
 // LightTesterMover
 //
-/*LightTesterMover::LightTesterMover(std::string init_name, glm::vec3 init_pivot_position, float init_pivot_radius, float init_pivot_speed, float init_intensity, float init_range, float init_falloff, float init_strength, glm::vec3 init_color)
-: Light(init_name, init_intensity, init_range, init_falloff, init_strength, init_color), pivot_position(init_pivot_position), pivot_radius(init_pivot_radius), pivot_speed(init_pivot_speed)
-{
-	my_type = graphx::classes::LIGHTTESTERMOVER;
-	my_light_type = graphx::classes::LIGHT;
-}*/
-
 LightTesterMover::LightTesterMover(std::string init_name)
 : Light(init_name)
 {
