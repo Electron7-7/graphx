@@ -15,7 +15,7 @@
 #include <cmath>
 
 std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs;
-std::vector<GLShader *> shaders;
+// std::vector<GLShader *> shaders;
 bool time_to_render = false;
 bool time_to_store_buffers = false;
 
@@ -304,7 +304,7 @@ void R_GL_BufferMeshes()
 	//------------//
 	// Primitives //
 	//------------//
-	std::vector<float> primitive_verts = 
+	/*std::vector<float> primitive_verts = 
 	{
 		-1.0f, 0.0f, -1.0f,
 		 1.0f, 0.0f, -1.0f,
@@ -319,7 +319,7 @@ void R_GL_BufferMeshes()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(0));
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	glBindVertexArray(0);*/
 
 	//-------------------//
 	// ...Not Primitives //
@@ -388,7 +388,6 @@ void R_GL_DrawSkybox()
 	static unsigned int background_vao = 0;
 	static unsigned int background_vbo = 0;
 
-	static GLShader skybox_shader(skybox_vert, skybox_frag);
 	static Texture skybox_texture(
 	{
 		SHIT_SKYBOX_XPOS_png,
@@ -496,9 +495,9 @@ void R_GL_DrawSkybox()
 	}
 
 	glDepthFunc(GL_LEQUAL);
-	glUseProgram(skybox_shader.id);
-	skybox_shader.setUniform("skybox_view_matrix", glm::mat4(glm::mat3(getCurrentPlayer()->getViewMatrix())));
-	skybox_shader.setUniform("skybox_projection_matrix", R_GL_GetProjectionMatrix());
+	glUseProgram(graphx::rendering::SHADER_SKYBOX->id);
+	graphx::rendering::SHADER_SKYBOX->setUniform("skybox_view_matrix", glm::mat4(glm::mat3(getCurrentPlayer()->getViewMatrix())));
+	graphx::rendering::SHADER_SKYBOX->setUniform("skybox_projection_matrix", R_GL_GetProjectionMatrix());
 	glBindVertexArray(background_vao);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -508,9 +507,9 @@ void R_GL_DrawSkybox()
 
 std::vector<RenderCmd> render_commands;
 std::vector<LightRenderCmd> light_render_commands;
-std::vector<PrimitiveRenderCmd> primitive_render_commands;
+// std::vector<PrimitiveRenderCmd> primitive_render_commands;
 
-void R_DrawPrimitive(PrimitiveRenderCmd primitive)
+/*void R_DrawPrimitive(PrimitiveRenderCmd primitive)
 {
 	if(loading_new_main_theatre)
 		return;
@@ -532,7 +531,7 @@ void R_DrawPrimitive(PrimitiveRenderCmd primitive)
 		shaders[2]->setUniform("vertex_color[2]", primitive.colors_3);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
-}
+}*/
 
 void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 {
@@ -540,7 +539,7 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 	int spot_light_index = 0;
 	int directional_light_index = 0;
 
-	glUseProgram(shaders[graphx::rendering::shader_index]->id);
+	glUseProgram(graphx::rendering::SHADER_DEFAULT->id);
 
 	for(auto rendercmd_iterator = light_render_commands.begin() ; rendercmd_iterator != light_render_commands.end() ;)
 	{
@@ -562,16 +561,16 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 			which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
 		}
 
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "color", render_command.light_data->color);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "energy", render_command.light_data->energy);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "specular_strength", render_command.light_data->specular_strength);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "ambient_strength", render_command.light_data->ambient_strength);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "attenuation", render_command.light_data->attenuation);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "range", render_command.light_data->range);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "position", render_command.light_data->position);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "direction", render_command.light_data->direction);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "spot_cutoff", render_command.light_data->spot_cutoff);
-		shaders[graphx::rendering::shader_index]->setUniform(which_light + "spot_cutoff_fade", render_command.light_data->spot_cutoff_fade);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "color", render_command.light_data->color);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "energy", render_command.light_data->energy);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "specular_strength", render_command.light_data->specular_strength);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "ambient_strength", render_command.light_data->ambient_strength);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "attenuation", render_command.light_data->attenuation);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "range", render_command.light_data->range);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "position", render_command.light_data->position);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "direction", render_command.light_data->direction);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "spot_cutoff", render_command.light_data->spot_cutoff);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "spot_cutoff_fade", render_command.light_data->spot_cutoff_fade);
 
 		if(render_command.renderDebugMesh())
 		{
@@ -582,37 +581,22 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 	}
 }
 
-void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer)
+void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 {
 	if(loading_new_main_theatre)
 		return;
 
 	glBindVertexArray(VAOs[graphx::rendering::VAO_DEFAULT]);
 
-	switch(graphx::rendering::shader_debug_value)
-	{
-	case graphx::rendering::SHADER_DEBUG_VERTEX_COLORS:
-		glUseProgram(shaders[graphx::rendering::SHADER_DEBUG_VERTEX_COLORS]->id);
-		break;
-	case graphx::rendering::SHADER_DEBUG_NORMALS:
-		glUseProgram(shaders[graphx::rendering::SHADER_DEBUG_NORMALS]->id);
-		break;
-	case graphx::rendering::SHADER_DEBUG_FULLBRIGHT:
-		glUseProgram(shaders[graphx::rendering::SHADER_DEBUG_LIGHT]->id);
-		break;
-	default:
-		glUseProgram(shaders[graphx::rendering::shader_index]->id);
-		break;
-	}
-
-	shaders[graphx::rendering::shader_index]->setUniform("enable_ambient", static_cast<int>(graphx::rendering::lighting_switch_ambient));
-	shaders[graphx::rendering::shader_index]->setUniform("enable_diffuse", static_cast<int>(graphx::rendering::lighting_switch_diffuse));
-	shaders[graphx::rendering::shader_index]->setUniform("enable_specular", static_cast<int>(graphx::rendering::lighting_switch_specular));
-	shaders[graphx::rendering::shader_index]->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
-	shaders[graphx::rendering::shader_index]->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
-	shaders[graphx::rendering::shader_index]->setUniform("directional_lights_count", getCurrentTheatre()->directional_lights_count);
-
 	R_GL_RenderLights(state_mutex, interpolation_time);
+
+	glUseProgram(graphx::rendering::current_shader->id);
+	graphx::rendering::current_shader->setUniform("enable_ambient", static_cast<int>(graphx::rendering::lighting_switch_ambient));
+	graphx::rendering::current_shader->setUniform("enable_diffuse", static_cast<int>(graphx::rendering::lighting_switch_diffuse));
+	graphx::rendering::current_shader->setUniform("enable_specular", static_cast<int>(graphx::rendering::lighting_switch_specular));
+	graphx::rendering::current_shader->setUniform("point_lights_count", getCurrentTheatre()->point_lights_count);
+	graphx::rendering::current_shader->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
+	graphx::rendering::current_shader->setUniform("directional_lights_count", getCurrentTheatre()->directional_lights_count);
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
@@ -624,8 +608,8 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 			continue;
 		}
 
-		if(render_command.is_light_debug_mesh)
-			glUseProgram(shaders[graphx::rendering::SHADER_DEBUG_LIGHT]->id);
+		if(render_command.is_light_debug_mesh || render_command.mesh_material.mat_fullbright)
+			glUseProgram(graphx::rendering::SHADER_DEBUG_FULLBRIGHT->id);
 
 		glm::mat4 model_matrix = glm::mat4(1.0f);
 
@@ -658,19 +642,18 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRe
 		glBindTextureUnit(0, texture_storage.at(render_command.mesh_material.diffuse_texture_name).texture_id);
 		glBindTextureUnit(1, texture_storage.at(render_command.mesh_material.specular_texture_name).texture_id);
 
-		shaders[graphx::rendering::shader_index]->setUniform("model_matrix", model_matrix);
-		shaders[graphx::rendering::shader_index]->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
-		shaders[graphx::rendering::shader_index]->setUniform("projection_matrix", R_GL_GetProjectionMatrix());
-		shaders[graphx::rendering::shader_index]->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
-		shaders[graphx::rendering::shader_index]->setUniform("view_position", getCurrentPlayer()->getViewPosition());
-
-		shaders[graphx::rendering::shader_index]->setUniform("current_material.texture_diffuse", 0);
-		shaders[graphx::rendering::shader_index]->setUniform("current_material.texture_specular", 1);
-		shaders[graphx::rendering::shader_index]->setUniform("current_material.diffuse_color", render_command.mesh_material.color);
-		shaders[graphx::rendering::shader_index]->setUniform("current_material.specular_sharpness", render_command.mesh_material.specular_sharpness);
-		shaders[graphx::rendering::shader_index]->setUniform("current_material.specular_strength", render_command.mesh_material.specular_strength);
-		shaders[graphx::rendering::shader_index]->setUniform("current_environment.ambient_light_contribution", getCurrentEnvironment()->ambient_light_amount);
-		shaders[graphx::rendering::shader_index]->setUniform("current_environment.ambient_light_color", getCurrentEnvironment()->ambient_light_color);
+		graphx::rendering::current_shader->setUniform("model_matrix", model_matrix);
+		graphx::rendering::current_shader->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+		graphx::rendering::current_shader->setUniform("projection_matrix", R_GL_GetProjectionMatrix());
+		graphx::rendering::current_shader->setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
+		graphx::rendering::current_shader->setUniform("view_position", getCurrentPlayer()->getViewPosition());
+		graphx::rendering::current_shader->setUniform("current_material.texture_diffuse", 0);
+		graphx::rendering::current_shader->setUniform("current_material.texture_specular", 1);
+		graphx::rendering::current_shader->setUniform("current_material.diffuse_color", render_command.mesh_material.color);
+		graphx::rendering::current_shader->setUniform("current_material.specular_sharpness", render_command.mesh_material.specular_sharpness);
+		graphx::rendering::current_shader->setUniform("current_material.specular_strength", render_command.mesh_material.specular_strength);
+		graphx::rendering::current_shader->setUniform("current_environment.ambient_light_contribution", getCurrentEnvironment()->ambient_light_amount);
+		graphx::rendering::current_shader->setUniform("current_environment.ambient_light_color", getCurrentEnvironment()->ambient_light_color);
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 
@@ -714,12 +697,12 @@ void R_BufferRenderCmd(LightRenderCmd light_render_command)
 	light_render_commands.insert(light_render_commands.end(), light_render_command);
 }
 
-void R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command)
+/*void R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command)
 {
 	primitive_render_commands.insert(primitive_render_commands.end(), primitive_render_command);
-}
+}*/
 
-void R_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer)
+void R_Render(std::mutex &state_mutex, float interpolation_time)
 {
 	if(loading_new_main_theatre)
 		return;
@@ -729,7 +712,7 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRende
 	switch(graphx::rendering::graphx_api)
 	{
 	case graphx::rendering::GRAPHX_OPENGL:
-		R_GL_Render(state_mutex, interpolation_time, debug_renderer);
+		R_GL_Render(state_mutex, interpolation_time);
 		break;
 	}
 }
@@ -737,6 +720,14 @@ void R_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRende
 void R_GL_Initialize()
 {
 	glGenVertexArrays(graphx::rendering::VAOS_AMOUNT, &VAOs[graphx::rendering::VAO_DEFAULT]);
+
+	graphx::rendering::SHADER_DEFAULT = new GLShader(blinn_phong_vert, blinn_phong_frag);
+	graphx::rendering::SHADER_SKYBOX = new GLShader(skybox_vert, skybox_frag);
+	graphx::rendering::SHADER_DEBUG_FULLBRIGHT = new GLShader(blinn_phong_vert, light_debug_frag);
+	graphx::rendering::SHADER_DEBUG_NORMALS = new GLShader(blinn_phong_vert, debug_normals_frag);
+	graphx::rendering::SHADER_DEBUG_VERTEX_COLORS = new GLShader(blinn_phong_vert, debug_vertex_colors_frag);
+
+	graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
 }
 
 void R_InitializeRenderingAPI()

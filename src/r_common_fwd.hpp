@@ -31,7 +31,7 @@ struct GLShader;
 
 // Variables
 // extern std::array<unsigned int, VAOS_AMOUNT> VAOs; // Commented out bc can't be assed to make VAOS_AMOUNT not a #define
-extern std::vector<GLShader *> shaders;
+// extern std::vector<GLShader *> shaders;
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern bool time_to_render;
@@ -47,11 +47,11 @@ void        R_Render(std::mutex &state_mutex, float interpolation_time);
 void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();
 void        R_GL_RenderPrimitives(RenderCmd *render_command);
-void        R_GL_Render(std::mutex &mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer);
+void        R_GL_Render(std::mutex &mutex, float interpolation_time);
 void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
-void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
+// void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
 void        R_InitializeRenderingAPI();
 std::string T_LoadImageFile(std::string file_path);
 void        M_GL_BufferMaterialTexture(unsigned int &texture_id, unsigned char *texture_buffer);

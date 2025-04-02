@@ -224,7 +224,7 @@ struct PrimitiveRenderCmd
 };
 
 extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector? (would make the forward declarations nicer)
-extern std::vector<GLShader *> shaders;
+// extern std::vector<GLShader *> shaders;
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern bool time_to_render;
@@ -237,12 +237,12 @@ void        R_GL_BufferTextures();
 void        R_GL_BufferMeshes();
 void        R_DrawPrimitive(PrimitiveRenderCmd primitive);
 void        R_GL_DrawSkybox();
-void        R_Render(std::mutex &state_mutex, float interpolation_time, JPH::DebugRenderer *debug_renderer);
+void        R_Render(std::mutex &state_mutex, float interpolation_time);
 void        R_GL_Render(std::mutex &mutex, float interpolation_time);
 void        R_RenderStage(glm::mat4 projection_matrix, unsigned int shader_index);
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
-void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
+// void        R_BufferRenderCmd(PrimitiveRenderCmd primitive_render_command);
 void        R_InitializeRenderingAPI();
 std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);

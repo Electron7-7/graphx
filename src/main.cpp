@@ -3,7 +3,7 @@
 
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
-#include "graphx_classes_namespace.hpp" // NOLINT
+// #include "graphx_classes_namespace.hpp" // NOLINT
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
@@ -48,7 +48,7 @@ void testGameTick(GLFWwindow *window);
 // The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
 #include "jolt_boilerplate.hpp"
 
-class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
+/*class GraphXDeadSimpleDebugRenderer : public JPH::DebugRendererSimple
 {
 public:
     virtual void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
@@ -67,13 +67,13 @@ public:
     }
 };
 
-GraphXDeadSimpleDebugRenderer *debug_renderer = nullptr;
+GraphXDeadSimpleDebugRenderer *debug_renderer = nullptr;*/
 
 int main()
 {
 	graphx::rendering::graphx_api = graphx::rendering::GRAPHX_OPENGL;
 
-	// OpenGL/GLFW Setup (MOVE ALL OF THIS INTO R_GL_Initialize AT SOME POINT)
+	// OpenGL/GLFW Setup | Todo: MOVE ALL OF THIS INTO R_GL_Initialize AT SOME POINT
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(graphx::rendering::main_window_width, graphx::rendering::main_window_height);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -92,14 +92,6 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_FRAMEBUFFER_SRGB);
-
-	GLShader phong_shader(phong_vert, phong_frag);
-	GLShader old_blinn_phong_shader(old_blinn_phong_vert, old_blinn_phong_frag);
-	GLShader blinn_phong_shader(blinn_phong_vert, blinn_phong_frag);
-	GLShader light_debug_shader(blinn_phong_vert, light_debug_frag);
-	GLShader debug_normals_shader(blinn_phong_vert, debug_normals_frag);
-	GLShader debug_vertex_colors_shader(blinn_phong_vert, debug_vertex_colors_frag);
-	shaders.insert(shaders.end(), {&phong_shader, &old_blinn_phong_shader, &blinn_phong_shader, &light_debug_shader, &debug_normals_shader, &debug_vertex_colors_shader});
 
 	R_InitializeRenderingAPI();
 
@@ -144,7 +136,7 @@ int main()
 		if(time_to_render)
 		{
 			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
-			R_Render(actor_state_mutex, interpolation_time, debug_renderer);
+			R_Render(actor_state_mutex, interpolation_time);
 		}
 
 		ImGui::Render();
@@ -174,8 +166,8 @@ void testGameTick(GLFWwindow *main_window)
 
 	GraphXContactListener contact_listener;
 	jolt_physics_system.SetContactListener(&contact_listener);
-	GraphXDeadSimpleDebugRenderer jolt_debug_renderer;
-	debug_renderer = &jolt_debug_renderer;
+	// GraphXDeadSimpleDebugRenderer jolt_debug_renderer;
+	// debug_renderer = &jolt_debug_renderer;
 #endif
 
 	JPH::TempAllocatorImpl jolt_temp_allocator(10 * 1024 * 1024);
@@ -279,25 +271,25 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
 	{
-		if(graphx::rendering::shader_debug_value != graphx::rendering::SHADER_DEBUG_NORMALS)
+		if(graphx::rendering::current_shader != graphx::rendering::SHADER_DEBUG_NORMALS)
 		{
-			graphx::rendering::shader_debug_value = graphx::rendering::SHADER_DEBUG_NORMALS;
-			PRINTNOTE("Shader Debug Focus Lighting Component: Normals")
+			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_NORMALS;
+			PRINTNOTE("Shader Debug Focus Normals: On")
 			return;
 		}
-		graphx::rendering::shader_debug_value = 0;
-		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
+		graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
+		PRINTNOTE("Shader Debug Focus Normals: Off")
 	}
 
 	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
 	{
-		if(graphx::rendering::shader_debug_value != graphx::rendering::SHADER_DEBUG_VERTEX_COLORS)
+		if(graphx::rendering::current_shader != graphx::rendering::SHADER_DEBUG_VERTEX_COLORS)
 		{
-			graphx::rendering::shader_debug_value = graphx::rendering::SHADER_DEBUG_VERTEX_COLORS;
+			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_VERTEX_COLORS;
 			PRINTNOTE("Shader Debug Focus Vertex Colors: On")
 			return;
 		}
-		graphx::rendering::shader_debug_value = 0;
+		graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
 		PRINTNOTE("Shader Debug Focus Vertex Colors: Off")
 	}
 
@@ -322,48 +314,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			PRINTNOTE("Jolt Debug Renderer: Enabled")
 		else
 			PRINTNOTE("Jolt Debug Renderer: Disabled")
-	}
-
-	if(key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)
-	{
-		if(graphx::rendering::shader_index >= (graphx::rendering::SHADERS_AMOUNT - 1))
-			graphx::rendering::shader_index = 0;
-		else
-			graphx::rendering::shader_index++;
-
-		switch(graphx::rendering::shader_index)
-		{
-		case graphx::rendering::SHADER_PHONG:
-			PRINTNOTE("Using Shader: Phong")
-			break;
-		case graphx::rendering::SHADER_OLD_BLINN_PHONG:
-			PRINTNOTE("Using Shader: Old Blinn-Phong")
-			break;
-		case graphx::rendering::SHADER_BLINN_PHONG:
-			PRINTNOTE("Using Shader: Blinn-Phong")
-			break;
-		}
-	}
-
-	if(key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS)
-	{
-		if(graphx::rendering::shader_index <= 0)
-			graphx::rendering::shader_index = graphx::rendering::SHADERS_AMOUNT - 1;
-		else
-			graphx::rendering::shader_index--;
-
-		switch(graphx::rendering::shader_index)
-		{
-		case graphx::rendering::SHADER_PHONG:
-			PRINTNOTE("Using Shader: Phong")
-			break;
-		case graphx::rendering::SHADER_OLD_BLINN_PHONG:
-			PRINTNOTE("Using Shader: Old Blinn-Phong")
-			break;
-		case graphx::rendering::SHADER_BLINN_PHONG:
-			PRINTNOTE("Using Shader: Blinn-Phong")
-			break;
-		}
 	}
 
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)

@@ -2080,3 +2080,6 @@ Actor::Actor(std::string init_name, Mesh *init_mesh, ...)
 :::
 
 Well, maybe not technically a memory leak if Actor always deletes this before getting destroyed (which it definitely doesn't), but still pretty stupid. The renderer shouldn't crash if the mesh is null, so this is either forgetfullness or paranoia lmfao.
+
+[04/02/25]
+At work; cleaned up the code from yesterday. This includes removing the `shaders` vector and instead using the graphx::rendering namespace to store my shaders. Currently, it's hard-coded to OpenGL but I intend on making it more streamlined and API-agnostic in the future. For now, though, some global variables should do.

@@ -133,18 +133,11 @@ namespace graphx
 	{
 		inline constexpr unsigned int GRAPHX_OPENGL = 917; // API identifier (more to be added)
 
-
-		inline constexpr unsigned int SHADERS_AMOUNT             = 3; // I leave out the debug shaders, since they're manually toggled/used
-		//-----------------------------------------------------------
-		inline constexpr unsigned int SHADER_PHONG               = 0;
-		inline constexpr unsigned int SHADER_OLD_BLINN_PHONG     = 1;
-		inline constexpr unsigned int SHADER_BLINN_PHONG         = 2;
-		//-----------------------------------------------------------
-		inline constexpr unsigned int SHADER_DEBUG_LIGHT         = 3;
-		inline constexpr unsigned int SHADER_DEBUG_FULLBRIGHT    = 3;
-		inline constexpr unsigned int SHADER_DEBUG_NORMALS       = 4;
-		inline constexpr unsigned int SHADER_DEBUG_VERTEX_COLORS = 5;
-
+		inline GLShader *SHADER_DEFAULT             = nullptr;
+		inline GLShader *SHADER_DEBUG_FULLBRIGHT    = nullptr;
+		inline GLShader *SHADER_DEBUG_NORMALS       = nullptr;
+		inline GLShader *SHADER_DEBUG_VERTEX_COLORS = nullptr;
+		inline GLShader *SHADER_SKYBOX              = nullptr;
 
 		inline constexpr unsigned int VAOS_AMOUNT        = 2;
 		//---------------------------------------------------
@@ -154,8 +147,7 @@ namespace graphx
 
 		inline bool  do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
 		inline int   graphx_api = GRAPHX_OPENGL;
-		inline int   shader_debug_value = 0;
-		inline int   shader_index = SHADER_BLINN_PHONG;
+		inline GLShader *current_shader = nullptr;
 		inline float main_window_width = 1280.0f;
 		inline float main_window_height = 720.0f;
 		inline float camera_near = 0.1f;
