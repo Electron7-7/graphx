@@ -94,9 +94,12 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
 	GLShader phong_shader(phong_vert, phong_frag);
+	GLShader old_blinn_phong_shader(old_blinn_phong_vert, old_blinn_phong_frag);
 	GLShader blinn_phong_shader(blinn_phong_vert, blinn_phong_frag);
-	GLShader new_blinn_phong_shader(new_blinn_phong_vert, new_blinn_phong_frag);
-	shaders.insert(shaders.end(), {&phong_shader, &blinn_phong_shader, &new_blinn_phong_shader});
+	GLShader light_debug_shader(blinn_phong_vert, light_debug_frag);
+	GLShader debug_normals_shader(blinn_phong_vert, debug_normals_frag);
+	GLShader debug_vertex_colors_shader(blinn_phong_vert, debug_vertex_colors_frag);
+	shaders.insert(shaders.end(), {&phong_shader, &old_blinn_phong_shader, &blinn_phong_shader, &light_debug_shader, &debug_normals_shader, &debug_vertex_colors_shader});
 
 	R_InitializeRenderingAPI();
 
@@ -267,6 +270,15 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_3 && action == GLFW_PRESS)
 	{
+		graphx::rendering::lighting_switch_ambient = !graphx::rendering::lighting_switch_ambient;
+		if(graphx::rendering::lighting_switch_ambient)
+			PRINTNOTE("Ambient Lighting Component: Enabled")
+		else
+			PRINTNOTE("Ambient Lighting Component: Disabled")
+	}
+
+	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
+	{
 		if(graphx::rendering::shader_debug_value != graphx::rendering::SHADER_DEBUG_NORMALS)
 		{
 			graphx::rendering::shader_debug_value = graphx::rendering::SHADER_DEBUG_NORMALS;
@@ -277,7 +289,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		PRINTNOTE("Shader Debug Focus Lighting Component: None (Default lighting)")
 	}
 
-	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
+	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
 	{
 		if(graphx::rendering::shader_debug_value != graphx::rendering::SHADER_DEBUG_VERTEX_COLORS)
 		{
@@ -289,7 +301,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		PRINTNOTE("Shader Debug Focus Vertex Colors: Off")
 	}
 
-	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
+	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
 	{
 		is_wireframe = !is_wireframe;
 		if(is_wireframe)
@@ -314,18 +326,21 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)
 	{
-		if(graphx::rendering::shader_index >= (shaders.size() - 1))
+		if(graphx::rendering::shader_index >= (graphx::rendering::SHADERS_AMOUNT - 1))
 			graphx::rendering::shader_index = 0;
 		else
 			graphx::rendering::shader_index++;
 
 		switch(graphx::rendering::shader_index)
 		{
-		case graphx::rendering::SHADER_BLINN_PHONG:
-			PRINTNOTE("Using Shader: Blinn-Phong")
-			break;
 		case graphx::rendering::SHADER_PHONG:
 			PRINTNOTE("Using Shader: Phong")
+			break;
+		case graphx::rendering::SHADER_OLD_BLINN_PHONG:
+			PRINTNOTE("Using Shader: Old Blinn-Phong")
+			break;
+		case graphx::rendering::SHADER_BLINN_PHONG:
+			PRINTNOTE("Using Shader: Blinn-Phong")
 			break;
 		}
 	}
@@ -333,7 +348,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS)
 	{
 		if(graphx::rendering::shader_index <= 0)
-			graphx::rendering::shader_index = shaders.size() - 1;
+			graphx::rendering::shader_index = graphx::rendering::SHADERS_AMOUNT - 1;
 		else
 			graphx::rendering::shader_index--;
 
@@ -342,11 +357,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		case graphx::rendering::SHADER_PHONG:
 			PRINTNOTE("Using Shader: Phong")
 			break;
+		case graphx::rendering::SHADER_OLD_BLINN_PHONG:
+			PRINTNOTE("Using Shader: Old Blinn-Phong")
+			break;
 		case graphx::rendering::SHADER_BLINN_PHONG:
 			PRINTNOTE("Using Shader: Blinn-Phong")
-			break;
-		case graphx::rendering::SHADER_NEW_BLINN_PHONG:
-			PRINTNOTE("Using Shader: New Blinn-Phong")
 			break;
 		}
 	}

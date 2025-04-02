@@ -85,7 +85,7 @@ Environment (environment)
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
-	Strength  (0.2)
+	Energy    (0.5)
 	Color     (0.8, 0.9, 1.0)
 }
 LightTesterMover (spinny_light)
@@ -94,7 +94,7 @@ LightTesterMover (spinny_light)
 	PivotRadius   (1.2)
 	PivotSpeed    (1.8)
 	Color         (1.0, 0.15, 0.3)
-	Strength      (1.0)
+	Energy        (0.7)
 }
 LightTesterMover (spinny_light_2)
 {
@@ -151,5 +151,4 @@ GraphXPlayer (main_player)
 	MovementAcceleration (2.0)
 }
 LightFlashlight (Player_Flashlight)
-{
-}
+{}

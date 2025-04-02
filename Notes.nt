@@ -2067,3 +2067,16 @@ I wanna restructure my resources (and steal from Godot):
         - Somehow notify rendering API of changes
 
 I want to keep these API agnostic as best as I can. Maybe I'll make a section of the graphx namespace for the different rendering APIs and their variables (e.g: graphx::OpenGL::VAOs, graphx::OpenGL::TextureIDs, etc).
+
+Found a memory leak in the Actor::Actor constructor:
+:::C++
+Actor::Actor(std::string init_name, Mesh *init_mesh, ...)
+: mesh(init_mesh), ...
+{
+    ...
+    mesh = new Mesh(); // Memory leak!
+    ...
+}
+:::
+
+Well, maybe not technically a memory leak if Actor always deletes this before getting destroyed (which it definitely doesn't), but still pretty stupid. The renderer shouldn't crash if the mesh is null, so this is either forgetfullness or paranoia lmfao.

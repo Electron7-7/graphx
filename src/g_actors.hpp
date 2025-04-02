@@ -76,22 +76,27 @@ public:
 // Pretty over-engineered, but a cool idea I think.
 struct LightData
 {
-	float strength;
-	float ambient_strength;
+	glm::vec3 color = glm::vec3(0.0f);
+	float specular_strength = 0.0f;
+	float ambient_strength = 0.0f;
+	float energy = 0.0f;
 
-	glm::vec3 color;
-	glm::vec3 position;
-	glm::vec3 direction;
+	float attenuation = 0.0f;
+	float range = 0.0f;
+	// float range;
+	// float intensity;
+	// float falloff;
 
-	float range;
-	float intensity;
-	float falloff;
+	glm::vec3 position = glm::vec3(0.0f);
+	glm::vec3 direction = glm::vec3(0.0f);
 
-	float inner_cutoff;
-	float outer_cutoff;
+	float spot_cutoff = 0.0f;
+	float spot_cutoff_fade = 0.0f;
+
+	// Texture *projection_texture;
 };
 
-class Light: public Actor
+/*class Light: public Actor
 {
 public:
 	Mesh temporary_light_mesh = Mesh();
@@ -139,6 +144,68 @@ public:
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 	LightData getLightData() override;
+};*/
+
+class Light : public Actor
+{
+public:
+	bool debug_visible = false;
+
+	// Basic Properties
+	glm::vec3 light_color = glm::vec3(1.0f);
+	float light_specular_strength = 1.0f;
+	float light_ambient_strength = 0.05f;
+	float light_energy = 0.8f;
+
+	// Attenuation
+	float light_attenuation = 1.0f; // Keep this between 0 and 10 for best results. Setting it to 2 results in the proper inverse square attenuation (for physically accurate lights/realism)
+	float light_range = 100.0f;
+
+	// Attenuation
+	// float range = 100.0f;
+	// float intensity = 1.0f;
+	// float falloff = 0.0f;
+
+	// Other
+	// Texture *texture_projection = nullptr;
+
+	Light(std::string init_name = "UNTITLED_LIGHT");
+
+	bool isLightType(graphx::gClass light_type);
+	graphx::gClass const &getLightType();
+
+	virtual LightData getLightData();
+
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+
+protected:
+	graphx::gClass my_light_type;
+};
+
+class LightDirectional : public Light
+{
+public:
+	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
+
+	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
+
+	LightData getLightData() override;
+
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+};
+
+class LightSpot : public Light
+{
+public:
+	glm::vec3 spot_direction = glm::vec3(0.1f, -0.5f, 0.8f);
+	float spot_angle = 17.5f;
+	float spot_angle_fade = 5.0f;
+
+	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
+
+	LightData getLightData() override;
+
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 };
 
 class LightFlashlight: public LightSpot
@@ -148,7 +215,7 @@ public:
 	glm::vec3 position_offset = glm::vec3(0.0f);
 	glm::vec3 rotation_offset = glm::vec3(0.0f);
 
-	LightFlashlight(std::string init_name = "UNTITLED FLASHLIGHT", float init_intensity = 0.5f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f), float init_inner_cutoff_angle = 12.5f, float init_outer_cutoff_angle = 17.5f, glm::vec3 init_position_offset = glm::vec3(0.0f), glm::vec3 init_rotation_offset = glm::vec3(0.0f));
+	LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
 
 	void setLight(bool is_on);
 	void setLightColor(glm::vec3 color);
@@ -173,7 +240,7 @@ public:
 	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
 
-	LightTesterMover(std::string init_name = "UNTITLED MOVING LIGHT TESTER", glm::vec3 init_pivot_position = glm::vec3(0.0f), float init_pivot_radius = 3.0f, float init_pivot_speed = 1.0f, float init_intensity = 1.0f, float init_range = 325.0f, float init_falloff = 0.0f, float init_strength = 1.0f, glm::vec3 init_color = glm::vec3(1.0f));
+	LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;

@@ -72,12 +72,6 @@ template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::ve
 	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
 }
 
-template<> void GLShader::setUniform<glm::bvec2>(const std::string &name, glm::bvec2 value) const
-{
-	glm::vec3 bool_as_float((float)value.x, (float)value.y, 1.0f);
-	glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(bool_as_float));
-}
-
 template<> void GLShader::setUniform<glm::vec4>(const std::string &name, glm::vec4 value) const
 {
 	glUniform4fv(glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
@@ -155,25 +149,21 @@ long Device::getUID()
 //
 // Environment
 //
-Environment::Environment(bool enable_ambient_lighting, float init_ambient_strength)
-: ambient_lighting_enabled(enable_ambient_lighting), ambient_light_strength(init_ambient_strength)
+Environment::Environment(std::string init_name, bool enable_ambient_light, float init_ambient_light_amount, glm::vec3 init_ambient_light_color)
+: ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount * enable_ambient_light)
 {
+	name = init_name;
 	my_type = graphx::classes::ENVIRONMENT;
-	name = "Untitled Environment";
 }
 
 void Environment::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
-	getSetting(ambient_lighting_enabled, settings["AmbientLightingEnabled"]);
-	getSetting(ambient_light_strength, settings["AmbientLightingStrength"]);
-}
-
-
-float Environment::getAmbientLight()
-{
-	return ambient_light_strength * ambient_lighting_enabled;
+	// getSetting(ambient_lighting_enabled, settings["AmbientLightingEnabled"]);
+	// getSetting(ambient_light_strength, settings["AmbientLightingStrength"]);
+	getSetting(ambient_light_amount, settings["AmbientLightAmount"]);
+	getSetting(ambient_light_color, settings["AmbientLightColor"]);
 }
 
 //
@@ -483,11 +473,18 @@ Mesh::Mesh()
 	name = "Untitled Mesh";
 }
 
-Mesh::Mesh(Material *new_material)
+Mesh::Mesh(Material *new_material, std::string init_mesh_data_name)
 {
 	my_type = graphx::classes::MESH;
 	name = "Untitled Mesh";
 	material = new_material;
+}
+
+Mesh::Mesh(std::string init_mesh_data_name)
+{
+	my_type = graphx::classes::MESH;
+	name = "Untitled Mesh";
+	mesh_data_name = init_mesh_data_name;
 }
 
 void Mesh::prepForDestruction()

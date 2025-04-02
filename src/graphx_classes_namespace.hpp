@@ -60,6 +60,8 @@ namespace graphx
 			TEXTURE,
 		};
 
+		inline static constexpr gClass const &LIGHTPOINT = LIGHT; // Just for clarity's sake; might remove later bc it's kinda unnecessary
+
 		inline const gClass &getBaseType(const gClass &type) noexcept
 		{
 			if(gClass::INVALID_TYPE == type)

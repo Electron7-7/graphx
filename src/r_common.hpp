@@ -53,12 +53,14 @@ protected:
 
 struct Environment final : public Device // Will be extended
 {
-	bool ambient_lighting_enabled = true;
-	float ambient_light_strength = 0.05f;
+	glm::vec3 ambient_light_color = glm::vec3(1.0f);
+	float ambient_light_amount = 0.0f;
+	// bool ambient_lighting_enabled = true;
+	// float ambient_light_strength = 0.05f;
 
-	Environment(bool enable_ambient_lighting = true, float init_ambient_strength = 0.05f);
+	Environment(std::string init_name = "UNTITLED_ENVIRONMENT", bool enable_ambient_light = false, float init_ambient_light_amount = 0.05f, glm::vec3 init_ambient_light_color = glm::vec3(1.0f));
 
-	float getAmbientLight();
+	// float getAmbientLight();
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
 
@@ -153,7 +155,8 @@ struct Mesh : public Device
 	std::string mesh_data_name = ERROR_MODEL;
 
 	Mesh();
-	Mesh(Material *new_material);
+	Mesh(Material *new_material, std::string init_mesh_data_name = ERROR_MODEL);
+	Mesh(std::string init_mesh_data_name);
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 	void prepForDestruction() override;

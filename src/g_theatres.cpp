@@ -96,7 +96,7 @@ void Theatre::probeActorsForRenderCommands()
         if(graphx::classes::isLight(pair.second->getType()))
         {
             LightRenderCmd light_render_command;
-            if(pair.second->wantsToBeRendered())
+            if(static_cast<Light *>(pair.second)->debug_visible)
             {
                 light_render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
                 light_render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
@@ -159,7 +159,9 @@ void Theatre::raiseCurtains()
         createActor(graphx::classes::LIGHTDIRECTIONAL, 55252525);
         objects.at(55252525)->setName("THE FUCKING SUN HAS GONE OUT!!!!!");
         static_cast<LightDirectional *>(objects.at(55252525))->light_color = glm::vec3(0.0f);
-        static_cast<LightDirectional *>(objects.at(55252525))->intensity = 0.0f;
+        static_cast<LightDirectional *>(objects.at(55252525))->light_energy = 0.0f;
+        static_cast<LightDirectional *>(objects.at(55252525))->light_ambient_strength = 0.0f;
+        static_cast<LightDirectional *>(objects.at(55252525))->light_specular_strength = 0.0f;
     }
 
     sortTroupe();

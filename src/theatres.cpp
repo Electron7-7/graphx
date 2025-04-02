@@ -88,7 +88,7 @@ Environment (environment)
 LightDirectional (Sun)
 {
 	Direction (-0.2, -1.0, -0.3)
-	Strength  (0.2)
+	Energy    (0.5)
 	Color     (0.8, 0.9, 1.0)
 }
 LightTesterMover (spinny_light)
@@ -97,7 +97,7 @@ LightTesterMover (spinny_light)
 	PivotRadius   (1.2)
 	PivotSpeed    (1.8)
 	Color         (1.0, 0.15, 0.3)
-	Strength      (1.0)
+	Energy        (0.7)
 }
 LightTesterMover (spinny_light_2)
 {
@@ -154,8 +154,7 @@ GraphXPlayer (main_player)
 	MovementAcceleration (2.0)
 }
 LightFlashlight (Player_Flashlight)
-{
-})~"}},{1, std::string{R"~(@CollisionTesting
+{})~"}},{1, std::string{R"~(@CollisionTesting
 GraphXPlayer (main_player)
 {
 	Position             (0.0, 3.0, 6.0)
@@ -326,8 +325,8 @@ LightTesterMover (test_light_2)
 })~"}},{2, std::string{R"~(@RamielTheatre
 LightDirectional (Sun)
 {
-	Strength (0.05)
-	Direction (0.2, -0.2, -0.1)
+	Energy (0.05)
+	Direction (0.3, -0.7, -0.2)
 }
 LightFlashlight (Flashlight)
 {}
@@ -375,35 +374,35 @@ Mesh (TestMesh)
 }
 Light (fix_light)
 {
-	Position (0.0, 10.0, -4.0)
+	Position (250.0, 300.0, -400.0)
 	Color (1.0, 1.0, 1.0)
-	Strength (1.0)
-	Range (200.0)
-	Intensity (0.2)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
 }
 Light (fix_light_2)
 {
-	Position (0.0, 50.0, 50.0)
+	Position (320.0, 250.0, -350.0)
 	Color (1.0, 1.0, 1.0)
-	Strength (1.0)
-	Range (300.0)
-	Intensity (0.2)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
 }
 Light (fix_light_3)
 {
-	Position (-10.0, 20.0, -20.0)
+	Position (200.0, 420.0, -700.0)
 	Color (1.0, 1.0, 1.0)
-	Strength (1.0)
-	Range (200.0)
-	Intensity (0.2)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
 }
 Light (fix_light_4)
 {
-	Position (20.0, 25.0, 80.0)
+	Position (280.0, 225.0, -150.0)
 	Color (1.0, 1.0, 1.0)
-	Strength (1.0)
-	Range (200.0)
-	Intensity (0.2)
+	Energy (8.0)
+	Range (500.0)
+	Attenuation (1.0)
 }
 Material (Ramiel_Mat)
 {

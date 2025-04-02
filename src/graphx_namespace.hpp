@@ -131,17 +131,19 @@ namespace graphx
 
 	namespace rendering
 	{
-		inline constexpr unsigned int SHADER_DEBUG_NORMALS       = 1;
-		inline constexpr unsigned int SHADER_DEBUG_VERTEX_COLORS = 2;
-
 		inline constexpr unsigned int GRAPHX_OPENGL = 917; // API identifier (more to be added)
 
 
-		inline constexpr unsigned int SHADERS_AMOUNT         = 3;
-		//-------------------------------------------------------
-		inline constexpr unsigned int SHADER_PHONG           = 0;
-		inline constexpr unsigned int SHADER_BLINN_PHONG     = 1;
-		inline constexpr unsigned int SHADER_NEW_BLINN_PHONG = 2;
+		inline constexpr unsigned int SHADERS_AMOUNT             = 3; // I leave out the debug shaders, since they're manually toggled/used
+		//-----------------------------------------------------------
+		inline constexpr unsigned int SHADER_PHONG               = 0;
+		inline constexpr unsigned int SHADER_OLD_BLINN_PHONG     = 1;
+		inline constexpr unsigned int SHADER_BLINN_PHONG         = 2;
+		//-----------------------------------------------------------
+		inline constexpr unsigned int SHADER_DEBUG_LIGHT         = 3;
+		inline constexpr unsigned int SHADER_DEBUG_FULLBRIGHT    = 3;
+		inline constexpr unsigned int SHADER_DEBUG_NORMALS       = 4;
+		inline constexpr unsigned int SHADER_DEBUG_VERTEX_COLORS = 5;
 
 
 		inline constexpr unsigned int VAOS_AMOUNT        = 2;
@@ -161,6 +163,7 @@ namespace graphx
 		inline bool  jolt_debug_render = false;
 		inline bool  lighting_switch_diffuse = true;
 		inline bool  lighting_switch_specular = true;
+		inline bool  lighting_switch_ambient = true;
 	};
 
 	/// The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`.
