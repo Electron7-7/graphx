@@ -491,6 +491,7 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 	int spot_light_index = 0;
 	int directional_light_index = 0;
 
+	graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
 	glUseProgram(graphx::rendering::current_shader->id);
 
 	for(auto rendercmd_iterator = light_render_commands.begin() ; rendercmd_iterator != light_render_commands.end() ;)

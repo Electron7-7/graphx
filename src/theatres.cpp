@@ -48,8 +48,7 @@ Mesh (Pyramid)
 }
 Mesh (OBJ_Mesh)
 {
-	// MeshData [OBJ_SUZANNE]
-	MeshData [OBJ_ERROR]
+	MeshData [OBJ_SUZANNE]
 }
 Actor (Suzanne_Tester)
 {
@@ -83,8 +82,8 @@ StaticBodyActor (Wall)
 }
 Environment (environment)
 {
-	AmbientLightingColor (1.0, 1.0, 1.0)
-	AmbientLightingStrength (0.2)
+	AmbientLightColor (1.0, 1.0, 1.0)
+	AmbientLightAmount (0.2)
 }
 LightDirectional (Sun)
 {
@@ -307,7 +306,7 @@ RigidBodyActor (Falling_Actor_5)
 LightDirectional (Sun)
 {
 	Direction (-0.1, -1.0, -0.3)
-	Strength  (0.05)
+	Energy    (0.05)
 	Color     (1.0, 1.0, 1.0)
 }
 LightTesterMover (test_light_1)

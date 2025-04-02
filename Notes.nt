@@ -2087,3 +2087,14 @@ At work; cleaned up the code from yesterday. This includes removing the `shaders
 All right, then, what's next? I might want to clean up and get ready for a release, but I'd like to add some more functionality to the engine (or at least a new feature) before I do, since most of these changes have been under-the-hood, unseen stuff.
 
 Aight, found some bugs... time to squash.
+
+Hmm... it looks like there's at least two bugs:
+  1. The flashlight doesn't follow the player
+  2. LightDirectional and/or Environment aren't given/don't use proper default values
+Pretty sure these are both issues with how I send data (and what data I send) to the shader, so I'll look in `r_renderer.cpp` first.
+
+Turns out it was because I had changed Light::getLightData to this:
+:::C++
+virtual const LightData getLightData();
+:::
+Yeah, that `const` was causing the issues, lmfao. I assume it's because all derived Light classes use Light::getLightData to populate a new LightData object with values from Light, but since it's `const` none of the values can be changed/set. Woops.

@@ -609,7 +609,7 @@ graphx::gClass const &Light::getLightType()
 	return my_light_type;
 }
 
-const LightData Light::getLightData()
+LightData Light::getLightData()
 {
 	LightData light_data;
 
@@ -648,7 +648,7 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 	delete mesh;
 }
 
-const LightData LightDirectional::getLightData()
+LightData LightDirectional::getLightData()
 {
 	LightData directional_light_data = Light::getLightData();
 	directional_light_data.direction = directional_direction;
@@ -676,7 +676,7 @@ void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(spot_angle_fade, settings["AngleFadeIntensity"]);
 }
 
-const LightData LightSpot::getLightData()
+LightData LightSpot::getLightData()
 {
 	LightData spot_light_data = Light::getLightData();
 	spot_light_data.direction = spot_direction;
@@ -721,8 +721,8 @@ void LightFlashlight::tick(int current_tick)
 	if(getCurrentTheatre()->getPlayer() == nullptr)
 		return;
 
-	position_global = getCurrentTheatre()->getPlayer()->player_camera.getPosition<glm::vec3>() + position_offset;
-	quaternion = getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset));
+	setGlobalPosition(getCurrentTheatre()->getPlayer()->player_camera.getPosition<glm::vec3>() + position_offset);
+	setGlobalRotation(getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset)));
 	spot_direction = quaternion * vector3_front;
 }
 

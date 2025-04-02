@@ -150,7 +150,7 @@ public:
 	bool isLightType(graphx::gClass light_type);
 	graphx::gClass const &getLightType();
 
-	virtual const LightData getLightData();
+	virtual LightData getLightData();
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 
@@ -165,7 +165,7 @@ public:
 
 	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
 
-	const LightData getLightData() override;
+	LightData getLightData() override;
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 };
@@ -179,7 +179,7 @@ public:
 
 	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
 
-	const LightData getLightData() override;
+	LightData getLightData() override;
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 };
