@@ -142,7 +142,7 @@ namespace graphx
 		inline constexpr unsigned int VAOS_AMOUNT        = 2;
 		//---------------------------------------------------
 		inline constexpr unsigned int VAO_DEFAULT        = 0;
-		inline constexpr unsigned int VAO_PRIMITIVES     = 1;
+		inline constexpr unsigned int VAO_TEXT           = 1;
 
 
 		inline bool  do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom

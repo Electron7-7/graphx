@@ -36,8 +36,8 @@ extern bool time_to_store_buffers;
 // Functions
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color);
-void        R_BufferMeshesAndTextures();
 void        R_InitializeRenderingAPI();
+void        R_BufferMeshesAndTextures();
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
 void        R_Render(std::mutex &state_mutex, float interpolation_time);

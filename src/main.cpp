@@ -11,6 +11,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <theatres.hpp>
+// #include <ft2build.h>
+// #include FT_FREETYPE_H
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -48,7 +50,9 @@ int main()
 {
 	graphx::rendering::graphx_api = graphx::rendering::GRAPHX_OPENGL;
 
+	//------------------
 	// OpenGL/GLFW Setup | Todo: MOVE ALL OF THIS INTO R_GL_Initialize AT SOME POINT
+	//------------------
 	glfwInit();
 	GLFWwindow *main_window = W_CreateWindow(graphx::rendering::main_window_width, graphx::rendering::main_window_height);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());

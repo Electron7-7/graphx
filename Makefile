@@ -5,7 +5,7 @@ CXXFLAGS = -g -Wall -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
 INCLUDES = -I src/include
-LIBS = -l glfw -L src/lib -l:libJolt.a
+LIBS = -l glfw -L src/lib -l Jolt -l freetype
 
 ifeq ($(OS),Windows_NT) 
 	WCXX = g++
@@ -17,8 +17,8 @@ endif
 
 WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows -frtti -ffat-lto-objects $(JOLTFLAGS) $(GRAPHXFLAGS)
 WCCFLAGS = -g -Wall -static -mwindows
-WLIBS = -L src/windows_dependencies/lib/jolt-mingw-w64 -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
 WINCLUDES = -I src/include -I src/windows_dependencies/include
+WLIBS = -L src/windows_dependencies/lib/jolt-mingw-w64 -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
 
 JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
 GRAPHXFLAGS = -D GRAPHX_COMPILING

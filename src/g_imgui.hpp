@@ -10,6 +10,7 @@
 struct Theatre;
 struct gMeshData;
 
+
 struct GraphXConsole
 {
 	bool active;
@@ -23,14 +24,11 @@ struct GraphXConsole
 	GraphXConsole();
 
 	void updateFrame(GLFWwindow *window);
-	void displayTheatre();
+	void displayActorDebugger();
 	void displayTheatreData();
-	void displayMeshData();
 	bool justClosed();
 
 private:
-	std::vector<long> actor_id_dump;
-	std::string theatre_name;
 	bool was_active;
 };
 

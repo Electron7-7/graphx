@@ -8,10 +8,7 @@ namespace IMGUI = ImGui;
 //
 GraphXConsole::GraphXConsole()
 : active(false), secondary_active(false), tertiary_active(false), toggle_activation_key(ImGuiKey_Tab), name("GraphX Debug Console"), was_active(false)
-{
-	theatre_name = getCurrentTheatre(false)->name;
-	actor_id_dump = getCurrentTheatre(false)->dumpActorIDs();
-}
+{}
 
 bool GraphXConsole::justClosed()
 {
@@ -36,7 +33,7 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 		return;
 
 	if(secondary_active)
-		displayTheatre();
+		displayActorDebugger();
 
 	was_active = active;
 #ifndef GRAPHX_DEBUG
@@ -53,7 +50,7 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	IMGUI::End();
 }
 
-void GraphXConsole::displayTheatre()
+/*void GraphXConsole::displayTheatre()
 {
 	if(current_theatre == nullptr || !current_theatre->name.compare("Untitled Theatre"))
 		return;
@@ -90,6 +87,11 @@ void GraphXConsole::displayTheatre()
 		IMGUI::PopID();
 	}
 	IMGUI::End();
+}*/
+
+void GraphXConsole::displayActorDebugger()
+{
+	
 }
 
 void GraphXConsole::displayTheatreData()

@@ -225,8 +225,8 @@ extern bool time_to_store_buffers;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-void        R_BufferMeshesAndTextures();
 void        R_InitializeRenderingAPI();
+void        R_BufferMeshesAndTextures();
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
 void        R_Render(std::mutex &state_mutex, float interpolation_time);

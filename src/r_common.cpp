@@ -12,7 +12,7 @@ GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_c
 	buildShader(vertex_shader_code, fragment_shader_code);
 }
 
-void glshader_error_handler(unsigned int shader_id)
+void GLShaderErrorHandler(unsigned int shader_id)
 {
 	// https://stackoverflow.com/a/63420289
 	int v_result = GL_FALSE;
@@ -36,12 +36,12 @@ void GLShader::buildShader(std::string vertex_shader_string, std::string fragmen
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &v_shader_code, NULL);
 	glCompileShader(vertex);
-	glshader_error_handler(vertex);
+	GLShaderErrorHandler(vertex);
 
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment, 1, &f_shader_code, NULL);
 	glCompileShader(fragment);
-	glshader_error_handler(fragment);
+	GLShaderErrorHandler(fragment);
 
 	id = glCreateProgram();
 	glAttachShader(id, vertex);
