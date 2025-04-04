@@ -21,6 +21,7 @@ struct Collider; // Collider declared here too, despite being in g_jolt.hpp (mai
 // RenderCmds (none of these are derived)
 struct RenderCmd;
 struct LightRenderCmd;
+struct TextRenderCmd;
 
 // Other
 struct MeshData;
@@ -40,6 +41,7 @@ void        R_InitializeRenderingAPI();
 void        R_BufferMeshesAndTextures();
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
+void        R_BufferRenderCmd(TextRenderCmd text_render_command);
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);

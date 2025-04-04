@@ -8,6 +8,8 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/Core/Color.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include <array>
 #include <mutex>
 
@@ -217,18 +219,38 @@ public:
 	bool isRenderable();
 };
 
+struct TextRenderCmd
+{
+public:
+	std::string font_name = "Arial"; // Temporary solution
+	std::string text;
+	float position_x;
+	float position_y;
+	// float position_z;
+	float scale;
+	glm::vec3 color;
+
+	TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
+	TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
+};
+
 extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
+extern FT_Library freetype;
+extern bool enable_default_shader;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+void        F_InitializeFreeType();
+void        F_LoadFont(std::string ttf_file_path, std::string font_name);
 void        R_InitializeRenderingAPI();
 void        R_BufferMeshesAndTextures();
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
+void        R_BufferRenderCmd(TextRenderCmd text_render_command);
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);

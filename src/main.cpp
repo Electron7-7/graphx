@@ -11,8 +11,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <theatres.hpp>
-// #include <ft2build.h>
-// #include FT_FREETYPE_H
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -73,6 +71,13 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
 	R_InitializeRenderingAPI();
+
+	//----------------
+	// FreeType2 Setup
+	//----------------
+	F_InitializeFreeType();
+	F_LoadFont("src/fonts/Arial.ttf", "Arial");
+	F_LoadFont("src/fonts/Verdana.ttf", "Verdana");
 
 	std::thread game_logic_main_thread(gameTick, main_window);
 
@@ -315,6 +320,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			PRINTNOTE("Jolt Debug Renderer: Enabled")
 		else
 			PRINTNOTE("Jolt Debug Renderer: Disabled")
+	}
+
+	if(key == GLFW_KEY_ENTER && action == GLFW_PRESS)
+	{
+		enable_default_shader = !enable_default_shader;
 	}
 
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)

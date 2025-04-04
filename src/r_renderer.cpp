@@ -12,6 +12,8 @@
 #include <tiny_obj_loader.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include <cmath>
 
 std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs;
@@ -484,6 +486,130 @@ void R_GL_DrawSkybox()
 
 std::vector<RenderCmd> render_commands;
 std::vector<LightRenderCmd> light_render_commands;
+std::vector<TextRenderCmd> text_render_commands;
+
+struct Character
+{
+	unsigned int texture_id;
+	glm::ivec2 size;
+	glm::ivec2 bearing;      // Offset from baseline to left/top of glyph
+	unsigned int advance;    // Offset to advance to next glyph
+};
+
+FT_Library freetype;
+std::map<char, Character> characters;
+std::map<std::string, unsigned int> font_vbos;
+
+void F_InitializeFreeType()
+{
+	if(FT_Init_FreeType(&freetype))
+		PRINTERR("FreeType library failed to initialize!")
+}
+
+void F_LoadFont(std::string ttf_file_path, std::string font_name)
+{
+	glUseProgram(graphx::rendering::SHADER_FONTS->id);
+	graphx::rendering::SHADER_FONTS->setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
+
+	FT_Face new_face;
+	if(FT_New_Face(freetype, ttf_file_path.c_str(), 0, &new_face))
+	{
+		PRINTERR("FreeType failed to load font face (filepath: " << ttf_file_path << ")")
+		return;
+	}
+
+	FT_Set_Pixel_Sizes(new_face, 0, 48);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	for(unsigned char character = 0 ; character < 128 ; character++)
+	{
+		if(FT_Load_Char(new_face, character, FT_LOAD_RENDER))
+		{
+			PRINTERR("FreeType failed to load glyph (character: " << character << ")")
+			continue;
+		}
+
+		unsigned int texture_id;
+		glGenTextures(1, &texture_id);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, new_face->glyph->bitmap.buffer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+		Character new_character =
+		{
+			texture_id,
+			glm::ivec2(new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows),
+			glm::ivec2(new_face->glyph->bitmap_left, new_face->glyph->bitmap_top),
+			static_cast<unsigned int>(new_face->glyph->advance.x)
+		};
+		characters.insert(characters.end(), std::make_pair(character, new_character));
+	}
+
+	FT_Done_Face(new_face);
+	// FT_Done_FreeType(freetype);
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	font_vbos[font_name] = VBO;
+}
+
+bool enable_default_shader = true;
+
+void R_GL_RenderFonts()
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	for(auto rendercmd_iterator = text_render_commands.begin() ; rendercmd_iterator != text_render_commands.end() ;)
+	{
+		glUseProgram(graphx::rendering::SHADER_FONTS->id);
+		graphx::rendering::SHADER_FONTS->setUniform("text_color", rendercmd_iterator->color);
+		glActiveTexture(GL_TEXTURE0);
+		glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
+
+		std::string::const_iterator character_iterator;
+		for(character_iterator = rendercmd_iterator->text.begin() ; character_iterator != rendercmd_iterator->text.end() ; character_iterator++)
+		{
+			Character character = characters.at(*character_iterator);
+			float x_position = rendercmd_iterator->position_x + character.bearing.x * rendercmd_iterator->scale;
+			float y_position = rendercmd_iterator->position_y - (character.size.y - character.bearing.y) * rendercmd_iterator->scale;
+			float width = character.size.x * rendercmd_iterator->scale;
+			float height = character.size.y * rendercmd_iterator->scale;
+
+			float vertices[6][4] =
+			{
+				{ x_position        , y_position + height, 0.0f, 0.0f },
+				{ x_position        , y_position         , 0.0f, 1.0f },
+				{ x_position + width, y_position         , 1.0f, 1.0f },
+				{ x_position        , y_position + height, 0.0f, 0.0f },
+				{ x_position + width, y_position         , 1.0f, 1.0f },
+				{ x_position + width, y_position + height, 1.0f, 0.0f },
+			};
+
+			glBindTexture(GL_TEXTURE_2D, character.texture_id);
+			glBindBuffer(GL_ARRAY_BUFFER, font_vbos.at(rendercmd_iterator->font_name));
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			// Advance cursors for next glyph
+			rendercmd_iterator->position_x += (character.advance >> 6) * rendercmd_iterator->scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+		}
+		rendercmd_iterator = text_render_commands.erase(rendercmd_iterator);
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_BLEND);
+}
 
 void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 {
@@ -552,6 +678,12 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
 	{
+		if(!enable_default_shader)
+		{
+			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+			continue;
+		}
+
 		RenderCmd render_command = *rendercmd_iterator.base();
 
 		if(!render_command.isRenderable())
@@ -617,6 +749,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	}
 
 	R_GL_DrawSkybox();
+	R_GL_RenderFonts();
 }
 
 void R_BufferMeshesAndTextures()
@@ -646,6 +779,11 @@ void R_BufferRenderCmd(LightRenderCmd light_render_command)
 	light_render_commands.insert(light_render_commands.end(), light_render_command);
 }
 
+void R_BufferRenderCmd(TextRenderCmd text_render_command)
+{
+	text_render_commands.insert(text_render_commands.end(), text_render_command);
+}
+
 void R_Render(std::mutex &state_mutex, float interpolation_time)
 {
 	if(loading_new_main_theatre)
@@ -667,6 +805,7 @@ void R_GL_Initialize()
 
 	graphx::rendering::SHADER_DEFAULT = new GLShader(blinn_phong_vert, blinn_phong_frag);
 	graphx::rendering::SHADER_SKYBOX = new GLShader(skybox_vert, skybox_frag);
+	graphx::rendering::SHADER_FONTS = new GLShader(font_vert, font_frag);
 	graphx::rendering::SHADER_DEBUG_FULLBRIGHT = new GLShader(blinn_phong_vert, light_debug_frag);
 	graphx::rendering::SHADER_DEBUG_NORMALS = new GLShader(blinn_phong_vert, debug_normals_frag);
 	graphx::rendering::SHADER_DEBUG_VERTEX_COLORS = new GLShader(blinn_phong_vert, debug_vertex_colors_frag);

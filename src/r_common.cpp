@@ -544,3 +544,14 @@ bool RenderCmd::isRenderable()
 {
 	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
 }
+
+//
+// TextRenderCmd
+//
+TextRenderCmd::TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
+: text(init_text), position_x(init_position_x), position_y(init_position_y),/* position_z(init_position_z),*/ scale(init_scale), color(init_color)
+{}
+
+TextRenderCmd::TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
+: font_name(init_font_name), text(init_text), position_x(init_position_x), position_y(init_position_y),/* position_z(init_position_z),*/ scale(init_scale), color(init_color)
+{}

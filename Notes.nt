@@ -2138,3 +2138,6 @@ I want to implement a 3D Label type, for debugging purposes (mostly, selecting A
 I've also just realized that I might want to move away from having external libraries in the fuckin' repo.
 
 Fucking... this is so not something to tackle while frustrated. Gonna save this for tomorrow.
+
+[04/04/25]
+Followed the "Text Rendering" section on LearnOpenGL; just trying to get `libfreetype.a` to fucking play nice with me.

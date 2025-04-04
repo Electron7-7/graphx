@@ -134,10 +134,11 @@ namespace graphx
 		inline constexpr unsigned int GRAPHX_OPENGL = 917; // API identifier (more to be added)
 
 		inline GLShader *SHADER_DEFAULT             = nullptr;
+		inline GLShader *SHADER_FONTS               = nullptr;
+		inline GLShader *SHADER_SKYBOX              = nullptr;
 		inline GLShader *SHADER_DEBUG_FULLBRIGHT    = nullptr;
 		inline GLShader *SHADER_DEBUG_NORMALS       = nullptr;
 		inline GLShader *SHADER_DEBUG_VERTEX_COLORS = nullptr;
-		inline GLShader *SHADER_SKYBOX              = nullptr;
 
 		inline constexpr unsigned int VAOS_AMOUNT        = 2;
 		//---------------------------------------------------
