@@ -28,6 +28,7 @@ namespace graphx
 		inline static constexpr gClass CAMERA           ( "Camera",              5,    &createNewActor<Camera>           );
 		inline static constexpr gClass GRAPHXPLAYER     ( "GraphXPlayer",        6,    &createNewActor<GraphXPlayer>     );
 		inline static constexpr gClass RAMIEL           ( "Ramiel",              7,    &createNewActor<Ramiel>           );
+		inline static constexpr gClass LABEL            ( "Label",               8,    &createNewActor<Label>            );
 
 		// ALL LIGHT DERIVED CLASSES MUST USE NEGATIVE TYPE IDS IN ORDER FOR graphx::classes::isLight TO WORK
 		inline static constexpr gClass LIGHT            ( "Light",              -1,    &createNewActor<Light>            );

@@ -78,6 +78,7 @@ int main()
 	F_InitializeFreeType();
 	F_LoadFont("src/fonts/Arial.ttf", "Arial");
 	F_LoadFont("src/fonts/Verdana.ttf", "Verdana");
+	F_LoadFont("src/fonts/Tr2n.ttf", "Tr2n");
 
 	std::thread game_logic_main_thread(gameTick, main_window);
 

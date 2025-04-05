@@ -2141,3 +2141,13 @@ Fucking... this is so not something to tackle while frustrated. Gonna save this 
 
 [04/04/25]
 Followed the "Text Rendering" section on LearnOpenGL; just trying to get `libfreetype.a` to fucking play nice with me.
+
+Finally got it working and I'm taking a detour to figure out what's causing the performance to tank, since I've done nothing but improve the codebase. Turns out, I'm pretty sure it's that Theatre::countLights is setting the light counts to be wayyyy too high.
+
+Oh my god I'm fucking stupid, I NEVER RESET THE FUCKING LIGHT COUNTERS LMFAOOOO IT JUST KEEPS GOING UP!
+
+The performance just went up like fucking 1000%, holy shit.
+
+Todo: Fix specular highlights; currently, they are visible even when a light is being blocked by some geometry.
+
+Todo: Finish Label class.

@@ -164,9 +164,34 @@ struct Mesh : public Device
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 struct Sprite : public Mesh
 {
-	Sprite();
+	Sprite(std::string init_name = "UNTITLED_SPRITE");
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+};
+
+struct Character
+{
+	unsigned int texture_id;
+	int size_x;
+	int size_y;
+	int bearing_x; // Offset from baseline to left of glyph
+	int bearing_y; // Offset from baseline to top of glyph
+	int advance;   // Offset to advance to next glyph
+
+	Character() = default;
+	Character(unsigned int init_texture_id, int init_size_x, int init_size_y, int init_bearing_x, int init_bearing_y, int init_advance);
+	Character(unsigned int init_texture_id, glm::vec2 init_size, glm::vec2 init_bearing, int init_advance);
+	Character(unsigned int init_texture_id, glm::ivec2 init_size, glm::ivec2 init_bearing, int init_advance);
+};
+
+struct Font
+{
+	std::string font_name;
+	std::map<char, Character> character_set;
+	unsigned int VBO;
+
+	Font() = default;
+	Font(std::string init_font_name);
 };
 
 // Idea for later:
@@ -222,11 +247,11 @@ public:
 struct TextRenderCmd
 {
 public:
-	std::string font_name = "Arial"; // Temporary solution
+	std::string font_name; // Temporary solution
 	std::string text;
 	float position_x;
 	float position_y;
-	// float position_z;
+	float position_z;
 	float scale;
 	glm::vec3 color;
 
@@ -237,6 +262,7 @@ public:
 extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
+extern std::map<std::string, Font> font_map;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern FT_Library freetype;

@@ -670,6 +670,10 @@ void Theatre::sortTroupe()
 
 void Theatre::countLights()
 {
+    point_lights_count = 0;
+    spot_lights_count = 0;
+    directional_lights_count = 0;
+
     for(Actor *actor : troupe)
     {
         if(!graphx::classes::isLight(actor->getType())) // Keep an eye on this... (see notes @ [03/28/25])

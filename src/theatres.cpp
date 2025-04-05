@@ -418,7 +418,7 @@ Ramiel (Ramiel)
 	Position (600.0, 465.0, -800.0)
 	Rotation (0.0, 148.0, 0.0)
 	MovementType (1)
-	MovementSpeed (0.5)
+	MovementSpeed (0.1)
 	// PivotPosition (0.0, 90.0, -20.0)
 	// PivotRadius   (40.2)
 	// PivotSpeed    (0.2)
@@ -426,6 +426,16 @@ Ramiel (Ramiel)
 Mesh (Cube_Mesh)
 {
 	MeshData [GRAPHX_CUBE]
+}
+Mesh (Error_Mesh)
+{
+	MeshData [OBJ_ERROR]
+}
+Actor (ErrorTest)
+{
+	Mesh <Error_Mesh>
+	Position (0.0, 1.0, 160.0)
+	Scale (1.0, 1.0, 1.0)
 }
 RigidBodyActor (FallOnMe)
 {
@@ -444,10 +454,5 @@ RigidBodyActor (FallOnMe3)
 	Mesh <Cube_Mesh>
 	Position (0.0, 5.0, -5.0)
 	Scale (1.1, 3.3, 0.7)
-}
-Actor (fake_actor)
-{
-	Position (0.0, -100.0, 0.0)
-	Scale (20.0, 10.0, 3.0)
 })~"}}
 };

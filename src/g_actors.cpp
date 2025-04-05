@@ -228,6 +228,38 @@ bool Actor::wantsToBeRendered()
 }
 
 //
+// Label
+//
+Label::Label(std::string init_name, Actor *init_parent)
+: Actor(init_name, &label_mesh), parent(init_parent), label_text(init_name)
+{
+	my_type = graphx::classes::LABEL;
+}
+
+void Label::tick(int current_tick)
+{
+	if(parent != nullptr)
+	{
+		setGlobalPosition(parent->getPosition<glm::vec3>());
+		setGlobalRotation(parent->getRotation<glm::vec3>());
+	}
+
+	text_render_command.text = label_text;
+	text_render_command.color = label_color;
+}
+
+void Label::youGotACallBack(graphx::gSettings new_settings)
+{
+	Actor::youGotACallBack(new_settings);
+
+	getSetting(label_color, settings["Color"]);
+	getSetting(label_color, settings["TextColor"]);
+	getSetting(label_text, settings["Text"]);
+	getSetting(label_text, settings["Label"]);
+	getSetting(label_text, settings["Message"]);
+}
+
+//
 // PhysicsActor
 //
 PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)

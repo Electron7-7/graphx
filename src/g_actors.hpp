@@ -16,6 +16,21 @@
 #define LIGHT_DIRECTIONAL	1
 #define LIGHT_SPOT			2
 
+class Label : public Actor
+{
+public:
+	Actor *parent = nullptr;
+	std::string label_text;
+	glm::vec3 label_color = glm::vec3(0.0f);
+
+	Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
+
+	void tick(int current_tick) override;
+	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+private:
+	Sprite label_mesh = Sprite();
+};
+
 class PhysicsActor: public Actor
 {
 public:
