@@ -139,6 +139,7 @@ int main()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+	FT_Done_FreeType(freetype); // Todo: make a release function for FreeType
 	game_logic_main_thread.join();
 	glfwTerminate();
 	return 0;
@@ -278,26 +279,48 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_4 && action == GLFW_PRESS)
 	{
-		if(graphx::rendering::current_shader != graphx::rendering::SHADER_DEBUG_NORMALS)
+		switch(debug_render_switches - 1)
 		{
-			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_NORMALS;
-			PRINTNOTE("Shader Debug Focus Normals: On")
-			return;
+		case USE_FULLBRIGHT:
+			debug_render_switches = USE_FULLBRIGHT;
+			PRINTNOTE("Shader Debug Focus: mat_fullbright       ;3")
+			break;
+		case USE_NORMALS:
+			debug_render_switches = USE_NORMALS;
+			PRINTNOTE("Shader Debug Focus: Normals")
+			break;
+		case USE_DEFAULT:
+			debug_render_switches = USE_DEFAULT;
+			PRINTNOTE("Shader Debug Focus: Regular Shader Output")
+			break;
+		default:
+			debug_render_switches = USE_VERTEX_COLORS;
+			PRINTNOTE("Shader Debug Focus: Vertex Colors")
+			break;
 		}
-		graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
-		PRINTNOTE("Shader Debug Focus Normals: Off")
 	}
 
 	if(key == GLFW_KEY_5 && action == GLFW_PRESS)
 	{
-		if(graphx::rendering::current_shader != graphx::rendering::SHADER_DEBUG_VERTEX_COLORS)
+		switch(debug_render_switches + 1)
 		{
-			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_VERTEX_COLORS;
-			PRINTNOTE("Shader Debug Focus Vertex Colors: On")
-			return;
+		case USE_FULLBRIGHT:
+			debug_render_switches = USE_FULLBRIGHT;
+			PRINTNOTE("Shader Debug Focus: mat_fullbright       ;3")
+			break;
+		case USE_NORMALS:
+			debug_render_switches = USE_NORMALS;
+			PRINTNOTE("Shader Debug Focus: Normals")
+			break;
+		case USE_VERTEX_COLORS:
+			debug_render_switches = USE_VERTEX_COLORS;
+			PRINTNOTE("Shader Debug Focus: Vertex Colors")
+			break;
+		default:
+			debug_render_switches = USE_DEFAULT;
+			PRINTNOTE("Shader Debug Focus: Regular Shader Output")
+			break;
 		}
-		graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
-		PRINTNOTE("Shader Debug Focus Vertex Colors: Off")
 	}
 
 	if(key == GLFW_KEY_6 && action == GLFW_PRESS)
@@ -312,15 +335,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 		PRINTNOTE("Polygon Mode: Normal")
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-
-	if(key == GLFW_KEY_0 && action == GLFW_PRESS)
-	{
-		graphx::rendering::jolt_debug_render = !graphx::rendering::jolt_debug_render;
-		if(graphx::rendering::jolt_debug_render)
-			PRINTNOTE("Jolt Debug Renderer: Enabled")
-		else
-			PRINTNOTE("Jolt Debug Renderer: Disabled")
 	}
 
 	if(key == GLFW_KEY_ENTER && action == GLFW_PRESS)

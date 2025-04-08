@@ -104,40 +104,7 @@ void Theatre::probeActorsForRenderCommands()
         if(loading_new_main_theatre)
             return;
 
-        if(graphx::classes::isLight(pair.second->getType()))
-        {
-            LightRenderCmd light_render_command;
-            if(static_cast<Light *>(pair.second)->debug_visible)
-            {
-                light_render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
-                light_render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
-            }
-
-            light_render_command.light_type = static_cast<Light *>(pair.second)->getLightType();
-
-            if(light_render_command.light_type == graphx::classes::LIGHT)
-                light_render_command.light_data = static_cast<Light *>(pair.second)->getLightData();
-
-            else if(light_render_command.light_type == graphx::classes::LIGHTSPOT)
-                light_render_command.light_data = static_cast<LightSpot *>(pair.second)->getLightData();
-
-            else if(light_render_command.light_type == graphx::classes::LIGHTDIRECTIONAL)
-                light_render_command.light_data = static_cast<LightDirectional *>(pair.second)->getLightData();
-
-            R_BufferRenderCmd(light_render_command);
-            continue;
-        }
-
-        if(!pair.second->wantsToBeRendered())
-            continue;
-
-        RenderCmd render_command;
-        render_command.current_render_state = &pair.second->current_state_buffer[pair.second->state_index];
-        render_command.previous_render_state = &pair.second->previous_state_buffer[pair.second->state_index];
-        render_command.mesh_data_name = pair.second->mesh->mesh_data_name;
-        render_command.mesh_material = *pair.second->mesh->material;
-
-        R_BufferRenderCmd(render_command);
+        R_BufferRenderCommands(pair.second->getRenderCommands());
     }
 }
 

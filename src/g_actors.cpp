@@ -136,6 +136,26 @@ template<> void Actor::setLocalRotation(JPH::Vec3 new_value)
 	local_quaternion = glm::quat(gmath::convertMath<glm::vec3>(new_value));
 }
 
+RenderCommands Actor::getRenderCommands()
+{
+	RenderCommands render_commands;
+
+	render_commands.render_command.current_render_state = &current_state_buffer[state_index];
+	render_commands.render_command.previous_render_state = &previous_state_buffer[state_index];
+	if(mesh != nullptr && visible && (my_type != graphx::classes::GRAPHXPLAYER))
+	{
+		render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
+		render_commands.render_command.mesh_material = *mesh->material;
+	}
+	else
+	{
+		// Todo: change this
+		render_commands.render_command.mesh_data_name = ""; // So that RenderCmd::isValid returns false (might wanna make this a bit more sophisticated, later)
+	}
+
+	return(render_commands);
+}
+
 bool Actor::isPhysicsActor()
 {
 	return false;
@@ -222,16 +242,11 @@ void Actor::takeABow()
 		mesh->prepForDestruction();
 }
 
-bool Actor::wantsToBeRendered()
-{
-	return (mesh != nullptr && visible && !(my_type == graphx::classes::GRAPHXPLAYER));
-}
-
 //
 // Label
 //
 Label::Label(std::string init_name, Actor *init_parent)
-: Actor(init_name, &label_mesh), parent(init_parent), label_text(init_name)
+: Actor(init_name, &label_mesh), parent(init_parent), label_text_render_command(TextRenderCmd("Verdana", init_name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
 {
 	my_type = graphx::classes::LABEL;
 }
@@ -243,20 +258,28 @@ void Label::tick(int current_tick)
 		setGlobalPosition(parent->getPosition<glm::vec3>());
 		setGlobalRotation(parent->getRotation<glm::vec3>());
 	}
-
-	text_render_command.text = label_text;
-	text_render_command.color = label_color;
 }
 
 void Label::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	getSetting(label_color, settings["Color"]);
-	getSetting(label_color, settings["TextColor"]);
-	getSetting(label_text, settings["Text"]);
-	getSetting(label_text, settings["Label"]);
-	getSetting(label_text, settings["Message"]);
+	label_text_render_command.font_name = "Arial";
+	label_text_render_command.scale = 1.0f;
+
+	/**
+	 * `getSetting` Tip:
+	 *   When "overloading" `getSetting` settings, I like to make sure that the most verbose/explicit option always
+	 *   comes last, making it override all other options. As an example, "TextColor" will always win over "Color",
+	 *   and "Label" will always win over both "Message" and "Text". This basically just ensures that should multiple
+	 *   versions of the same setting be used, the one that wins is the one that looks more intentional, hopefully
+	 *   avoiding confusion.
+	*/
+	getSetting(label_text_render_command.color, settings["Color"]);
+	getSetting(label_text_render_command.color, settings["TextColor"]);
+	getSetting(label_text_render_command.text, settings["Message"]);
+	getSetting(label_text_render_command.text, settings["Text"]);
+	getSetting(label_text_render_command.text, settings["Label"]);
 }
 
 //
@@ -587,11 +610,6 @@ glm::vec3 GraphXPlayer::getViewPosition()
 	return player_camera.getPosition<glm::vec3>();
 }
 
-bool GraphXPlayer::wantsToBeRendered()
-{
-	return false;
-}
-
 void GraphXPlayer::takeABow()
 {
 	Actor::takeABow();
@@ -608,6 +626,16 @@ Light::Light(std::string init_name)
 	my_light_type = graphx::classes::LIGHT;
 	debug_visible = true;
 	scale = glm::vec3(0.25f);
+}
+
+bool Light::isLightType(graphx::gClass light_type)
+{
+	return light_type == my_light_type;
+}
+
+graphx::gClass const &Light::getLightType()
+{
+	return my_light_type;
 }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
@@ -631,29 +659,27 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	}
 }
 
-bool Light::isLightType(graphx::gClass light_type)
+RenderCommands Light::getRenderCommands()
 {
-	return light_type == my_light_type;
-}
+	RenderCommands render_commands = Actor::getRenderCommands();
 
-graphx::gClass const &Light::getLightType()
-{
-	return my_light_type;
-}
+	render_commands.light_render_command.light_type = my_light_type;
+	render_commands.light_render_command.light_data.energy = light_energy;
+	render_commands.light_render_command.light_data.ambient_strength = light_ambient_strength;
+	render_commands.light_render_command.light_data.specular_strength = light_specular_strength;
+	render_commands.light_render_command.light_data.color = light_color;
+	render_commands.light_render_command.light_data.position = getPosition<glm::vec3>();
+	render_commands.light_render_command.light_data.attenuation = light_attenuation;
+	render_commands.light_render_command.light_data.range = light_range;
 
-LightData Light::getLightData()
-{
-	LightData light_data;
+	if(debug_visible)
+	{
+		render_commands.render_command.is_light_debug_mesh = true;
+		render_commands.render_command.mesh_data_name = GRAPHX_CUBE;
+		render_commands.render_command.mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_color * light_energy);
+	}
 
-	light_data.energy = light_energy;
-	light_data.ambient_strength = light_ambient_strength;
-	light_data.specular_strength = light_specular_strength;
-	light_data.color = light_color;
-	light_data.position = getPosition<glm::vec3>();
-	light_data.attenuation = light_attenuation;
-	light_data.range = light_range;
-
-	return light_data;
+	return(render_commands);
 }
 
 //
@@ -680,11 +706,13 @@ void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 	delete mesh;
 }
 
-LightData LightDirectional::getLightData()
+RenderCommands LightDirectional::getRenderCommands()
 {
-	LightData directional_light_data = Light::getLightData();
-	directional_light_data.direction = directional_direction;
-	return directional_light_data;
+	RenderCommands render_commands = Light::getRenderCommands();
+
+	render_commands.light_render_command.light_data.direction = directional_direction;
+
+	return(render_commands);
 }
 
 //
@@ -708,14 +736,15 @@ void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(spot_angle_fade, settings["AngleFadeIntensity"]);
 }
 
-LightData LightSpot::getLightData()
+RenderCommands LightSpot::getRenderCommands()
 {
-	LightData spot_light_data = Light::getLightData();
-	spot_light_data.direction = spot_direction;
-	spot_light_data.spot_cutoff = glm::cos(glm::radians(spot_angle));
-	spot_light_data.spot_cutoff_fade = glm::cos(glm::radians(spot_angle - spot_angle_fade));
+	RenderCommands render_commands = Light::getRenderCommands();
 
-	return spot_light_data;
+	render_commands.light_render_command.light_data.direction = spot_direction;
+	render_commands.light_render_command.light_data.spot_cutoff = glm::cos(glm::radians(spot_angle));
+	render_commands.light_render_command.light_data.spot_cutoff_fade = glm::cos(glm::radians(spot_angle - spot_angle_fade));
+
+	return(render_commands);
 }
 
 //

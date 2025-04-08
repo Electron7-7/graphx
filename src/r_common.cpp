@@ -552,24 +552,15 @@ Font::Font(std::string init_font_name)
 //
 // LightRenderCmd
 //
-bool LightRenderCmd::renderDebugMesh()
+bool LightRenderCmd::isValid() const
 {
-	return ((current_render_state != nullptr || previous_render_state != nullptr));
+	return (light_type != graphx::gClass::INVALID_TYPE);
 }
 
 //
 // RenderCmd
 //
-RenderCmd::RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color)
-{
-	is_light_debug_mesh = true;
-	current_render_state = light_render_command.current_render_state;
-	previous_render_state = light_render_command.previous_render_state;
-	mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_debug_material_color);
-	mesh_data_name = GRAPHX_CUBE;
-}
-
-bool RenderCmd::isRenderable()
+bool RenderCmd::isValid() const
 {
 	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
 }
@@ -591,7 +582,11 @@ TextRenderCmd::TextRenderCmd(std::string init_text, float init_position_x, float
 TextRenderCmd::TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
 : TextRenderCmd(init_text, init_position_x, init_position_y, init_scale, init_color)
 {
-	font_name = init_font_name;
-	// if()
-		// font_name = init_font_name;
+	if(font_map.contains(init_font_name))
+		font_name = init_font_name;
+}
+
+bool TextRenderCmd::isValid() const
+{
+	return (font_map.contains(font_name) && scale > 0.0f);
 }

@@ -2,7 +2,7 @@
 #define GRAPHX_ENGINE_COMMON
 #include "t_settings.hpp"
 #include "graphx_namespace.hpp"
-#include "r_common.hpp"
+#include "r_common_fwd.hpp"
 #include "g_common_fwd.hpp"
 #include <glm/fwd.hpp>
 #include <mutex>
@@ -57,8 +57,8 @@ public:
 	void setName(char *new_name);
 	std::string getName();
 
-	virtual RenderCmd *getRenderCommand();
-	virtual TextRenderCmd *getTextRenderCommand();
+	virtual RenderCommands getRenderCommands();
+
 	virtual bool isPhysicsActor();
 	virtual void youGotACallBack(graphx::gSettings new_settings = empty_settings); // Loads settings
 	virtual void callToStage(Theatre *parent_theatre);
@@ -68,7 +68,6 @@ public:
 	virtual void processKey(GLFWwindow *window, int key, int scancode, int action, int mods);
 	virtual void tick(int current_tick);
 	virtual void updateStates(std::mutex &state_mutex);
-	virtual bool wantsToBeRendered();
 
 protected:
 	graphx::gClass my_type;
@@ -78,8 +77,6 @@ protected:
 	glm::vec3 position_local = glm::vec3(0.0f);
 	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-	RenderCmd render_command;
-	TextRenderCmd text_render_command;
 
 	virtual void updateVectors();
 };
