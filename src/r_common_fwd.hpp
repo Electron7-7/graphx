@@ -18,10 +18,11 @@ struct Mesh;
 struct Sprite;
 struct Collider; // Collider declared here too, despite being in g_jolt.hpp (mainly bc it's a Device)
 
-// RenderCmds (none of these are derived)
+// Render Commands & Helpers (none of these are derived)
 struct RenderCmd;
 struct LightRenderCmd;
 struct TextRenderCmd;
+struct RenderCommands;
 
 // Other
 struct MeshData;
@@ -39,6 +40,7 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color);
 void        R_InitializeRenderingAPI();
 void        R_BufferMeshesAndTextures();
+void        R_BufferRenderCommands(RenderCommands render_commands);
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
 void        R_BufferRenderCmd(TextRenderCmd text_render_command);

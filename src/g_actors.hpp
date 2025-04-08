@@ -20,14 +20,14 @@ class Label : public Actor
 {
 public:
 	Actor *parent = nullptr;
-	std::string label_text;
-	glm::vec3 label_color = glm::vec3(0.0f);
+	TextRenderCmd label_text_render_command;
 
 	Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-private:
+
+protected:
 	Sprite label_mesh = Sprite();
 };
 
@@ -127,7 +127,6 @@ public:
 	void processKey(GLFWwindow *window, int key, int scancode, int action, int mods) override;
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
-	bool wantsToBeRendered() override;
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
@@ -145,8 +144,6 @@ private:
 class Light : public Actor
 {
 public:
-	bool debug_visible = false;
-
 	// Basic Properties
 	glm::vec3 light_color = glm::vec3(1.0f);
 	float light_specular_strength = 1.0f;
@@ -165,12 +162,12 @@ public:
 	bool isLightType(graphx::gClass light_type);
 	graphx::gClass const &getLightType();
 
-	virtual LightData getLightData();
-
+	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 
 protected:
 	graphx::gClass my_light_type;
+	bool debug_visible = false;
 };
 
 class LightDirectional : public Light
@@ -180,8 +177,7 @@ public:
 
 	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
 
-	LightData getLightData() override;
-
+	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 };
 
@@ -194,8 +190,7 @@ public:
 
 	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
 
-	LightData getLightData() override;
-
+	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 };
 

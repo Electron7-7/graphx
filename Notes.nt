@@ -2151,3 +2151,15 @@ The performance just went up like fucking 1000%, holy shit.
 Todo: Fix specular highlights; currently, they are visible even when a light is being blocked by some geometry.
 
 Todo: Finish Label class.
+
+[04/07/25]
+Forgot to take notes. I've been re-writing a lot of the code for buffering render commands and I've created a new RenderCommands struct that contains a RenderCmd, a LightRenderCmd, and a TextRenderCmd. This is what Theatre::probeActorsForRenderCommands will get from each Actor pointer (via the virtual function Actor::getRenderCommands()), and the function `R_BufferRenderCommands` will take a RenderCommands struct and just call the three overloaded versions of `R_BufferRenderCmd`. Those functions do a check on each render command's `isValid` function, and only buffer the command if it returns true. Currently, this system works like a charm, except that Material textures aren't being rendered. While thinking about fixing this, I had a new idea:
+Instead of supplying the entire Material to RenderCmd, what if I supplied either a new `MaterialData` struct, or just the raw values + texture names? Either way, I need to fix this problem by first figuring out where in the pipeline the texture data doesn't get correctly read/written.
+
+Nsight is showing that the textures are fine... I think the lights aren't making proper LightRenderCmds.
+
+It was because LightRenderCmd::light_type wasn't being set, LMFAO! Hey, at least I found the problem pretty quickly; that means I'm learning and improving!
+
+It all works! Noticing that mangohud is crashing when I exit the application, however, and only when throttling the FPS. It also gives a warning in the beginning (again, only when throttling FPS). It's benign... I think, but it kinda irks me. Don't have enough time to focus on that, however, and before I finish up tonight I'd like to get the debug shaders working.
+
+Oh my fucking god, the ERROR model! I totally forgot to try fixing that! Well, the shaders are all working now (and cycled with 4 & 5 instead of directly toggled). I kinda wanna peek into the ERROR model but, alas, I shall do that tomorrow.

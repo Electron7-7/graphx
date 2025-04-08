@@ -153,7 +153,6 @@ namespace graphx
 		inline float main_window_height = 720.0f;
 		inline float camera_near = 0.1f;
 		inline float camera_far = 10000.0f;
-		inline bool  jolt_debug_render = false;
 		inline bool  lighting_switch_diffuse = true;
 		inline bool  lighting_switch_specular = true;
 		inline bool  lighting_switch_ambient = true;

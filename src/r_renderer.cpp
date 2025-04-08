@@ -20,6 +20,8 @@ std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs;
 // Todo: Phase these two booleans out already, fucking hell...
 bool time_to_render = false;
 bool time_to_store_buffers = false;
+// Todo: Make this better or get rid of it
+int debug_render_switches = 0;
 
 std::map<std::string, MeshData> mesh_data_storage =
 {
@@ -362,8 +364,73 @@ glm::mat4 R_GL_GetProjectionMatrix()
 	return glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), graphx::rendering::main_window_width / graphx::rendering::main_window_height, graphx::rendering::camera_near, graphx::rendering::camera_far);
 }
 
-void R_GL_DrawSkybox()
+std::vector<RenderCmd> render_commands_buffer;
+std::vector<LightRenderCmd> light_render_commands_buffer;
+std::vector<TextRenderCmd> text_render_commands_buffer;
+
+FT_Library freetype;
+std::map<std::string, Font> font_map;
+
+void F_InitializeFreeType()
 {
+	if(FT_Init_FreeType(&freetype))
+		PRINTERR("FreeType library failed to initialize!")
+}
+
+void F_LoadFont(std::string ttf_file_path, std::string font_name)
+{
+	glUseProgram(graphx::rendering::SHADER_FONTS->id);
+	graphx::rendering::SHADER_FONTS->setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
+
+	FT_Face new_face;
+	if(FT_New_Face(freetype, ttf_file_path.c_str(), 0, &new_face))
+	{
+		PRINTERR("FreeType failed to load font face (filepath: " << ttf_file_path << ")")
+		return;
+	}
+
+	FT_Set_Pixel_Sizes(new_face, 0, 48);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	font_map[font_name] = Font(font_name);
+	Font &new_font = font_map.at(font_name);
+
+	for(unsigned char character = 0 ; character < 128 ; character++)
+	{
+		if(FT_Load_Char(new_face, character, FT_LOAD_RENDER))
+		{
+			PRINTERR("FreeType failed to load glyph (character: " << character << ")")
+			continue;
+		}
+
+		unsigned int texture_id;
+		glGenTextures(1, &texture_id);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, new_face->glyph->bitmap.buffer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		new_font.character_set[character] = Character(texture_id, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, new_face->glyph->bitmap_left, new_face->glyph->bitmap_top, static_cast<int>(new_face->glyph->advance.x));
+	}
+
+	FT_Done_Face(new_face);
+
+	glGenBuffers(1, &new_font.VBO);
+	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
+	glBindBuffer(GL_ARRAY_BUFFER, new_font.VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+bool enable_default_shader = true; // Todo: delete this, lmfao
+
+void R_GL_RenderSkybox()
+{ // Todo: get rid of static variables and make this function less terrible
 	static unsigned int background_vao = 0;
 	static unsigned int background_vbo = 0;
 
@@ -484,72 +551,6 @@ void R_GL_DrawSkybox()
 	glDepthFunc(GL_LESS);
 }
 
-std::vector<RenderCmd> render_commands;
-std::vector<LightRenderCmd> light_render_commands;
-std::vector<TextRenderCmd> text_render_commands;
-
-FT_Library freetype;
-std::map<std::string, Font> font_map;
-
-void F_InitializeFreeType()
-{
-	if(FT_Init_FreeType(&freetype))
-		PRINTERR("FreeType library failed to initialize!")
-}
-
-void F_LoadFont(std::string ttf_file_path, std::string font_name)
-{
-	glUseProgram(graphx::rendering::SHADER_FONTS->id);
-	graphx::rendering::SHADER_FONTS->setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
-
-	FT_Face new_face;
-	if(FT_New_Face(freetype, ttf_file_path.c_str(), 0, &new_face))
-	{
-		PRINTERR("FreeType failed to load font face (filepath: " << ttf_file_path << ")")
-		return;
-	}
-
-	FT_Set_Pixel_Sizes(new_face, 0, 48);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	font_map[font_name] = Font(font_name);
-	Font &new_font = font_map.at(font_name);
-
-	for(unsigned char character = 0 ; character < 128 ; character++)
-	{
-		if(FT_Load_Char(new_face, character, FT_LOAD_RENDER))
-		{
-			PRINTERR("FreeType failed to load glyph (character: " << character << ")")
-			continue;
-		}
-
-		unsigned int texture_id;
-		glGenTextures(1, &texture_id);
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, new_face->glyph->bitmap.buffer);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		new_font.character_set[character] = Character(texture_id, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, new_face->glyph->bitmap_left, new_face->glyph->bitmap_top, static_cast<int>(new_face->glyph->advance.x));
-	}
-
-	FT_Done_Face(new_face);
-	// FT_Done_FreeType(freetype); // Todo: make a release function for FreeType
-
-	glGenBuffers(1, &new_font.VBO);
-	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
-	glBindBuffer(GL_ARRAY_BUFFER, new_font.VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-}
-
-bool enable_default_shader = true;
-
 void R_GL_RenderFonts()
 {
 	glEnable(GL_BLEND);
@@ -557,11 +558,11 @@ void R_GL_RenderFonts()
 	glUseProgram(graphx::rendering::SHADER_FONTS->id);
 	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
 
-	for(auto rendercmd_iterator = text_render_commands.begin() ; rendercmd_iterator != text_render_commands.end() ;)
+	for(auto rendercmd_iterator = text_render_commands_buffer.begin() ; rendercmd_iterator != text_render_commands_buffer.end() ;)
 	{
 		if(!font_map.contains(rendercmd_iterator->font_name))
 		{
-			rendercmd_iterator = text_render_commands.erase(rendercmd_iterator);
+			rendercmd_iterator = text_render_commands_buffer.erase(rendercmd_iterator);
 			continue;
 		}
 
@@ -598,7 +599,7 @@ void R_GL_RenderFonts()
 			rendercmd_iterator->position_x += (character.advance >> 6) * rendercmd_iterator->scale; // bitshift by 6 to get value in pixels (2^6 = 64)
 		}
 
-		rendercmd_iterator = text_render_commands.erase(rendercmd_iterator);
+		rendercmd_iterator = text_render_commands_buffer.erase(rendercmd_iterator);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -611,10 +612,7 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 	int spot_light_index = 0;
 	int directional_light_index = 0;
 
-	graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
-	glUseProgram(graphx::rendering::current_shader->id);
-
-	for(auto rendercmd_iterator = light_render_commands.begin() ; rendercmd_iterator != light_render_commands.end() ;)
+	for(auto rendercmd_iterator = light_render_commands_buffer.begin() ; rendercmd_iterator != light_render_commands_buffer.end() ;)
 	{
 		LightRenderCmd render_command = *rendercmd_iterator.base();
 		std::string which_light;
@@ -634,23 +632,18 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 			which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
 		}
 
-		graphx::rendering::current_shader->setUniform(which_light + "color", render_command.light_data.color);
-		graphx::rendering::current_shader->setUniform(which_light + "energy", render_command.light_data.energy);
-		graphx::rendering::current_shader->setUniform(which_light + "specular_strength", render_command.light_data.specular_strength);
-		graphx::rendering::current_shader->setUniform(which_light + "ambient_strength", render_command.light_data.ambient_strength);
-		graphx::rendering::current_shader->setUniform(which_light + "attenuation", render_command.light_data.attenuation);
-		graphx::rendering::current_shader->setUniform(which_light + "range", render_command.light_data.range);
-		graphx::rendering::current_shader->setUniform(which_light + "position", render_command.light_data.position);
-		graphx::rendering::current_shader->setUniform(which_light + "direction", render_command.light_data.direction);
-		graphx::rendering::current_shader->setUniform(which_light + "spot_cutoff", render_command.light_data.spot_cutoff);
-		graphx::rendering::current_shader->setUniform(which_light + "spot_cutoff_fade", render_command.light_data.spot_cutoff_fade);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "color", render_command.light_data.color);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "energy", render_command.light_data.energy);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "specular_strength", render_command.light_data.specular_strength);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "ambient_strength", render_command.light_data.ambient_strength);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "attenuation", render_command.light_data.attenuation);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "range", render_command.light_data.range);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "position", render_command.light_data.position);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "direction", render_command.light_data.direction);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "spot_cutoff", render_command.light_data.spot_cutoff);
+		graphx::rendering::SHADER_DEFAULT->setUniform(which_light + "spot_cutoff_fade", render_command.light_data.spot_cutoff_fade);
 
-		if(render_command.renderDebugMesh())
-		{
-			R_BufferRenderCmd(RenderCmd(render_command, (render_command.light_data.color * render_command.light_data.energy)));
-		}
-
-		rendercmd_iterator = light_render_commands.erase(rendercmd_iterator);
+		rendercmd_iterator = light_render_commands_buffer.erase(rendercmd_iterator);
 	}
 }
 
@@ -670,25 +663,32 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	graphx::rendering::SHADER_DEFAULT->setUniform("spot_lights_count", getCurrentTheatre()->spot_lights_count);
 	graphx::rendering::SHADER_DEFAULT->setUniform("directional_lights_count", getCurrentTheatre()->directional_lights_count);
 
-	for(auto rendercmd_iterator = render_commands.begin() ; rendercmd_iterator != render_commands.end() ;)
+	for(auto rendercmd_iterator = render_commands_buffer.begin() ; rendercmd_iterator != render_commands_buffer.end() ;)
 	{
-		if(!enable_default_shader)
+		if(!enable_default_shader || !rendercmd_iterator->isValid())
 		{
-			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+			rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);
 			continue;
 		}
 
-		RenderCmd render_command = *rendercmd_iterator.base();
-
-		if(!render_command.isRenderable())
+		// Todo: make this bullshit better or remove it
+		switch(debug_render_switches)
 		{
-			rendercmd_iterator = render_commands.erase(rendercmd_iterator);
-			continue;
+		case USE_FULLBRIGHT:
+			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_FULLBRIGHT;
+			break;
+		case USE_NORMALS:
+			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_NORMALS;
+			break;
+		case USE_VERTEX_COLORS:
+			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_VERTEX_COLORS;
+			break;
+		default:
+			graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
+			break;
 		}
 
-		graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
-
-		if(render_command.is_light_debug_mesh || render_command.mesh_material.mat_fullbright)
+		if(rendercmd_iterator->is_light_debug_mesh || rendercmd_iterator->mesh_material.mat_fullbright)
 			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_FULLBRIGHT;
 
 		glUseProgram(graphx::rendering::current_shader->id);
@@ -697,8 +697,9 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		std::lock_guard guard(state_mutex);
 
-		RenderState *current_state		=	render_command.current_render_state;
-		RenderState *previous_state		=	render_command.previous_render_state;
+		// Todo: maybe change RenderState pointers to just copy the de-referenced RenderState pointers? (bc I don't like that R_GL_Render is accessing an Actor pointer)
+		RenderState *current_state		=	rendercmd_iterator->current_render_state;
+		RenderState *previous_state		=	rendercmd_iterator->previous_render_state;
 
 		glm::vec3 interpolated_position	=	current_state->render_position;
 		glm::vec3 interpolated_scale	=	current_state->render_scale;
@@ -719,10 +720,8 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		model_matrix *= glm::toMat4(interpolated_quat);
 		model_matrix = glm::scale(model_matrix, interpolated_scale);
 
-		MeshData mesh_data = mesh_data_storage.at(render_command.mesh_data_name);
-
-		glBindTextureUnit(0, texture_storage.at(render_command.mesh_material.diffuse_texture_name).texture_id);
-		glBindTextureUnit(1, texture_storage.at(render_command.mesh_material.specular_texture_name).texture_id);
+		glBindTextureUnit(0, texture_storage.at(rendercmd_iterator->mesh_material.diffuse_texture_name).texture_id);
+		glBindTextureUnit(1, texture_storage.at(rendercmd_iterator->mesh_material.specular_texture_name).texture_id);
 
 		graphx::rendering::current_shader->setUniform("model_matrix", model_matrix);
 		graphx::rendering::current_shader->setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
@@ -731,20 +730,21 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		graphx::rendering::current_shader->setUniform("view_position", getCurrentPlayer()->getViewPosition());
 		graphx::rendering::current_shader->setUniform("current_material.texture_diffuse", 0);
 		graphx::rendering::current_shader->setUniform("current_material.texture_specular", 1);
-		graphx::rendering::current_shader->setUniform("current_material.diffuse_color", render_command.mesh_material.color);
-		graphx::rendering::current_shader->setUniform("current_material.specular_sharpness", render_command.mesh_material.specular_sharpness);
-		graphx::rendering::current_shader->setUniform("current_material.specular_strength", render_command.mesh_material.specular_strength);
+		graphx::rendering::current_shader->setUniform("current_material.diffuse_color", rendercmd_iterator->mesh_material.color);
+		graphx::rendering::current_shader->setUniform("current_material.specular_sharpness", rendercmd_iterator->mesh_material.specular_sharpness);
+		graphx::rendering::current_shader->setUniform("current_material.specular_strength", rendercmd_iterator->mesh_material.specular_strength);
 		graphx::rendering::current_shader->setUniform("current_environment.ambient_light_contribution", getCurrentEnvironment()->ambient_light_amount);
 		graphx::rendering::current_shader->setUniform("current_environment.ambient_light_color", getCurrentEnvironment()->ambient_light_color);
 
+		MeshData &mesh_data = mesh_data_storage.at(rendercmd_iterator->mesh_data_name);
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 
-		rendercmd_iterator = render_commands.erase(rendercmd_iterator);
+		rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);
 	}
 
 	R_BufferRenderCmd(TextRenderCmd("Tr2n", "Fucking WHAT", 0, 500, 1, glm::vec3(0.2f, 0.5f, 1.0f)));
 
-	R_GL_DrawSkybox();
+	R_GL_RenderSkybox();
 	R_GL_RenderFonts();
 }
 
@@ -765,19 +765,29 @@ void R_BufferMeshesAndTextures()
 	time_to_render = true;
 }
 
+void R_BufferRenderCommands(RenderCommands render_commands)
+{
+	R_BufferRenderCmd(render_commands.render_command);
+	R_BufferRenderCmd(render_commands.light_render_command);
+	R_BufferRenderCmd(render_commands.text_render_command);
+}
+
 void R_BufferRenderCmd(RenderCmd render_command)
 {
-	render_commands.insert(render_commands.end(), render_command);
+	if(render_command.isValid())
+		render_commands_buffer.insert(render_commands_buffer.end(), render_command);
 }
 
 void R_BufferRenderCmd(LightRenderCmd light_render_command)
 {
-	light_render_commands.insert(light_render_commands.end(), light_render_command);
+	if(light_render_command.isValid())
+		light_render_commands_buffer.insert(light_render_commands_buffer.end(), light_render_command);
 }
 
 void R_BufferRenderCmd(TextRenderCmd text_render_command)
 {
-	text_render_commands.insert(text_render_commands.end(), text_render_command);
+	if(text_render_command.isValid())
+		text_render_commands_buffer.insert(text_render_commands_buffer.end(), text_render_command);
 }
 
 void R_Render(std::mutex &state_mutex, float interpolation_time)
@@ -806,7 +816,7 @@ void R_GL_Initialize()
 	graphx::rendering::SHADER_DEBUG_NORMALS = new GLShader(blinn_phong_vert, debug_normals_frag);
 	graphx::rendering::SHADER_DEBUG_VERTEX_COLORS = new GLShader(blinn_phong_vert, debug_vertex_colors_frag);
 
-	graphx::rendering::current_shader = graphx::rendering::SHADER_DEFAULT;
+	graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_NORMALS;
 }
 
 void R_InitializeRenderingAPI()

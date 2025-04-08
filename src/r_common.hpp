@@ -222,11 +222,12 @@ struct LightRenderCmd
 {
 public:
 	LightData light_data;
-	RenderState *current_render_state = nullptr;
-	RenderState *previous_render_state = nullptr;
-	graphx::gClass light_type;
+	// RenderState *current_render_state = nullptr;
+	// RenderState *previous_render_state = nullptr;
+	graphx::gClass light_type = graphx::gClass::INVALID_TYPE;
+	// bool render_debug_mesh = false;
 
-	bool renderDebugMesh();
+	bool isValid() const;
 };
 
 struct RenderCmd
@@ -236,27 +237,37 @@ public:
 	std::string mesh_data_name = ERROR_MODEL;
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
-	Material mesh_material;
+	Material mesh_material; // Todo: make this a reference
 
-	RenderCmd() = default;
-	RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color);
+	// RenderCmd() = default;
+	// RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color);
 
-	bool isRenderable();
+	bool isValid() const;
 };
 
 struct TextRenderCmd
 {
 public:
-	std::string font_name; // Temporary solution
-	std::string text;
-	float position_x;
-	float position_y;
-	float position_z;
-	float scale;
-	glm::vec3 color;
+	std::string font_name = ""; // Temporary solution
+	std::string text = "";
+	float position_x = 0.0f;
+	float position_y = 0.0f;
+	float position_z = 0.0f;
+	float scale = 0.0f;
+	glm::vec3 color = glm::vec3(0.0f);
 
+	TextRenderCmd() = default;
 	TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
 	TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
+
+	bool isValid() const;
+};
+
+struct RenderCommands
+{
+	RenderCmd render_command;
+	LightRenderCmd light_render_command;
+	TextRenderCmd text_render_command;
 };
 
 extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
@@ -267,6 +278,12 @@ extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern FT_Library freetype;
 extern bool enable_default_shader;
+// Todo: make this better or remove it
+#define USE_DEFAULT       0
+#define USE_FULLBRIGHT    1
+#define USE_NORMALS       2
+#define USE_VERTEX_COLORS 3
+extern int debug_render_switches;
 
 GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
 void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -274,6 +291,7 @@ void        F_InitializeFreeType();
 void        F_LoadFont(std::string ttf_file_path, std::string font_name);
 void        R_InitializeRenderingAPI();
 void        R_BufferMeshesAndTextures();
+void        R_BufferRenderCommands(RenderCommands render_commands);
 void        R_BufferRenderCmd(RenderCmd render_command);
 void        R_BufferRenderCmd(LightRenderCmd light_render_command);
 void        R_BufferRenderCmd(TextRenderCmd text_render_command);
