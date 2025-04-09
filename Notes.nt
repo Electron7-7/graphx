@@ -2217,3 +2217,5 @@ Oh my god... I think that the base vertex is the base index...
 Wait... is this just floating point imprecision? I don't know... I need to stop for tonight.
 
 WHAT THE FUCK????? ALL OF A SUDDEN IT JUST FUCKING DECIDES TO FUCKING WORK???!?!?!?!?!?!?!?!?!??!!?!?!!! (textures are semi-broken tho...)
+
+I think I know what's going on. My theory is that the function `MeshData::fixOBJ()` is fucking up the vertex data and/or that thing about the triangulated meshes are all working together to give me fucked data. OR MAYBE NONE OF THAT IS TRUE AND ITS JUST MAGICAL!! BEATS ME!
