@@ -734,7 +734,9 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);
 	}
 
-	R_BufferRenderCmd(TextRenderCmd("Tr2n", "Fucking WHAT", 0, 500, 1, glm::vec3(0.2f, 0.5f, 1.0f)));
+	R_BufferRenderCmd(TextRenderCmd("Tr2n", "Fucking WHAT", 0, 360, 1.0f, glm::vec3(0.2f, 0.5f, 1.0f)));
+	R_BufferRenderCmd(TextRenderCmd("Tr2n", "The fucking models just", 0, 300, 1.0f, glm::vec3(0.2f, 0.5f, 1.0f)));
+	R_BufferRenderCmd(TextRenderCmd("Tr2n", "fucking WORK NOW", 0, 240, 1.0f, glm::vec3(0.2f, 0.5f, 1.0f)));
 
 	R_GL_RenderSkybox();
 	R_GL_RenderFonts();

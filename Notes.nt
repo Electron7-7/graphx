@@ -2215,3 +2215,5 @@ So, the original problem of the index overflow is my fault, but the new problem 
 Oh my god... I think that the base vertex is the base index...
 
 Wait... is this just floating point imprecision? I don't know... I need to stop for tonight.
+
+WHAT THE FUCK????? ALL OF A SUDDEN IT JUST FUCKING DECIDES TO FUCKING WORK???!?!?!?!?!?!?!?!?!??!!?!?!!! (textures are semi-broken tho...)
