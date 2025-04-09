@@ -2163,3 +2163,55 @@ It was because LightRenderCmd::light_type wasn't being set, LMFAO! Hey, at least
 It all works! Noticing that mangohud is crashing when I exit the application, however, and only when throttling the FPS. It also gives a warning in the beginning (again, only when throttling FPS). It's benign... I think, but it kinda irks me. Don't have enough time to focus on that, however, and before I finish up tonight I'd like to get the debug shaders working.
 
 Oh my fucking god, the ERROR model! I totally forgot to try fixing that! Well, the shaders are all working now (and cycled with 4 & 5 instead of directly toggled). I kinda wanna peek into the ERROR model but, alas, I shall do that tomorrow.
+
+[04/08/25]
+Today I'm going to start with the ERROR model.
+
+[04/09/25]
+I didn't get to work much yesterday. Today I'm going to start with the ERROR model. Going to start with trying to reproduce the problem in a test Theatre. Going to quickly add a "DoGravity" option to GraphXPlayer.
+
+Bug found: if the only line in an Actor (in a GraphXTheatre file) is a sandwich, there's a buffer overflow (specifically, the `it` value in the sandwich function overflows).
+
+Found the overflow bug:
+:::C++
+// in interpretSandwich
+while(theatre_settings[i][it].second.first > SANDWICH)
+:::
+This only accounts for there being more settings after the sandwich, not if the sandwich is the only setting. One fix (and the one I'm gonna implement) would be for the function to also have the size of all the settings in that object to compare with `it`.
+
+Also, rq, I'm gonna give the flashlight a setting for whether it should be on or off by default.
+
+BIG TODO:
+While I was working on the flashlight, I had a realization: I should really make interface variables & functions (or even just full on classes) for my classes that I can put in a separate header file, and that file will be what every other file includes if it needs to interface with my classes (instead of the giant header file). For example, instead of include `g_actors.hpp` whenever I need to interface with any Actor, I can just include a generic "actors interface" header file and know that any Actor can be interacted with via that interface. This could help with both compile times and compile errors when I edit a header file like `g_actors.hpp`.
+
+Small Todo:
+Make my own debug info and stop using MangoHud for stuff like FPS and frame-ms and shit.
+
+Okay, the bug is reproducable; I want to quickly make a debugging texture so I can see what I'm doing, LMFAO, then I'll get to work.
+
+Reproducing the bug, I figured out that all OBJ models are fucked, and I think it's because I'm not assigning them the correct indices (and/or the correct number of indices). While using Nsight to debug, I noticed what looks like index overflow in the geometry, and I think that's what's causing all of this! Now to find out why this overflow is happening.
+
+I've slimmed down how `R_GL_BufferMeshes` preps the data for buffering, but the bug is still there (which just means I slimmed the code well, I guess). Anyways, this means the problem is either with how I process OBJ models into MeshData objects, or with how I use `glDrawElementsBaseVertex`.
+
+Okay, I've discovered the issue, and it's in two parts:
+
+Part One:
+IM A FUCKING IDIOT AND ONCE AGAIN DID THE WRONG FUCKING MATH AGAIN!!!!!!
+:::C++
+vertex_indices.clear();
+for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+{
+    vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i + 1, i + 2));
+}
+:::
+
+THAT FUCKING `* 3` DOESN'T NEED TO BE THERE!!!! `vertex_positions` IS ALREADY THE RIGHT FUCKING SIZE!!!!
+
+Part Two:
+Suzanne looks fucked up when I perform this fix, and that's because her model is straight from Blender and IS NOT MADE OF JUST TRIANGLES! The TinyObj library actually does something nice and instead of just spitting out indices, it processes the data on a per-face basis. This means that it can accept faces of any vertex number.
+
+So, the original problem of the index overflow is my fault, but the new problem is just that Suzanne isn't optimized for a game engine (i.e: converted to only use tris), and since I only handle meshes made up entirely of tris, her mesh is fucked but the code is fine (just not for her model). I'll test this by re-exporting Suzanne after converting her mesh into triangles.
+
+Oh my god... I think that the base vertex is the base index...
+
+Wait... is this just floating point imprecision? I don't know... I need to stop for tonight.

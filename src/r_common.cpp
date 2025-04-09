@@ -392,7 +392,7 @@ void MeshData::fixOBJData()
 	}
 
 	vertex_indices.clear();
-	for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+	for(int i = 0 ; i < vertex_positions.size(); i += 3)
 	{
 		vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i + 1, i + 2));
 	}

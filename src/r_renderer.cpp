@@ -41,6 +41,7 @@ std::map<std::string, Texture> texture_storage =
 	{FLAT_SPEC, Texture(FLAT_SPEC_jpg, FLAT_SPEC_jpg_len)},
 	{LIGHT_DEBUGGING, Texture(LIGHT_DEBUGGING_jpg, LIGHT_DEBUGGING_jpg_len)},
 	{MISSING_TEXTURE, Texture(MISSING_TEXTURE_jpg, MISSING_TEXTURE_jpg_len)},
+	{debug_checkers, Texture(debug_checkers_png, debug_checkers_png_len)},
 	{NO_TEXTURE, Texture(NO_TEXTURE_jpg, NO_TEXTURE_jpg_len)},
 	{SOURCE_LIGHT_GREY, Texture(SOURCE_LIGHT_GREY_png, SOURCE_LIGHT_GREY_png_len)},
 	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png, SOURCE_ORANGE_png_len)},
@@ -179,6 +180,7 @@ MeshData M_LoadOBJ(std::string embedded_obj_file)
 	auto &shapes = reader.GetShapes();
 
 	// Loop over shapes
+	// Shapes are full meshes in the OBJ
 	for (size_t s = 0; s < shapes.size(); s++)
 	{
 		// Loop over faces(polygon)
@@ -307,11 +309,6 @@ void R_GL_BufferMeshes()
 {
 	std::set<std::string> used_mesh_data_names = getCurrentTheatre()->getMeshDataNames();
 
-	long vertex_buffer_size = 0; // The start of the VBO's empty store, in bytes
-	long index_buffer_size = 0;  // The start of the IBO's empty store, in bytes
-	unsigned int number_of_vertices = 0;
-	unsigned int number_of_indices = 0;
-
 	std::vector<float> all_vertices;
 	std::vector<unsigned int> all_indices;
 
@@ -334,20 +331,15 @@ void R_GL_BufferMeshes()
 		std::vector<float> vertices = mesh_data_pair.second.vertices();
 		std::vector<unsigned int> indices = mesh_data_pair.second.indices();
 
+		mesh_data_pair.second.base_vertex = all_vertices.size() / 11;
+		mesh_data_pair.second.base_index = all_indices.size();
+
 		all_vertices.insert(all_vertices.end(), vertices.begin(), vertices.end());
 		all_indices.insert(all_indices.end(), indices.begin(), indices.end());
-
-		mesh_data_pair.second.base_vertex = number_of_vertices;
-		mesh_data_pair.second.base_index = number_of_indices;
-
-		number_of_vertices += mesh_data_pair.second.vertices_count();
-		vertex_buffer_size += mesh_data_pair.second.vertices_size();
-		number_of_indices += mesh_data_pair.second.indices_count();
-		index_buffer_size += mesh_data_pair.second.indices_size();
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, all_vertices.data(), GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, all_indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, all_vertices.size() * sizeof(float), all_vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, all_indices.size() * sizeof(unsigned int), all_indices.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(0));
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));

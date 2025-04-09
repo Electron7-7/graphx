@@ -484,6 +484,7 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
+	getSetting(do_gravity, settings["DoGravity"]);
 	getSetting(mouse_sensitivity, settings["MouseSensitivity"]);
 	getSetting(movement_speed, settings["MovementSpeed"]);
 	getSetting(lerp_speed, settings["MovementAcceleration"]);
@@ -506,6 +507,7 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CylinderShape(scale[1], scale[0])).Create().Get();
 	player_settings->mFriction = friction;
 	player_settings->mMass = mass;
+	player_settings->mGravityFactor *= do_gravity;
 	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
 	jph_character = new JPH::Character(player_settings, getPosition<JPH::Vec3>(), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
@@ -539,24 +541,22 @@ void GraphXPlayer::tick(int current_tick)
 
 void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-	if(key == GLFW_KEY_F && action == GLFW_PRESS && player_flashlight != nullptr)
+	if(key == GLFW_KEY_F && action == GLFW_PRESS)
 	{
-		flashlight_toggle = !flashlight_toggle;
-		player_flashlight->setLight(flashlight_toggle);
-		if(flashlight_toggle)
-			PRINTNOTE("Flashlight On")
-		else
+		player_flashlight->toggleLight();
+		if(player_flashlight->light_color == glm::vec3(0.0f))
 			PRINTNOTE("Flashlight Off")
+		else
+			PRINTNOTE("Flashlight On")
 	}
 
 	if(key == GLFW_KEY_Q && action == GLFW_PRESS && player_flashlight != nullptr)
 	{
-		flashlight_color_toggle = !flashlight_color_toggle;
-		player_flashlight->setLightColor(flashlight_color_toggle);
-		if(flashlight_color_toggle)
+		player_flashlight->setLightColor(flashlight_debug_toggle_color_god_damn_this_variable_name_is_long);
+		if(player_flashlight->light_color == flashlight_debug_toggle_color_god_damn_this_variable_name_is_long)
 			PRINTNOTE("Flashlight Red")
 		else
-			PRINTNOTE("Flashlight Not Red")
+			PRINTNOTE("Flashlight Not Red Anymore")
 	}
 }
 
@@ -766,10 +766,14 @@ void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
 	Light::youGotACallBack(new_settings);
 
+	getSetting(start_enabled, settings["StartOn"]);
+	getSetting(start_enabled, settings["StartEnabled"]);
 	getSetting(position_offset, settings["PositionOffset"]);
 	getSetting(rotation_offset, settings["RotationOffset"]);
 
 	_color = light_color;
+	setLight(start_enabled);
+
 	if(mesh != nullptr)
 		mesh->prepForDestruction();
 	mesh = nullptr;
@@ -787,11 +791,21 @@ void LightFlashlight::tick(int current_tick)
 	spot_direction = quaternion * vector3_front;
 }
 
+void LightFlashlight::toggleLight(glm::vec3 toggle_color)
+{
+	// https://stackoverflow.com/questions/392932/how-do-i-use-the-conditional-ternary-operator
+	// That's just for reference... until I stop forgetting how to use the ternary operator LMFAOOOOOOOOOO
+	// (and I wanted to link to the stackoverflow answer bc I don't plagerise, HBomberGuy...)
+	light_color = (light_color == toggle_color) ? _color : toggle_color;
+}
+
+// Todo: decide whether or not to keep these `setLight` & `setLightColor` functions, since the toggle versions seem to be better
 void LightFlashlight::setLight(bool is_on)
 {
 	light_color = _color * (float)is_on;
 }
 
+// Todo: decide whether or not to keep these `setLight` & `setLightColor` functions, since the toggle versions seem to be better
 void LightFlashlight::setLightColor(glm::vec3 color)
 {
 	light_color = color;

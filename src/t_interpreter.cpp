@@ -27,6 +27,7 @@ std::map<std::string, std::any> cpp_definitions =
 	{"SOURCE_ORANGE", SOURCE_ORANGE},
 	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY},
 	{"LIGHT_DEBUGGING", LIGHT_DEBUGGING},
+	{"DEBUG", debug_checkers},
 	{"GRAPHX_CUBE", GRAPHX_CUBE},
 	{"GRAPHX_PYRAMID", GRAPHX_PYRAMID},
 	{"GRAPHX_QUAD", GRAPHX_QUAD},
@@ -489,7 +490,7 @@ void interpretTheatreReference(graphx::gSettings &current_object_settings, std::
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
 
-void interpretSandwich(graphx::gSettings &current_object_settings, graphx::interpreter::gStringSettings &theatre_settings, std::string current_object_name, int &i, int &it, Theatre &new_theatre)
+void interpretSandwich(graphx::gSettings &current_object_settings, graphx::interpreter::gStringSettings &theatre_settings, std::string current_object_name, int &i, int &it, unsigned long settings_size, Theatre &new_theatre)
 {
 	graphx::gSettings sandwich_settings;
 	graphx::interpreter::gStringSetting sandwich_bun_setting = theatre_settings[i][it];
@@ -502,7 +503,7 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 	sandwich_settings["Name"] = graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{sandwich_bun_setting.second.second + "_" + current_object_name});
 
 	it++;
-	while(theatre_settings[i][it].second.first > SANDWICH)
+	while(theatre_settings[i][it].second.first > SANDWICH && it < settings_size)
 	{
 		std::string sandwich_variable = theatre_settings[i][it].first.substr(theatre_settings[i][it].first.find_last_of(':') + 1);
 		std::string sandwich_value = theatre_settings[i][it].second.second;
@@ -587,7 +588,7 @@ Theatre loadTheatre(long theatre_uid)
 				interpretExternalReference(current_object_settings, setting.first, setting.second.second);
 				break;
 			case SANDWICH:
-				interpretSandwich(current_object_settings, theatre_settings, theatre_settings[i][0].second.second, i, it, new_theatre);
+				interpretSandwich(current_object_settings, theatre_settings, theatre_settings[i][0].second.second, i, it, theatre_settings[i].size(), new_theatre);
 				break;
 			}
 		}

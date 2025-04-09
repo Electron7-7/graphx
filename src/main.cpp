@@ -283,7 +283,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 		case USE_FULLBRIGHT:
 			debug_render_switches = USE_FULLBRIGHT;
-			PRINTNOTE("Shader Debug Focus: mat_fullbright       ;3")
+			PRINTNOTE("Shader Debug Focus: mat_fullbright")
 			break;
 		case USE_NORMALS:
 			debug_render_switches = USE_NORMALS;

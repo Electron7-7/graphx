@@ -103,8 +103,8 @@ struct Material final : public Device
 
 struct MeshData
 {
-	unsigned int base_vertex = -1;
-	unsigned int base_index = -1;
+	unsigned int base_vertex = 0;
+	unsigned int base_index = 0;
 	std::string debug_name = ""; // Debugging variable; remove later (watch me forget this)
 	bool is_in_use = false;
 

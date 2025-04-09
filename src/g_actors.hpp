@@ -109,6 +109,7 @@ public:
 	Camera player_camera;
 	LightFlashlight *player_flashlight = nullptr;
 
+	bool do_gravity = true; // Debugging, mostly
 	float mouse_sensitivity = 0.05f;
 	float movement_speed = 13.0f;
 	double lerp_speed = 1.3f;
@@ -133,9 +134,8 @@ public:
 	void takeABow() override;
 
 private:
+	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
 	glm::vec2 mouse_last = glm::vec2(0.0f);
-	bool flashlight_toggle = true;
-	bool flashlight_color_toggle = false;
 	JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
@@ -200,10 +200,12 @@ public:
 	GraphXPlayer *parent = nullptr;
 	glm::vec3 position_offset = glm::vec3(0.0f);
 	glm::vec3 rotation_offset = glm::vec3(0.0f);
+	bool start_enabled = true;
 
 	LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
 
 	void setLight(bool is_on);
+	void toggleLight(glm::vec3 toggle_color = glm::vec3(0.0f));
 	void setLightColor(glm::vec3 color);
 	void setLightColor(bool color_toggle);
 

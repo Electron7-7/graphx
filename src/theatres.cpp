@@ -427,16 +427,6 @@ Mesh (Cube_Mesh)
 {
 	MeshData [GRAPHX_CUBE]
 }
-Mesh (Error_Mesh)
-{
-	MeshData [OBJ_ERROR]
-}
-Actor (ErrorTest)
-{
-	Mesh <Error_Mesh>
-	Position (0.0, 1.0, 160.0)
-	Scale (1.0, 1.0, 1.0)
-}
 RigidBodyActor (FallOnMe)
 {
 	Mesh <Cube_Mesh>

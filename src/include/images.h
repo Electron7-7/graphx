@@ -10,6 +10,10 @@ extern unsigned int COMP04_5_png_len;
 extern unsigned char COMP04_5_SPECULAR_jpg[];
 extern unsigned int COMP04_5_SPECULAR_jpg_len;
 
+#define debug_checkers std::string("debug_checkers_png")
+extern unsigned char debug_checkers_png[];
+extern unsigned int debug_checkers_png_len;
+
 #define FLAT_SPEC std::string("FLAT_SPEC_jpg")
 extern unsigned char FLAT_SPEC_jpg[];
 extern unsigned int FLAT_SPEC_jpg_len;

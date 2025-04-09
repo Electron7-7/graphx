@@ -67,13 +67,12 @@ std::vector<long> Theatre::dumpActorIDs()
 
 std::set<std::string> Theatre::getMeshDataNames()
 {
-    std::set<std::string> mesh_data_names;
+    std::set<std::string> mesh_data_names = {ERROR_MODEL};
 
     for(auto &device_pair : devices)
         if(device_pair.second->getType() == graphx::classes::MESH)
             mesh_data_names.insert(static_cast<Mesh *>(device_pair.second)->mesh_data_name);
 
-    mesh_data_names.insert(ERROR_MODEL);
     return mesh_data_names;
 }
 

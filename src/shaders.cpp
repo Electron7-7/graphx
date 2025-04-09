@@ -1,7 +1,7 @@
 #include <string>
 std::string blinn_phong_frag = R"~(
 #version 460 core
-#define MAX_NUMBER_OF_LIGHTS 50
+#define MAX_NUMBER_OF_LIGHTS 100
 
 out vec4 FragColor;
 
