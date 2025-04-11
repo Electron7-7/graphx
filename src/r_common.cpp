@@ -9,28 +9,8 @@
 //
 GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
 {
-	buildShader(vertex_shader_code, fragment_shader_code);
-}
-
-void GLShaderErrorHandler(unsigned int shader_id)
-{
-	// https://stackoverflow.com/a/63420289
-	int v_result = GL_FALSE;
-	int info_log_length;
-	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &v_result);
-	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-	if(info_log_length > 0)
-	{
-		std::vector<char> shader_error_message(info_log_length + 1);
-		glGetShaderInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
-		PRINTERR("GLSL Shader Compilation Error(s):\n" << shader_error_message.data())
-	}
-}
-
-void GLShader::buildShader(std::string vertex_shader_string, std::string fragment_shader_string)
-{
-	const char *v_shader_code = vertex_shader_string.c_str();
-	const char *f_shader_code = fragment_shader_string.c_str();
+	const char *v_shader_code = vertex_shader_code.c_str();
+	const char *f_shader_code = fragment_shader_code.c_str();
 
 	unsigned int vertex, fragment;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -50,6 +30,21 @@ void GLShader::buildShader(std::string vertex_shader_string, std::string fragmen
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
+}
+
+void GLShader::GLShaderErrorHandler(unsigned int shader_id)
+{
+	// https://stackoverflow.com/a/63420289
+	int v_result = GL_FALSE;
+	int info_log_length;
+	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &v_result);
+	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	if(info_log_length > 0)
+	{
+		std::vector<char> shader_error_message(info_log_length + 1);
+		glGetShaderInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
+		PRINTERR("GLSL Shader Compilation Error(s):\n" << shader_error_message.data())
+	}
 }
 
 template<> void GLShader::setUniform<bool>(const std::string &name, bool value) const
@@ -538,10 +533,6 @@ Character::Character(unsigned int init_texture_id, glm::vec2 init_size, glm::vec
 : Character(init_texture_id, init_size.x, init_size.y, init_bearing.x, init_bearing.y, init_advance)
 {}
 
-Character::Character(unsigned int init_texture_id, glm::ivec2 init_size, glm::ivec2 init_bearing, int init_advance)
-: Character(init_texture_id, init_size.x, init_size.y, init_bearing.x, init_bearing.y, init_advance)
-{}
-
 //
 // Font
 //
@@ -574,7 +565,6 @@ TextRenderCmd::TextRenderCmd(std::string init_text, float init_position_x, float
 	text = init_text;
 	position_x = init_position_x;
 	position_y = init_position_y;
-	// position_z = init_position_z;
 	scale = init_scale;
 	color = init_color;
 }
@@ -582,11 +572,15 @@ TextRenderCmd::TextRenderCmd(std::string init_text, float init_position_x, float
 TextRenderCmd::TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
 : TextRenderCmd(init_text, init_position_x, init_position_y, init_scale, init_color)
 {
-	if(font_map.contains(init_font_name))
-		font_name = init_font_name;
+	font_name = (font_map.contains(init_font_name)) ? init_font_name : "Arial";
 }
 
 bool TextRenderCmd::isValid() const
 {
 	return (font_map.contains(font_name) && scale > 0.0f);
+}
+
+bool TextRenderCmd::is3D() const
+{
+	return (current_render_state != nullptr || previous_render_state != nullptr);
 }

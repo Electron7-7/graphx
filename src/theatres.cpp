@@ -50,6 +50,26 @@ Mesh (OBJ_Mesh)
 {
 	MeshData [OBJ_SUZANNE]
 }
+Material (LabelMat)
+{
+	DiffuseTexture [NO_TEXTURE]
+	SpecularStrength (0)
+	Color (0,0,0)
+}
+Mesh (LabelMesh)
+{
+	MeshData [GRAPHX_QUAD]
+	Material <LabelMat>
+}
+Label (Label3D)
+{
+	Mesh <LabelMesh>
+	Font (Arial)
+	Color (1.0, 0.2, 0.8)
+	Text (AAAAAAAAAAAAAAA)
+	Position (3, 3, -12)
+	Scale (1, 1, 1)
+}
 Actor (Suzanne_Tester)
 {
 	Mesh:Material <OBJ_Mesh>:<Suzanne_Mat>

@@ -2219,3 +2219,28 @@ Wait... is this just floating point imprecision? I don't know... I need to stop 
 WHAT THE FUCK????? ALL OF A SUDDEN IT JUST FUCKING DECIDES TO FUCKING WORK???!?!?!?!?!?!?!?!?!??!!?!?!!! (textures are semi-broken tho...)
 
 I think I know what's going on. My theory is that the function `MeshData::fixOBJ()` is fucking up the vertex data and/or that thing about the triangulated meshes are all working together to give me fucked data. OR MAYBE NONE OF THAT IS TRUE AND ITS JUST MAGICAL!! BEATS ME!
+
+[04/10/25]
+Today I'd like to finish with the Label class, and start work on Actor/Device interfacing before finally cleaning everything up for a release. I don't expect to finish all this today, but that's the general roadmap for the next few days. Ooh, also, I want to streamline/relocate the maps for MeshData, Texture, and any other future resources so that it's less of a pain to add to them(similar to what I did with the class definitions in `graphx_classes_namespace.hpp`).
+
+Okay, I've gotten the basic stuff written down, but I want to first tackle combining all the text in one TextRenderCmd into a single mesh/VBO, so that way I can position it much more easily.
+
+Hmm, that might be more expensive than just drawing each character one by one using the same VBO. Idk, tho, maybe not because it would be less GPU calls.
+
+Okay, instead of explicitly making TextRenderCmd support 2D and 3D text, I think that either using a RenderCmd to render 3D text, or just adding RenderState pointers into TextRenderCmd are what I'm gonna do.
+
+I'm also real quickly gonna go back to using a vector and index numbers for swapping shaders, but keep the index definitions (and `current_shader`) in `graphx_namespace.hpp`.
+
+Yeah, this might be more convoluted than trying to figure out a nice way to buffer 2D text via TextRenderCmd and then render it with a RenderCmd, but slapping RenderState pointers in TextRenderCmd (and a lil `is3D` function) should be a fine solution for the time being.
+
+I think I'll either use texture arrays or texture atlases for rendering text. I could theoretically find each unique character, store their texture + mesh data, and then combine them as needed into a single VBO.
+
+Yeah, I'm gonna use texture arrays for my fonts.
+
+Aight, pretty much made no progress as all the stuff I tried didn't really go anywhere. Lesson learned: I gotta fuckin' know what I'm doing, LMFAO! However, I did learn a lot about what I don't know and what doesn't work, as well as wrote a lot of code that, while it didn't work, definitely helped strengthen my knowledge in the parts that were correct (mainly OpenGL functions). To get the Label working, I'm going to start with a very dead simple strategy of basically doing all the code that I'd normally do for 2D rendering but before rendering, select which shader to use, and if it's the 3D shader, sending the matrix data to it. This should result in a less efficient but easier method of doing things, and I can dick around with more complex methods later.
+
+Also, side note: make `graphx_namespace.hpp` a precompiled header.
+
+BIG TODO: `Mesh` should no longer be a requirement, and an Actor should be able to take a `MeshData` setting and translate it to a new `Mesh` that uses that `MeshData`.
+
+3D calculations for text are all fucked, btw, I'm totally not understanding what I'm doing LMFAO.

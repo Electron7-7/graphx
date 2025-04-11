@@ -55,6 +55,7 @@ namespace graphx
 			CAMERA,
 			GRAPHXPLAYER,
 			RAMIEL,
+			LABEL,
 			LIGHT,
 			LIGHTDIRECTIONAL,
 			LIGHTSPOT,

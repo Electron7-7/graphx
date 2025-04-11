@@ -19,12 +19,16 @@
 
 struct GLShader
 {
-	unsigned int id;
+public:
+	unsigned int id = 0;
 
+	GLShader() = default;
 	GLShader(std::string vertex_shader_code, std::string fragment_shader_code);
 
 	template<typename T> void setUniform(const std::string &name, T value) const;
-	void buildShader(std::string vertex_shader_code, std::string fragment_shader_code);
+
+private:
+	void GLShaderErrorHandler(unsigned int shader_id);
 };
 
 struct Device
@@ -181,13 +185,13 @@ struct Character
 	Character() = default;
 	Character(unsigned int init_texture_id, int init_size_x, int init_size_y, int init_bearing_x, int init_bearing_y, int init_advance);
 	Character(unsigned int init_texture_id, glm::vec2 init_size, glm::vec2 init_bearing, int init_advance);
-	Character(unsigned int init_texture_id, glm::ivec2 init_size, glm::ivec2 init_bearing, int init_advance);
 };
 
 struct Font
 {
 	std::string font_name;
 	std::map<char, Character> character_set;
+	unsigned int texture_array_id;
 	unsigned int VBO;
 
 	Font() = default;
@@ -252,15 +256,18 @@ public:
 	std::string text = "";
 	float position_x = 0.0f;
 	float position_y = 0.0f;
-	float position_z = 0.0f;
 	float scale = 0.0f;
 	glm::vec3 color = glm::vec3(0.0f);
+
+	RenderState *current_render_state = nullptr;
+	RenderState *previous_render_state = nullptr;
 
 	TextRenderCmd() = default;
 	TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
 	TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
 
 	bool isValid() const;
+	bool is3D() const;
 };
 
 struct RenderCommands
@@ -271,6 +278,7 @@ struct RenderCommands
 };
 
 extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
+extern std::array<GLShader, graphx::rendering::SHADERS_AMOUNT> shaders;
 extern std::map<std::string, MeshData> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern std::map<std::string, Font> font_map;

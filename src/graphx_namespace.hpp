@@ -133,12 +133,17 @@ namespace graphx
 	{
 		inline constexpr unsigned int GRAPHX_OPENGL = 917; // API identifier (more to be added)
 
-		inline GLShader *SHADER_DEFAULT             = nullptr;
-		inline GLShader *SHADER_FONTS               = nullptr;
-		inline GLShader *SHADER_SKYBOX              = nullptr;
-		inline GLShader *SHADER_DEBUG_FULLBRIGHT    = nullptr;
-		inline GLShader *SHADER_DEBUG_NORMALS       = nullptr;
-		inline GLShader *SHADER_DEBUG_VERTEX_COLORS = nullptr;
+		inline constexpr unsigned int SHADERS_AMOUNT             = 7;
+		//-----------------------------------------------------------
+		inline constexpr unsigned int SHADER_DEFAULT             = 0;
+		inline constexpr unsigned int SHADER_FONTS_2D            = 1;
+		inline constexpr unsigned int SHADER_FONTS_3D            = 2;
+		inline constexpr unsigned int SHADER_SKYBOX              = 3;
+		inline constexpr unsigned int SHADER_DEBUG_FULLBRIGHT    = 4;
+		inline constexpr unsigned int SHADER_DEBUG_NORMALS       = 5;
+		inline constexpr unsigned int SHADER_DEBUG_VERTEX_COLORS = 6;
+
+		inline unsigned int current_shader = SHADER_DEFAULT;
 
 		inline constexpr unsigned int VAOS_AMOUNT        = 2;
 		//---------------------------------------------------
@@ -148,7 +153,6 @@ namespace graphx
 
 		inline bool  do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom
 		inline int   graphx_api = GRAPHX_OPENGL;
-		inline GLShader *current_shader = nullptr;
 		inline float main_window_width = 1280.0f;
 		inline float main_window_height = 720.0f;
 		inline float camera_near = 0.1f;

@@ -58,7 +58,6 @@ public:
 	std::string getName();
 
 	virtual RenderCommands getRenderCommands();
-
 	virtual bool isPhysicsActor();
 	virtual void youGotACallBack(graphx::gSettings new_settings = empty_settings); // Loads settings
 	virtual void callToStage(Theatre *parent_theatre);

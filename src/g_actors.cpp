@@ -246,9 +246,23 @@ void Actor::takeABow()
 // Label
 //
 Label::Label(std::string init_name, Actor *init_parent)
-: Actor(init_name, &label_mesh), parent(init_parent), label_text_render_command(TextRenderCmd("Verdana", init_name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
+: Actor(init_name, &label_mesh), parent(init_parent), label_font("Verdana"), label_text(init_name), label_color(glm::vec3(0.15f, 0.6f, 0.9f))
 {
 	my_type = graphx::classes::LABEL;
+}
+
+RenderCommands Label::getRenderCommands()
+{
+	RenderCommands render_commands = Actor::getRenderCommands();
+	render_commands.text_render_command.font_name = label_font;
+	render_commands.text_render_command.text = label_text;
+	render_commands.text_render_command.position_x = position_global.x;
+	render_commands.text_render_command.position_y = position_global.y;
+	render_commands.text_render_command.scale = scale.y;
+	render_commands.text_render_command.color = label_color;
+	render_commands.text_render_command.current_render_state = &current_state_buffer[state_index];
+	render_commands.text_render_command.previous_render_state = &previous_state_buffer[state_index];
+	return render_commands;
 }
 
 void Label::tick(int current_tick)
@@ -264,9 +278,6 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
 
-	label_text_render_command.font_name = "Arial";
-	label_text_render_command.scale = 1.0f;
-
 	/**
 	 * `getSetting` Tip:
 	 *   When "overloading" `getSetting` settings, I like to make sure that the most verbose/explicit option always
@@ -275,11 +286,13 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 	 *   versions of the same setting be used, the one that wins is the one that looks more intentional, hopefully
 	 *   avoiding confusion.
 	*/
-	getSetting(label_text_render_command.color, settings["Color"]);
-	getSetting(label_text_render_command.color, settings["TextColor"]);
-	getSetting(label_text_render_command.text, settings["Message"]);
-	getSetting(label_text_render_command.text, settings["Text"]);
-	getSetting(label_text_render_command.text, settings["Label"]);
+	getSetting(label_font, settings["Font"]);
+	getSetting(label_font, settings["FontName"]);
+	getSetting(label_color, settings["Color"]);
+	getSetting(label_color, settings["TextColor"]);
+	getSetting(label_text, settings["Message"]);
+	getSetting(label_text, settings["Text"]);
+	getSetting(label_text, settings["Label"]);
 }
 
 //
