@@ -67,8 +67,9 @@ Label (Label3D)
 	Font (Arial)
 	Color (1.0, 0.2, 0.8)
 	Text (AAAAAAAAAAAAAAA)
-	Position (3, 3, -12)
-	Scale (1, 1, 1)
+	Position (2, 3, -12)
+	TextPosition (0,0)
+	TextScale (1)
 }
 Actor (Suzanne_Tester)
 {
@@ -169,7 +170,7 @@ RigidBodyActor (Falling_Cube_6)
 }
 GraphXPlayer (main_player)
 {
-	Position             (0.0, 3.0, 6.0)
+	Position             (0.0, 3.0, 8.0)
 	MovementSpeed        (10.0)
 	MovementAcceleration (2.0)
 }

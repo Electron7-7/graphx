@@ -210,26 +210,23 @@ void main()
 std::string font2d_frag = R"~(
 #version 460 core
 in vec2 vertex_uv;
-// in float texture_index;
 
 out vec4 FragColor;
 
-uniform sampler2D text;
-// uniform sampler2DArray text;
+uniform sampler2D glyph_texture;
 uniform vec3 text_color;
 
 void main()
 {
-	vec4 sampled = vec4(1.0f, 1.0f, 1.0f, texture(text, vertex_uv).r);
-	// vec4 sampled = vec4(1.0f, 1.0f, 1.0f, texture(text, vec3(vertex_uv, texture_index)).r);
-	FragColor = vec4(text_color, 1.0f) * sampled;
+	float glyph_shape = texture(glyph_texture, vertex_uv).r;
+	if(glyph_shape < 0.5)
+		discard;
+	FragColor = vec4(text_color, 1.0f);
 }
 )~";
 std::string font2d_vert = R"~(
 #version 460 core
 layout (location = 0) in vec4 _vertex_position_and_uv;
-// layout (location = 0) in vec2 _vertex_position;
-// layout (location = 1) in vec2 _vertex_uv;
 
 out vec2 vertex_uv;
 
@@ -244,22 +241,23 @@ void main()
 std::string font3d_frag = R"~(
 #version 460 core
 in vec2 vertex_uv;
+
 out vec4 FragColor;
 
-uniform sampler2D text;
+uniform sampler2D glyph_texture;
 uniform vec3 text_color;
 
 void main()
 {
-	vec4 sampled = vec4(1.0f, 1.0f, 1.0f, texture(text, vertex_uv).r);
-	FragColor = vec4(text_color, 1.0f) * sampled;
+	float glyph_shape = texture(glyph_texture, vertex_uv).r;
+	if(glyph_shape < 0.5)
+		discard;
+	FragColor = vec4(text_color, 1.0f);
 }
 )~";
 std::string font3d_vert = R"~(
 #version 460 core
 layout (location = 0) in vec4 _vertex_position_and_uv;
-// layout (location = 0) in vec2 _vertex_position;
-// layout (location = 1) in vec2 _vertex_uv;
 
 out vec2 vertex_uv;
 
@@ -271,8 +269,6 @@ void main()
 {
 	gl_Position = projection_matrix * view_matrix * model_matrix * vec4(_vertex_position_and_uv.xy, 0.0f, 1.0f);
 	vertex_uv = _vertex_position_and_uv.zw;
-	// gl_Position = projection_matrix * view_matrix * model_matrix * vec4(_vertex_position, 0.0f, 1.0f);
-	// vertex_uv = _vertex_uv;
 }
 )~";
 std::string light_debug_frag = R"~(

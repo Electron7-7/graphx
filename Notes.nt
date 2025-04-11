@@ -2244,3 +2244,8 @@ Also, side note: make `graphx_namespace.hpp` a precompiled header.
 BIG TODO: `Mesh` should no longer be a requirement, and an Actor should be able to take a `MeshData` setting and translate it to a new `Mesh` that uses that `MeshData`.
 
 3D calculations for text are all fucked, btw, I'm totally not understanding what I'm doing LMFAO.
+
+[04/11/25]
+I wanna get the 3D text working, now. Yeah, the way text is rendered in 3D needs to be totally different from 2D; 2D works by rendering each letter one after another at specific positions, but in order to get proper 3D positioning, I need to combine all the characters into one mesh+texture and then render that out (using the blinn phong shader, too).
+
+Got it semi working. I don't know what I'm doing and it's very much not a solution, but the matrices do kinda work a lil bit. I need to learn how to get the text into a state that they can be centered at the world origin, scaled properly, and rendered accordingly.

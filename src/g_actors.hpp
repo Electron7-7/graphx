@@ -20,9 +20,7 @@ class Label : public Actor
 {
 public:
 	Actor *parent = nullptr;
-	std::string label_font = "";
-	std::string label_text = "";
-	glm::vec3 label_color = glm::vec3(0.0f);
+	TextRenderCmd text_render_command;
 
 	Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
 

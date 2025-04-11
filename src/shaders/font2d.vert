@@ -1,7 +1,5 @@
 #version 460 core
 layout (location = 0) in vec4 _vertex_position_and_uv;
-// layout (location = 0) in vec2 _vertex_position;
-// layout (location = 1) in vec2 _vertex_uv;
 
 out vec2 vertex_uv;
 

@@ -369,97 +369,8 @@ void F_InitializeFreeType()
 		PRINTERR("FreeType library failed to initialize!")
 }
 
-/*void F_LoadFont(std::string ttf_file_path, std::string font_name) // 2D Texture Array attempt #1
-{
-	glUseProgram(shaders[graphx::rendering::SHADER_FONTS_2D].id);
-	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
-
-	FT_Face new_face;
-	if(FT_New_Face(freetype, ttf_file_path.c_str(), 0, &new_face))
-	{
-		PRINTERR("FreeType failed to load font face (filepath: " << ttf_file_path << ")")
-		return;
-	}
-
-	FT_Set_Pixel_Sizes(new_face, 0, 48);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	font_map[font_name] = Font(font_name);
-	Font &new_font = font_map.at(font_name);
-
-	glGenTextures(1, &new_font.texture_array_id);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, new_font.texture_array_id);
-
-	int max_width = -1;
-	int max_height = -1;
-
-	unsigned int index = 0;
-	for(unsigned char character = 0 ; character < 128 ; character++,index++)
-	{
-		if(FT_Load_Char(new_face, character, FT_LOAD_RENDER))
-		{
-			PRINTERR("FreeType failed to load glyph (character: " << character << ")")
-			continue;
-		}
-
-		new_font.character_set[character] = Character(
-			index,
-			new_face->glyph->bitmap.width,
-			new_face->glyph->bitmap.rows,
-			new_face->glyph->bitmap_left,
-			new_face->glyph->bitmap_top,
-			static_cast<int>(new_face->glyph->advance.x)
-		);
-
-		new_font.character_set.at(character).bitmap_buffer = new_face->glyph->bitmap.buffer;
-
-		max_width  = ( new_face->glyph->bitmap.width > max_width  ) ? new_face->glyph->bitmap.width : max_width;
-		max_height = ( new_face->glyph->bitmap.rows  > max_height ) ? new_face->glyph->bitmap.rows  : max_height;
-	}
-
-	glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RED, max_width, max_height, index);
-
-	for(auto &character_pair : new_font.character_set)
-	{
-		glTexImage3D(GL_TEXTURE_2D_ARRAY,
-			0,
-			GL_RED,
-			character_pair.second.size_x,
-			character_pair.second.size_y,
-			character_pair.second.texture_array_depth,
-			0,
-			GL_RED,
-			GL_UNSIGNED_BYTE,
-			(GLubyte*)character_pair.second.bitmap_buffer
-		);
-
-		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		character_pair.second.bitmap_buffer = nullptr; // Idk, seems like a good idea
-	}
-
-	FT_Done_Face(new_face);
-
-	glGenBuffers(1, &new_font.VBO);
-	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
-	glBindBuffer(GL_ARRAY_BUFFER, new_font.VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(2 * sizeof(float)));
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-}*/
-
 void F_LoadFont(std::string ttf_file_path, std::string font_name)
 {
-	glUseProgram(shaders[graphx::rendering::SHADER_FONTS_2D].id);
-	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
-
 	FT_Face new_face;
 	if(FT_New_Face(freetype, ttf_file_path.c_str(), 0, &new_face))
 	{
@@ -469,6 +380,8 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 
 	FT_Set_Pixel_Sizes(new_face, 0, 48);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	FT_GlyphSlot glyph_slot = new_face->glyph;
 
 	font_map[font_name] = Font(font_name);
 	Font &new_font = font_map.at(font_name);
@@ -480,6 +393,8 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 			PRINTERR("FreeType failed to load glyph (character: " << character << ")")
 			continue;
 		}
+
+		FT_Render_Glyph(glyph_slot, FT_RENDER_MODE_SDF);
 
 		unsigned int texture_id;
 		glGenTextures(1, &texture_id);
@@ -671,54 +586,11 @@ void R_GL_RenderSkybox()
 	glDepthFunc(GL_LESS);
 }
 
-/*void R_GL_RenderFont2D(TextRenderCmd &render_command) // 2D Texture Array attempt #1
-{
-	glUseProgram(shaders[graphx::rendering::SHADER_FONTS_2D].id);
-	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("text_color", render_command.color);
-	// glActiveTexture(GL_TEXTURE0);
-
-	Font &font = font_map.at(render_command.font_name);
-
-	glActiveTexture(GL_TEXTURE_2D_ARRAY);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, font.texture_array_id);
-
-	for(std::string::const_iterator character_iterator = render_command.text.begin() ; character_iterator != render_command.text.end() ; character_iterator++)
-	{
-		Character &character = font.character_set.at(*character_iterator);
-		float x_position = render_command.position_x + character.bearing_x * render_command.scale;
-		float y_position = render_command.position_y - (character.size_y - character.bearing_y) * render_command.scale;
-		float width = character.size_x * render_command.scale;
-		float height = character.size_y * render_command.scale;
-
-		float vertices[6][4] =
-		{
-			{ x_position        , y_position + height, 0.0f, 0.0f },
-			{ x_position        , y_position         , 0.0f, 1.0f },
-			{ x_position + width, y_position         , 1.0f, 1.0f },
-			{ x_position        , y_position + height, 0.0f, 0.0f },
-			{ x_position + width, y_position         , 1.0f, 1.0f },
-			{ x_position + width, y_position + height, 1.0f, 0.0f },
-		};
-
-		shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("texture_index", character.texture_array_depth);
-
-		// glBindTexture(GL_TEXTURE_2D, character.texture_id);
-		glBindBuffer(GL_ARRAY_BUFFER, font.VBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		// Advance cursors for next glyph
-		render_command.position_x += (character.advance >> 6) * render_command.scale; // bitshift by 6 to get value in pixels (2^6 = 64)
-	}
-
-	// glBindTexture(GL_TEXTURE_2D, 0);
-}*/
-
 void R_GL_RenderFonts()
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_CULL_FACE);
 	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
 
 	for(auto rendercmd_iterator = text_render_commands_buffer.begin() ; rendercmd_iterator != text_render_commands_buffer.end() ;)
@@ -738,35 +610,36 @@ void R_GL_RenderFonts()
 			float y_position = rendercmd_iterator->position_y - (character.size_y - character.bearing_y) * rendercmd_iterator->scale;
 			float width = character.size_x * rendercmd_iterator->scale;
 			float height = character.size_y * rendercmd_iterator->scale;
-
-			float vertices[6][4] =
+			float vertices[24] =
 			{
-				{ x_position        , y_position + height, 0.0f, 0.0f },
-				{ x_position        , y_position         , 0.0f, 1.0f },
-				{ x_position + width, y_position         , 1.0f, 1.0f },
-				{ x_position        , y_position + height, 0.0f, 0.0f },
-				{ x_position + width, y_position         , 1.0f, 1.0f },
-				{ x_position + width, y_position + height, 1.0f, 0.0f },
+				x_position        , y_position + height, 0.0f, 0.0f,
+				x_position        , y_position         , 0.0f, 1.0f,
+				x_position + width, y_position         , 1.0f, 1.0f,
+				x_position        , y_position + height, 0.0f, 0.0f,
+				x_position + width, y_position         , 1.0f, 1.0f,
+				x_position + width, y_position + height, 1.0f, 0.0f,
 			};
 
 			if(rendercmd_iterator->is3D())
 			{
+				glUseProgram(shaders[graphx::rendering::SHADER_FONTS_3D].id);
 				// For now, I'm not using interpolation in this function
 				glm::mat4 model_matrix = glm::mat4(1.0f);
-				model_matrix = glm::translate(model_matrix, rendercmd_iterator->current_render_state->render_position);
-				model_matrix *= glm::toMat4(rendercmd_iterator->current_render_state->render_quaternion);
-				model_matrix = glm::scale(model_matrix, rendercmd_iterator->current_render_state->render_scale);
+				// Todo: FIX THIS SHIT (learn how to do this)
+				// model_matrix *= glm::toMat4(rendercmd_iterator->current_render_state->render_quaternion);
+				model_matrix = glm::scale(model_matrix, rendercmd_iterator->current_render_state->render_scale / glm::vec3(2*width, 2*height, 1.0f));
+				model_matrix = glm::translate(model_matrix, rendercmd_iterator->current_render_state->render_position - glm::vec3(x_position, y_position, 0.0f));
 
-				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("model_matrix", model_matrix);
 				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("text_color", rendercmd_iterator->color);
+				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("model_matrix", model_matrix);
 				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
 				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
-				glUseProgram(shaders[graphx::rendering::SHADER_FONTS_3D].id);
 			}
 			else
 			{
-				shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("text_color", rendercmd_iterator->color);
 				glUseProgram(shaders[graphx::rendering::SHADER_FONTS_2D].id);
+				shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("text_color", rendercmd_iterator->color);
+				shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
 			}
 
 			glBindTextureUnit(0, character.texture_id);
@@ -782,6 +655,7 @@ void R_GL_RenderFonts()
 		rendercmd_iterator = text_render_commands_buffer.erase(rendercmd_iterator);
 	}
 
+	// glEnable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 }
 
@@ -830,7 +704,6 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 {
 	if(loading_new_main_theatre)
 		return;
-	R_GL_RenderFonts();
 
 	glBindVertexArray(VAOs[graphx::rendering::VAO_DEFAULT]);
 
@@ -922,10 +795,12 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);
 	}
 
-	R_BufferRenderCmd(TextRenderCmd("Tr2n", "Fucking WHAT", 0, 360, 1.0f, glm::vec3(0.2f, 0.5f, 1.0f)));
+	R_BufferRenderCmd(TextRenderCmd("Tr2n", "Fucking WHAT", 0, 100, 1.0f, glm::vec3(0.2f, 0.5f, 1.0f)));
 
 	R_GL_RenderSkybox();
+	glDepthMask(GL_FALSE);
 	R_GL_RenderFonts();
+	glDepthMask(GL_TRUE);
 }
 
 void R_Render(std::mutex &state_mutex, float interpolation_time)
