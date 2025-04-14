@@ -15,6 +15,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <cmath>
+#include <filesystem> // Yes, the devil hath been evoked...
 
 std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs;
 std::array<GLShader, graphx::rendering::SHADERS_AMOUNT> shaders;
@@ -90,7 +91,7 @@ std::string T_LoadImageFile(std::string file_path)
 	if(file_path.starts_with('/') || !file_path.substr(1, 2).compare(":/"))
 		file_path_checked = file_path;
 
-	std::string texture_name = std::filesystem::path(file_path_checked).stem();
+	std::string texture_name = std::filesystem::path(file_path_checked).stem().string();
 
 	if(texture_storage.contains(texture_name))
 		return texture_name;

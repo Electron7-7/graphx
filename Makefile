@@ -8,8 +8,8 @@ INCLUDES = -I src/include
 LIBS = -l glfw -L src/lib/ -l Jolt -l freetype
 
 ifeq ($(OS),Windows_NT) 
-	WCXX = g++
-	WCC = gcc
+	WCXX = clang++
+	WCC = clang
 else
 	WCXX = x86_64-w64-mingw32-g++
 	WCC = x86_64-w64-mingw32-gcc
@@ -106,9 +106,11 @@ dirty_clean:
 	-rm -f $(O)/*.tmp
 	-rm -f $(O)/main.*
 	-rm -f $(GRAPHX_OBJS)
+	-rm -f $(WOBJS)
 
 clean: clean_resources embed_resources
 	-rm -f $(OBJS)
+	-rm -f $(WOBJS)
 	-rm -f $(O)/main.*
 	-rm -f $(O)/*.tmp
 	-rm -f $(O)/$(LINUX)
