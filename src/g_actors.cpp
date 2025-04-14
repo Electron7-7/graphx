@@ -270,15 +270,13 @@ void Label::tick(int current_tick)
 	}
 	else
 	{
-		position_global.x += 0.1f;
+		position_global.x += 0.0f;
 	}
 }
 
 void Label::youGotACallBack(graphx::gSettings new_settings)
 {
 	Actor::youGotACallBack(new_settings);
-	glm::vec2 text_position(text_render_command.position_x, text_render_command.position_y);
-
 	/**
 	 * `getSetting` Tip:
 	 *   When "overloading" `getSetting` settings, I like to make sure that the most verbose/explicit option always
@@ -294,13 +292,10 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(text_render_command.text, settings["Message"]);
 	getSetting(text_render_command.text, settings["Text"]);
 	getSetting(text_render_command.text, settings["Label"]);
-	getSetting(text_position.x, settings["TextPositionX"]);
-	getSetting(text_position.y, settings["TextPositionY"]);
-	getSetting(text_position, settings["TextPosition"]);
 	getSetting(text_render_command.scale, settings["TextScale"]);
 
-	text_render_command.position_x = text_position.x;
-	text_render_command.position_y = text_position.y;
+	text_render_command.position_x = 0.0f;
+	text_render_command.position_y = 0.0f;
 }
 
 //

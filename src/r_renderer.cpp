@@ -606,12 +606,13 @@ void R_GL_RenderFonts()
 
 		for(std::string::const_iterator character_iterator = rendercmd_iterator->text.begin() ; character_iterator != rendercmd_iterator->text.end() ; character_iterator++)
 		{
+			// https://stackoverflow.com/a/62629272
 			Character &character = font.character_set.at(*character_iterator);
 			float x_position = rendercmd_iterator->position_x + character.bearing_x * rendercmd_iterator->scale;
 			float y_position = rendercmd_iterator->position_y - (character.size_y - character.bearing_y) * rendercmd_iterator->scale;
 			float width = character.size_x * rendercmd_iterator->scale;
 			float height = character.size_y * rendercmd_iterator->scale;
-			float vertices[24] =
+			/*float vertices[24] =
 			{
 				x_position        , y_position + height, 0.0f, 0.0f,
 				x_position        , y_position         , 0.0f, 1.0f,
@@ -619,7 +620,7 @@ void R_GL_RenderFonts()
 				x_position        , y_position + height, 0.0f, 0.0f,
 				x_position + width, y_position         , 1.0f, 1.0f,
 				x_position + width, y_position + height, 1.0f, 0.0f,
-			};
+			};*/
 
 			if(rendercmd_iterator->is3D())
 			{
@@ -627,9 +628,9 @@ void R_GL_RenderFonts()
 				// For now, I'm not using interpolation in this function
 				glm::mat4 model_matrix = glm::mat4(1.0f);
 				// Todo: FIX THIS SHIT (learn how to do this)
-				// model_matrix *= glm::toMat4(rendercmd_iterator->current_render_state->render_quaternion);
-				model_matrix = glm::scale(model_matrix, rendercmd_iterator->current_render_state->render_scale / glm::vec3(2*width, 2*height, 1.0f));
-				model_matrix = glm::translate(model_matrix, rendercmd_iterator->current_render_state->render_position - glm::vec3(x_position, y_position, 0.0f));
+				model_matrix = glm::translate(model_matrix, rendercmd_iterator->current_render_state->render_position);
+				model_matrix *= glm::toMat4(rendercmd_iterator->current_render_state->render_quaternion);
+				model_matrix = glm::scale(model_matrix, rendercmd_iterator->current_render_state->render_scale);
 
 				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("text_color", rendercmd_iterator->color);
 				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("model_matrix", model_matrix);

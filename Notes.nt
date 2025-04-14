@@ -2249,3 +2249,10 @@ BIG TODO: `Mesh` should no longer be a requirement, and an Actor should be able 
 I wanna get the 3D text working, now. Yeah, the way text is rendered in 3D needs to be totally different from 2D; 2D works by rendering each letter one after another at specific positions, but in order to get proper 3D positioning, I need to combine all the characters into one mesh+texture and then render that out (using the blinn phong shader, too).
 
 Got it semi working. I don't know what I'm doing and it's very much not a solution, but the matrices do kinda work a lil bit. I need to learn how to get the text into a state that they can be centered at the world origin, scaled properly, and rendered accordingly.
+
+[04/14/25]
+Yeah, so, I'm gonna try and implement that idea of sending both types of positional data to the shader.
+
+Wait a minute!! I don't need to fucking do all this shit!! I just need to calculate the offset for each glyph and add that to the fucking vertex position data!!
+
+WAIT A FUCKING MINUTE!! IF IT'S 3D IT DOESN'T NEED POSITIONAL DATA BECAUSE IT USES THE FUCKING RENDER STATE!!
