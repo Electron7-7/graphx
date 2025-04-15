@@ -61,9 +61,9 @@ Mesh (LabelMesh)
 Label (Label3D)
 {
 	Mesh <LabelMesh>
-	Font (Arial)
+	Font (Verdana)
 	Color (1.0, 0.2, 0.8)
-	Text (AAAAAAAAAAAAAAA)
+	Text (ABCD)
 	Position (2, 3, -12)
 	TextPosition (0,0)
 	TextScale (1)

@@ -2256,3 +2256,12 @@ Yeah, so, I'm gonna try and implement that idea of sending both types of positio
 Wait a minute!! I don't need to fucking do all this shit!! I just need to calculate the offset for each glyph and add that to the fucking vertex position data!!
 
 WAIT A FUCKING MINUTE!! IF IT'S 3D IT DOESN'T NEED POSITIONAL DATA BECAUSE IT USES THE FUCKING RENDER STATE!!
+
+[04/15/25]
+Alright, let's finish this.
+
+I've finally gotten the data to appear the way I expected it to. I'm thinking that the main reason for the weird data problems might have something to do with how I'm buffering the data. I'm assuming that an overflow/underflow or just general mistranslation of the vertex data was happening due to me setting up OpenGL like the tutorial did, but not using the same syntax for creating the float data. That or I just separated the vertex attributes incorrectly LMFAO.
+
+Oh my god... I think it's because of the fucking VBO being shared... I think.
+
+HOLY FUCK I GOT IT WORKING!!! Yeah, it was totally because I forgot that since I'm using different VBOs for each Font, I need to re-assign the vertex attributes every time I want to render text, or else the VAO has no fucking clue what to do (since the VBO has no clue what to do). Weird issue where 3D text wouldn't ever render unless 2D text had rendered, but it only needed 2D text to render once (like, a single frame) and then it was fine. Interesting, and I assume that the one frame 2D render wasn't actually fixing anything permanentally; my guess is that changes made to the 3D text/any added 3D text wouldn't show up unless the 2D text rendered again. I want to use a single batched VBO for text, later down the line, and since the VBOs for every font all have the same size, it'll be relatively easy to calculate the proper vertex offset and shit (I could even use some math to do this instead of keeping track of how many Fonts are being used like I do with meshes).

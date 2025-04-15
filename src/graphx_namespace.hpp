@@ -145,10 +145,11 @@ namespace graphx
 
 		inline unsigned int current_shader = SHADER_DEFAULT;
 
-		inline constexpr unsigned int VAOS_AMOUNT        = 2;
+		inline constexpr unsigned int VAOS_AMOUNT        = 3;
 		//---------------------------------------------------
 		inline constexpr unsigned int VAO_DEFAULT        = 0;
-		inline constexpr unsigned int VAO_TEXT           = 1;
+		inline constexpr unsigned int VAO_SKYBOX         = 1;
+		inline constexpr unsigned int VAO_TEXT           = 2;
 
 
 		inline bool  do_interpolation = true; // For testing when I change the interpolation method to be more like GZDoom

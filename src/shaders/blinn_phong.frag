@@ -1,3 +1,4 @@
+// Blinn Phong Fragment Shader
 #version 460 core
 #define MAX_NUMBER_OF_LIGHTS 100
 

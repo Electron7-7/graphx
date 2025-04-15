@@ -20,10 +20,12 @@
 struct GLShader
 {
 public:
+	std::string debug_name = "UNTITLED_SHADER";
 	unsigned int id = 0;
 
 	GLShader() = default;
 	GLShader(std::string vertex_shader_code, std::string fragment_shader_code);
+	GLShader(std::string vertex_shader_code, std::string fragment_shader_code, std::string init_debug_name);
 
 	template<typename T> void setUniform(const std::string &name, T value) const;
 

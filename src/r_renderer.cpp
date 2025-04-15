@@ -385,7 +385,6 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 	FT_GlyphSlot glyph_slot = new_face->glyph;
 
 	font_map[font_name] = Font(font_name);
-	Font &new_font = font_map.at(font_name);
 
 	for(unsigned char character = 0 ; character < 128 ; character++)
 	{
@@ -406,19 +405,19 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		new_font.character_set[character] = Character(texture_id, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, new_face->glyph->bitmap_left, new_face->glyph->bitmap_top, static_cast<int>(new_face->glyph->advance.x));
+		font_map.at(font_name).character_set[character] = Character(texture_id, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, new_face->glyph->bitmap_left, new_face->glyph->bitmap_top, static_cast<int>(new_face->glyph->advance.x));
 	}
 
 	FT_Done_Face(new_face);
 
-	glGenBuffers(1, &new_font.VBO);
 	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
-	glBindBuffer(GL_ARRAY_BUFFER, new_font.VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 24, nullptr, GL_DYNAMIC_DRAW);
+	glGenBuffers(1, &font_map.at(font_name).VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, font_map.at(font_name).VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(0));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	glEnableVertexAttribArray(1);
 }
 
 void R_BufferMeshesAndTextures()
@@ -467,7 +466,6 @@ bool enable_default_shader = true; // Todo: delete this, lmfao
 
 void R_GL_RenderSkybox()
 { // Todo: get rid of static variables and make this function less terrible
-	static unsigned int background_vao = 0;
 	static unsigned int background_vbo = 0;
 
 	static Texture skybox_texture(
@@ -516,7 +514,7 @@ void R_GL_RenderSkybox()
 		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 	}
 
-	if(background_vao == 0)
+	if(background_vbo == 0)
 	{
 		float skybox_vertices[] =
 		{
@@ -563,10 +561,9 @@ void R_GL_RenderSkybox()
 		     1.0f, -1.0f,  1.0f
 		};
 
-		glGenVertexArrays(1, &background_vao);
 		glGenBuffers(1, &background_vbo);
 
-		glBindVertexArray(background_vao);
+		glBindVertexArray(VAOs[graphx::rendering::VAO_SKYBOX]);
 		glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(skybox_vertices), &skybox_vertices, GL_STATIC_DRAW);
 
@@ -580,9 +577,10 @@ void R_GL_RenderSkybox()
 	glUseProgram(shaders[graphx::rendering::SHADER_SKYBOX].id);
 	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_view_matrix", glm::mat4(glm::mat3(getCurrentPlayer()->getViewMatrix())));
 	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_projection_matrix", R_GL_GetProjectionMatrix());
-	glBindVertexArray(background_vao);
+	glBindVertexArray(VAOs[graphx::rendering::VAO_SKYBOX]);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	glBindVertexArray(0);
 	glDepthFunc(GL_LESS);
 }
@@ -591,8 +589,13 @@ void R_GL_RenderFonts()
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_FALSE);
 	glDisable(GL_CULL_FACE);
-	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
+
+	// Todo: find out if it's worth it to take these out of the for loop
+	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
+	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
 
 	for(auto rendercmd_iterator = text_render_commands_buffer.begin() ; rendercmd_iterator != text_render_commands_buffer.end() ;)
 	{
@@ -600,6 +603,22 @@ void R_GL_RenderFonts()
 		{
 			rendercmd_iterator = text_render_commands_buffer.erase(rendercmd_iterator);
 			continue;
+		}
+
+		if(rendercmd_iterator->is3D())
+		{
+			glm::mat4 model_matrix = glm::mat4(1.0f);
+			model_matrix = glm::translate(model_matrix, rendercmd_iterator->current_render_state->render_position);
+			model_matrix *= glm::toMat4(rendercmd_iterator->current_render_state->render_quaternion);
+			model_matrix = glm::scale(model_matrix, rendercmd_iterator->current_render_state->render_scale);
+			shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("model_matrix", model_matrix);
+			shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("text_color", rendercmd_iterator->color);
+			glUseProgram(shaders[graphx::rendering::SHADER_FONTS_3D].id);
+		}
+		else
+		{
+			shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("text_color", rendercmd_iterator->color);
+			glUseProgram(shaders[graphx::rendering::SHADER_FONTS_2D].id);
 		}
 
 		Font &font = font_map.at(rendercmd_iterator->font_name);
@@ -612,7 +631,7 @@ void R_GL_RenderFonts()
 			float y_position = rendercmd_iterator->position_y - (character.size_y - character.bearing_y) * rendercmd_iterator->scale;
 			float width = character.size_x * rendercmd_iterator->scale;
 			float height = character.size_y * rendercmd_iterator->scale;
-			/*float vertices[24] =
+			float vertices[24] =
 			{
 				x_position        , y_position + height, 0.0f, 0.0f,
 				x_position        , y_position         , 0.0f, 1.0f,
@@ -620,34 +639,18 @@ void R_GL_RenderFonts()
 				x_position        , y_position + height, 0.0f, 0.0f,
 				x_position + width, y_position         , 1.0f, 1.0f,
 				x_position + width, y_position + height, 1.0f, 0.0f,
-			};*/
+			};
 
-			if(rendercmd_iterator->is3D())
-			{
-				glUseProgram(shaders[graphx::rendering::SHADER_FONTS_3D].id);
-				// For now, I'm not using interpolation in this function
-				glm::mat4 model_matrix = glm::mat4(1.0f);
-				// Todo: FIX THIS SHIT (learn how to do this)
-				model_matrix = glm::translate(model_matrix, rendercmd_iterator->current_render_state->render_position);
-				model_matrix *= glm::toMat4(rendercmd_iterator->current_render_state->render_quaternion);
-				model_matrix = glm::scale(model_matrix, rendercmd_iterator->current_render_state->render_scale);
+			shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("glyph_scale", glm::vec2(width, height));
 
-				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("text_color", rendercmd_iterator->color);
-				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("model_matrix", model_matrix);
-				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
-				shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
-			}
-			else
-			{
-				glUseProgram(shaders[graphx::rendering::SHADER_FONTS_2D].id);
-				shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("text_color", rendercmd_iterator->color);
-				shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
-			}
-
+			glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
 			glBindTextureUnit(0, character.texture_id);
 			glBindBuffer(GL_ARRAY_BUFFER, font.VBO);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), &vertices);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(0));
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
 			// Advance cursors for next glyph
@@ -657,7 +660,7 @@ void R_GL_RenderFonts()
 		rendercmd_iterator = text_render_commands_buffer.erase(rendercmd_iterator);
 	}
 
-	// glEnable(GL_CULL_FACE);
+	glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
 }
 
@@ -800,9 +803,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 	R_BufferRenderCmd(TextRenderCmd("Tr2n", "Fucking WHAT", 0, 100, 1.0f, glm::vec3(0.2f, 0.5f, 1.0f)));
 
 	R_GL_RenderSkybox();
-	glDepthMask(GL_FALSE);
 	R_GL_RenderFonts();
-	glDepthMask(GL_TRUE);
 }
 
 void R_Render(std::mutex &state_mutex, float interpolation_time)
@@ -822,15 +823,15 @@ void R_Render(std::mutex &state_mutex, float interpolation_time)
 
 void R_GL_Initialize()
 {
-	glGenVertexArrays(graphx::rendering::VAOS_AMOUNT, &VAOs[graphx::rendering::VAO_DEFAULT]);
+	glGenVertexArrays(graphx::rendering::VAOS_AMOUNT, VAOs.data());
 
-	shaders[graphx::rendering::SHADER_DEFAULT] = GLShader(blinn_phong_vert, blinn_phong_frag);
-	shaders[graphx::rendering::SHADER_FONTS_2D] = GLShader(font2d_vert, font2d_frag);
-	shaders[graphx::rendering::SHADER_FONTS_3D] = GLShader(font3d_vert, font3d_frag);
-	shaders[graphx::rendering::SHADER_SKYBOX] = GLShader(skybox_vert, skybox_frag);
-	shaders[graphx::rendering::SHADER_DEBUG_FULLBRIGHT] = GLShader(blinn_phong_vert, light_debug_frag);
-	shaders[graphx::rendering::SHADER_DEBUG_NORMALS] = GLShader(blinn_phong_vert, debug_normals_frag);
-	shaders[graphx::rendering::SHADER_DEBUG_VERTEX_COLORS] = GLShader(blinn_phong_vert, debug_vertex_colors_frag);
+	shaders[graphx::rendering::SHADER_DEFAULT] = GLShader(blinn_phong_vert, blinn_phong_frag, "SHADER_DEFAULT");
+	shaders[graphx::rendering::SHADER_FONTS_2D] = GLShader(font2d_vert, font2d_frag, "SHADER_FONTS_2D");
+	shaders[graphx::rendering::SHADER_FONTS_3D] = GLShader(font3d_vert, font3d_frag, "SHADER_FONTS_3D");
+	shaders[graphx::rendering::SHADER_SKYBOX] = GLShader(skybox_vert, skybox_frag, "SHADER_SKYBOX");
+	shaders[graphx::rendering::SHADER_DEBUG_FULLBRIGHT] = GLShader(blinn_phong_vert, light_debug_frag, "SHADER_DEBUG_FULLBRIGHT");
+	shaders[graphx::rendering::SHADER_DEBUG_NORMALS] = GLShader(blinn_phong_vert, debug_normals_frag, "SHADER_DEBUG_NORMALS");
+	shaders[graphx::rendering::SHADER_DEBUG_VERTEX_COLORS] = GLShader(blinn_phong_vert, debug_vertex_colors_frag, "SHADER_DEBUG_VERTEX_COLORS");
 }
 
 void R_InitializeRenderingAPI()

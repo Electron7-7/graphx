@@ -7,6 +7,12 @@
 //
 // GLShader
 //
+GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code, std::string init_debug_name)
+: GLShader(vertex_shader_code, fragment_shader_code)
+{
+	debug_name = init_debug_name;
+}
+
 GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
 {
 	const char *v_shader_code = vertex_shader_code.c_str();
@@ -60,6 +66,11 @@ template<> void GLShader::setUniform<int>(const std::string &name, int value) co
 template<> void GLShader::setUniform<float>(const std::string &name, float value) const
 {
 	glProgramUniform1f(id, glGetUniformLocation(id, name.c_str()), value);
+}
+
+template<> void GLShader::setUniform<glm::vec2>(const std::string &name, glm::vec2 value) const
+{
+	glProgramUniform2fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value));
 }
 
 template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const

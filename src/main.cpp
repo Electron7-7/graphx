@@ -24,6 +24,7 @@ std::mutex actor_state_mutex;
 
 static int TICKRATE = 120;
 
+// Todo: put this in `graphx_namespace.hpp`
 int current_tick_since_second = 0;
 long current_tick_since_start = 0;
 double last_tick_timestamp = 0;
@@ -136,10 +137,10 @@ int main()
 	//------------------------------------------------------------------
 	// Sparse and malnourished cleanup code (it barely does anything...)
 	//------------------------------------------------------------------
+	FT_Done_FreeType(freetype); // Todo: make a release function for FreeType
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-	FT_Done_FreeType(freetype); // Todo: make a release function for FreeType
 	game_logic_main_thread.join();
 	glfwTerminate();
 	return 0;
