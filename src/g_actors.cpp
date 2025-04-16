@@ -254,7 +254,8 @@ Label::Label(std::string init_name, Actor *init_parent)
 
 RenderCommands Label::getRenderCommands()
 {
-	RenderCommands render_commands = Actor::getRenderCommands();
+	// RenderCommands render_commands = Actor::getRenderCommands();
+	RenderCommands render_commands;
 	render_commands.text_render_command = text_render_command;
 	render_commands.text_render_command.current_render_state = &current_state_buffer[state_index];
 	render_commands.text_render_command.previous_render_state = &previous_state_buffer[state_index];

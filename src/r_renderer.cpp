@@ -613,6 +613,7 @@ void R_GL_RenderFonts()
 			model_matrix = glm::scale(model_matrix, rendercmd_iterator->current_render_state->render_scale);
 			shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("model_matrix", model_matrix);
 			shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("text_color", rendercmd_iterator->color);
+			shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("text_scale", rendercmd_iterator->scale);
 			glUseProgram(shaders[graphx::rendering::SHADER_FONTS_3D].id);
 		}
 		else
@@ -640,8 +641,6 @@ void R_GL_RenderFonts()
 				x_position + width, y_position         , 1.0f, 1.0f,
 				x_position + width, y_position + height, 1.0f, 0.0f,
 			};
-
-			shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("glyph_scale", glm::vec2(width, height));
 
 			glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
 			glBindTextureUnit(0, character.texture_id);

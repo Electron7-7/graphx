@@ -63,7 +63,7 @@ Label (Label3D)
 	Mesh <LabelMesh>
 	Font (Verdana)
 	Color (1.0, 0.2, 0.8)
-	Text (ABCD)
+	Text (Hello, I am a Label)
 	Position (2, 3, -12)
 	TextPosition (0,0)
 	TextScale (1)
