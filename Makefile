@@ -144,7 +144,7 @@ eval_test:
 	$(eval TESTRUN_LINUX = $(TEST_LINUX))
 	$(eval TESTRUN_WINDOWS = $(TEST_WINDOWS))
 
-debug: rebuild_shaders
+debug: rebuild_shaders rebuild_theatres
 	$(info Version: Debug)
 	$(eval LINUX := GraphXDebug)
 	$(eval WINDOWS := GraphXDebug.exe)

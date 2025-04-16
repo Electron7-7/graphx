@@ -9,6 +9,7 @@ uniform vec3 text_color;
 
 void main()
 {
+	FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 	float glyph_shape = texture(glyph_texture, vertex_uv).r;
 	if(glyph_shape < 0.5)
 		discard;

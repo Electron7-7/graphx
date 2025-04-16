@@ -68,6 +68,17 @@ Label (Label3D)
 	TextPosition (0,0)
 	TextScale (1)
 }
+Label (Label3D)
+{
+	Mesh <LabelMesh>
+	Font (Verdana)
+	Color (1.0, 0.2, 0.8)
+	// Text (I am also a Label, hi)
+	Text (A)
+	Position (2, 1, -12)
+	TextPosition (0,0)
+	TextScale (0.5)
+}
 Actor (Suzanne_Tester)
 {
 	Mesh:Material <OBJ_Mesh>:<Suzanne_Mat>

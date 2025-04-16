@@ -594,8 +594,9 @@ void R_GL_RenderFonts()
 
 	// Todo: find out if it's worth it to take these out of the for loop
 	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
+	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("ortho_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
 	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
-	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("projection_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
+	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("ortho_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
 
 	for(auto rendercmd_iterator = text_render_commands_buffer.begin() ; rendercmd_iterator != text_render_commands_buffer.end() ;)
 	{
