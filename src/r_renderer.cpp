@@ -49,7 +49,6 @@ std::map<std::string, Texture> texture_storage =
 	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png, SOURCE_ORANGE_png_len)},
 };
 
-
 GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -382,8 +381,6 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 	FT_Set_Pixel_Sizes(new_face, 0, 48);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	FT_GlyphSlot glyph_slot = new_face->glyph;
-
 	font_map[font_name] = Font(font_name);
 
 	for(unsigned char character = 0 ; character < 128 ; character++)
@@ -394,18 +391,19 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 			continue;
 		}
 
+		FT_GlyphSlot glyph_slot = new_face->glyph;
 		FT_Render_Glyph(glyph_slot, FT_RENDER_MODE_SDF);
 
 		unsigned int texture_id;
 		glGenTextures(1, &texture_id);
 		glBindTexture(GL_TEXTURE_2D, texture_id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, new_face->glyph->bitmap.buffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, glyph_slot->bitmap.width, glyph_slot->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, glyph_slot->bitmap.buffer);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		font_map.at(font_name).character_set[character] = Character(texture_id, new_face->glyph->bitmap.width, new_face->glyph->bitmap.rows, new_face->glyph->bitmap_left, new_face->glyph->bitmap_top, static_cast<int>(new_face->glyph->advance.x));
+		font_map.at(font_name).character_set[character] = Character(texture_id, glyph_slot->bitmap.width, glyph_slot->bitmap.rows, glyph_slot->bitmap_left, glyph_slot->bitmap_top, static_cast<int>(glyph_slot->advance.x));
 	}
 
 	FT_Done_Face(new_face);

@@ -80,6 +80,7 @@ int main()
 	F_LoadFont("src/fonts/Arial.ttf", "Arial");
 	F_LoadFont("src/fonts/Verdana.ttf", "Verdana");
 	F_LoadFont("src/fonts/Tr2n.ttf", "Tr2n");
+	F_LoadFont("src/fonts/Audiowide-Regular.ttf", "Audiowide");
 
 	std::thread game_logic_main_thread(gameTick, main_window);
 
@@ -213,7 +214,8 @@ void gameTick(GLFWwindow *main_window)
 
 			for(Actor *actor : getCurrentTheatre()->troupe)
 			{
-				actor->processInput(main_window);
+				if(!ImGui::GetIO().WantCaptureKeyboard)
+					actor->processInput(main_window);
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
@@ -306,7 +308,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 		case USE_FULLBRIGHT:
 			debug_render_switches = USE_FULLBRIGHT;
-			PRINTNOTE("Shader Debug Focus: mat_fullbright       ;3")
+			PRINTNOTE("Shader Debug Focus: mat_fullbright ;3")
 			break;
 		case USE_NORMALS:
 			debug_render_switches = USE_NORMALS;

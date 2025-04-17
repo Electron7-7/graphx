@@ -14,6 +14,7 @@ struct gMeshData;
 
 struct GraphXConsole
 {
+public:
 	bool active;
 	bool secondary_active;
 	bool tertiary_active;
@@ -25,18 +26,17 @@ struct GraphXConsole
 	GraphXConsole();
 
 	void updateFrame(GLFWwindow *window);
-	void displayActorDebugger();
 	void displayTheatreData();
 	bool justClosed();
 
 private:
 	bool was_active;
-	bool actor_select_by_name = true;
-	bool actor_select_by_uid = false;
+	bool keep_debug_labels_on = false;
 	bool actor_selection_made = false;
 	bool actor_selection_valid = false;
 	Actor *actor = nullptr;
-	std::string actor_selection = "";
+	std::string actor_name_selection = "";
+	std::string actor_uid_selection = "";
 	std::string error_string = "";
 };
 

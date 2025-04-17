@@ -171,15 +171,17 @@ RenderCommands Actor::getRenderCommands()
 		render_commands.render_command.mesh_data_name = ""; // So that RenderCmd::isValid returns false (might wanna make this a bit more sophisticated, later)
 	}
 
+	// Debug label!
 	if(graphx::debug::actor_debug_menu_open && my_type != graphx::classes::LABEL && visible)
 	{ // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
 		TextRenderCmd text_command;
-		text_command.font_name = "Arial";
-		text_command.text = std::string("Type: " + std::string(my_type.name) + "\nName: " + name + "\nUID: " + std::to_string(UID));
+		text_command.font_name = "Verdana";
+		text_command.text = std::string("Name: " + name + "\nType: " + std::string(my_type.name) + "\nUID: " + std::to_string(UID));
 		text_command.color = my_type.debugging_color;
 		text_command.scale = graphx::debug::actor_debug_menu_text_scale;
 		text_command.render_state = &current_state_buffer[state_index];
-		text_command.position_y = 4.0f;
+		text_command.position_y = -25.0f;
+		text_command.position_x = 50.0f;
 		text_command.is_debug_label = true;
 
 		R_BufferRenderCmd(text_command);

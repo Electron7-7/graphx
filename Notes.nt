@@ -2284,3 +2284,5 @@ Okay, I have an "Actor Debugging" button in the debug menu and the panel it open
 Implemented newlines in rendered text.
 
 Did a lot of work on the debugger. You can now pick Actors based on name or UID and change their position, scale, and rotation.
+
+Real quickly, the font size is relevant to the window size which it shouldn't be.
