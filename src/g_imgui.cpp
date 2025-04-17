@@ -123,7 +123,7 @@ void GraphXConsole::displayActorDebugger()
 
 	if(actor_selection_made && actor_selection_valid)
 	{
-		IMGUI::Begin("Actor Info", &actor_selection_made);
+		IMGUI::Begin("Actor Info", &actor_selection_made, window_flags);
 		IMGUI::Text(std::string("Name: " + actor->getName()).c_str(), "%s");
 		IMGUI::Text(std::string("Type: " + std::string(actor->getType().name)).c_str(), "%s");
 		IMGUI::Text(std::string("UID: "  + std::to_string(actor->getUID())).c_str(), "%s");
@@ -133,11 +133,11 @@ void GraphXConsole::displayActorDebugger()
 		std::vector<float> position_scalars = actor->getPosition<std::vector<float>>();
 		std::vector<float> rotation_scalars = actor->getRotationDegrees<std::vector<float>>();
 		std::vector<float> scale_scalars = {actor->scale.x, actor->scale.y, actor->scale.z};
-		if(IMGUI::DragFloat3("Position", position_scalars.data(), -100.0f, 100.0f))
+		if(IMGUI::DragFloat3("Position", position_scalars.data(), -0.1f, -100.0f, 100.0f))
 			actor->setGlobalPosition(glm::vec3(position_scalars[0], position_scalars[1], position_scalars[2]));
-		if(IMGUI::DragFloat3("Rotation", rotation_scalars.data(), -100.0f, 100.0f))
-			actor->setGlobalRotation(glm::radians(glm::vec3(position_scalars[0], position_scalars[1], position_scalars[2])));
-		if(IMGUI::DragFloat3("Scale", scale_scalars.data(), -100.0f, 100.0f))
+		if(IMGUI::DragFloat3("Rotation", rotation_scalars.data(), -0.1f, -100.0f, 100.0f))
+			actor->setGlobalRotation(glm::radians(glm::vec3(rotation_scalars[0], rotation_scalars[1], rotation_scalars[2])));
+		if(IMGUI::DragFloat3("Scale", scale_scalars.data(), -0.1f, -100.0f, 100.0f))
 			actor->scale = glm::vec3(scale_scalars[0], scale_scalars[1], scale_scalars[2]);
 		// Todo: finish this shit, lol
 		IMGUI::End();
