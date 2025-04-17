@@ -19,7 +19,9 @@ struct Environment
 
 struct Material
 {
+	// Todo: combine color and alpha into a vec4
 	vec3 diffuse_color;
+	float alpha;
 	sampler2D texture_diffuse;
 
 	// Until I implement metallic, roughness, etc I'll just directly affect the specular
@@ -87,6 +89,9 @@ void main()
 	for(int i = 0 ; i < spot_lights_count ; i++)
 		output_color += calculateSpotLight(spot_lights[i]);
 
+	// Todo: once more than one material is supported, make sure that the alpha isn't just affected by one
+	if(current_material.alpha < 0.5f)
+		discard; // THIS IS A HACK FIX AND WILL BE REPLACED ONCE I HAVE PROPER TRANSPARENCY WORKING!!!!
 	FragColor = vec4(output_color, 1.0f);
 }
 
@@ -250,12 +255,17 @@ in vec2 vertex_uv;
 
 out vec4 FragColor;
 
+uniform bool is_debug;
 uniform sampler2D glyph_texture;
 uniform vec3 text_color;
 
 void main()
 {
-	FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	if(is_debug)
+	{
+		FragColor = vec4(vec3(0.0f), 1.0f);
+		return;
+	}
 	float glyph_shape = texture(glyph_texture, vertex_uv).r;
 	if(glyph_shape < 0.5)
 		discard;
@@ -271,6 +281,7 @@ layout (location = 1) in vec2 _vertex_uv;
 out vec2 vertex_uv;
 
 uniform float text_scale;
+uniform float z_offset;
 
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
@@ -280,7 +291,7 @@ uniform mat4 ortho_matrix;
 void main()
 {
 	// Todo: maybe change `/ text_scale` to `* text_scale`
-	gl_Position = projection_matrix * view_matrix * model_matrix * ortho_matrix * vec4(_vertex_position * text_scale, 0.0f, 1.0f);
+	gl_Position = projection_matrix * view_matrix * model_matrix * ortho_matrix * vec4(_vertex_position * text_scale, z_offset-0.1f, 1.0f);
 	vertex_uv = _vertex_uv.xy;
 }
 )~";

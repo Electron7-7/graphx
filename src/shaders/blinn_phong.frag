@@ -17,7 +17,9 @@ struct Environment
 
 struct Material
 {
+	// Todo: combine color and alpha into a vec4
 	vec3 diffuse_color;
+	float alpha;
 	sampler2D texture_diffuse;
 
 	// Until I implement metallic, roughness, etc I'll just directly affect the specular
@@ -85,6 +87,9 @@ void main()
 	for(int i = 0 ; i < spot_lights_count ; i++)
 		output_color += calculateSpotLight(spot_lights[i]);
 
+	// Todo: once more than one material is supported, make sure that the alpha isn't just affected by one
+	if(current_material.alpha < 0.5f)
+		discard; // THIS IS A HACK FIX AND WILL BE REPLACED ONCE I HAVE PROPER TRANSPARENCY WORKING!!!!
 	FragColor = vec4(output_color, 1.0f);
 }
 

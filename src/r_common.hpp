@@ -93,6 +93,7 @@ struct Material final : public Device
 	std::string specular_texture_name = MISSING_TEXTURE;
 
 	glm::vec3 color = glm::vec3(1.0f);
+	float color_alpha = 1.0f;
 	int specular_sharpness = 16;
 	float specular_strength = 1.0f;
 	bool mat_fullbright = false;
@@ -228,10 +229,7 @@ struct LightRenderCmd
 {
 public:
 	LightData light_data;
-	// RenderState *current_render_state = nullptr;
-	// RenderState *previous_render_state = nullptr;
 	graphx::gClass light_type = graphx::gClass::INVALID_TYPE;
-	// bool render_debug_mesh = false;
 
 	bool isValid() const;
 };
@@ -245,9 +243,6 @@ public:
 	RenderState *previous_render_state = nullptr;
 	Material mesh_material; // Todo: make this a reference
 
-	// RenderCmd() = default;
-	// RenderCmd(LightRenderCmd &light_render_command, glm::vec3 light_debug_material_color);
-
 	bool isValid() const;
 };
 
@@ -260,9 +255,8 @@ public:
 	float position_y = 0.0f;
 	float scale = 0.0f;
 	glm::vec3 color = glm::vec3(0.0f);
-
-	RenderState *current_render_state = nullptr;
-	RenderState *previous_render_state = nullptr;
+	bool is_debug_label = false;
+	RenderState *render_state = nullptr;
 
 	TextRenderCmd() = default;
 	TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);

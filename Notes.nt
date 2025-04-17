@@ -2269,3 +2269,18 @@ HOLY FUCK I GOT IT WORKING!!! Yeah, it was totally because I forgot that since I
 Last minute fix to the scaling; just did a hardcoded scaling by 100 LMFAO!
 
 Final note: I've figured out what I think is almost the perfect solution; for 3D, I multiply by the orthographic matrix, then the other 3. This lets me use the position and size variables that I used for 2D text, and it renders pretty fucking well! Just some edges to smooth out regarding scaling and I should be good!
+
+[04/16/25]
+I kind of want to clean up the 3D text code, but I don't want to spend more than 30 minutes on it.
+
+To keep the label hidden from the text, I can either make the label transparent or render the text ever so slightly in front of it (or have an option for either). This means giving Material vec4 support.
+
+Ugh, I'm fiddling; last thing I wanna do is make sure that the Label's scale doesn't affect the text's scale.
+
+All right, on to something else; I want to make that debug menu I was thinking about. I want to give every Actor a Label that floats above it and displays the name I can type/select in the debug menu to select that Actor.
+
+Okay, I have an "Actor Debugging" button in the debug menu and the panel it opens has a slider for changing the debug label text size. The debug label text also renders a black background to help distinguish the many labels on screen. This is done with two uniforms in the shader; one float for the z-offset, and one boolean that tells the fragment shader to just return black.
+
+Implemented newlines in rendered text.
+
+Did a lot of work on the debugger. You can now pick Actors based on name or UID and change their position, scale, and rotation.

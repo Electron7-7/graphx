@@ -109,7 +109,6 @@ int main()
 	while(!glfwWindowShouldClose(main_window))
 	{
 		W_SwapAndClear(main_window, glm::vec4(0.7f, 0.5f, 0.5f, 1.0f));
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();

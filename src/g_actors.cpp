@@ -47,6 +47,11 @@ std::string Actor::getName()
 	return name;
 }
 
+template<> std::vector<float> Actor::getPosition()
+{
+	return {position_global.x + position_local.x, position_global.y + position_local.y, position_global.z + position_local.z};
+}
+
 template<> glm::vec3 Actor::getPosition()
 {
 	return position_global + position_local;
@@ -55,6 +60,12 @@ template<> glm::vec3 Actor::getPosition()
 template<> JPH::Vec3 Actor::getPosition()
 {
 	return gmath::convertMath<JPH::Vec3>(position_global) + gmath::convertMath<JPH::Vec3>(position_local);
+}
+
+template<> std::vector<float> Actor::getRotation()
+{
+	glm::vec3 the_euler_angles = glm::eulerAngles(quaternion * local_quaternion);
+	return {the_euler_angles.x, the_euler_angles.y, the_euler_angles.z};
 }
 
 template<> glm::vec3 Actor::getRotation()
@@ -77,62 +88,68 @@ template<> JPH::Quat Actor::getRotation()
 	return gmath::convertMath<JPH::Quat>(quaternion) * gmath::convertMath<JPH::Quat>(local_quaternion);
 }
 
-template<> void Actor::setGlobalPosition(glm::vec3 new_value)
+template<> std::vector<float> Actor::getRotationDegrees()
+{
+	glm::vec3 the_euler_angles = glm::degrees(glm::eulerAngles(quaternion * local_quaternion));
+	return {the_euler_angles.x, the_euler_angles.y, the_euler_angles.z};
+}
+
+void Actor::setGlobalPosition(glm::vec3 new_value)
 {
 	position_global = new_value;
 }
 
-template<> void Actor::setGlobalPosition(JPH::Vec3 new_value)
+void Actor::setGlobalPosition(JPH::Vec3 new_value)
 {
 	position_global = gmath::convertMath<glm::vec3>(new_value);
 }
 
-template<> void Actor::setGlobalRotation(glm::quat new_value)
+void Actor::setGlobalRotation(glm::quat new_value)
 {
 	quaternion = new_value;
 }
 
-template<> void Actor::setGlobalRotation(JPH::Quat new_value)
+void Actor::setGlobalRotation(JPH::Quat new_value)
 {
 	quaternion = gmath::convertMath<glm::quat>(new_value);
 }
 
-template<> void Actor::setGlobalRotation(glm::vec3 new_value)
+void Actor::setGlobalRotation(glm::vec3 new_value)
 {
 	quaternion = glm::quat(new_value);
 }
 
-template<> void Actor::setGlobalRotation(JPH::Vec3 new_value)
+void Actor::setGlobalRotation(JPH::Vec3 new_value)
 {
 	quaternion = glm::quat(gmath::convertMath<glm::vec3>(new_value));
 }
 
-template<> void Actor::setLocalPosition(glm::vec3 new_value)
+void Actor::setLocalPosition(glm::vec3 new_value)
 {
 	position_local = new_value;
 }
 
-template<> void Actor::setLocalPosition(JPH::Vec3 new_value)
+void Actor::setLocalPosition(JPH::Vec3 new_value)
 {
 	position_local = gmath::convertMath<glm::vec3>(new_value);
 }
 
-template<> void Actor::setLocalRotation(glm::quat new_value)
+void Actor::setLocalRotation(glm::quat new_value)
 {
 	local_quaternion = new_value;
 }
 
-template<> void Actor::setLocalRotation(JPH::Quat new_value)
+void Actor::setLocalRotation(JPH::Quat new_value)
 {
 	local_quaternion = gmath::convertMath<glm::quat>(new_value);
 }
 
-template<> void Actor::setLocalRotation(glm::vec3 new_value)
+void Actor::setLocalRotation(glm::vec3 new_value)
 {
 	local_quaternion = glm::quat(new_value);
 }
 
-template<> void Actor::setLocalRotation(JPH::Vec3 new_value)
+void Actor::setLocalRotation(JPH::Vec3 new_value)
 {
 	local_quaternion = glm::quat(gmath::convertMath<glm::vec3>(new_value));
 }
@@ -152,6 +169,20 @@ RenderCommands Actor::getRenderCommands()
 	{
 		// Todo: change this
 		render_commands.render_command.mesh_data_name = ""; // So that RenderCmd::isValid returns false (might wanna make this a bit more sophisticated, later)
+	}
+
+	if(graphx::debug::actor_debug_menu_open && my_type != graphx::classes::LABEL && visible)
+	{ // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
+		TextRenderCmd text_command;
+		text_command.font_name = "Arial";
+		text_command.text = std::string("Type: " + std::string(my_type.name) + "\nName: " + name + "\nUID: " + std::to_string(UID));
+		text_command.color = my_type.debugging_color;
+		text_command.scale = graphx::debug::actor_debug_menu_text_scale;
+		text_command.render_state = &current_state_buffer[state_index];
+		text_command.position_y = 4.0f;
+		text_command.is_debug_label = true;
+
+		R_BufferRenderCmd(text_command);
 	}
 
 	return(render_commands);
@@ -255,11 +286,11 @@ Label::Label(std::string init_name, Actor *init_parent)
 RenderCommands Label::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
+	render_commands.render_command.mesh_material.color_alpha = label_alpha;
+	text_render_command.render_state = &current_state_buffer[state_index];
 	text_render_command.position_x = position_global.x;
 	text_render_command.position_y = position_global.y;
 	render_commands.text_render_command = text_render_command;
-	render_commands.text_render_command.current_render_state = &current_state_buffer[state_index];
-	render_commands.text_render_command.previous_render_state = &previous_state_buffer[state_index];
 	return render_commands;
 }
 
@@ -287,6 +318,8 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 	 *   versions of the same setting be used, the one that wins is the one that looks more intentional, hopefully
 	 *   avoiding confusion.
 	*/
+	getSetting(label_alpha, settings["Transparency"]);
+	getSetting(label_alpha, settings["Alpha"]);
 	getSetting(text_render_command.font_name, settings["Font"]);
 	getSetting(text_render_command.font_name, settings["FontName"]);
 	getSetting(text_render_command.color, settings["Color"]);
@@ -307,6 +340,20 @@ PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 ini
 : Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
 {
 	my_type = graphx::classes::PHYSICSACTOR;
+}
+
+void PhysicsActor::setGlobalPosition(glm::vec3 new_value)
+{
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	body_interface.SetPosition(collider->getBodyID(), gmath::convertMath<JPH::Vec3>(new_value), JPH::EActivation::Activate);
+}
+
+void PhysicsActor::setGlobalRotation(glm::vec3 new_value)
+{
+	glm::quat new_quaternion(new_value);
+	JPH::Quat new_new_quaternion = gmath::convertMath<JPH::Quat>(new_quaternion);
+	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+	body_interface.SetRotation(collider->getBodyID(), new_new_quaternion, JPH::EActivation::Activate);
 }
 
 bool PhysicsActor::isPhysicsActor()

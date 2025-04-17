@@ -44,11 +44,20 @@ public:
 
 	template<typename T> T getPosition();
 	template<typename T> T getRotation();
+	template<typename T> T getRotationDegrees();
 
-	template<typename T> void setGlobalPosition(T new_value);
-	template<typename T> void setGlobalRotation(T new_value);
-	template<typename T> void setLocalPosition(T new_value);
-	template<typename T> void setLocalRotation(T new_value);
+	virtual void setGlobalPosition(glm::vec3 new_value);
+	virtual void setGlobalPosition(JPH::Vec3 new_value);
+	virtual void setLocalPosition(glm::vec3 new_value);
+	virtual void setLocalPosition(JPH::Vec3 new_value);
+	virtual void setGlobalRotation(glm::vec3 new_value);
+	virtual void setGlobalRotation(glm::quat new_value);
+	virtual void setGlobalRotation(JPH::Vec3 new_value);
+	virtual void setGlobalRotation(JPH::Quat new_value);
+	virtual void setLocalRotation(glm::vec3 new_value);
+	virtual void setLocalRotation(glm::quat new_value);
+	virtual void setLocalRotation(JPH::Vec3 new_value);
+	virtual void setLocalRotation(JPH::Quat new_value);
 
 	long getUID();
 	void setUID(long manual_uid);

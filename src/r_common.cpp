@@ -264,6 +264,7 @@ void Material::loadSettings(graphx::gSettings new_settings)
 	getSetting(diffuse_texture_name, settings["DiffuseTexture"]);
 	getSetting(specular_texture_name, settings["SpecularTexture"]);
 	getSetting(color, settings["Color"]);
+	getSetting(color_alpha, settings["Alpha"]);
 	getSetting(specular_sharpness, settings["SpecularSharpness"]);
 	getSetting(specular_strength, settings["SpecularStrength"]);
 	getSetting(mat_fullbright, settings["mat_fullbright"]);
@@ -593,5 +594,5 @@ bool TextRenderCmd::isValid() const
 
 bool TextRenderCmd::is3D() const
 {
-	return (current_render_state != nullptr || previous_render_state != nullptr);
+	return (render_state != nullptr);
 }

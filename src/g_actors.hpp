@@ -20,7 +20,7 @@ class Label : public Actor
 {
 public:
 	Actor *parent = nullptr;
-	TextRenderCmd text_render_command;
+	float label_alpha = 0.0f;
 
 	Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
 
@@ -30,6 +30,7 @@ public:
 
 protected:
 	Sprite label_mesh = Sprite();
+	TextRenderCmd text_render_command;
 };
 
 class PhysicsActor: public Actor
@@ -40,6 +41,9 @@ public:
 	float mass = 1.0f; // in kg
 
 	PhysicsActor(std::string init_name = "Untitled Physics Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+
+	void setGlobalPosition(glm::vec3 new_value) override final;
+	void setGlobalRotation(glm::vec3 new_value) override final;
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;

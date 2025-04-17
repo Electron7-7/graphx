@@ -1,5 +1,7 @@
 #include "g_imgui.hpp"
 #include "g_common.hpp"
+#include "imgui_stdlib.h"
+#include "models.hpp"
 
 namespace IMGUI = ImGui;
 
@@ -29,11 +31,13 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	if(tertiary_active)
 		displayTheatreData();
 
-	if(!active)
-		return;
-
 	if(secondary_active)
 		displayActorDebugger();
+	else
+		graphx::debug::actor_debug_menu_open = false;
+
+	if(!active)
+		return;
 
 	was_active = active;
 #ifndef GRAPHX_DEBUG
@@ -42,7 +46,7 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 #endif
 	IMGUI::Begin(name.c_str(), &active, ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus);
 	IMGUI::Text("%s", std::string("Currently Loaded Theatre: " + current_theatre->name).c_str());
-	if(IMGUI::Button("Toggle Theatre Printout"))
+	if(IMGUI::Button("Toggle Actor Debugger"))
 		secondary_active = !secondary_active;
 	IMGUI::SameLine();
 	if(IMGUI::Button("Toggle GraphXTheatre Printout"))
@@ -50,48 +54,100 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	IMGUI::End();
 }
 
-/*void GraphXConsole::displayTheatre()
+void GraphXConsole::displayActorDebugger()
 {
+	graphx::debug::actor_debug_menu_open = true;
 	if(current_theatre == nullptr || !current_theatre->name.compare("Untitled Theatre"))
 		return;
 	std::string name(current_theatre->name + " - Actors");
 #ifndef GRAPHX_DEBUG
-	IMGUI::SetNextWindowSize(ImVec2(510, 485), ImGuiCond_Once);
-	IMGUI::SetNextWindowPos(ImVec2(35, 220), ImGuiCond_Once);
+	IMGUI::SetNextWindowSize(ImVec2(510, 125), ImGuiCond_Once);
+	IMGUI::SetNextWindowPos(ImVec2(35, 100), ImGuiCond_Once);
 #endif
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoInputs;
 	if(active)
 		window_flags = ImGuiWindowFlags_None;
-	if(theatre_name.compare(getCurrentTheatre()->name))
-	{
-		theatre_name = getCurrentTheatre()->name;
-		actor_id_dump = getCurrentTheatre()->dumpActorIDs();
-	}
 	IMGUI::Begin(name.c_str(), &secondary_active, window_flags);
-	IMGUI::Text("Actors:");
-	for(long actor_id : actor_id_dump)
+	IMGUI::SliderFloat("Debug Label Size", &graphx::debug::actor_debug_menu_text_scale, 0.0f, 10.0f, "%.2f");
+	if(IMGUI::Button("Select Actor by Name"))
 	{
-		if(getCurrentTheatre()->dropping_curtains)
+		actor_select_by_name = !actor_select_by_name;
+		actor_select_by_uid = !actor_select_by_name;
+	}
+	if(IMGUI::Button("Select Actor by UID"))
+	{
+		actor_select_by_uid = !actor_select_by_uid;
+		actor_select_by_name = !actor_select_by_uid;
+	}
+	if(actor_select_by_name)
+	{
+		IMGUI::InputText("Actor Name", &actor_selection);
+		IMGUI::SameLine();
+		if(IMGUI::Button("Get Actor!"))
 		{
-			IMGUI::End();
-			return;
+			actor_selection_made = true;
+			actor_selection_valid = !(actor_selection.empty() || current_theatre->getActor(actor_selection) == nullptr);
+			if(!actor_selection_valid)
+				error_string = "Invalid Actor Name!";
+			else
+				actor = current_theatre->getActor(actor_selection);
 		}
-		IMGUI::PushID(actor_id);
-		Actor *actor = getCurrentTheatre()->getActor(actor_id);
-		std::string actor_banner(std::string(actor->getType().name) + " \"" + actor->getName() + "\"");
-		glm::vec3 actor_position = actor->getPosition<glm::vec3>();
-		std::vector<float> position_scalars = {actor_position.x, actor_position.y, actor_position.z};
-		IMGUI::Text("%s", actor_banner.c_str());
-		if(IMGUI::DragFloat3("Global Position", position_scalars.data(), 1.0f, -1000.0, 1000.0))
-			actor->setGlobalPosition(glm::vec3(position_scalars[0],position_scalars[1],position_scalars[2]));
-		IMGUI::PopID();
+	}
+	if(actor_select_by_uid)
+	{
+		IMGUI::InputText("Actor UID", &actor_selection);
+		IMGUI::SameLine();
+		if(IMGUI::Button("Get Actor!"))
+		{
+			actor_selection_made = true;
+			actor_selection_valid = true;
+			try
+			{
+				std::stod(actor_selection);
+			}
+			catch (std::invalid_argument const &exception)
+			{
+				PRINTERR("GraphXConsole::displayActorDebugger - std::stod(actor_selection) threw an exception!");
+				actor_selection_valid = false;
+			}
+
+			if(actor_selection_valid && current_theatre->getActor(std::stod(actor_selection)) != nullptr)
+				actor = current_theatre->getActor(std::stod(actor_selection));
+			else
+			{
+				actor_selection_valid = false;
+				error_string = "Invalid Actor UID!";
+			}
+		}
+	}
+
+	if(actor_selection_made && actor_selection_valid)
+	{
+		IMGUI::Begin("Actor Info", &actor_selection_made);
+		IMGUI::Text(std::string("Name: " + actor->getName()).c_str(), "%s");
+		IMGUI::Text(std::string("Type: " + std::string(actor->getType().name)).c_str(), "%s");
+		IMGUI::Text(std::string("UID: "  + std::to_string(actor->getUID())).c_str(), "%s");
+		IMGUI::Separator();
+		if(IMGUI::Button("Toggle Visibility"))
+			actor->visible = !actor->visible;
+		std::vector<float> position_scalars = actor->getPosition<std::vector<float>>();
+		std::vector<float> rotation_scalars = actor->getRotationDegrees<std::vector<float>>();
+		std::vector<float> scale_scalars = {actor->scale.x, actor->scale.y, actor->scale.z};
+		if(IMGUI::DragFloat3("Position", position_scalars.data(), -100.0f, 100.0f))
+			actor->setGlobalPosition(glm::vec3(position_scalars[0], position_scalars[1], position_scalars[2]));
+		if(IMGUI::DragFloat3("Rotation", rotation_scalars.data(), -100.0f, 100.0f))
+			actor->setGlobalRotation(glm::radians(glm::vec3(position_scalars[0], position_scalars[1], position_scalars[2])));
+		if(IMGUI::DragFloat3("Scale", scale_scalars.data(), -100.0f, 100.0f))
+			actor->scale = glm::vec3(scale_scalars[0], scale_scalars[1], scale_scalars[2]);
+		// Todo: finish this shit, lol
+		IMGUI::End();
+		error_string = "";
+	}
+	if(!actor_selection_valid)
+	{
+		IMGUI::Text(error_string.c_str(), "%s");
 	}
 	IMGUI::End();
-}*/
-
-void GraphXConsole::displayActorDebugger()
-{
-	
 }
 
 void GraphXConsole::displayTheatreData()

@@ -62,22 +62,25 @@ Label (Label3D)
 {
 	Mesh <LabelMesh>
 	Font (Verdana)
-	Color (1.0, 0.2, 0.8)
+	Color (0.2, 0.8, 1.0)
+	Alpha (1.0)
 	Text (Hello, I am a Label)
+	Scale (3,1,1)
 	Position (2, 3, -12)
 	TextPosition (0,0)
-	TextScale (1)
+	TextScale (2)
 }
 Label (Label3D)
 {
 	Mesh <LabelMesh>
 	Font (Verdana)
-	Color (1.0, 0.2, 0.8)
-	// Text (I am also a Label, hi)
-	Text (A)
+	Color (0.2, 0.8, 1.0)
+	Alpha (0.0)
+	Text (I am also a Label, hi)
+	Scale (1,1,1)
 	Position (2, 1, -12)
 	TextPosition (0,0)
-	TextScale (0.5)
+	TextScale (1.7)
 }
 Actor (Suzanne_Tester)
 {

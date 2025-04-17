@@ -1,7 +1,8 @@
-#ifndef GRAPHXnameSPACE
-#define GRAPHXnameSPACE
+#ifndef GRAPHXNAMESPACE
+#define GRAPHXNAMESPACE
 #include "g_common_fwd.hpp"
 #include "r_common_fwd.hpp"
+#include <glm/glm.hpp>
 #include <array>
 #include <any>
 #include <string>
@@ -10,6 +11,12 @@
 
 namespace graphx
 {
+	namespace debug
+	{
+		inline bool actor_debug_menu_open = false;
+		inline float actor_debug_menu_text_scale = 1.8f;
+	}
+
 	struct gClass
 	{
 	public:
@@ -29,10 +36,12 @@ namespace graphx
 		Actor *(*create_new_actor)() = nullptr;
 		Device *(*create_new_device)() = nullptr;
 
+		glm::vec3 debugging_color = glm::vec3(1.0f, 0.3f, 0.83f);
+
 		inline gClass() = default;
-		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)())   : id(init_id), name(init_name), create_new_actor(new_actor_function)   {}
-		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Device*(*new_device_function)()) : id(init_id), name(init_name), create_new_device(new_device_function) {}
-		inline constexpr gClass(const gClass &to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device) {}
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)(), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f))   : id(init_id), name(init_name), create_new_actor(new_actor_function), debugging_color(init_debugging_color)   {}
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Device*(*new_device_function)(), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f)) : id(init_id), name(init_name), create_new_device(new_device_function), debugging_color(init_debugging_color) {}
+		inline constexpr gClass(const gClass &to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device), debugging_color(to_copy.debugging_color) {}
 
 		inline gClass(std::string init_name)
 		{

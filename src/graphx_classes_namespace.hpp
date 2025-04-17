@@ -19,31 +19,31 @@ namespace graphx
 	// If you need more than 1000 IDs for Actors and/or Devices (or you want to change the ranges), you'll need to change gClass::ACTOR_ID_LIMIT & gClass::DEVICE_ID_LIMIT
 	namespace classes
 	{
-		//                             variable            name                  ID    class constructor function
-		//-----------------------------------------------------------------------------------------------------------------
-		inline static constexpr gClass ACTOR            ( "Actor",               1,    &createNewActor<Actor>            );
-		inline static constexpr gClass PHYSICSACTOR     ( "PhysicsActor",        2,    &createNewActor<PhysicsActor>     );
-		inline static constexpr gClass STATICBODYACTOR  ( "StaticBodyActor",     3,    &createNewActor<StaticBodyActor>  );
-		inline static constexpr gClass RIGIDBODYACTOR   ( "RigidBodyActor",      4,    &createNewActor<RigidBodyActor>   );
-		inline static constexpr gClass CAMERA           ( "Camera",              5,    &createNewActor<Camera>           );
-		inline static constexpr gClass GRAPHXPLAYER     ( "GraphXPlayer",        6,    &createNewActor<GraphXPlayer>     );
-		inline static constexpr gClass RAMIEL           ( "Ramiel",              7,    &createNewActor<Ramiel>           );
-		inline static constexpr gClass LABEL            ( "Label",               8,    &createNewActor<Label>            );
+		//                             variable            name                  ID    class constructor function         debugging color (optional)
+		//----------------------------------------------------------------------------------------------------------------------------------------------
+		inline static constexpr gClass ACTOR            ( "Actor",               1,    &createNewActor<Actor>,            glm::vec3(0.4f, 0.6f, 0.8f) );
+		inline static constexpr gClass PHYSICSACTOR     ( "PhysicsActor",        2,    &createNewActor<PhysicsActor>,     glm::vec3(1.0f, 0.2f, 0.1f) );
+		inline static constexpr gClass STATICBODYACTOR  ( "StaticBodyActor",     3,    &createNewActor<StaticBodyActor>,  glm::vec3(1.0f, 0.6f, 0.4f) );
+		inline static constexpr gClass RIGIDBODYACTOR   ( "RigidBodyActor",      4,    &createNewActor<RigidBodyActor>,   glm::vec3(1.0f, 0.6f, 0.1f) );
+		inline static constexpr gClass CAMERA           ( "Camera",              5,    &createNewActor<Camera>,           glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass GRAPHXPLAYER     ( "GraphXPlayer",        6,    &createNewActor<GraphXPlayer>,     glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass RAMIEL           ( "Ramiel",              7,    &createNewActor<Ramiel>,           glm::vec3(0.3f, 0.1f, 1.0f) );
+		inline static constexpr gClass LABEL            ( "Label",               8,    &createNewActor<Label>,            glm::vec3(0.0f, 0.0f, 0.0f) );
 
 		// ALL LIGHT DERIVED CLASSES MUST USE NEGATIVE TYPE IDS IN ORDER FOR graphx::classes::isLight TO WORK
-		inline static constexpr gClass LIGHT            ( "Light",              -1,    &createNewActor<Light>            );
-		inline static constexpr gClass LIGHTDIRECTIONAL ( "LightDirectional",   -2,    &createNewActor<LightDirectional> );
-		inline static constexpr gClass LIGHTSPOT        ( "LightSpot",          -3,    &createNewActor<LightSpot>        );
-		inline static constexpr gClass LIGHTFLASHLIGHT  ( "LightFlashlight",    -4,    &createNewActor<LightFlashlight>  );
-		inline static constexpr gClass LIGHTTESTERMOVER ( "LightTesterMover",   -5,    &createNewActor<LightTesterMover> );
+		inline static constexpr gClass LIGHT            ( "Light",              -1,    &createNewActor<Light>,            glm::vec3(1.0f, 1.0f, 1.0f) );
+		inline static constexpr gClass LIGHTDIRECTIONAL ( "LightDirectional",   -2,    &createNewActor<LightDirectional>, glm::vec3(1.0f, 1.0f, 1.0f) );
+		inline static constexpr gClass LIGHTSPOT        ( "LightSpot",          -3,    &createNewActor<LightSpot>,        glm::vec3(0.5f, 1.0f, 0.5f) );
+		inline static constexpr gClass LIGHTFLASHLIGHT  ( "LightFlashlight",    -4,    &createNewActor<LightFlashlight>,  glm::vec3(1.0f, 1.0f, 1.0f) );
+		inline static constexpr gClass LIGHTTESTERMOVER ( "LightTesterMover",   -5,    &createNewActor<LightTesterMover>, glm::vec3(1.0f, 1.0f, 1.0f) );
 
-		inline static constexpr gClass DEVICE           ( "Device",           1000,    &createNewDevice<Device>          );
-		inline static constexpr gClass ENVIRONMENT      ( "Environment",      1001,    &createNewDevice<Environment>     );
-		inline static constexpr gClass MATERIAL         ( "Material",         1002,    &createNewDevice<Material>        );
-		inline static constexpr gClass MESH             ( "Mesh",             1003,    &createNewDevice<Mesh>            );
-		inline static constexpr gClass SPRITE           ( "Sprite",           1004,    &createNewDevice<Sprite>          );
-		inline static constexpr gClass COLLIDER         ( "Collider",         1005,    &createNewDevice<Collider>        );
-		inline static constexpr gClass TEXTURE          ( "Texture",          1006,    &createNewDevice<Texture>         );
+		inline static constexpr gClass DEVICE           ( "Device",           1000,    &createNewDevice<Device>,          glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass ENVIRONMENT      ( "Environment",      1001,    &createNewDevice<Environment>,     glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass MATERIAL         ( "Material",         1002,    &createNewDevice<Material>,        glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass MESH             ( "Mesh",             1003,    &createNewDevice<Mesh>,            glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass SPRITE           ( "Sprite",           1004,    &createNewDevice<Sprite>,          glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass COLLIDER         ( "Collider",         1005,    &createNewDevice<Collider>,        glm::vec3(0.0f, 0.0f, 0.0f) );
+		inline static constexpr gClass TEXTURE          ( "Texture",          1006,    &createNewDevice<Texture>,         glm::vec3(0.0f, 0.0f, 0.0f) );
 
 		// Don't forget to add your gClass variable to the `valid_classes` array!
 		inline static constexpr std::array<gClass, (gClass::ACTOR_ID_LIMIT + gClass::DEVICE_ID_LIMIT)> valid_classes =

@@ -64,10 +64,10 @@ GRAPHX_OBJS =              \
 	$(O)/t_interpreter.opp \
 	$(O)/g_theatres.opp
 
-OBJS =             \
-	$(EXT_OBJS)    \
-	$(EMBED_OBJS)  \
-	$(GRAPHX_OBJS) \
+OBJS =             	\
+	$(EXT_OBJS)    	\
+	$(EMBED_OBJS)  	\
+	$(GRAPHX_OBJS)
 
 WOBJS = $(subst .o,.wo,$(OBJS))
 
@@ -216,3 +216,6 @@ $(O)/%.wopp: $(SRC)/%.cpp
 
 $(O)/%.wo: $(SRC)/%.c
 	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
+
+$(O)/%.gch: $(SRC)/%.hpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
