@@ -59,7 +59,7 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 	
 	if(new_window == NULL)
 	{
-		std::cerr << "[ERROR] Failed to create GLFW window!" << std::endl;
+		PRINTERR("Failed to create GLFW window!")
 		glfwTerminate();
 	}
 
@@ -67,7 +67,7 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 		glfwMakeContextCurrent(new_window);
 
 	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-		std::cerr << "[ERROR] Failed to initialize GLAD!" << std::endl;
+		PRINTERR("Failed to initialize GLAD!")
 
 	return new_window;
 }
