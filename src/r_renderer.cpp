@@ -15,7 +15,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <cmath>
-#include <filesystem> // Yes, the devil hath been evoked...
+#include <filesystem> // Yes, the devil hath been invoked...
 
 std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs;
 std::array<GLShader, graphx::rendering::SHADERS_AMOUNT> shaders;
@@ -851,13 +851,13 @@ void R_GL_Initialize()
 {
 	glGenVertexArrays(graphx::rendering::VAOS_AMOUNT, VAOs.data());
 
-	shaders[graphx::rendering::SHADER_DEFAULT] = GLShader(blinn_phong_vert, blinn_phong_frag, "SHADER_DEFAULT");
-	shaders[graphx::rendering::SHADER_FONTS_2D] = GLShader(font2d_vert, font2d_frag, "SHADER_FONTS_2D");
-	shaders[graphx::rendering::SHADER_FONTS_3D] = GLShader(font3d_vert, font3d_frag, "SHADER_FONTS_3D");
-	shaders[graphx::rendering::SHADER_SKYBOX] = GLShader(skybox_vert, skybox_frag, "SHADER_SKYBOX");
-	shaders[graphx::rendering::SHADER_DEBUG_FULLBRIGHT] = GLShader(blinn_phong_vert, light_debug_frag, "SHADER_DEBUG_FULLBRIGHT");
-	shaders[graphx::rendering::SHADER_DEBUG_NORMALS] = GLShader(blinn_phong_vert, debug_normals_frag, "SHADER_DEBUG_NORMALS");
-	shaders[graphx::rendering::SHADER_DEBUG_VERTEX_COLORS] = GLShader(blinn_phong_vert, debug_vertex_colors_frag, "SHADER_DEBUG_VERTEX_COLORS");
+	shaders[graphx::rendering::SHADER_DEFAULT] = GLShader(blinn_phong_vert, blinn_phong_frag);
+	shaders[graphx::rendering::SHADER_FONTS_2D] = GLShader(font2d_vert, font2d_frag);
+	shaders[graphx::rendering::SHADER_FONTS_3D] = GLShader(font3d_vert, font3d_frag);
+	shaders[graphx::rendering::SHADER_SKYBOX] = GLShader(skybox_vert, skybox_frag);
+	shaders[graphx::rendering::SHADER_DEBUG_FULLBRIGHT] = GLShader(blinn_phong_vert, light_debug_frag);
+	shaders[graphx::rendering::SHADER_DEBUG_NORMALS] = GLShader(blinn_phong_vert, debug_normals_frag);
+	shaders[graphx::rendering::SHADER_DEBUG_VERTEX_COLORS] = GLShader(blinn_phong_vert, debug_vertex_colors_frag);
 }
 
 void R_InitializeRenderingAPI()

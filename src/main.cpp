@@ -6,6 +6,7 @@
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
+#include "sanity_printouts.hpp"
 #include "t_common.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -34,6 +35,7 @@ bool is_wireframe = false;
 double cursor_last_x = 0.0;
 double cursor_last_y = 0.0;
 
+void APIENTRY openGLDebugMessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_in);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -53,6 +55,7 @@ int main()
 	// OpenGL/GLFW Setup | Todo: MOVE ALL OF THIS INTO R_GL_Initialize AT SOME POINT
 	//------------------
 	glfwInit();
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 	GLFWwindow *main_window = W_CreateWindow(graphx::rendering::main_window_width, graphx::rendering::main_window_height);
 	const GLFWvidmode *primary_monitor_video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	int primary_monitor_xposition = 0;
@@ -67,9 +70,14 @@ int main()
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetFramebufferSizeCallback(main_window, frameBufferSizeCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(openGLDebugMessageCallback, nullptr);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_FRAMEBUFFER_SRGB);
+
+	PRINTDEBUG("GL_VERSION: " << glGetString(GL_VERSION))
+	PRINTDEBUG("GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION))
 
 	R_InitializeRenderingAPI();
 
@@ -454,4 +462,103 @@ void frameBufferSizeCallback(GLFWwindow *window, int width, int height)
 	graphx::rendering::main_window_height = height;
 
 	glViewport(0, 0, width, height);
+}
+
+//----------------------------------------------------------------------------------
+// OpenGL Debug Message Callback Function
+// https://gist.github.com/liam-middlebrook/c52b069e4be2d87a6d2f (with minor tweaks)
+//----------------------------------------------------------------------------------
+void APIENTRY openGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* data)
+{
+	std::string _source;
+    std::string _type;
+    std::string _severity;
+
+    switch (source) {
+        case GL_DEBUG_SOURCE_API:
+        _source = "API";
+        break;
+
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        _source = "WINDOW SYSTEM";
+        break;
+
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        _source = "SHADER COMPILER";
+        break;
+
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+        _source = "THIRD PARTY";
+        break;
+
+        case GL_DEBUG_SOURCE_APPLICATION:
+        _source = "APPLICATION";
+        break;
+
+        case GL_DEBUG_SOURCE_OTHER:
+        _source = "UNKNOWN";
+        break;
+
+        default:
+        _source = "UNKNOWN";
+        break;
+    }
+
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+        _type = "ERROR";
+        break;
+
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        _type = "DEPRECATED BEHAVIOR";
+        break;
+
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        _type = "UDEFINED BEHAVIOR";
+        break;
+
+        case GL_DEBUG_TYPE_PORTABILITY:
+        _type = "PORTABILITY";
+        break;
+
+        case GL_DEBUG_TYPE_PERFORMANCE:
+        _type = "PERFORMANCE";
+        break;
+
+        case GL_DEBUG_TYPE_OTHER:
+        _type = "OTHER";
+        break;
+
+        case GL_DEBUG_TYPE_MARKER:
+        _type = "MARKER";
+        break;
+
+        default:
+        _type = "UNKNOWN";
+        break;
+    }
+
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_HIGH:
+        _severity = "HIGH";
+        break;
+
+        case GL_DEBUG_SEVERITY_MEDIUM:
+        _severity = "MEDIUM";
+        break;
+
+        case GL_DEBUG_SEVERITY_LOW:
+        _severity = "LOW";
+        break;
+
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+        _severity = "NOTIFICATION";
+        break;
+
+        default:
+        _severity = "UNKNOWN";
+        break;
+    }
+
+    printf("%d: %s of %s severity, raised from %s: %s\n", id, _type.c_str(), _severity.c_str(), _source.c_str(), message);
 }

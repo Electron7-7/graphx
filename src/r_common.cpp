@@ -7,12 +7,6 @@
 //
 // GLShader
 //
-GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code, std::string init_debug_name)
-: GLShader(vertex_shader_code, fragment_shader_code)
-{
-	debug_name = init_debug_name;
-}
-
 GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
 {
 	const char *v_shader_code = vertex_shader_code.c_str();
@@ -20,12 +14,12 @@ GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_c
 
 	unsigned int vertex, fragment;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex, 1, &v_shader_code, NULL);
+	glShaderSource(vertex, 1, &v_shader_code, nullptr);
 	glCompileShader(vertex);
 	GLShaderErrorHandler(vertex);
 
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment, 1, &f_shader_code, NULL);
+	glShaderSource(fragment, 1, &f_shader_code, nullptr);
 	glCompileShader(fragment);
 	GLShaderErrorHandler(fragment);
 
@@ -33,23 +27,38 @@ GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_c
 	glAttachShader(id, vertex);
 	glAttachShader(id, fragment);
 	glLinkProgram(id);
+	GLShaderErrorHandler(id, true);
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
 }
 
-void GLShader::GLShaderErrorHandler(unsigned int shader_id)
+void GLShader::GLShaderErrorHandler(const unsigned int& shader_id, const bool is_program_linking)
 {
 	// https://stackoverflow.com/a/63420289
 	int v_result = GL_FALSE;
 	int info_log_length;
-	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &v_result);
-	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	std::string shader_error_type = "Shader Compilation";
+	if(is_program_linking)
+	{
+		shader_error_type = "Program Linking";
+		glGetProgramiv(shader_id, GL_LINK_STATUS, &v_result);
+		glGetProgramiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	}
+	else
+	{
+		glGetShaderiv(shader_id, GL_COMPILE_STATUS, &v_result);
+		glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	}
 	if(info_log_length > 0)
 	{
 		std::vector<char> shader_error_message(info_log_length + 1);
-		glGetShaderInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
-		PRINTERR("GLSL Shader Compilation Error(s):\n" << shader_error_message.data())
+		if(is_program_linking)
+			glGetProgramInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
+		else
+			glGetShaderInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
+
+		PRINTERR("GLSL " << shader_error_type << " Error(s):\n" << shader_error_message.data())
 	}
 }
 

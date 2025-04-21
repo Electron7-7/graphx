@@ -20,17 +20,15 @@
 struct GLShader
 {
 public:
-	std::string debug_name = "UNTITLED_SHADER";
 	unsigned int id = 0;
 
 	GLShader() = default;
-	GLShader(std::string vertex_shader_code, std::string fragment_shader_code);
-	GLShader(std::string vertex_shader_code, std::string fragment_shader_code, std::string init_debug_name);
+	GLShader(std::string, std::string);
 
 	template<typename T> void setUniform(const std::string &name, T value) const;
 
 private:
-	void GLShaderErrorHandler(unsigned int shader_id);
+	void GLShaderErrorHandler(const unsigned int&, const bool = false);
 };
 
 struct Device

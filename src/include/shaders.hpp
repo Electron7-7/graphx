@@ -10,10 +10,6 @@ extern std::string font2d_vert;
 extern std::string font3d_frag;
 extern std::string font3d_vert;
 extern std::string light_debug_frag;
-extern std::string old_blinn_phong_frag;
-extern std::string old_blinn_phong_vert;
-extern std::string phong_frag;
-extern std::string phong_vert;
 extern std::string skybox_frag;
 extern std::string skybox_vert;
 #endif

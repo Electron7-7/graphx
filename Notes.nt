@@ -2286,3 +2286,6 @@ Implemented newlines in rendered text.
 Did a lot of work on the debugger. You can now pick Actors based on name or UID and change their position, scale, and rotation.
 
 Real quickly, the font size is relevant to the window size which it shouldn't be.
+
+[04/19/25]
+The shader error is weird, but regardless of why it compiles on my laptop and not on my dedicated GPU, the problem is that I have way too many uniforms because of the Light arrays. To fully solve this problem, I should start learning deferred rendering, so I can stop using the Light arrays (or do baked lighting but I like realtime lighting). I could also reduce the number of uniforms in the Light struct.
