@@ -2289,3 +2289,8 @@ Real quickly, the font size is relevant to the window size which it shouldn't be
 
 [04/19/25]
 The shader error is weird, but regardless of why it compiles on my laptop and not on my dedicated GPU, the problem is that I have way too many uniforms because of the Light arrays. To fully solve this problem, I should start learning deferred rendering, so I can stop using the Light arrays (or do baked lighting but I like realtime lighting). I could also reduce the number of uniforms in the Light struct.
+
+[04/20/25]
+Had an idea while working on Levitate (specifically the custom vec3 type): what if I could write my own implementation of certain operators for Jolt's math types to convert them to glm types without needing to use an external function?
+
+Ah, I'd have to actually add custom code to the library and re-compile it and I don't wanna do allat rn. Food for thought tho.
