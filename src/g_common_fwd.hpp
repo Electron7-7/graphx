@@ -27,7 +27,6 @@ struct RenderState;
 
 // Variables
 extern bool loading_new_main_theatre;
-extern Theatre current_theatre;
 
 // Functions
 template<typename T> T iKnowWhatActorIWant(auto identifier);

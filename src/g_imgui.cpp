@@ -1,8 +1,9 @@
 #include "g_imgui.hpp"
+// #include "r_common.hpp"
 #include "g_common.hpp"
-#include "imgui_internal.h"
+#include "graphx_namespace.hpp"
 #include "imgui_stdlib.h"
-#include "models.hpp"
+#include <models.hpp>
 
 namespace IMGUI = ImGui;
 
@@ -10,7 +11,7 @@ namespace IMGUI = ImGui;
 // GraphXConsole
 //
 GraphXConsole::GraphXConsole()
-: active(false), secondary_active(false), tertiary_active(false), toggle_activation_key(ImGuiKey_Tab), name("GraphX Debug Console"), was_active(false)
+: active(false), secondary_active(false), tertiary_active(false), quaternary_active(false), toggle_activation_key(ImGuiKey_Tab), name("GraphX Debug Console"), was_active(false)
 {}
 
 bool GraphXConsole::justClosed()
@@ -29,8 +30,14 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	if(IMGUI::IsKeyPressed(ImGuiKey_Tab))
 		active = !active;
 
+	if(secondary_active)
+		displayTheatrePrintout();
+
 	if(tertiary_active)
-		displayTheatreData();
+		liveTheatreEditor();
+
+	if(quaternary_active)
+		exportTheatreFile();
 
 	if(!active)
 	{
@@ -44,10 +51,10 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	IMGUI::SetNextWindowSize(ImVec2(484, 434), ImGuiCond_Once);
 #endif
 	IMGUI::Begin(name.c_str(), &active, ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus);
-	IMGUI::Text("%s", std::string("Currently Loaded Theatre: " + current_theatre->name).c_str());
+	IMGUI::Text("%s", std::string("Currently Loaded Theatre: " + graphx::current::theatre.name).c_str());
 	IMGUI::Separator();
 	if(IMGUI::Button("Toggle GraphXTheatre Printout"))
-		tertiary_active = !tertiary_active;
+		secondary_active = !secondary_active;
 	IMGUI::Checkbox("Keep Debug Labels On", &keep_debug_labels_on);
 	IMGUI::NewLine();
 	IMGUI::NewLine();
@@ -63,11 +70,11 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	if(IMGUI::Button("Get Actor!##1"))
 	{
 		actor_selection_made = true;
-		actor_selection_valid = !(actor_name_selection.empty() || current_theatre->getActor(actor_name_selection) == nullptr);
+		actor_selection_valid = !(actor_name_selection.empty() || graphx::current::theatre.getActor(actor_name_selection) == nullptr);
 		if(!actor_selection_valid)
 			error_string = "Invalid Actor Name!";
 		else
-			actor = current_theatre->getActor(actor_name_selection);
+			single_actor = graphx::current::theatre.getActor(actor_name_selection);
 	}
 	IMGUI::Text("Select Actor by UID:");
 	IMGUI::PushItemWidth(100.0f);
@@ -88,8 +95,8 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 			actor_selection_valid = false;
 		}
 
-		if(actor_selection_valid && current_theatre->getActor(std::stod(actor_uid_selection)) != nullptr)
-			actor = current_theatre->getActor(std::stod(actor_uid_selection));
+		if(actor_selection_valid && graphx::current::theatre.getActor(std::stod(actor_uid_selection)) != nullptr)
+			single_actor = graphx::current::theatre.getActor(std::stod(actor_uid_selection));
 		else
 		{
 			actor_selection_valid = false;
@@ -99,38 +106,92 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 
 	if(actor_selection_made && actor_selection_valid)
 	{
-		IMGUI::Text("Actor Info");
-		IMGUI::Separator();
-		IMGUI::Text(std::string("Name: " + actor->getName()).c_str(), "%s");
-		IMGUI::Text(std::string("Type: " + std::string(actor->getType().name)).c_str(), "%s");
-		IMGUI::Text(std::string("UID: "  + std::to_string(actor->getUID())).c_str(), "%s");
-		IMGUI::Separator();
-		if(IMGUI::Button("Toggle Visibility"))
-			actor->visible = !actor->visible;
-		std::vector<float> position_scalars = actor->getPosition<std::vector<float>>();
-		std::vector<float> rotation_scalars = actor->getRotationDegrees<std::vector<float>>();
-		std::vector<float> scale_scalars = {actor->scale.x, actor->scale.y, actor->scale.z};
-		if(IMGUI::DragFloat3("Position", position_scalars.data(), -0.1f, -100.0f, 100.0f))
-			actor->setGlobalPosition(glm::vec3(position_scalars[0], position_scalars[1], position_scalars[2]));
-		if(IMGUI::DragFloat3("Rotation", rotation_scalars.data(), -0.1f, -100.0f, 100.0f))
-			actor->setGlobalRotation(glm::radians(glm::vec3(rotation_scalars[0], rotation_scalars[1], rotation_scalars[2])));
-		if(IMGUI::DragFloat3("Scale", scale_scalars.data(), -0.1f, -100.0f, 100.0f))
-			actor->scale = glm::vec3(scale_scalars[0], scale_scalars[1], scale_scalars[2]);
-		// Todo: finish this shit, lol
 		error_string = "";
+		IMGUI::NewLine();
+		showActorEditor(single_actor);
 	}
 	if(!actor_selection_valid)
 	{
 		IMGUI::Text(error_string.c_str(), "%s");
 	}
+	IMGUI::Separator();
+	if(IMGUI::Button("Open live Theatre editor (Warning: performance will go down!)"))
+		tertiary_active = true;
+	if(IMGUI::Button("Export current Theatre state as a GraphXTheatre (.gt) file"))
+		quaternary_active = true;
 	IMGUI::End();
 }
 
-void GraphXConsole::displayTheatreData()
+std::string indexMe(const std::string string, const int index)
 {
-	if(current_theatre == nullptr || !current_theatre->name.compare("Untitled Theatre"))
+	return (string + "##" + std::to_string(index));
+}
+
+void GraphXConsole::showActorEditor(Actor* actor, int index)
+{
+	IMGUI::BeginGroup();
+	//
+	//  Actor info
+	//
+	IMGUI::TextColored(glm::vec4(0.7f, 0.8f, 1.0f, 0.8f), "Actor");
+	IMGUI::SameLine();
+	IMGUI::Text(std::string(std::string(actor->getType()->name) + " \"" + actor->getName() + "\" (UID: " + std::to_string(actor->getUID()) + ")").c_str(), "%s");
+	IMGUI::Separator();
+	//
+	//  Actor visibility
+	//
+	if(IMGUI::Button(indexMe("Toggle Visibility", index).c_str()))
+		actor->visible = !actor->visible;
+	IMGUI::SameLine();
+	//
+	//  Reset Actor
+	//
+	if(IMGUI::Button(indexMe("Reset Actor", index).c_str()))
+		actor->youGotACallBack();
+	//
+	//  Actor rotation, position, and scale manipulation
+	//
+	std::vector<float> position_vectors = actor->getPosition<std::vector<float>>();
+	std::vector<float> rotation_vectors = actor->getRotationDegrees<std::vector<float>>();
+	std::vector<float> scale_vectors = {actor->scale.x, actor->scale.y, actor->scale.z};
+	if(IMGUI::DragFloat3(indexMe("Position", index).c_str(), position_vectors.data(), -0.1f, -100.0f, 100.0f))
+		actor->setGlobalPosition(glm::vec3(position_vectors[0], position_vectors[1], position_vectors[2]));
+	if(IMGUI::DragFloat3(indexMe("Rotation", index).c_str(), rotation_vectors.data(), -0.1f, -100.0f, 100.0f))
+		actor->setGlobalRotation(glm::radians(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2])));
+	if(IMGUI::DragFloat3(indexMe("Scale", index).c_str(), scale_vectors.data(), -0.1f, -100.0f, 100.0f))
+		actor->scale = glm::vec3(scale_vectors[0], scale_vectors[1], scale_vectors[2]);
+	IMGUI::EndGroup();
+	if(IMGUI::IsItemHovered())
+		actor->highlightMe();
+	else
+		actor->unHighlightMe();
+}
+
+void GraphXConsole::liveTheatreEditor()
+{
+	std::vector<Actor*> troupe = graphx::current::theatre.getTroupe();
+	IMGUI::Begin("Live Theatre Editor", &tertiary_active);
+	for(int i = 0 ; i < troupe.size() ; i++) // AYO I THINK THAT THE TROUPE IS GETTING BLOATED AS FUCK MY GUY
+	{
+		if(i != 0) IMGUI::NewLine();
+		showActorEditor(troupe.at(i), i);
+	}
+	IMGUI::End();
+}
+
+void GraphXConsole::exportTheatreFile()
+{
+	graphx::interpreter::gStringSettings init_settings = graphx::current::theatre.graphx_theatre_settings;
+	IMGUI::Begin("Export Theatre", &quaternary_active);
+
+	IMGUI::End();
+}
+
+void GraphXConsole::displayTheatrePrintout()
+{
+	if(!graphx::current::theatre.name.compare("Untitled Theatre"))
 		return;
-	std::string this_name = current_theatre->name + " - Parsed GraphXTheatre Settings";
+	std::string this_name = graphx::current::theatre.name + " - Parsed GraphXTheatre Settings";
 #ifndef GRAPHX_DEBUG
 	IMGUI::SetNextWindowSize(ImVec2(635, 520), ImGuiCond_Once);
 	IMGUI::SetNextWindowPos(ImVec2(600, 175), ImGuiCond_Once);
@@ -138,8 +199,8 @@ void GraphXConsole::displayTheatreData()
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoInputs;
 	if(active)
 		window_flags = ImGuiWindowFlags_None;
-	IMGUI::Begin(this_name.c_str(), &tertiary_active, window_flags);
-	IMGUI::Text("%s", current_theatre->theatre_file_data_printout.c_str());
+	IMGUI::Begin(this_name.c_str(), &secondary_active, window_flags);
+	IMGUI::Text("%s", graphx::current::theatre.theatre_file_data_printout.c_str());
 	IMGUI::End();
 }
 

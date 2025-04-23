@@ -98,7 +98,6 @@ int main()
 	GraphXConsole graphx_debug_console;
 
 	graphx_debug_console.active = (glfwGetInputMode(main_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL);
-	graphx_debug_console.current_theatre = &current_theatre;
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -220,7 +219,8 @@ void gameTick(GLFWwindow *main_window)
 			current_tick_since_second++;
 			current_tick_since_start++;
 
-			for(Actor *actor : getCurrentTheatre()->troupe)
+			std::vector<Actor*> troupe = getCurrentTheatre()->getTroupe(); // Todo: change the troupe to be a pointer/reference to the objects map?
+			for(Actor *actor : troupe)
 			{
 				if(!ImGui::GetIO().WantCaptureKeyboard)
 					actor->processInput(main_window);
@@ -356,10 +356,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		if(loading_new_main_theatre)
 			return;
-		long current_theatre = getCurrentTheatre()->getUID();
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
 		{
-			if(it->first == current_theatre)
+			if(it->first == graphx::current::theatre.getUID())
 			{
 				++it;
 				if(it == embedded_theatres.end())
@@ -378,10 +377,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		if(loading_new_main_theatre)
 			return;
 		checkForAndLoadExternalTheatres();
-		long current_theatre = getCurrentTheatre()->getUID();
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
 		{
-			if(it->first == current_theatre)
+			if(it->first == graphx::current::theatre.getUID())
 			{
 				if(it == embedded_theatres.begin())
 				{
@@ -401,7 +399,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
-		for(Actor *actor : getCurrentTheatre()->troupe)
+		std::vector<Actor*> troupe = getCurrentTheatre()->getTroupe();
+		for(Actor* actor : troupe)
 			if(actor->isPhysicsActor())
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
 	}

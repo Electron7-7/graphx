@@ -107,10 +107,10 @@ template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::ma
 //
 Device::Device()
 {
-	my_type = graphx::classes::DEVICE;
+	my_type = &graphx::classes::DEVICE;
 }
 
-graphx::gClass &Device::getType()
+const graphx::gClass* Device::getType() const
 {
 	return my_type;
 }
@@ -125,7 +125,7 @@ void Device::setName(char *new_name)
 	name = new_name;
 }
 
-std::string Device::getName()
+const std::string Device::getName() const
 {
 	return name;
 }
@@ -162,21 +162,97 @@ long Device::getUID()
 }
 
 //
+// Collider
+//
+Collider::Collider()
+{
+	my_type = &graphx::classes::COLLIDER;
+	name = "Untitled Collider";
+}
+
+Collider::~Collider()
+{
+	J_RemoveAndDestroyBody(body_id);
+}
+
+void Collider::loadSettings(graphx::gSettings new_settings)
+{
+	Device::loadSettings(new_settings);
+
+	getSetting(motion_type, settings["MotionType"]);
+	getSetting(object_layer, settings["ObjectLayer"]);
+	getSetting(activation, settings["Activation"]);
+	getSetting(shape, settings["Shape"]);
+	getSetting(forever_alone, settings["ForeverAlone"]);
+	getSetting(position, settings["Position"]);
+	getSetting(euler_angles, settings["Rotation"]);
+	getSetting(local_position, settings["LocalPosition"]);
+	getSetting(local_euler_angles, settings["LocalRotation"]);
+	getSetting(scale, settings["Scale"]);
+}
+
+JPH::BodyCreationSettings* Collider::getBodySettings()
+{
+	return &body_settings;
+}
+
+const JPH::BodyID& Collider::getBodyID()
+{
+	return body_id;
+}
+
+void Collider::createBody()
+{
+	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
+	JPH::RVec3 body_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
+	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
+
+	body_settings = JPH::BodyCreationSettings(J_CreateAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
+	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
+	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
+}
+
+void Collider::destroyBody()
+{
+	if(!body_id.IsInvalid())
+		J_RemoveAndDestroyBody(body_id);
+}
+
+void Collider::initialize()
+{
+	if(forever_alone)
+		createBody();
+}
+
+void Collider::prepForDestruction()
+{
+	Device::prepForDestruction();
+
+	if(jolt_physics_system.GetBodyInterface().IsAdded(body_id))
+		J_RemoveAndDestroyBody(body_id);
+}
+
+//
 // Environment
 //
-Environment::Environment(std::string init_name, bool enable_ambient_light, float init_ambient_light_amount, glm::vec3 init_ambient_light_color)
-: ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount * enable_ambient_light)
+Environment::Environment(float init_ambient_light_amount, glm::vec3 init_ambient_light_color)
+: ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount)
 {
-	name = init_name;
-	my_type = graphx::classes::ENVIRONMENT;
+	name = "Untitled Environment";
+	my_type = &graphx::classes::ENVIRONMENT;
 }
 
 void Environment::loadSettings(graphx::gSettings new_settings)
 {
 	Device::loadSettings(new_settings);
 
+	bool ambient_light_enabled = (ambient_light_amount > 0.0f);
+
 	getSetting(ambient_light_amount, settings["AmbientLightAmount"]);
 	getSetting(ambient_light_color, settings["AmbientLightColor"]);
+	getSetting(ambient_light_enabled, settings["AmbientLightEnabled"]);
+
+	ambient_light_amount *= ambient_light_enabled;
 }
 
 //
@@ -184,13 +260,13 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 //
 Texture::Texture()
 {
-	my_type = graphx::classes::TEXTURE;
+	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 }
 
 Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
 {
-	my_type = graphx::classes::TEXTURE;
+	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_data = init_texture_data;
 	texture_size = init_texture_size;
@@ -198,7 +274,7 @@ Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<uns
 
 Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size)
 {
-	my_type = graphx::classes::TEXTURE;
+	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = init_texture_size;
 	texture_data.clear();
@@ -208,7 +284,7 @@ Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsign
 
 Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size)
 {
-	my_type = graphx::classes::TEXTURE;
+	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = init_texture_size;
 	texture_data.clear();
@@ -218,7 +294,7 @@ Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsign
 
 Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_size)
 {
-	my_type = graphx::classes::TEXTURE;
+	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_data = {init_texture_data};
 	texture_size = {init_texture_size};
@@ -226,7 +302,7 @@ Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_siz
 
 Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
 {
-	my_type = graphx::classes::TEXTURE;
+	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data))};
@@ -234,7 +310,7 @@ Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
 
 Texture::Texture(std::string init_texture_data, unsigned int init_texture_size)
 {
-	my_type = graphx::classes::TEXTURE;
+	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
@@ -250,7 +326,7 @@ void Texture::loadSettings(graphx::gSettings new_settings)
 //
 Material::Material()
 {
-	my_type = graphx::classes::MATERIAL;
+	my_type = &graphx::classes::MATERIAL;
 	name = "Untitled Material";
 }
 
@@ -483,20 +559,20 @@ size_t MeshData::indices_size()
 //
 Mesh::Mesh()
 {
-	my_type = graphx::classes::MESH;
+	my_type = &graphx::classes::MESH;
 	name = "Untitled Mesh";
 }
 
 Mesh::Mesh(Material *new_material, std::string init_mesh_data_name)
 {
-	my_type = graphx::classes::MESH;
+	my_type = &graphx::classes::MESH;
 	name = "Untitled Mesh";
 	material = new_material;
 }
 
 Mesh::Mesh(std::string init_mesh_data_name)
 {
-	my_type = graphx::classes::MESH;
+	my_type = &graphx::classes::MESH;
 	name = "Untitled Mesh";
 	mesh_data_name = init_mesh_data_name;
 }
@@ -526,7 +602,7 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 Sprite::Sprite(std::string init_name)
 : Mesh(init_name)
 {
-	my_type = graphx::classes::SPRITE;
+	my_type = &graphx::classes::SPRITE;
 	mesh_data_name = GRAPHX_QUAD;
 	name = init_name;
 }

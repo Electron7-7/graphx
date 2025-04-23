@@ -2294,3 +2294,17 @@ The shader error is weird, but regardless of why it compiles on my laptop and no
 Had an idea while working on Levitate (specifically the custom vec3 type): what if I could write my own implementation of certain operators for Jolt's math types to convert them to glm types without needing to use an external function?
 
 Ah, I'd have to actually add custom code to the library and re-compile it and I don't wanna do allat rn. Food for thought tho.
+
+[04/22/25]
+I'm gonna start working on a roadmap for v0.0.8 on Milanote, and hopefully get some work done today.
+
+Okay, first idea for today: give the debug menu the ability to export the current Theatre in its current state to a .gt file.
+
+Here's the mini roadmap from Milanote (so far):
+First off, I need to at the very least implement Actor repositioning, spawning, and de-spawning. This will also require me to write an interface for assigning, removing, and editing any Devices that the currently selected Actor is using. I'll also need to write a sort of inverse interpreter to take the C++ code and spit it out as a GraphXTheatre file. However, this won't be too difficult as I already have a parser; all I really need to do is take the parser output, do some replacements/insertions/removals as needed, and save the changed output to a file. I'd also like for the saved file to be formatted nicely (line-breaks and such) and for the user to be able to choose whether or not to replace the current .gt file, or to save the new one as a copy.
+
+The plan is to use Dear ImGui for all of this and to keep things as functional as possible (and try not to get too sidetracked). I'm gonna start with implementing a way to interface with Actors and Devices. I'm thinking a separate class.
+
+Just found out I don't need to create the interface class (at least not now). The debug menu can just include `g_common.hpp` and `r_common.hpp` and be compiled after their respective source files.
+
+Finished up with the bare bones Actor editor; you can change the position, rotation, and scale of any Actor either by selecting one via name/uid, or by opening the "editor" which shows all Actors in the Theatre. Hovering over the settings of an Actor will highlight it and you can reset Actors to default; the button just calls `Actor::youGotACallback()` so I should either reset everything in that function or make a new one (e.g: visible doesn't reset).

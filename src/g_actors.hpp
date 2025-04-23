@@ -1,7 +1,7 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
 #include "g_common.hpp"
-#include "g_jolt.hpp"
+#include "r_common.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
@@ -54,13 +54,13 @@ public:
 	virtual void reset_to_initial_orientation_for_testing();
 
 protected:
-	JPH::Vec3 reset_position;
-	JPH::Quat reset_quaternion;
+	JPH::Vec3 reset_position = JPH::Vec3(0.0f, 0.0f, 0.0f);
+	JPH::Quat reset_quaternion = JPH::Quat::sIdentity();
 	std::vector<JPH::BodyCreationSettings> body_creation_settings;
 	std::vector<JPH::EActivation> body_activation;
-	JPH::Vec3 body_scale;
-	JPH::Vec3 body_position;
-	JPH::Quat body_quat;
+	JPH::Vec3 body_scale = JPH::Vec3(1.0f, 1.0f, 1.0f);
+	JPH::Vec3 body_position = JPH::Vec3(0.0f, 0.0f, 0.0f);
+	JPH::Quat body_quat = JPH::Quat::sIdentity();
 	JPH::EActivation test_body_activation;
 	JPH::EMotionType test_motion_type;
 	JPH::ObjectLayer test_object_layer;
@@ -164,14 +164,15 @@ public:
 
 	Light(std::string init_name = "UNTITLED_LIGHT");
 
-	bool isLightType(graphx::gClass light_type);
-	graphx::gClass const &getLightType();
+	const graphx::gClass* getLightType() const;
+	const bool isLightType(const graphx::gClass* light_type) const;
+	const bool isLightType(const graphx::gClass& light_type) const;
 
 	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 
 protected:
-	graphx::gClass my_light_type;
+	const graphx::gClass* my_light_type = nullptr;
 	bool debug_visible = false;
 };
 

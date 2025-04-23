@@ -699,19 +699,13 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 		std::string which_light;
 
 		if(render_command.light_type == graphx::classes::LIGHT)
-		{
 			which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
-		}
 
 		else if(render_command.light_type == graphx::classes::LIGHTDIRECTIONAL)
-		{
 			which_light = "directional_lights[" + std::to_string(directional_light_index++) + "].";
-		}
 
 		else if(render_command.light_type == graphx::classes::LIGHTSPOT)
-		{
 			which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
-		}
 
 		shaders[graphx::rendering::SHADER_DEFAULT].setUniform(which_light + "color", render_command.light_data.color);
 		shaders[graphx::rendering::SHADER_DEFAULT].setUniform(which_light + "energy", render_command.light_data.energy);
@@ -819,6 +813,8 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[graphx::rendering::current_shader].setUniform("current_material.specular_strength", rendercmd_iterator->mesh_material.specular_strength);
 		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_contribution", getCurrentEnvironment()->ambient_light_amount);
 		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_color", getCurrentEnvironment()->ambient_light_color);
+
+		shaders[graphx::rendering::current_shader].setUniform("debug_highlight", rendercmd_iterator->debug_highlight_color);
 
 		MeshData &mesh_data = mesh_data_storage.at(rendercmd_iterator->mesh_data_name);
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);

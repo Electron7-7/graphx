@@ -11,7 +11,7 @@
 extern bool loading_new_main_theatre;
 
 struct RenderState
-{ // Used by Actors to store/send position, rotation, and scale data
+{   // Used by Actors to store/send position, rotation, and scale data
 	glm::vec3 render_position = glm::vec3(0.0f);
 	glm::quat render_quaternion = glm::quat();
 	glm::vec3 render_scale = glm::vec3(0.0f);
@@ -39,52 +39,57 @@ public:
 
 	graphx::gSettings settings = empty_settings;
 
-	Actor(std::string init_name = "Untitled Actor", Mesh *init_mesh = nullptr, glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	Actor(std::string = "Untitled Actor", Mesh* = nullptr, glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(1.0f));
 	virtual ~Actor() = default;
 
 	template<typename T> T getPosition();
 	template<typename T> T getRotation();
 	template<typename T> T getRotationDegrees();
 
-	virtual void setGlobalPosition(glm::vec3 new_value);
-	virtual void setGlobalPosition(JPH::Vec3 new_value);
-	virtual void setLocalPosition(glm::vec3 new_value);
-	virtual void setLocalPosition(JPH::Vec3 new_value);
-	virtual void setGlobalRotation(glm::vec3 new_value);
-	virtual void setGlobalRotation(glm::quat new_value);
-	virtual void setGlobalRotation(JPH::Vec3 new_value);
-	virtual void setGlobalRotation(JPH::Quat new_value);
-	virtual void setLocalRotation(glm::vec3 new_value);
-	virtual void setLocalRotation(glm::quat new_value);
-	virtual void setLocalRotation(JPH::Vec3 new_value);
-	virtual void setLocalRotation(JPH::Quat new_value);
+	// Todo: convert these to function templates
+	virtual void setGlobalPosition(glm::vec3);
+	virtual void setGlobalPosition(JPH::Vec3);
+	virtual void setGlobalRotation(glm::vec3);
+	virtual void setGlobalRotation(glm::quat);
+	virtual void setGlobalRotation(JPH::Vec3);
+	virtual void setGlobalRotation(JPH::Quat);
+	virtual void setLocalPosition(glm::vec3);
+	virtual void setLocalPosition(JPH::Vec3);
+	virtual void setLocalRotation(glm::vec3);
+	virtual void setLocalRotation(glm::quat);
+	virtual void setLocalRotation(JPH::Vec3);
+	virtual void setLocalRotation(JPH::Quat);
 
-	long getUID();
-	void setUID(long manual_uid);
-	graphx::gClass &getType();
-	void setName(std::string new_name);
-	void setName(char *new_name);
-	std::string getName();
+	long getUID() const;
+	void setUID(const long);
+	std::string getName() const;
+	void setName(const std::string);
+	void setName(const char*);
+	const graphx::gClass* getType() const;
+
+	void highlightMe();
+	void unHighlightMe();
 
 	virtual RenderCommands getRenderCommands();
 	virtual bool isPhysicsActor();
-	virtual void youGotACallBack(graphx::gSettings new_settings = empty_settings); // Loads settings
-	virtual void callToStage(Theatre *parent_theatre);
+	virtual void youGotACallBack(graphx::gSettings = empty_settings); // Loads settings
+	virtual void callToStage(Theatre*);
 	virtual void takeABow();
-	virtual void processMouse(GLFWwindow *window, double x_position_in, double y_position_in);
-	virtual void processInput(GLFWwindow *window);
-	virtual void processKey(GLFWwindow *window, int key, int scancode, int action, int mods);
-	virtual void tick(int current_tick);
-	virtual void updateStates(std::mutex &state_mutex);
+	virtual void processMouse(GLFWwindow*, double, double);
+	virtual void processInput(GLFWwindow*);
+	virtual void processKey(GLFWwindow*, int, int, int, int);
+	virtual void tick(int);
+	virtual void updateStates(std::mutex&);
 
 protected:
-	graphx::gClass my_type;
-	long UID = -1; // A UID of -1 means it's not been set yet
-	std::string name = "Untitled Actor";
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);
 	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	long UID = -1;
+	std::string name = "Untitled Actor";
+	const graphx::gClass* my_type = nullptr;
+	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
 
 	virtual void updateVectors();
 };
@@ -106,7 +111,6 @@ struct Theatre
 	glm::quat stage_quaternion = glm::quat();
 
 	std::string name = "Untitled Theatre";
-	std::vector<Actor *> troupe = {};
 	int point_lights_count = 0;
 	int spot_lights_count = 0;
 	int directional_lights_count = 0;
@@ -119,6 +123,7 @@ struct Theatre
 	Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
 	std::vector<long> dumpActorIDs();
+	std::vector<Actor*> getTroupe();
 
 	std::set<std::string> getMeshDataNames();
 	std::set<std::string> getTextureNames();
@@ -165,33 +170,30 @@ private:
 	long UID = -1;
 	long environment_uid = -1;
 	long player_uid = -1;
-
-	void sortTroupe();
-	void countLights();
 };
 
-extern Theatre current_theatre;
+// extern Theatre graphx::current::theatre;
 // extern std::map<int, Actor*(*)()> actor_map;
 
 // Use with CAUTION!!
-// Wants to return static_cast<T>(current_theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
+// Wants to return static_cast<T>(graphx::current::theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
 // Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
 template<typename T> T iKnowWhatActorIWant(auto identifier)
 {
-	if(current_theatre.getUID() == -1 || current_theatre.getActor(identifier) == nullptr)
+	if(graphx::current::theatre.getUID() == -1 || graphx::current::theatre.getActor(identifier) == nullptr)
 		return new std::remove_pointer_t<T>;
 
-	return static_cast<T>(current_theatre.getActor(identifier));
+	return static_cast<T>(graphx::current::theatre.getActor(identifier));
 }
 
 // Use with CAUTION!!
-// Wants to return static_cast<T>(current_theatre.getDevice(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
+// Wants to return static_cast<T>(graphx::current::theatre.getDevice(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
 // Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
 template<typename T> T iKnowWhatDeviceIWant(auto identifier)
 {
-	if(current_theatre.getUID() == -1 || current_theatre.getDevice(identifier) == nullptr)
+	if(graphx::current::theatre.getUID() == -1 || graphx::current::theatre.getDevice(identifier) == nullptr)
 		return new std::remove_pointer_t<T>;
-	return static_cast<T>(current_theatre.getDevice(identifier));
+	return static_cast<T>(graphx::current::theatre.getDevice(identifier));
 }
 
 // template<typename T> Actor *createNewActor() { return new T; }

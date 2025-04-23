@@ -11,6 +11,11 @@
 
 namespace graphx
 {
+	namespace current
+	{
+		extern Theatre theatre;
+	}
+
 	namespace debug
 	{
 		inline bool actor_debug_menu_open = false;
@@ -27,25 +32,25 @@ namespace graphx
 		inline static constexpr int INVALID_TYPE_ID = -481516;
 		inline static constexpr char INVALID_TYPE_NAME[13] = "INVALID_TYPE";
 		inline static constexpr int NAME_MAX_SIZE_BYTES = 80; // Raise this at your memory's peril
-		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)> &classes; // Defined in `graphx_classes_namespace.hpp`
+		static const std::array<gClass, (ACTOR_ID_LIMIT + DEVICE_ID_LIMIT)>& classes; // Defined in `graphx_classes_namespace.hpp`
 	public:
 		static const gClass INVALID_TYPE;      // Defined in `graphx_classes_namespace.hpp`
 
 		int id = INVALID_TYPE_ID;              // `id` is usually more important than `name`... usually...
-		const char *name = INVALID_TYPE_NAME;  // `name` is only really used by the interpreter (and for debugging)
-		Actor *(*create_new_actor)() = nullptr;
-		Device *(*create_new_device)() = nullptr;
+		const char* name = INVALID_TYPE_NAME;  // `name` is only really used by the interpreter (and for debugging)
+		Actor*  (*create_new_actor)()  = nullptr;
+		Device* (*create_new_device)() = nullptr;
 
 		glm::vec3 debugging_color = glm::vec3(1.0f, 0.3f, 0.83f);
 
 		inline gClass() = default;
 		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)(), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f))   : id(init_id), name(init_name), create_new_actor(new_actor_function), debugging_color(init_debugging_color)   {}
 		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Device*(*new_device_function)(), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f)) : id(init_id), name(init_name), create_new_device(new_device_function), debugging_color(init_debugging_color) {}
-		inline constexpr gClass(const gClass &to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device), debugging_color(to_copy.debugging_color) {}
+		inline constexpr gClass(const gClass& to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device), debugging_color(to_copy.debugging_color) {}
 
-		inline gClass(std::string init_name)
+		inline gClass(const std::string init_name)
 		{
-			for(const gClass &valid_class : classes)
+			for(const gClass& valid_class : classes)
 				if(valid_class == init_name)
 				{
 					*this = valid_class;
@@ -54,9 +59,9 @@ namespace graphx
 			*this = INVALID_TYPE;
 		}
 
-		inline gClass(int init_id)
+		inline gClass(const int init_id)
 		{
-			for(const gClass &valid_class : classes)
+			for(const gClass& valid_class : classes)
 				if(valid_class == init_id)
 				{
 					*this = valid_class;
@@ -65,7 +70,7 @@ namespace graphx
 			*this = INVALID_TYPE;
 		}
 
-		inline static bool isValidClass(gClass type)
+		inline static bool isValidClass(const gClass& type)
 		{
 			for(auto valid_class = classes.begin() ; *valid_class != INVALID_TYPE ; valid_class++)
 				if(*valid_class == type)
@@ -73,7 +78,7 @@ namespace graphx
 			return false;
 		}
 
-		inline static const gClass &getClassType(gClass type)
+		inline static const gClass& getClassType(const gClass& type)
 		{
 			for(auto valid_class = classes.begin() ; *valid_class != INVALID_TYPE ; valid_class++)
 				if(*valid_class == type)
@@ -84,36 +89,39 @@ namespace graphx
 		// Overloading Comparison Operators
 		//---------------------------------
 		// 1: Comparing gClass to gClass
-		const bool operator==(const gClass &compare_against) const { return (id == compare_against.id);  }
-		const bool operator!=(const gClass &compare_against) const { return !(*this == compare_against); }
-		const bool operator< (const gClass &compare_against) const { return (id < compare_against.id);   }
-		const bool operator> (const gClass &compare_against) const { return (id > compare_against.id);   }
-		const bool operator<=(const gClass &compare_against) const { return !(*this > compare_against);  }
-		const bool operator>=(const gClass &compare_against) const { return !(*this < compare_against);  }
-		// 2: Comparing gClass to int
-		const bool operator==(const int &compare_against) const { return (id == compare_against);     }
-		const bool operator!=(const int &compare_against) const { return !(*this == compare_against); }
-		const bool operator< (const int &compare_against) const { return (id < compare_against);      }
-		const bool operator> (const int &compare_against) const { return (id > compare_against);      }
-		const bool operator<=(const int &compare_against) const { return !(*this > compare_against);  }
-		const bool operator>=(const int &compare_against) const { return !(*this < compare_against);  }
+		const bool operator==(const gClass& compare_against) const { return (id == compare_against.id);  }
+		const bool operator!=(const gClass& compare_against) const { return !(*this == compare_against); }
+		const bool operator< (const gClass& compare_against) const { return (id < compare_against.id);   }
+		const bool operator> (const gClass& compare_against) const { return (id > compare_against.id);   }
+		const bool operator<=(const gClass& compare_against) const { return !(*this > compare_against);  }
+		const bool operator>=(const gClass& compare_against) const { return !(*this < compare_against);  }
+		// 2a: Comparing gClass to gClass* (2b is non-member)
+		const bool operator==(const gClass* compare_against) const { return (compare_against && *this == *compare_against); }
+		const bool operator!=(const gClass* compare_against) const { return (compare_against && *this != *compare_against); }
+		// 3: Comparing gClass to int
+		const bool operator==(const int& compare_against) const { return (id == compare_against);     }
+		const bool operator!=(const int& compare_against) const { return !(*this == compare_against); }
+		const bool operator< (const int& compare_against) const { return (id < compare_against);      }
+		const bool operator> (const int& compare_against) const { return (id > compare_against);      }
+		const bool operator<=(const int& compare_against) const { return !(*this > compare_against);  }
+		const bool operator>=(const int& compare_against) const { return !(*this < compare_against);  }
 		// 4: Comparing gClass to std::string
-		const bool operator==(const std::string &compare_against) const { return (name == compare_against);   }
-		const bool operator!=(const std::string &compare_against) const { return !(*this == compare_against); }
-		const bool operator< (const std::string &compare_against) const { return (name < compare_against);    }
-		const bool operator> (const std::string &compare_against) const { return (name > compare_against);    }
-		const bool operator<=(const std::string &compare_against) const { return !(*this > compare_against);  }
-		const bool operator>=(const std::string &compare_against) const { return !(*this < compare_against);  }
+		const bool operator==(const std::string& compare_against) const { return (name == compare_against);   }
+		const bool operator!=(const std::string& compare_against) const { return !(*this == compare_against); }
 
 		// Overloading Conversion Operators
 		//---------------------------------
 		// 1: Conversion from gClass to int
 		constexpr operator int() const { return id; }
 		// 2: Conversion from gClass to long
-		constexpr operator long() const { return static_cast<long>(id); }
+		// constexpr operator long() const { return static_cast<long>(id); }
 		// 3: Conversion from gClass to std::string
 		constexpr operator std::string() const { return std::string(name); }
 	};
+
+	// 2b: Comparing gClass* to gClass
+	inline const bool operator==(const gClass* pointer, const gClass& object) { return (object == *pointer); }
+	inline const bool operator!=(const gClass* pointer, const gClass& object) { return (object != *pointer); }
 
 	namespace error
 	{

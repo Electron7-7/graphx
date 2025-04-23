@@ -2,17 +2,15 @@
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
-#include "g_imgui.hpp"
-#include <algorithm>
 #include <set>
 
-Theatre current_theatre;
+Theatre graphx::current::theatre;
 
 Theatre *getCurrentTheatre(bool print_note)
 {
-    if(current_theatre.getUID() == -1 && print_note)
-        PRINTDEBUG("getCurrentTheatre() called, but current_theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
-    return &current_theatre;
+    if(graphx::current::theatre.getUID() == -1 && print_note)
+        PRINTDEBUG("getCurrentTheatre() called, but graphx::current::theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
+    return &graphx::current::theatre;
 }
 
 Environment *getCurrentEnvironment()
@@ -20,13 +18,13 @@ Environment *getCurrentEnvironment()
     if(loading_new_main_theatre)
         return new Environment();
 
-    if(current_theatre.unsafeGetFirstDeviceOfType(graphx::classes::ENVIRONMENT) == nullptr)
+    if(graphx::current::theatre.unsafeGetFirstDeviceOfType(graphx::classes::ENVIRONMENT) == nullptr)
     {
-        PRINTERR("getCurrentEnvironment called, but no Environment Device found in current_theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013 (in Theatre \"" << current_theatre.name << "\")")
-        current_theatre.createDevice(graphx::classes::ENVIRONMENT, 177013);
+        PRINTERR("getCurrentEnvironment called, but no Environment Device found in graphx::current::theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013 (in Theatre \"" << graphx::current::theatre.name << "\")")
+        graphx::current::theatre.createDevice(graphx::classes::ENVIRONMENT, 177013);
     }
 
-    return static_cast<Environment *>(current_theatre.getFirstDeviceOfType(graphx::classes::ENVIRONMENT));
+    return static_cast<Environment *>(graphx::current::theatre.getFirstDeviceOfType(graphx::classes::ENVIRONMENT));
 }
 
 GraphXPlayer *getCurrentPlayer()
@@ -34,13 +32,13 @@ GraphXPlayer *getCurrentPlayer()
     if(loading_new_main_theatre)
         return new GraphXPlayer();
 
-    if(current_theatre.unsafeGetFirstActorOfType(graphx::classes::GRAPHXPLAYER) == nullptr)
+    if(graphx::current::theatre.unsafeGetFirstActorOfType(graphx::classes::GRAPHXPLAYER) == nullptr)
     {
-        PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in current_theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069 (in Theatre \"" << current_theatre.name << "\")")
-        current_theatre.createActor(graphx::classes::GRAPHXPLAYER, 42069);
+        PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in graphx::current::theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069 (in Theatre \"" << graphx::current::theatre.name << "\")")
+        graphx::current::theatre.createActor(graphx::classes::GRAPHXPLAYER, 42069);
     }
 
-    return static_cast<GraphXPlayer *>(current_theatre.getFirstActorOfType(graphx::classes::GRAPHXPLAYER));
+    return static_cast<GraphXPlayer *>(graphx::current::theatre.getFirstActorOfType(graphx::classes::GRAPHXPLAYER));
 }
 
 //
@@ -63,6 +61,14 @@ std::vector<long> Theatre::dumpActorIDs()
     }
 
     return actor_ids;
+}
+
+std::vector<Actor*> Theatre::getTroupe()
+{
+    std::vector<Actor*> troupe = {};
+    for(auto &actor_pair : objects)
+        troupe.insert(troupe.end(), actor_pair.second);
+    return troupe;
 }
 
 std::set<std::string> Theatre::getMeshDataNames()
@@ -98,10 +104,30 @@ std::set<std::string> Theatre::getTextureNames()
 
 void Theatre::probeActorsForRenderCommands()
 {
-    for(auto &pair : objects)
+    point_lights_count = 0;
+    spot_lights_count = 0;
+    directional_lights_count = 0;
+
+    for(auto& pair : objects)
     {
         if(loading_new_main_theatre)
             return;
+
+        if(graphx::classes::isLight(*pair.second->getType()))
+        {
+            switch(*static_cast<Light*>(pair.second)->getLightType())
+            {
+            case graphx::classes::LIGHT:
+                point_lights_count++;
+                break;
+            case graphx::classes::LIGHTSPOT:
+                spot_lights_count++;
+                break;
+            case graphx::classes::LIGHTDIRECTIONAL:
+                directional_lights_count++;
+                break;
+            }
+        }
 
         R_BufferRenderCommands(pair.second->getRenderCommands());
     }
@@ -126,7 +152,7 @@ void Theatre::raiseCurtains()
         else if(pair.second->getType() == graphx::classes::LIGHTDIRECTIONAL)
             has_directional_light = true;
         pair.second->callToStage(this);
-        troupe.insert(troupe.end(), pair.second);
+        
     }
 
     if(!has_directional_light)
@@ -139,9 +165,6 @@ void Theatre::raiseCurtains()
         static_cast<LightDirectional *>(objects.at(55252525))->light_ambient_strength = 0.0f;
         static_cast<LightDirectional *>(objects.at(55252525))->light_specular_strength = 0.0f;
     }
-
-    sortTroupe();
-    countLights();
 }
 
 void Theatre::dropCurtains()
@@ -155,7 +178,6 @@ void Theatre::dropCurtains()
     for(auto &pair : objects)
         pair.second->takeABow();
     objects.clear();
-    troupe.clear();
 }
 
 std::vector<Actor *> Theatre::getAllActorsOfType(graphx::gClass type_name)
@@ -197,7 +219,8 @@ void Theatre::delegateKeyInput(GLFWwindow *window, int key, int scancode, int ac
 
 void Theatre::delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in)
 {
-    for(Actor *actor : troupe)
+    // Todo: don't use `getTroupe()` here, this is stupid
+    for(Actor* actor : getTroupe())
         actor->processMouse(window, x_position_in, y_position_in);
 }
 
@@ -333,11 +356,6 @@ void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings
     objects.at(uid)->setUID(uid);
     objects.at(uid)->youGotACallBack(new_settings);
 
-    troupe.insert(troupe.end(), objects.at(uid));
-
-    sortTroupe();
-    countLights();
-
     if(time_to_render)
     {
         objects.at(uid)->callToStage(this);
@@ -374,7 +392,7 @@ void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
 
         objects[pair.second] = pair.first;
         pair.first->setUID(pair.second);
-        troupe.insert(troupe.end(), objects.at(pair.second));
+        
 
         if(pair.first->getType() == graphx::classes::GRAPHXPLAYER)
             player_uid = pair.second;
@@ -385,9 +403,7 @@ void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
             pair.first->callToStage(this);
         }
     }
-
-    sortTroupe();
-    countLights();
+    
     time_to_store_buffers = time_to_render;
 }
 
@@ -400,7 +416,7 @@ void Theatre::actorEnter(Actor *new_actor, long uid, graphx::gSettings new_setti
     }
 
     objects[uid] = new_actor;
-    troupe.insert(troupe.end(), objects.at(uid));
+
     new_actor->setUID(uid);
 
     if(new_actor->getType() == graphx::classes::GRAPHXPLAYER)
@@ -419,9 +435,6 @@ void Theatre::actorEnter(Actor *new_actor, long uid, graphx::gSettings new_setti
         new_actor->mesh = static_cast<Mesh *>(devices.at(new_actor->mesh->getUID()));
     }
 
-    sortTroupe();
-    countLights();
-
     if(time_to_render)
         new_actor->callToStage(this);
 
@@ -435,19 +448,8 @@ void Theatre::actorLeave(Actor *old_actor)
 
     if(auto it = objects.find(old_actor->getUID()) ; it != objects.end())
     {
-        it->second = NULL;
+        it->second = nullptr;
         objects.erase(it);
-        int i = 0;
-        for(auto it = troupe.begin() ; it != troupe.end() ; it++,i++)
-        {
-            if (troupe[i] == old_actor)
-            {
-                troupe[i] = NULL;
-                troupe.erase(it);
-            }
-        }
-
-        countLights();
         time_to_store_buffers = time_to_render;
         return;
     }
@@ -468,19 +470,8 @@ void Theatre::actorLeave(long uid)
 
     if(auto it = objects.find(uid) ; it != objects.end())
     {
-        it->second = NULL;
+        it->second = nullptr;
         objects.erase(it);
-        int i = 0;
-        for(auto iter = troupe.begin() ; iter != troupe.end() ; iter++,i++)
-        {
-            if(troupe[i]->getUID() == uid)
-            {
-                troupe[i] = NULL;
-                troupe.erase(iter);
-            }
-        }
-
-        countLights();
         time_to_store_buffers = time_to_render;
         return;
     }
@@ -624,39 +615,4 @@ Environment *Theatre::getEnvironment()
         return static_cast<Environment *>(devices.at(environment_uid));
 
     return nullptr;
-}
-
-void Theatre::sortTroupe()
-{
-    std::sort(troupe.begin(), troupe.end(), [](Actor *left, Actor *right)
-    {
-        return (graphx::classes::isLight(left->getType()) > graphx::classes::isLight(right->getType()));
-    });
-}
-
-void Theatre::countLights()
-{
-    point_lights_count = 0;
-    spot_lights_count = 0;
-    directional_lights_count = 0;
-
-    for(Actor *actor : troupe)
-    {
-        if(!graphx::classes::isLight(actor->getType())) // Keep an eye on this... (see notes @ [03/28/25])
-            continue;
-
-        if(static_cast<Light *>(actor)->isLightType(graphx::classes::LIGHTSPOT))
-        {
-            spot_lights_count++;
-            continue;
-        }
-
-        else if(static_cast<Light *>(actor)->isLightType(graphx::classes::LIGHTDIRECTIONAL))
-        {
-            directional_lights_count++;
-            continue;
-        }
-
-        point_lights_count++;
-    }
 }

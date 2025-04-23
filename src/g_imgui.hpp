@@ -1,16 +1,13 @@
 #ifndef GRAPHX_IMGUI
 #define GRAPHX_IMGUI
 #include "g_common_fwd.hpp"
+#include <glm/glm.hpp>
+#define IM_VEC4_CLASS_EXTRA \
+	constexpr ImVec4(const glm::vec4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {} \
+	operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
-#include <glm/fwd.hpp>
 #include <string>
-#include <vector>
-
-// Forward Declarations
-struct Theatre;
-struct gMeshData;
-
 
 struct GraphXConsole
 {
@@ -18,15 +15,18 @@ public:
 	bool active;
 	bool secondary_active;
 	bool tertiary_active;
+	bool quaternary_active;
 
 	ImGuiKey toggle_activation_key;
 	std::string name;
-	Theatre *current_theatre = nullptr;
 
 	GraphXConsole();
 
-	void updateFrame(GLFWwindow *window);
-	void displayTheatreData();
+	void updateFrame(GLFWwindow* window);
+	void showActorEditor(Actor*, int = -1);
+	void displayTheatrePrintout();
+	void exportTheatreFile();
+	void liveTheatreEditor();
 	bool justClosed();
 
 private:
@@ -34,7 +34,7 @@ private:
 	bool keep_debug_labels_on = false;
 	bool actor_selection_made = false;
 	bool actor_selection_valid = false;
-	Actor *actor = nullptr;
+	Actor* single_actor = nullptr;
 	std::string actor_name_selection = "";
 	std::string actor_uid_selection = "";
 	std::string error_string = "";

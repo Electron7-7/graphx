@@ -67,6 +67,7 @@ uniform int enable_diffuse;
 uniform int enable_specular;
 
 uniform vec3 view_position;
+uniform vec4 debug_highlight;
 
 vec3 calculatePointLight(Light light);
 vec3 calculateSpotLight(Light light);
@@ -88,7 +89,7 @@ void main()
 	// Todo: once more than one material is supported, make sure that the alpha isn't just affected by one
 	if(current_material.alpha < 0.5f)
 		discard; // THIS IS A HACK FIX AND WILL BE REPLACED ONCE I HAVE PROPER TRANSPARENCY WORKING!!!!
-	FragColor = vec4(output_color, 1.0f);
+	FragColor = vec4(output_color, 1.0f) + debug_highlight;
 }
 
 vec3 calculatePointLight(Light light)

@@ -1,13 +1,11 @@
 #ifndef GRAPHX_RENDERING
 #define GRAPHX_RENDERING
 #include "graphx_namespace.hpp"
+#include "g_jolt.hpp"
 #include "t_settings.hpp"
 #include <images.h>
 #include <models.hpp>
 #include <glfw_fwd.hpp>
-#include <Jolt/Jolt.h>
-#include <Jolt/Core/Color.h>
-#include <Jolt/Renderer/DebugRendererSimple.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <array>
@@ -39,10 +37,10 @@ struct Device
 	Device();
 	virtual ~Device() = default;
 
-	graphx::gClass &getType();
+	const std::string getName() const;
 	void setName(std::string new_name);
 	void setName(char *new_name);
-	std::string getName();
+	const graphx::gClass* getType() const;
 
 	virtual void initialize();
 	virtual void loadSettings(graphx::gSettings new_settings = empty_settings);
@@ -51,17 +49,51 @@ struct Device
 	virtual void setUID(long manual_uid);
 
 protected:
-	graphx::gClass my_type;
+	const graphx::gClass* my_type = nullptr;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	bool ready_to_destroy = false;
+};
+
+struct Collider : public Device
+{
+	glm::vec3 			local_position = glm::vec3(0.0f);
+	glm::vec3			position = glm::vec3(0.0f);
+	glm::vec3			euler_angles = glm::vec3(0.0f);
+	glm::vec3 			local_euler_angles = glm::vec3(0.0f);
+	glm::vec3			scale = glm::vec3(1.0f);
+	JPH::EMotionType	motion_type = JPH::EMotionType::Dynamic;
+	JPH::ObjectLayer	object_layer = Layers::MOVING;
+	JPH::EActivation	activation = JPH::EActivation::Activate;
+	float				friction = 1.0f;
+	bool				forever_alone = false;
+	int 				shape = graphx::jolt::shapes::BOX;
+
+	graphx::jolt::shape_arguments shape_arguments;
+
+	Collider();
+	~Collider() override;
+
+	void createBody();
+	void destroyBody();
+
+	const JPH::BodyID &getBodyID();
+	JPH::BodyCreationSettings *getBodySettings();
+
+	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+	void initialize() override;
+	void prepForDestruction() override;
+
+protected:
+	JPH::BodyID body_id;
+	JPH::BodyCreationSettings body_settings;
 };
 
 struct Environment final : public Device // Will be extended in the future
 {
 	glm::vec3 ambient_light_color = glm::vec3(1.0f);
-	float ambient_light_amount = 0.0f;
+	float ambient_light_amount = 0.05f;
 
-	Environment(std::string init_name = "UNTITLED_ENVIRONMENT", bool enable_ambient_light = false, float init_ambient_light_amount = 0.05f, glm::vec3 init_ambient_light_color = glm::vec3(1.0f));
+	Environment(float = 0.05f, glm::vec3 = glm::vec3(1.0f));
 
 	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
 };
@@ -227,7 +259,7 @@ struct LightRenderCmd
 {
 public:
 	LightData light_data;
-	graphx::gClass light_type = graphx::gClass::INVALID_TYPE;
+	const graphx::gClass* light_type = &graphx::gClass::INVALID_TYPE;
 
 	bool isValid() const;
 };
@@ -235,6 +267,7 @@ public:
 struct RenderCmd
 {
 public:
+	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
 	bool is_light_debug_mesh = false;
 	std::string mesh_data_name = ERROR_MODEL;
 	RenderState *current_render_state = nullptr;

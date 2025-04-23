@@ -70,7 +70,7 @@ namespace graphx
 			TEXTURE,
 		};
 
-		inline const gClass &getBaseType(const gClass &type) noexcept
+		inline const gClass& getBaseType(const gClass& type) noexcept
 		{
 			if(gClass::INVALID_TYPE == type)
 				return gClass::INVALID_TYPE;
@@ -86,19 +86,15 @@ namespace graphx
 			return gClass::INVALID_TYPE;
 		}
 
-		inline const bool isLight(const gClass &type) noexcept
+		inline const bool isLight(const gClass& type) noexcept
 		{
-			if(getBaseType(type) != ACTOR)
-				return false;
-
-			if(type > 0)
-				return false;
-
-			return true;
+			if(getBaseType(type) == ACTOR && type < 0)
+				return true;
+			return false;
 		}
 	};
 
 	inline const gClass gClass::INVALID_TYPE = gClass(); // The default constructor for `gClass` is `INVALID_TYPE`
-	inline const std::array<gClass, (gClass::ACTOR_ID_LIMIT + gClass::DEVICE_ID_LIMIT)> &gClass::classes = classes::valid_classes;
+	inline const std::array<gClass, (gClass::ACTOR_ID_LIMIT + gClass::DEVICE_ID_LIMIT)>& gClass::classes = classes::valid_classes;
 }
 #endif

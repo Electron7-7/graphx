@@ -42,10 +42,10 @@ std::map<std::string, std::any> cpp_definitions =
 	{"NonMoving", Layers::NON_MOVING},
 	{"Activate", JPH::EActivation::Activate},
 	{"DontActivate", JPH::EActivation::DontActivate},
-	{"BoxShape", ColliderShapes::BOX},
-	{"SphereShape", ColliderShapes::SPHERE},
-	{"CapsuleShape", ColliderShapes::CAPSULE},
-	{"CylinderShape", ColliderShapes::CYLINDER},
+	{"BoxShape", graphx::jolt::shapes::BOX},
+	{"SphereShape", graphx::jolt::shapes::SPHERE},
+	{"CapsuleShape", graphx::jolt::shapes::CAPSULE},
+	{"CylinderShape", graphx::jolt::shapes::CYLINDER},
 };
 
 graphx::interpreter::gStringSettings theatreParser(std::string theatre_data)
@@ -616,7 +616,7 @@ Theatre loadTheatre(long theatre_uid)
 
 void loadMainTheatre(long theatre_uid)
 {
-	if(current_theatre.getUID() == theatre_uid)
+	if(graphx::current::theatre.getUID() == theatre_uid)
 	{
 		PRINTERR("A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded because it's already the current Theatre (or the current Theatre has the same UID)!")
 		return;
@@ -626,9 +626,9 @@ void loadMainTheatre(long theatre_uid)
 	time_to_render = false;
 	time_to_store_buffers = false;
 
-	current_theatre.dropCurtains();
-	current_theatre = loadTheatre(theatre_uid);
-	current_theatre.raiseCurtains();
+	graphx::current::theatre.dropCurtains();
+	graphx::current::theatre = loadTheatre(theatre_uid);
+	graphx::current::theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
 
 	time_to_store_buffers = true;

@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <Jolt/Jolt.h>
 
+#define DEFAULT_VALUE_SETTING 99
+
 #define GRAB_SETTING_ERR_DEVICE_POINTER     -4
 #define GRAB_SETTING_ERR_ACTOR_POINTER      -8
 #define GRAB_SETTING_ERR_RAW_DATA_SINGLE    -15
@@ -26,13 +28,22 @@
 extern std::string empty_settings_identifier;
 extern graphx::gSettings empty_settings;
 
-template<typename T> int getSetting(T &variable, graphx::gSetting setting)
+template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 {
 	std::any set_value = setting.second;
 	int setting_type = setting.first;
 
 	if((setting_type == -1 || setting_type == 0) || (!set_value.has_value() || set_value.type() == typeid(void) || set_value.type() == typeid(nullptr)))
+	{
+		setting = graphx::gSetting(DEFAULT_VALUE_SETTING, variable);
 		return 0; // No setting to get
+	}
+
+	if(setting_type == DEFAULT_VALUE_SETTING)
+	{
+		variable = std::any_cast<T>(set_value);
+		return 0;
+	}
 
 	if(setting_type == RAW_DATA)
 	{

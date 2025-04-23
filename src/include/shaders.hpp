@@ -1,6 +1,8 @@
 #ifndef GRAPHX_EMBEDDED_SHADERS
 #define GRAPHX_EMBEDDED_SHADERS
 #include <string>
+extern std::string blinn_phong_deferred_frag;
+extern std::string blinn_phong_deferred_vert;
 extern std::string blinn_phong_frag;
 extern std::string blinn_phong_vert;
 extern std::string debug_normals_frag;

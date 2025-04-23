@@ -30,7 +30,8 @@ NAME = ""
 FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
 TESTRUN_LINUX = exit 0 &&
 TESTRUN_WINDOWS = exit 0 &&
-TEST_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows
+# TEST_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows
+TEST_LINUX = 
 TEST_WINDOWS = # nothing here, yet
 
 SRC := src
@@ -54,14 +55,14 @@ EMBED_OBJS =          \
 	$(O)/theatres.opp \
 	$(O)/models.opp
 
-GRAPHX_OBJS =              \
-	$(O)/g_math.opp        \
-	$(O)/r_common.opp      \
-	$(O)/g_jolt.opp        \
-	$(O)/g_actors.opp      \
-	$(O)/g_imgui.opp       \
-	$(O)/r_renderer.opp    \
-	$(O)/t_interpreter.opp \
+GRAPHX_OBJS =              		 \
+	$(O)/g_math.opp        		 \
+	$(O)/g_jolt.opp        		 \
+	$(O)/r_common.opp      		 \
+	$(O)/g_actors.opp      		 \
+	$(O)/g_imgui.opp       		 \
+	$(O)/r_renderer.opp    		 \
+	$(O)/t_interpreter.opp 		 \
 	$(O)/g_theatres.opp
 
 OBJS =             	\
