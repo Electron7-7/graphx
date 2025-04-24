@@ -31,22 +31,20 @@ private:
 
 struct Device
 {
-	std::string name = "Untitled Device";
 	graphx::gSettings settings = empty_settings;
 
-	Device();
+	Device(const graphx::gUID&, const graphx::gSettings&);
+	Device(const long, const std::string& = "Untitled Device");
 	virtual ~Device() = default;
 
-	const std::string getName() const;
-	void setName(std::string new_name);
-	void setName(char *new_name);
+	void setName(const std::string& new_name);
+	void setUID(const graphx::gUID&);
+	const graphx::gUID& getUID() const;
 	const graphx::gClass* getType() const;
 
 	virtual void initialize();
-	virtual void loadSettings(graphx::gSettings new_settings = empty_settings);
+	virtual void loadSettings(graphx::gSettings = empty_settings);
 	virtual void prepForDestruction();
-	virtual long getUID();
-	virtual void setUID(long manual_uid);
 
 protected:
 	const graphx::gClass* my_type = nullptr;
@@ -335,5 +333,5 @@ std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 MeshData    M_LoadOBJ(std::string embedded_obj_file);
 
-template<typename T> Device *createNewDevice() { return new T; }
+template<typename T> Device* createNewDevice(const graphx::gUID& new_uid, const graphx::gSettings& new_settings = empty_settings) { return new T(new_uid, new_settings); }
 #endif

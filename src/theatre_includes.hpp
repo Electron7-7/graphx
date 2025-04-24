@@ -5,7 +5,8 @@
 #include <gmath.hpp>
 #ifndef GRAPHX_COMPILING
 #include "r_common.hpp"
-#include "g_common.hpp"
+#include "g_actor.hpp"
+#include "g_theatre.hpp"
 #include "g_actors.hpp"
 #include "g_jolt.hpp"
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>

@@ -14,11 +14,11 @@ glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 //
 // Actor
 //
-Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+Actor::Actor(const long init_id, const std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : mesh(init_mesh), scale(init_scale), position_global(init_position)
 {
 	my_type = &graphx::classes::ACTOR;
-	name = init_name;
+	uid = graphx::gUID(init_id, init_name);
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	RenderState render_state = RenderState(init_position, quaternion, init_scale);
 	current_state_buffer = { render_state, render_state };
@@ -26,30 +26,30 @@ Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, gl
 	updateVectors();
 }
 
-void Actor::setName(const std::string new_name)
+Actor::Actor(const graphx::gUID& new_uid, const graphx::gSettings& new_settings)
 {
-	name = new_name;
+	my_type = &graphx::classes::ACTOR;
+	uid = new_uid;
+	settings = new_settings; // THIS IS PROBABLY GONNA BREAK EVERYTHING
+	RenderState render_state = RenderState(position_global, quaternion, scale);
+	current_state_buffer = { render_state, render_state };
+	previous_state_buffer = { render_state, render_state };
+	updateVectors();
 }
 
-void Actor::setName(const char* new_name)
+const graphx::gUID& Actor::getUID() const
 {
-	name = new_name;
+	return uid;
 }
 
-std::string Actor::getName() const
+void Actor::setUID(const graphx::gUID& manual_uid)
 {
-	return name;
+	uid = manual_uid;
 }
 
-void Actor::setUID(const long manual_uid)
+void Actor::setName(const std::string& new_name)
 {
-	if(manual_uid != -1)
-		UID = manual_uid;
-}
-
-long Actor::getUID() const
-{
-	return UID;
+	uid.name = new_name;
 }
 
 const graphx::gClass* Actor::getType() const

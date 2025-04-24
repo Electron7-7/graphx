@@ -2,7 +2,7 @@
 #define GRAPHXNAMESPACE
 #include "g_common_fwd.hpp"
 #include "r_common_fwd.hpp"
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
 #include <array>
 #include <any>
 #include <string>
@@ -11,6 +11,12 @@
 
 namespace graphx
 {
+	/// The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`.
+	typedef std::pair<int, std::any> gSetting;
+	typedef std::unordered_map<std::string, gSetting> gSettings;
+	inline const std::string empty_settings_identifier = "FUCKYOU";
+	inline const graphx::gSettings empty_settings = {{empty_settings_identifier, graphx::gSetting(-1, {})}};
+
 	namespace current
 	{
 		extern Theatre theatre;
@@ -21,6 +27,42 @@ namespace graphx
 		inline bool actor_debug_menu_open = false;
 		inline float actor_debug_menu_text_scale = 1.8f;
 	}
+
+	struct gUID
+	{
+	public:
+		int id = -1;
+		std::string name = "A Class With No Name";
+
+		gUID(const int new_id = -1, const std::string new_name = "A Class With No Name"):
+		id(new_id), name(new_name)
+		{}
+
+		// Comparing gUID to gUID
+		const bool operator==(const gUID& compare_against) const { return (id == compare_against.id);  }
+		const bool operator!=(const gUID& compare_against) const { return !(*this == compare_against); }
+		const bool operator< (const gUID& compare_against) const { return (id < compare_against.id);   }
+		const bool operator> (const gUID& compare_against) const { return (id > compare_against.id);   }
+		const bool operator<=(const gUID& compare_against) const { return !(*this > compare_against);  }
+		const bool operator>=(const gUID& compare_against) const { return !(*this < compare_against);  }
+		// Comparing gUID to int
+		const bool operator==(const int& compare_against) const { return (id == compare_against);     }
+		const bool operator!=(const int& compare_against) const { return !(*this == compare_against); }
+		const bool operator< (const int& compare_against) const { return (id < compare_against);      }
+		const bool operator> (const int& compare_against) const { return (id > compare_against);      }
+		const bool operator<=(const int& compare_against) const { return !(*this > compare_against);  }
+		const bool operator>=(const int& compare_against) const { return !(*this < compare_against);  }
+		// Comparing gUID to std::string
+		const bool operator==(const std::string& compare_against) const { return (name == compare_against);   }
+		const bool operator!=(const std::string& compare_against) const { return !(*this == compare_against); }
+
+		inline const std::string string() const
+		{
+			return std::string("{" + std::to_string(id) + ", " + name + "}");
+		}
+	};
+
+	inline const gUID INVALID_UID;
 
 	struct gClass
 	{
@@ -38,15 +80,35 @@ namespace graphx
 
 		int id = INVALID_TYPE_ID;              // `id` is usually more important than `name`... usually...
 		const char* name = INVALID_TYPE_NAME;  // `name` is only really used by the interpreter (and for debugging)
-		Actor*  (*create_new_actor)()  = nullptr;
-		Device* (*create_new_device)() = nullptr;
+
+		Actor*(*new_actor)(const graphx::gUID&, const graphx::gSettings&) = nullptr;
+		Device*(*new_device)(const graphx::gUID&, const graphx::gSettings&) = nullptr;
 
 		glm::vec3 debugging_color = glm::vec3(1.0f, 0.3f, 0.83f);
 
 		inline gClass() = default;
-		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)(), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f))   : id(init_id), name(init_name), create_new_actor(new_actor_function), debugging_color(init_debugging_color)   {}
-		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Device*(*new_device_function)(), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f)) : id(init_id), name(init_name), create_new_device(new_device_function), debugging_color(init_debugging_color) {}
-		inline constexpr gClass(const gClass& to_copy) : id(to_copy.id), name(to_copy.name), create_new_actor(to_copy.create_new_actor), create_new_device(to_copy.create_new_device), debugging_color(to_copy.debugging_color) {}
+
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Actor*(*new_actor_function)(const graphx::gUID&, const graphx::gSettings&), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f)):
+		id(init_id),
+		name(init_name),
+		new_actor(new_actor_function),
+		debugging_color(init_debugging_color)
+		{}
+
+		inline constexpr gClass(const char init_name[NAME_MAX_SIZE_BYTES], int init_id, Device*(*new_device_function)(const graphx::gUID&, const graphx::gSettings&), glm::vec3 init_debugging_color = glm::vec3(1.0f, 0.3f, 0.83f)):
+		id(init_id),
+		name(init_name),
+		new_device(new_device_function),
+		debugging_color(init_debugging_color)
+		{}
+
+		inline constexpr gClass(const gClass& to_copy):
+		id(to_copy.id),
+		name(to_copy.name),
+		new_actor(to_copy.new_actor),
+		new_device(to_copy.new_device),
+		debugging_color(to_copy.debugging_color)
+		{}
 
 		inline gClass(const std::string init_name)
 		{
@@ -179,9 +241,5 @@ namespace graphx
 		inline bool  lighting_switch_specular = true;
 		inline bool  lighting_switch_ambient = true;
 	};
-
-	/// The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`.
-	typedef std::pair<int, std::any> gSetting;
-	typedef std::unordered_map<std::string, gSetting> gSettings;
 }
 #endif

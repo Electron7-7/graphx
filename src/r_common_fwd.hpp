@@ -4,7 +4,6 @@
 #include <Jolt/Renderer/DebugRendererSimple.h>
 #include <glfw_fwd.hpp>
 #include <glm/fwd.hpp>
-#include <glm/vec3.hpp>
 #include <string>
 #include <mutex>
 #include <map>

@@ -60,10 +60,11 @@ GRAPHX_OBJS =              		 \
 	$(O)/g_jolt.opp        		 \
 	$(O)/r_common.opp      		 \
 	$(O)/g_actors.opp      		 \
+	$(O)/g_actor_interfacer.opp  \
 	$(O)/g_imgui.opp       		 \
 	$(O)/r_renderer.opp    		 \
 	$(O)/t_interpreter.opp 		 \
-	$(O)/g_theatres.opp
+	$(O)/g_theatre.opp
 
 OBJS =             	\
 	$(EXT_OBJS)    	\

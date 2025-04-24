@@ -2308,3 +2308,10 @@ The plan is to use Dear ImGui for all of this and to keep things as functional a
 Just found out I don't need to create the interface class (at least not now). The debug menu can just include `g_common.hpp` and `r_common.hpp` and be compiled after their respective source files.
 
 Finished up with the bare bones Actor editor; you can change the position, rotation, and scale of any Actor either by selecting one via name/uid, or by opening the "editor" which shows all Actors in the Theatre. Hovering over the settings of an Actor will highlight it and you can reset Actors to default; the button just calls `Actor::youGotACallback()` so I should either reset everything in that function or make a new one (e.g: visible doesn't reset).
+
+[04/23/25]
+I want to keep working on the new update. I'm going to start with the Actor interfacer because, quoting my Milanote notes: "I want to be able to interface with all Actor types without needing to check and re-cast the Actor pointer (to avoid a hard crash). I'm thinking a simple "wrapper" class with various abstract functions that have no undefined behavior".
+
+After lots of testing, I've got a much better understanding of pointer memory allocation. To avoid memory leaks, if I use a raw pointer and `new` at any point, then I need to define a destructor for that class that explicitly deletes that pointer. To avoid having to do any of this, I could also just make a private, static, constant Actor variable that the pointer gets set to if an invalid/null reference is given to the constructor.
+
+Putting this on pause while I dig in and fix all the nasty undefined behaviour I've inadvertantly created in Theatre (and Actor).

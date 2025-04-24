@@ -2,7 +2,8 @@
 #include "sanity.hpp"
 #include "graphx_classes_namespace.hpp"
 #include "g_jolt.hpp"
-#include "g_common.hpp"
+#include "g_actor.hpp"
+#include "g_theatre.hpp"
 #include "r_common.hpp"
 #include <images.h>
 #include <models.hpp>
@@ -13,8 +14,6 @@
 #include <sstream>
 
 bool loading_new_main_theatre = true; // Definitely wanna replace this with something a little more sophisticated.
-std::string empty_settings_identifier = "FUCKYOU";
-graphx::gSettings empty_settings = {{empty_settings_identifier, graphx::gSetting(-1, {})}};
 
 /// This map is where valid `CPP_DEFINITION` variable names are stored.
 std::map<std::string, std::any> cpp_definitions =

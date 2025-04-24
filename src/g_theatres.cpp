@@ -435,8 +435,9 @@ void Theatre::actorEnter(Actor *new_actor, long uid, graphx::gSettings new_setti
         new_actor->mesh = static_cast<Mesh *>(devices.at(new_actor->mesh->getUID()));
     }
 
-    if(time_to_render)
-        new_actor->callToStage(this);
+    // if(time_to_render)
+        // new_actor->callToStage(this);
+    new_actor->callToStage(this); // If this is an initializer, it shouldn't be behind an if...
 
     time_to_store_buffers = time_to_render;
 }

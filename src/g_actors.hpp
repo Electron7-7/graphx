@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
-#include "g_common.hpp"
+#include "g_actor.hpp"
+#include "g_theatre.hpp"
 #include "r_common.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -267,5 +268,5 @@ extern glm::vec3 vector3_up;
 extern glm::vec3 vector3_front;
 extern glm::vec3 vector3_right;
 
-template<typename T> Actor *createNewActor() { return new T; }
+template<typename T> Actor* createNewActor(const graphx::gUID& new_uid, const graphx::gSettings& new_settings = empty_settings) { return new T(new_uid, new_settings); }
 #endif

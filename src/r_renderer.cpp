@@ -1,5 +1,6 @@
 #include "r_common.hpp"
-#include "g_common.hpp"
+#include "g_actor.hpp"
+#include "g_theatre.hpp"
 #include "g_actors.hpp"
 #include "sanity.hpp"
 #include "t_common.hpp"

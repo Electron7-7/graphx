@@ -107,7 +107,15 @@ template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::ma
 //
 Device::Device()
 {
+	name = "Untitled Device";
 	my_type = &graphx::classes::DEVICE;
+}
+
+Device::Device(const long new_uid, const graphx::gSettings& new_settings)
+: Device()
+{
+	UID = new_uid;
+	settings = new_settings;
 }
 
 const graphx::gClass* Device::getType() const
