@@ -436,7 +436,7 @@ void interpretTheatreReference(graphx::gSettings &current_object_settings, std::
 	if(variable_name.find(':') != std::string::npos)
 		class_name = variable_name.substr(variable_name.find_last_of(':') + 1);
 
-	if(!graphx::gClass::isValidClass(class_name)) // If true, this is a reference to a variable of the same name in another Actor/Device
+	if(!graphx::classes::isValid(class_name)) // If true, this is a reference to a variable of the same name in another Actor/Device
 	{
 		graphx::interpreter::gStringSetting referenced_setting(variable_name, graphx::interpreter::gValue(-1, "EMPTY"));
 

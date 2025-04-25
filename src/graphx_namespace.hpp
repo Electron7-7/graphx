@@ -67,7 +67,7 @@ namespace graphx
 	struct gClass
 	{
 	public:
-		static const gClass INVALID_TYPE;  // The default constructor is INVALID_TYPE
+		static const gClass INVALID_TYPE;
 
 		const int id = 0;
 		const char* name = "INVALID_TYPE";
@@ -107,6 +107,9 @@ namespace graphx
 		debugging_color(to_copy.debugging_color)
 		{}
 
+		gClass(const std::string&);
+		gClass(const int&);
+
 		// Comparing gClass to gClass
 		const bool operator==(const gClass&) const;
 		const bool operator!=(const gClass&) const;
@@ -128,8 +131,8 @@ namespace graphx
 		const bool operator!=(const std::string&) const;
 
 		// Conversions
-		constexpr operator int() const;
-		constexpr operator std::string() const;
+		// constexpr operator int() const;
+		// constexpr operator std::string() const;
 	};
 
 	// Comparing gClass to gClass* (left and right sided)

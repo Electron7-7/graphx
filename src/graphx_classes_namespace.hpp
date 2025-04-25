@@ -18,103 +18,41 @@
 */
 namespace graphx
 {
+	inline constexpr gClass gClass::INVALID_TYPE = gClass();  // The default constructor is INVALID_TYPE
+
 	namespace classes
 	{
 		// Feel free to expand these limits if needed
 		#define ACTOR_LIMIT  100
 		#define DEVICE_LIMIT 200
-		#define AL ACTOR_LIMIT // This helps make the list below look a lot nicer
 
-		//                      variable         name                    ID    class constructor function         debugging color (optional)
-		//--------------------------------------------------------------------------------------------------------------------------------------
-		inline constexpr gClass ACTOR            ( "Actor",              1,    &createNewActor<Actor>,            glm::vec3(0.4f, 0.6f, 0.8f) );
-		inline constexpr gClass PHYSICSACTOR     ( "PhysicsActor",       2,    &createNewActor<PhysicsActor>,     glm::vec3(1.0f, 0.2f, 0.1f) );
-		inline constexpr gClass STATICBODYACTOR  ( "StaticBodyActor",    3,    &createNewActor<StaticBodyActor>,  glm::vec3(1.0f, 0.6f, 0.4f) );
-		inline constexpr gClass RIGIDBODYACTOR   ( "RigidBodyActor",     4,    &createNewActor<RigidBodyActor>,   glm::vec3(1.0f, 0.6f, 0.1f) );
-		inline constexpr gClass CAMERA           ( "Camera",             5,    &createNewActor<Camera>,           glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass GRAPHXPLAYER     ( "GraphXPlayer",       6,    &createNewActor<GraphXPlayer>,     glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass RAMIEL           ( "Ramiel",             7,    &createNewActor<Ramiel>,           glm::vec3(0.3f, 0.1f, 1.0f) );
-		inline constexpr gClass LABEL            ( "Label",              8,    &createNewActor<Label>,            glm::vec3(0.0f, 0.0f, 0.0f) );
+		extern const std::array<const gClass*, (ACTOR_LIMIT + DEVICE_LIMIT)> valid_classes;
 
-		// ALL LIGHT DERIVED CLASSES MUST USE NEGATIVE TYPE IDS IN ORDER FOR graphx::classes::isLight TO WORK
-		inline constexpr gClass LIGHT            ( "Light",             -1,    &createNewActor<Light>,            glm::vec3(1.0f, 1.0f, 1.0f) );
-		inline constexpr gClass LIGHTDIRECTIONAL ( "LightDirectional",  -2,    &createNewActor<LightDirectional>, glm::vec3(1.0f, 1.0f, 1.0f) );
-		inline constexpr gClass LIGHTSPOT        ( "LightSpot",         -3,    &createNewActor<LightSpot>,        glm::vec3(0.5f, 1.0f, 0.5f) );
-		inline constexpr gClass LIGHTFLASHLIGHT  ( "LightFlashlight",   -4,    &createNewActor<LightFlashlight>,  glm::vec3(1.0f, 1.0f, 1.0f) );
-		inline constexpr gClass LIGHTTESTERMOVER ( "LightTesterMover",  -5,    &createNewActor<LightTesterMover>, glm::vec3(1.0f, 1.0f, 1.0f) );
+		extern const gClass ACTOR;
+		extern const gClass PHYSICSACTOR;
+		extern const gClass STATICBODYACTOR;
+		extern const gClass RIGIDBODYACTOR;
+		extern const gClass CAMERA;
+		extern const gClass GRAPHXPLAYER;
+		extern const gClass RAMIEL;
+		extern const gClass LABEL;
+		extern const gClass LIGHT;
+		extern const gClass LIGHTDIRECTIONAL;
+		extern const gClass LIGHTSPOT;
+		extern const gClass LIGHTFLASHLIGHT;
+		extern const gClass LIGHTTESTERMOVER;
+		extern const gClass DEVICE;
+		extern const gClass ENVIRONMENT;
+		extern const gClass MATERIAL;
+		extern const gClass MESH;
+		extern const gClass SPRITE;
+		extern const gClass COLLIDER;
+		extern const gClass TEXTURE;
 
-		inline constexpr gClass DEVICE           ( "Device",      AL+    1,    &createNewDevice<Device>,          glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass ENVIRONMENT      ( "Environment", AL+    2,    &createNewDevice<Environment>,     glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass MATERIAL         ( "Material",    AL+    3,    &createNewDevice<Material>,        glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass MESH             ( "Mesh",        AL+    4,    &createNewDevice<Mesh>,            glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass SPRITE           ( "Sprite",      AL+    5,    &createNewDevice<Sprite>,          glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass COLLIDER         ( "Collider",    AL+    6,    &createNewDevice<Collider>,        glm::vec3(0.0f, 0.0f, 0.0f) );
-		inline constexpr gClass TEXTURE          ( "Texture",     AL+    7,    &createNewDevice<Texture>,         glm::vec3(0.0f, 0.0f, 0.0f) );
-
-		// Don't forget to add your gClass variable to the `valid_classes` array!
-		inline constexpr std::array<const gClass*, (ACTOR_LIMIT + DEVICE_LIMIT)> valid_classes =
-		{
-			// Actors
-			&ACTOR,
-			&PHYSICSACTOR,
-			&STATICBODYACTOR,
-			&RIGIDBODYACTOR,
-			&CAMERA,
-			&GRAPHXPLAYER,
-			&RAMIEL,
-			&LABEL,
-			&LIGHT,
-			&LIGHTDIRECTIONAL,
-			&LIGHTSPOT,
-			&LIGHTFLASHLIGHT,
-			&LIGHTTESTERMOVER,
-			// Devices
-			&DEVICE,
-			&ENVIRONMENT,
-			&MATERIAL,
-			&MESH,
-			&SPRITE,
-			&COLLIDER,
-			&TEXTURE,
-		};
-
-		inline bool isValidClass(const gClass& type)
-		{
-			for(auto valid_class = valid_classes.begin() ; *valid_class != INVALID_TYPE ; valid_class++)
-				if(*valid_class == type)
-					return true;
-			return false;
-		}
-
-		inline const gClass& getClassType(const gClass& type)
-		{
-			for(auto valid_class = valid_classes.begin() ; *valid_class != INVALID_TYPE ; valid_class++)
-				if(*valid_class == type)
-					return **valid_class;
-			return INVALID_TYPE;
-		}
-
-		inline const gClass& getBaseType(const gClass& type) noexcept
-		{
-			if(INVALID_TYPE == type)
-				return INVALID_TYPE;
-
-			const int type_id = abs(type.id); // Because Lights use negative values
-
-			if(type_id <= ACTOR_LIMIT && ACTOR <= type_id)
-				return ACTOR;
-
-			if(type_id <= DEVICE_LIMIT && DEVICE <= type_id)
-				return DEVICE;
-
-			return INVALID_TYPE;
-		}
-
-		inline const bool isLight(const gClass& type) noexcept
-		{
-			// return (getBaseType(type) == ACTOR && type < 0); // Not necessary unless I decide to let Devices have negative ids
-			return(type < 0);
-		}
+		const gClass& getClassType(const gClass&) noexcept;
+		const gClass& getBaseType(const gClass&) noexcept;
+		const bool isValid(const gClass&) noexcept;
+		const bool isLight(const gClass&) noexcept;
 	}
 }
 #endif
