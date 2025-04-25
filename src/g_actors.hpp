@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
 #include "g_actor.hpp"
+#include "g_devices.hpp"
 #include "r_common.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -21,15 +22,14 @@ class Label : public Actor
 public:
 	float label_alpha = 0.0f;
 
-	Label(const graphx::gUID&, const graphx::gSettings& = graphx::empty_settings);
-	Label(const int, const std::string& = "UNTITLED_LABEL", const graphx::gSettings& = graphx::empty_settings);
+	using Actor::Actor;
 
 	void tick(const int) override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 	RenderCommands getRenderCommands() override;
 
 protected:
-	Actor *parent = this;
+	Actor* parent = this;
 	Sprite label_mesh = Sprite();
 	TextRenderCmd text_render_command;
 };
@@ -37,27 +37,20 @@ protected:
 class Camera : public Actor
 {
 public:
-	float view_pitch_clamp = 89.0f;
-	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
-	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
+	float view_pitch_clamp_degrees = 89.0f;
 
-	Camera();
+	using Actor::Actor;
 
-	void tick(const int) override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
-	void doRotation(glm::vec2 mouse_input);
-
-// protected:
-	// glm::vec3 position_global = glm::vec3(0.0f);
-	// glm::vec3 position_local = glm::vec3(0.0f, 3.0f, 0.0f); // temporary default offset
+	void loadSettings() override;
+	void processMouse(GLFWwindow* window, double x_position_in, double y_position_in) override;
 };
 
 class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:
-	Mesh player_mesh = Mesh();
+	Model player_mesh = Model();
 	Camera player_camera;
-	LightFlashlight *player_flashlight = nullptr;
+	LightFlashlight* player_flashlight = nullptr;
 
 	bool do_gravity = true; // Debugging, mostly
 	float mouse_sensitivity = 0.05f;
@@ -69,17 +62,17 @@ public:
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
 
-	GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f));
+	using Actor::Actor;
 
 	glm::mat4 getViewMatrix();
 	glm::vec3 getViewPosition();
-	void processMouse(GLFWwindow *window, double x_position_in, double y_position_in) override;
-	void processInput(GLFWwindow *window) override;
-	void processKey(GLFWwindow *window, int key, int scancode, int action, int mods) override;
+	void processMouse(GLFWwindow* window, double x_position_in, double y_position_in) override;
+	void checkForInput(GLFWwindow* window) override;
+	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) override;
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
 	void tick(int current_tick) override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 
 private:
 	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -105,14 +98,14 @@ public:
 	// Other
 	// Texture *texture_projection = nullptr;
 
-	Light(std::string init_name = "UNTITLED_LIGHT");
+	using Actor::Actor;
 
 	const graphx::gClass* getLightType() const;
 	const bool isLightType(const graphx::gClass* light_type) const;
 	const bool isLightType(const graphx::gClass& light_type) const;
 
 	RenderCommands getRenderCommands() override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 
 protected:
 	const graphx::gClass* my_light_type = nullptr;
@@ -124,10 +117,10 @@ class LightDirectional : public Light
 public:
 	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
 
-	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
+	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 };
 
 class LightSpot : public Light
@@ -137,10 +130,10 @@ public:
 	float spot_angle = 17.5f;
 	float spot_angle_fade = 5.0f;
 
-	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
+	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 };
 
 class LightFlashlight: public LightSpot
@@ -151,7 +144,7 @@ public:
 	glm::vec3 rotation_offset = glm::vec3(0.0f);
 	bool start_enabled = true;
 
-	LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
+	using LightSpot::LightSpot;
 
 	void setLight(bool is_on);
 	void toggleLight(glm::vec3 toggle_color = glm::vec3(0.0f));
@@ -159,7 +152,7 @@ public:
 	void setLightColor(bool color_toggle);
 
 	void tick(int current_tick) override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 
 private:
 	glm::vec3 _color = light_color;
@@ -174,13 +167,13 @@ public:
 	float pivot_theta = 0.0f;
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
-	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
-	Actor pivot_point = Actor(-4269, "pivot point");
+	Model temporary_pivot_mesh = Model(&temporary_pivot_material);
+	Actor pivot_point = Actor("pivot point");
 
-	LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
+	using Light::Light;
 
 	void tick(const int) override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 };
 
 #define RAMIEL_CIRLE    0
@@ -198,15 +191,15 @@ public:
 
 	float movement_speed = 1.0f;
 
-	Ramiel();
+	using Actor::Actor;
 
 	void tick(const int) override;
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
+	void loadSettings() override;
 };
 
 extern glm::vec3 vector3_up;
 extern glm::vec3 vector3_front;
 extern glm::vec3 vector3_right;
 
-template<typename T> Actor* createNewActor(const graphx::gUID& new_uid, const graphx::gSettings& new_settings = empty_settings) { return new T(new_uid, new_settings); }
+template<typename T> Actor* createNewActor(const graphx::gID& new_uid, const graphx::gSettings& new_settings = graphx::gSettings()) { return new T(new_uid, new_settings); }
 #endif

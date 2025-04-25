@@ -2499,3 +2499,6 @@ While refactoring Actor, I had the idea to create a function template for automa
 But that would be useless, because the only way to safely do anything with that pointer, I'd have to know what type it is already... which kinda defeats the purpose of the function template.
 
 I need to put all the namespace definitions in a source file.
+
+[04/25/25]
+I did a lot of refactoring today; I'm falling prey to "feature creep" but it's more like "refactor creep". As an example: while I was refactoring the Actors and Devices, I ended up randomly deciding to change the Material pointer in Mesh to a graphx::gID. This means that I can't test my code until I've accounted for that. I need to be more focused on smaller changes, even when doing big changes. Basically: DONT DO EVERYTHING AT ONCE!!! Even if I'm doing a big change (like a major refactor/overhaul of a core implementation), don't do anything other than that one change before testing. Anyways, you can check the fuckin' commit for this and see for yourself just how much I've written. I'm very close to finishing, now. Just need to iron out the rest of the Actors and Devices, make sure I plug everything back in, and hope to god I don't get a shit ton of linker errors.

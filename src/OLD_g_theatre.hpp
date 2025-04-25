@@ -7,7 +7,7 @@
 
 struct Theatre
 {
-    Mesh *stage_mesh = nullptr;
+    Model *stage_mesh = nullptr;
     Material *stage_material = nullptr;
     Actor stage;
     glm::vec3 stage_scale = glm::vec3(0.0f);
@@ -40,15 +40,15 @@ struct Theatre
     void delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods);
     void delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in);
     void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
-    void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = empty_settings);
+    void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = graphx::gSettings());
     void actorLeave(Actor *old_actor);
     void actorLeave(long uid);
-    void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = empty_settings);
+    void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = graphx::gSettings());
     void removeDevice(Device *old_device);
     void removeDevice(long uid);
 
-    void createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings = empty_settings);
-    void createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings  = empty_settings);
+    void createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings = graphx::gSettings());
+    void createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings  = graphx::gSettings());
 
     std::vector<Actor *> getAllActorsOfType(graphx::gClass type_name);
     std::vector<Device *> getAllDevicesOfType(graphx::gClass type_name);

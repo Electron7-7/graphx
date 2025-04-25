@@ -1,10 +1,10 @@
 #include "t_common.hpp"
 #include "sanity.hpp"
-#include "graphx_classes_namespace.hpp"
+#include "graphx_classes.hpp"
 #include "g_jolt.hpp"
 #include "g_actor.hpp"
+#include "g_device.hpp"
 #include "g_theatre.hpp"
-#include "r_common.hpp"
 #include <images.h>
 #include <models.hpp>
 #include <theatres.hpp>
@@ -489,15 +489,15 @@ void interpretTheatreReference(graphx::gSettings &current_object_settings, std::
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
 
-void interpretSandwich(graphx::gSettings &current_object_settings, graphx::interpreter::gStringSettings &theatre_settings, std::string current_object_name, int &i, int &it, unsigned long settings_size, Theatre &new_theatre)
+void interpretSandwich(graphx::gSettings& current_object_settings, graphx::interpreter::gStringSettings& theatre_settings, std::string current_object_name, int& i, int& it, unsigned long settings_size, Theatre& new_theatre)
 {
 	graphx::gSettings sandwich_settings;
-	graphx::interpreter::gStringSetting sandwich_bun_setting = theatre_settings[i][it];
+	graphx::interpreter::gStringSetting sandwich_bun_setting = theatre_settings.at(i).at(it);
 
 	if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
-		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->settings;
+		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->getSettings();
 	else
-		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->settings;
+		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->getSettings();
 
 	sandwich_settings["Name"] = graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{sandwich_bun_setting.second.second + "_" + current_object_name});
 
@@ -532,15 +532,13 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 
 	if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
 	{
-		Actor *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_actor();
-		sandwich_bun->youGotACallBack(sandwich_settings);
+		Actor* sandwich_bun = graphx::classes::getClassType(sandwich_bun_setting.first).new_actor("Sandwiched Actor", sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
 	else if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::DEVICE)
 	{
-		Device *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_device();
-		sandwich_bun->loadSettings(sandwich_settings);
+		Device* sandwich_bun = graphx::classes::getClassType(sandwich_bun_setting.first).new_device("Sandwiched Device", sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
@@ -558,11 +556,11 @@ Theatre loadTheatre(long theatre_uid)
 
 	graphx::interpreter::gStringSettings theatre_settings = theatreParser(embedded_theatres.at(theatre_uid));
 
-	Theatre new_theatre = Theatre(theatre_settings[0][0].second.second, theatre_uid);
-	new_theatre.graphx_theatre_settings = theatre_settings;
-	new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
+	Theatre new_theatre = Theatre(theatre_uid, theatre_settings[0][0].second.second);
+	// new_theatre.graphx_theatre_settings = theatre_settings;
+	// new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
 
-	PRINTDEBUG("Loading Theatre \"" << new_theatre.name << "\"")
+	PRINTDEBUG("Loading Theatre \"" << new_theatre.getID().name << "\"")
 
 	for(int i = 1 ; i < theatre_settings.size() ; i++)
 	{
@@ -592,22 +590,17 @@ Theatre loadTheatre(long theatre_uid)
 			}
 		}
 
-		if(graphx::classes::getBaseType(theatre_settings[i][0].first) == graphx::classes::ACTOR)
-		{
-			new_theatre.createActor(theatre_settings[i][0].first, i, current_object_settings);
-			continue;
-		}
-
 		if(!theatre_settings[i][0].first.compare("Stage"))
 		{
-			new_theatre.stage.youGotACallBack(current_object_settings);
-			new_theatre.stage_mesh->loadSettings(current_object_settings);
-			new_theatre.loadStageSettings(current_object_settings);
-			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.getName() << "\" given custom settings")
+			// new_theatre.stage.youGotACallBack(current_object_settings);
+			// new_theatre.stage_mesh->loadSettings(current_object_settings);
+			// new_theatre.loadStageSettings(current_object_settings);
+			// PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.getName() << "\" given custom settings")
+			PRINTNOTE("Stage doesn't exist yet")
 			continue;
 		}
 
-		new_theatre.createDevice(theatre_settings[i][0].first, i, current_object_settings);
+		new_theatre.createActorOrDevice(theatre_settings[i][0].first, i, current_object_settings);
 	}
 
 	return new_theatre;
@@ -615,7 +608,7 @@ Theatre loadTheatre(long theatre_uid)
 
 void loadMainTheatre(long theatre_uid)
 {
-	if(graphx::current::theatre.getUID() == theatre_uid)
+	if(graphx::current::theatre.getID() == theatre_uid)
 	{
 		PRINTERR("A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded because it's already the current Theatre (or the current Theatre has the same UID)!")
 		return;
@@ -625,9 +618,9 @@ void loadMainTheatre(long theatre_uid)
 	time_to_render = false;
 	time_to_store_buffers = false;
 
-	graphx::current::theatre.dropCurtains();
+	// graphx::current::theatre.dropCurtains();
 	graphx::current::theatre = loadTheatre(theatre_uid);
-	graphx::current::theatre.raiseCurtains();
+	// graphx::current::theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
 
 	time_to_store_buffers = true;
@@ -636,7 +629,7 @@ void loadMainTheatre(long theatre_uid)
 
 void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
 {
-	if(parent_theatre == nullptr || parent_theatre->getUID() == -1)
+	if(parent_theatre == nullptr || parent_theatre->getID() == -1)
 	{
 		PRINTERR("Tried loading a child Theatre for an invalid parent Theatre (either nullptr or with a UID of -1)!")
 		return;

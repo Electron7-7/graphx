@@ -57,6 +57,7 @@ EMBED_OBJS =          \
 
 GRAPHX_OBJS =                   \
 	$(O)/graphx_namespace.opp   \
+	$(O)/graphx_classes.opp     \
 	$(O)/g_math.opp        		\
 	$(O)/g_jolt.opp        		\
 	$(O)/r_common.opp      		\

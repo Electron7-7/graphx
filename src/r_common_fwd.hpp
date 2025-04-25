@@ -13,7 +13,7 @@ struct Device;
 struct Environment;
 struct Texture;
 struct Material;
-struct Mesh;
+struct Model;
 struct Sprite;
 struct Collider; // Collider declared here too, despite being in g_jolt.hpp (mainly bc it's a Device)
 
@@ -24,12 +24,12 @@ struct TextRenderCmd;
 struct RenderCommands;
 
 // Other
-struct MeshData;
+struct Mesh;
 struct GLShader;
 struct LightData;
 
 // Variables
-extern std::map<std::string, MeshData> mesh_data_storage;
+extern std::map<std::string, Mesh> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
@@ -46,5 +46,5 @@ void        R_BufferRenderCmd(TextRenderCmd text_render_command);
 void        R_Render(std::mutex &state_mutex, float interpolation_time);
 std::string T_LoadImageFile(std::string file_path);
 std::string M_LoadModelFile(std::string file_path, std::string file_extension);
-MeshData    M_LoadOBJ(std::string embedded_obj_file);
+Mesh    M_LoadOBJ(std::string embedded_obj_file);
 #endif

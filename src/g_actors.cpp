@@ -1,6 +1,7 @@
-#include "g_actor.hpp"
 #include "g_actors.hpp"
-#include "graphx_classes_namespace.hpp"
+#include "g_actor.hpp"
+#include "t_settings.hpp"
+#include "graphx_classes.hpp"
 #include <gmath.hpp>
 #include <models.hpp>
 #include <glm/glm.hpp>
@@ -13,21 +14,13 @@ using namespace graphx;
 //
 // Label
 //
-Label::Label(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
-: Actor(&graphx::classes::LABEL, my_id, my_settings), parent(this), text_render_command(TextRenderCmd("Verdana", my_id.name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
-{}
-
-Label::Label(const int my_id_number, const std::string& my_name, const graphx::gSettings& my_settings)
-: Label(graphx::gUID(my_id_number, my_name), my_settings)
-{}
-
 RenderCommands Label::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
 	render_commands.render_command.mesh_material->color_alpha = label_alpha;
 	text_render_command.render_state = &current_state_buffer[state_index];
-	text_render_command.position_x = position_global.x;
-	text_render_command.position_y = position_global.y;
+	text_render_command.position_x = (getGlobalPosition() + getLocalPosition()).x;
+	text_render_command.position_y = (getGlobalPosition() + getLocalPosition()).y;
 	render_commands.text_render_command = text_render_command;
 	return render_commands;
 }
@@ -41,13 +34,13 @@ void Label::tick(int current_tick)
 	}
 	else
 	{
-		position_global.x += 0.0f;
+		setGlobalPosition(getGlobalPosition() += 0.01f);
 	}
 }
 
-void Label::loadSettings(const graphx::gSettings& new_settings)
+void Label::loadSettings()
 {
-	Actor::loadSettings(new_settings);
+	Actor::loadSettings();
 	/**
 	 * `getSetting` Tip:
 	 *   When "overloading" `getSetting` settings, I like to make sure that the most verbose/explicit option always
@@ -72,166 +65,29 @@ void Label::loadSettings(const graphx::gSettings& new_settings)
 }
 
 //
-// PhysicsActor
-//
-PhysicsActor::PhysicsActor(const graphx::gClass* my_class, const graphx::gUID& my_id, const graphx::gSettings& my_settings)
-: Actor(my_class, my_id, my_settings)
-{}
-
-PhysicsActor::PhysicsActor(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
-: PhysicsActor(&graphx::classes::PHYSICSACTOR, my_id, my_settings)
-{}
-
-void PhysicsActor::loadSettings(const graphx::gSettings& new_settings)
-{
-	Actor::loadSettings(new_settings);
-
-	getSetting(mass, settings["Mass"]);
-	getSetting(collider, settings["Collider"]);
-	collider->loadSettings();
-
-	reset_position = gmath::convertMath<JPH::Vec3>(getGlobalPosition() + getLocalPosition());
-	reset_quaternion = gmath::convertMath<JPH::Quat>(getGlobalQuaternion() * getLocalQuaternion());
-
-	reset_to_initial_orientation_for_testing();
-}
-
-void PhysicsActor::reset_to_initial_orientation_for_testing()
-{
-	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	body_interface.SetPositionAndRotation(collider->getBodyID(), reset_position, reset_quaternion, JPH::EActivation::Activate);
-	body_interface.SetLinearAndAngularVelocity(collider->getBodyID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
-}
-
-/*//
-// RigidBodyActor
-//
-RigidBodyActor::RigidBodyActor(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
-: PhysicsActor(&graphx::classes::RIGIDBODYACTOR, my_id, my_settings)
-{}
-
-void RigidBodyActor::loadSettings(const graphx::gSettings& new_settings)
-{
-	PhysicsActor::loadSettings(new_settings);
-
-	collider->prepForDestruction();
-	collider->activation = JPH::EActivation::Activate;
-	collider->motion_type = JPH::EMotionType::Dynamic;
-	collider->object_layer = Layers::MOVING;
-	collider->scale = scale;
-	collider->position = position_global;
-	collider->local_position = position_local;
-	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
-	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
-	collider->createBody();
-}
-
-void RigidBodyActor::tick(int current_tick)
-{
-	PhysicsActor::tick(current_tick);
-}
-
-void RigidBodyActor::reset_to_initial_orientation_for_testing()
-{
-	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	body_interface.SetPositionAndRotation(collider->getBodyID(), reset_position, reset_quaternion, JPH::EActivation::Activate);
-	body_interface.SetLinearAndAngularVelocity(collider->getBodyID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
-}
-
-void RigidBodyActor::takeABow()
-{
-	if(collider != nullptr)
-		collider->prepForDestruction();
-	PhysicsActor::takeABow();
-}
-
-//
-// StaticBodyActor
-//
-StaticBodyActor::StaticBodyActor()
-: PhysicsActor()
-{
-	my_type = &graphx::classes::STATICBODYACTOR;
-}
-
-void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
-{
-	PhysicsActor::youGotACallBack(new_settings);
-}
-
-void StaticBodyActor::callToStage(Theatre *parent_theatre)
-{
-	PhysicsActor::callToStage(parent_theatre);
-	my_type = &graphx::classes::STATICBODYACTOR;
-	if(collider == nullptr)
-		return;
-	collider->prepForDestruction();
-	collider = new Collider();
-	collider->activation = JPH::EActivation::Activate;
-	collider->motion_type = JPH::EMotionType::Static;
-	collider->object_layer = Layers::NON_MOVING;
-	collider->scale = scale;
-	collider->position = position_global;
-	collider->local_position = position_local;
-	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
-	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
-	collider->createBody();
-}
-
-void StaticBodyActor::takeABow()
-{
-	if(collider != nullptr)
-		collider->prepForDestruction();
-	PhysicsActor::takeABow();
-}*/
-
-//
 // Camera
 //
-Camera::Camera()
+void Camera::processMouse(GLFWwindow* window, double x_position_in, double y_position_in)
 {
-	my_type = &graphx::classes::CAMERA;
+	glm::vec3 euler_rotation = getGlobalRotationAngles(true) + getLocalRotationAngles(true);
+	euler_rotation[0] -= x_position_in;
+	euler_rotation[1] -= y_position_in;
+
+	if(std::abs(euler_rotation[0]) > view_pitch_clamp_degrees)
+		euler_rotation[0] = view_pitch_clamp_degrees * ((euler_rotation[0] > 0) - euler_rotation[0] < 0);
+
+	setGlobalRotationAngles(euler_rotation, true);
 }
 
-void Camera::tick(int current_tick)
-{}
-
-void Camera::doRotation(glm::vec2 mouse_input)
-{
-	euler_rotation += euler_rotation_local;
-	euler_rotation[0] -= glm::radians(mouse_input[1]);
-	euler_rotation[1] -= glm::radians(mouse_input[0]);
-
-	if(std::abs(glm::degrees(euler_rotation[0])) > view_pitch_clamp)
-		euler_rotation[0] = glm::radians(view_pitch_clamp * ((glm::degrees(euler_rotation[0]) > 0) - (glm::degrees(euler_rotation[0]) < 0)));
-
-	quaternion = glm::quat(euler_rotation);
-	updateVectors();
-}
-
-void Camera::youGotACallBack(graphx::gSettings new_settings)
-{
-	Actor::youGotACallBack(new_settings);
-
-	getSetting(position_local, settings["LocalPosition"]);
-	getSetting(euler_rotation_local, settings["LocalRotationDegrees"]);
-}
+void Camera::loadSettings(const graphx::gSettings& new_settings)
+{ Actor::loadSettings(new_settings); } // Eventually, I will have Camera settings
 
 //
 // GraphXPlayer
 //
-GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::vec3 init_rotation_euler)
-: Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f, 2.0f, 1.0f))
+void GraphXPlayer::loadSettings()
 {
-	my_type = &graphx::classes::GRAPHXPLAYER;
-	player_camera.euler_rotation = glm::radians(init_rotation_euler);
-	player_camera.setGlobalRotation(init_position);
-	visible = false;
-}
-
-void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
-{
-	Actor::youGotACallBack(new_settings);
+	Actor::loadSettings();
 
 	getSetting(do_gravity, settings["DoGravity"]);
 	getSetting(mouse_sensitivity, settings["MouseSensitivity"]);
@@ -315,7 +171,7 @@ void GraphXPlayer::doMovement(int direction[2])
 		return;
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(orientation_front[0], 0.0f, orientation_front[2])) * static_cast<float>(direction[0] * movement_speed);
 	wish_velocity += gmath::convertMath<JPH::Vec3>(orientation_right) * static_cast<float>(direction[1] * movement_speed);
 
 	if(direction[0] == last_direction[0] && direction[1] == last_direction[1])
@@ -346,7 +202,7 @@ void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
 	player_camera.doRotation(mouse_offset * mouse_sensitivity);
 	glm::vec3 horizontal_rotation = glm::vec3(0.0f, player_camera.euler_rotation[1], 0.0f);
 	quaternion = glm::quat(horizontal_rotation);
-	updateVectors();
+	updateOrientationVectors();
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()
@@ -597,13 +453,13 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(pivot_speed, settings["PivotSpeed"]);
 
 	pivot_point.setGlobalPosition(pivot_position);
-	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
+	pivot_point.mesh->setName("Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
 	pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
 	pivot_point.mesh->setUID(4815 + UID);
 	graphx::gSettings pivot_settings
 	{
 		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
-		{"MeshData", settings["MeshData"]},
+		{"Mesh", settings["Mesh"]},
 	};
 	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);
 }

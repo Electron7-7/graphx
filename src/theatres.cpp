@@ -38,17 +38,17 @@ Material (Pyramid_Mat)
 	SpecularSharpness (128)
 	SpecularStrength (0.5)
 }
-Mesh (Cube)
+Model (Cube)
 {
-	MeshData [GRAPHX_CUBE]
+	Mesh [GRAPHX_CUBE]
 }
-Mesh (Pyramid)
+Model (Pyramid)
 {
-	MeshData [GRAPHX_PYRAMID]
+	Mesh [GRAPHX_PYRAMID]
 }
-Mesh (OBJ_Mesh)
+Model (OBJ_Mesh)
 {
-	MeshData [OBJ_SUZANNE]
+	Mesh [OBJ_SUZANNE]
 }
 Material (LabelMat)
 {
@@ -56,14 +56,14 @@ Material (LabelMat)
 	SpecularStrength (0)
 	Color (0,0,0)
 }
-Mesh (LabelMesh)
+Model (LabelMesh)
 {
-	MeshData [GRAPHX_QUAD]
+	Mesh [GRAPHX_QUAD]
 	Material <LabelMat>
 }
 Label (Label3D)
 {
-	Mesh <LabelMesh>
+	Model <LabelMesh>
 	Font (Verdana)
 	Color (0.2, 0.8, 1.0)
 	Alpha (1.0)
@@ -75,7 +75,7 @@ Label (Label3D)
 }
 Label (Label3D)
 {
-	Mesh <LabelMesh>
+	Model <LabelMesh>
 	Font (Verdana)
 	Color (0.2, 0.8, 1.0)
 	Alpha (0.0)
@@ -87,31 +87,31 @@ Label (Label3D)
 }
 Actor (Suzanne_Tester)
 {
-	Mesh:Material <OBJ_Mesh>:<Suzanne_Mat>
+	Model:Material <OBJ_Mesh>:<Suzanne_Mat>
 	Scale (1.0, 1.0, 1.0)
 	Position (10.0, 4.0, 0.0)
 }
 Actor (Pyramid_Tester)
 {
-	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Model:Material <Pyramid>:<Source_Mat_1>
 	Scale (1.5, 1.5, 1.5)
 	Position (8.0, 4.0, -4.0)
 }
 Actor (Pyramid_Tester_2)
 {
-	Mesh:Material <Pyramid>:<Source_Mat_1>
+	Model:Material <Pyramid>:<Source_Mat_1>
 	Scale (1.5, 1.5, 1.5)
 	Position (8.0, 1.0, -8.0)
 }
 StaticBodyActor (Floor)
 {
-	Mesh:MeshData:Material <OBJ_Mesh>:[GRAPHX_CUBE]:<Doom_Dull>
+	Model:Mesh:Material <OBJ_Mesh>:[GRAPHX_CUBE]:<Doom_Dull>
 	Scale		  (50.0, 1.0, 50.0)
 	Position      (0.0, -1.0, 0.0)
 }
 StaticBodyActor (Wall)
 {
-	Mesh:Material <Cube>:<Doom_Dull>
+	Model:Material <Cube>:<Doom_Dull>
 	Scale		  (50.0, 50.0, 1.0)
 	Position      (0.0, 50.0, -51.0)
 }
@@ -143,41 +143,41 @@ LightTesterMover (spinny_light_2)
 }
 RigidBodyActor (Falling_Cube_1)
 {
-	Mesh:Material <Cube>:<Doom_Shiny>
+	Model:Material <Cube>:<Doom_Shiny>
 	Scale		  (1.0, 1.0, 1.0)
 	Position      (-2.0, 9.0, -6.0)
 }
 RigidBodyActor (Falling_Cube_2)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (3.0, 0.8, 1.0)
 	Position        (-2.3, 11.5, -5.2)
 	Rotation        (5.0, -2.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_3)
 {
-	Mesh:Material   <Cube>:<Doom_Dull>
+	Model:Material   <Cube>:<Doom_Dull>
 	Scale		    (4.2, 0.9, 2.7)
 	Position        (-3.5, 6.7, -4.0)
 	Rotation        (0.0, 60.0, 25.0)
 }
 RigidBodyActor (Falling_Cube_4)
 {
-	Mesh:Material   <Cube>:<Doom_Dull>
+	Model:Material   <Cube>:<Doom_Dull>
 	Scale		    (0.78, 0.5, 0.8)
 	Position        (-3.3, 7.2, -5.2)
 	Rotation        (5.0, -2.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_5)
 {
-	Mesh:Material   <Cube>:<Source_Mat_1>
+	Model:Material   <Cube>:<Source_Mat_1>
 	Scale		    (5.0, 3.5, 1.2)
 	Position        (-5.3, 12.2, -6.2)
 	Rotation        (15.0, -25.0, 37.0)
 }
 RigidBodyActor (Falling_Cube_6)
 {
-	Mesh:Material   <Cube>:<Source_Mat_1>
+	Model:Material   <Cube>:<Source_Mat_1>
 	Scale		    (0.3, 0.5, 0.3)
 	Position        (-5.3, 9.2, -6.2)
 	Rotation        (-45.0, 25.0, 8.0)
@@ -232,33 +232,33 @@ Material (Doom_Dull)
 	SpecularSharpness (16)
 	SpecularStrength  (0.4)
 }
-Mesh (Cube)
+Model (Cube)
 {
-	MeshData [GRAPHX_CUBE]
+	Mesh [GRAPHX_CUBE]
 }
 StaticBodyActor (Floor)
 {
-	Mesh:Material <Cube>:<Doom_Dull>
+	Model:Material <Cube>:<Doom_Dull>
 	Scale		  (200.0, 1.0, 200.0)
 	Position      (0.0, -1.0, 0.0)
 }
 StaticBodyActor (Spire_1)
 {
-	Mesh:Material   <Cube>:<Doom_Dull>
+	Model:Material   <Cube>:<Doom_Dull>
 	Scale		    (20.0, 100.0, 20.0)
 	Position        (-28.3, 100.0, -43.2)
 	Rotation        (0.0, 53.7, 0.0)
 }
 StaticBodyActor (Platform_1)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (10.0, 50.0, 10.0)
 	Position        (32.1, 75.0, -29.7)
 	Rotation        (0.0, 20.0, 0.0)
 }
 StaticBodyActor (Platform_Floor_1)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (10.0, 5.0, 10.0)
 	Position        <Platform_1>
 	LocalPosition   (0.0, -70.0, 0.0)
@@ -266,7 +266,7 @@ StaticBodyActor (Platform_Floor_1)
 }
 StaticBodyActor (Platform_Stair_1)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (11.0, 2.5, 11.0)
 	Position        <Platform_1>
 	LocalPosition   (0.0, -72.5, 0.0)
@@ -274,7 +274,7 @@ StaticBodyActor (Platform_Stair_1)
 }
 StaticBodyActor (Platform_Stair_2)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (12.0, 2.0, 12.0)
 	Position        <Platform_1>
 	LocalPosition   (0.0, -73.0, 0.0)
@@ -282,7 +282,7 @@ StaticBodyActor (Platform_Stair_2)
 }
 StaticBodyActor (Platform_Stair_3)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (13.0, 1.5, 13.0)
 	Position        <Platform_1>
 	LocalPosition   (0.0, -73.5, 0.0)
@@ -290,7 +290,7 @@ StaticBodyActor (Platform_Stair_3)
 }
 StaticBodyActor (Platform_Stair_4)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (14.0, 1.0, 14.0)
 	Position        <Platform_1>
 	LocalPosition   (0.0, -74.0, 0.0)
@@ -298,7 +298,7 @@ StaticBodyActor (Platform_Stair_4)
 }
 StaticBodyActor (Platform_Stair_5)
 {
-	Mesh:Material   <Cube>:<Doom_Shiny>
+	Model:Material   <Cube>:<Doom_Shiny>
 	Scale		    (15.0, 0.5, 15.0)
 	Position        <Platform_1>
 	LocalPosition   (0.0, -74.5, 0.0)
@@ -306,34 +306,34 @@ StaticBodyActor (Platform_Stair_5)
 }
 RigidBodyActor (Falling_Actor_1)
 {
-	Mesh:Material <Cube>:<Doom_Shiny>
+	Model:Material <Cube>:<Doom_Shiny>
 	Scale (1.0, 1.0, 1.0)
 	Position (0.14, 3.12, -2.13)
 }
 RigidBodyActor (Falling_Actor_2)
 {
-	Mesh:Material <Cube>:<Doom_Shiny>
+	Model:Material <Cube>:<Doom_Shiny>
 	Scale (2.34, 0.87, 1.2)
 	Position (0.14, 8.12, -2.13)
 	Rotation (4.3, 67.3, 0.0)
 }
 RigidBodyActor (Falling_Actor_3)
 {
-	Mesh:Material <Cube>:<Source_Yellow>
+	Model:Material <Cube>:<Source_Yellow>
 	Scale (0.54, 0.37, 0.23)
 	Position (0.14, 5.12, -2.13)
 	Rotation (4.3, 67.3, -62.0)
 }
 RigidBodyActor (Falling_Actor_4)
 {
-	Mesh:Material <Cube>:<Source_Green>
+	Model:Material <Cube>:<Source_Green>
 	Scale (2.54, 0.77, 1.23)
 	Position (-2.3, 12.0, -3.63)
 	Rotation (4.3, 67.3, -62.0)
 }
 RigidBodyActor (Falling_Actor_5)
 {
-	Mesh:Material <Cube>:<Doom_Dull>
+	Model:Material <Cube>:<Doom_Dull>
 	Scale (2.54, 0.77, 2.23)
 	Position (-1.7, 16.0, -4.63)
 	Rotation (4.3, -43.3, 62.0)
@@ -387,25 +387,25 @@ Material (Second_Material)
 	SpecularStrength (0.8)
 	SpecularSharpness (128)
 }
-Mesh (Floor_Mesh)
+Model (Floor_Mesh)
 {
-	MeshData [GRAPHX_CUBE]
+	Mesh [GRAPHX_CUBE]
 }
 StaticBodyActor (Floor)
 {
-	Mesh:Material <Floor_Mesh>:<Floor_Material>
+	Model:Material <Floor_Mesh>:<Floor_Material>
 	Scale (200.0, 1.0, 200.0)
 	Position (0.0, -1.0, 0.0)
 }
-Mesh (TestMesh)
+Model (TestMesh)
 {
 	// Testing external references.
 	// Both absolute and relative paths are accepted.
 	// Absolute paths are used as-is, but relative paths are made relative to the program's location, not the user's
-	// MeshData "../src/models/purely_for_testing.obj"
-	// MeshData "theatres/test.obj"
-	// MeshData "theatres/ramiel.obj"
-	MeshData [Ramiel]
+	// Mesh "../src/models/purely_for_testing.obj"
+	// Mesh "theatres/test.obj"
+	// Mesh "theatres/ramiel.obj"
+	Mesh [Ramiel]
 }
 Light (fix_light)
 {
@@ -448,7 +448,7 @@ Material (Ramiel_Mat)
 }
 Ramiel (Ramiel)
 {
-	Mesh:Material <TestMesh>:<Ramiel_Mat>
+	Model:Material <TestMesh>:<Ramiel_Mat>
 	Scale (300.0, 300.0, 300.0)
 	Position (600.0, 465.0, -800.0)
 	Rotation (0.0, 148.0, 0.0)
@@ -458,25 +458,25 @@ Ramiel (Ramiel)
 	// PivotRadius   (40.2)
 	// PivotSpeed    (0.2)
 }
-Mesh (Cube_Mesh)
+Model (Cube_Mesh)
 {
-	MeshData [GRAPHX_CUBE]
+	Mesh [GRAPHX_CUBE]
 }
 RigidBodyActor (FallOnMe)
 {
-	Mesh <Cube_Mesh>
+	Model <Cube_Mesh>
 	Position (0.0, 1.5, -4.0)
 	Scale (3.4, 0.3, 7.8)
 }
 RigidBodyActor (FallOnMe2)
 {
-	Mesh <Cube_Mesh>
+	Model <Cube_Mesh>
 	Position (0.0, 3.0, -4.0)
 	Scale (5.1, 0.3, 3.2)
 }
 RigidBodyActor (FallOnMe3)
 {
-	Mesh <Cube_Mesh>
+	Model <Cube_Mesh>
 	Position (0.0, 5.0, -5.0)
 	Scale (1.1, 3.3, 0.7)
 })~"}}

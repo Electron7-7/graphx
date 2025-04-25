@@ -1,6 +1,6 @@
-#include "graphx_classes_namespace.hpp"
+#include "graphx_classes.hpp"
 #include "g_actors.hpp"
-#include "r_common.hpp"
+#include "g_devices.hpp"
 #include "t_settings.hpp"
 #include <set>
 
@@ -48,8 +48,8 @@ Theatre::Theatre(std::string init_name, long new_uid)
 : name(init_name), UID(new_uid)
 {
     stage_material = new Material(false, glm::vec3(0.5, 0.1, 0.4));
-    stage_mesh = new Mesh(stage_material);
-    stage_mesh->setName("Stage Mesh for Theatre (" + name + ")");
+    stage_mesh = new Model(stage_material);
+    stage_mesh->setName("Stage Model for Theatre (" + name + ")");
 }
 
 std::vector<long> Theatre::dumpActorIDs()
@@ -77,7 +77,7 @@ std::set<std::string> Theatre::getMeshDataNames()
 
     for(auto &device_pair : devices)
         if(device_pair.second->getType() == graphx::classes::MESH)
-            mesh_data_names.insert(static_cast<Mesh *>(device_pair.second)->mesh_data_name);
+            mesh_data_names.insert(static_cast<Model *>(device_pair.second)->mesh_data_name);
 
     return mesh_data_names;
 }
@@ -426,13 +426,13 @@ void Theatre::actorEnter(Actor *new_actor, long uid, graphx::gSettings new_setti
 
     // Writing this has made me realize just how nasty my usage of pointers is.
     // I want to rectify this by using UIDs instead; basically, instead of
-    // Actor::mesh being a Mesh pointer, it'd be the UID of a Mesh.
-    // Same goes for Mesh::material.
-    // Basically, anything that's stored somewhere else shouldn't be a pointer (Materials are already stored in devices, but I'm going to make them more closely resemble MeshData)
+    // Actor::mesh being a Model pointer, it'd be the UID of a Model.
+    // Same goes for Model::material.
+    // Basically, anything that's stored somewhere else shouldn't be a pointer (Materials are already stored in devices, but I'm going to make them more closely resemble Mesh)
     if(!devices.contains(new_actor->mesh->getUID()))
     {
-        devices[new_actor->mesh->getUID()] = new Mesh(*new_actor->mesh);
-        new_actor->mesh = static_cast<Mesh *>(devices.at(new_actor->mesh->getUID()));
+        devices[new_actor->mesh->getUID()] = new Model(*new_actor->mesh);
+        new_actor->mesh = static_cast<Model *>(devices.at(new_actor->mesh->getUID()));
     }
 
     // if(time_to_render)

@@ -1,10 +1,6 @@
-#ifndef GRAPHX_CLASSES_NAMESPACE
-#define GRAPHX_CLASSES_NAMESPACE
-// Not the same as `graphx_namespace_classes.cpp`
-// This is where all new Actor/Device derivations get their "type" defined
+#ifndef GRAPHX_CLASSES
+#define GRAPHX_CLASSES
 #include "graphx_namespace.hpp"
-#include "g_actors.hpp"
-#include "r_common.hpp"
 /**
  * Yeah, it's a bit finnicky to put a whole bunch of static constexpr global indentifier variables in a header file, BUT
  * I have two (relatively) good reasons for doing this:
@@ -18,14 +14,11 @@
 */
 namespace graphx
 {
-	inline constexpr gClass gClass::INVALID_TYPE = gClass();  // The default constructor is INVALID_TYPE
-
 	namespace classes
 	{
 		// Feel free to expand these limits if needed
 		#define ACTOR_LIMIT  100
 		#define DEVICE_LIMIT 200
-
 		extern const std::array<const gClass*, (ACTOR_LIMIT + DEVICE_LIMIT)> valid_classes;
 
 		extern const gClass ACTOR;

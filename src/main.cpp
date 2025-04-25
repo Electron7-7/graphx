@@ -1,6 +1,7 @@
 // Hello, production branch!
 // :3
 
+#include "g_theatre.hpp"
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
 #include "g_actors.hpp"
@@ -219,11 +220,11 @@ void gameTick(GLFWwindow *main_window)
 			current_tick_since_second++;
 			current_tick_since_start++;
 
-			std::vector<Actor*> troupe = getCurrentTheatre()->getTroupe(); // Todo: change the troupe to be a pointer/reference to the objects map?
+			std::vector<Actor*> troupe = graphx::current::theatre.getTroupe(); // Todo: change the troupe to be a pointer/reference to the objects map?
 			for(Actor *actor : troupe)
 			{
 				if(!ImGui::GetIO().WantCaptureKeyboard)
-					actor->processInput(main_window);
+					actor->checkForInput(main_window);
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}
@@ -239,8 +240,6 @@ void gameTick(GLFWwindow *main_window)
 	}
 
 	time_to_render = false; // Because game logic can (and usually does) exit before the main loop
-
-	getCurrentTheatre()->dropCurtains();
 
 	JPH::UnregisterTypes();
 	delete JPH::Factory::sInstance;
@@ -258,7 +257,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(ImGui::GetIO().WantCaptureKeyboard)
 		return;
 
-	getCurrentTheatre()->delegateKeyInput(window, key, scancode, action, mods);
+	graphx::current::theatre.delegateKeyInput(window, key, scancode, action, mods);
 
 	if(key == GLFW_KEY_1 && action == GLFW_PRESS)
 	{
@@ -399,10 +398,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
-		std::vector<Actor*> troupe = getCurrentTheatre()->getTroupe();
+		std::vector<Actor*> troupe = graphx::current::theatre.getTroupe();
 		for(Actor* actor : troupe)
-			if(actor->isPhysicsActor())
-				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
+			actor->reset_to_initial_orientation_for_testing();
 	}
 
 	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))

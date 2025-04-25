@@ -1,10 +1,11 @@
-#include "r_common.hpp"
+#include "r_rendering.hpp"
+#include "g_devices.hpp"
 #include "g_actor.hpp"
 #include "g_theatre.hpp"
 #include "g_actors.hpp"
 #include "sanity.hpp"
 #include "t_common.hpp"
-#include "graphx_classes_namespace.hpp"
+#include "graphx_classes.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT
@@ -26,11 +27,354 @@ bool time_to_store_buffers = false;
 // Todo: Make this better or get rid of it
 int debug_render_switches = 0;
 
-std::map<std::string, MeshData> mesh_data_storage =
+//---------
+// GLShader
+//---------
+GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
 {
-	{GRAPHX_CUBE,    MeshData(graphx::rendering::VAO_DEFAULT, CUBE_POSITIONS,    CUBE_NORMALS,    CUBE_UVS,    CUBE_COLORS,    CUBE_INDICES)},
-	{GRAPHX_QUAD,    MeshData(graphx::rendering::VAO_DEFAULT, QUAD_POSITIONS,    QUAD_NORMALS,    QUAD_UVS,    QUAD_COLORS,    QUAD_INDICES)},
-	{GRAPHX_PYRAMID, MeshData(graphx::rendering::VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_NORMALS, PYRAMID_UVS, PYRAMID_COLORS, PYRAMID_INDICES)},
+	const char *v_shader_code = vertex_shader_code.c_str();
+	const char *f_shader_code = fragment_shader_code.c_str();
+
+	unsigned int vertex, fragment;
+	vertex = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex, 1, &v_shader_code, nullptr);
+	glCompileShader(vertex);
+	GLShaderErrorHandler(vertex);
+
+	fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment, 1, &f_shader_code, nullptr);
+	glCompileShader(fragment);
+	GLShaderErrorHandler(fragment);
+
+	id = glCreateProgram();
+	glAttachShader(id, vertex);
+	glAttachShader(id, fragment);
+	glLinkProgram(id);
+	GLShaderErrorHandler(id, true);
+
+	glDeleteShader(vertex);
+	glDeleteShader(fragment);
+}
+
+void GLShader::GLShaderErrorHandler(const unsigned int& shader_id, const bool is_program_linking)
+{
+	// https://stackoverflow.com/a/63420289
+	int v_result = GL_FALSE;
+	int info_log_length;
+	std::string shader_error_type = "Shader Compilation";
+	if(is_program_linking)
+	{
+		shader_error_type = "Program Linking";
+		glGetProgramiv(shader_id, GL_LINK_STATUS, &v_result);
+		glGetProgramiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	}
+	else
+	{
+		glGetShaderiv(shader_id, GL_COMPILE_STATUS, &v_result);
+		glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+	}
+	if(info_log_length > 0)
+	{
+		std::vector<char> shader_error_message(info_log_length + 1);
+		if(is_program_linking)
+			glGetProgramInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
+		else
+			glGetShaderInfoLog(shader_id, info_log_length, nullptr, shader_error_message.data());
+
+		PRINTERR("GLSL " << shader_error_type << " Error(s):\n" << shader_error_message.data())
+	}
+}
+
+template<> void GLShader::setUniform<bool>(const std::string &name, bool value) const
+{ glProgramUniform1i(id, glGetUniformLocation(id, name.c_str()), static_cast<int>(value)); }
+
+template<> void GLShader::setUniform<int>(const std::string &name, int value) const
+{ glProgramUniform1i(id, glGetUniformLocation(id, name.c_str()), value); }
+
+template<> void GLShader::setUniform<float>(const std::string &name, float value) const
+{ glProgramUniform1f(id, glGetUniformLocation(id, name.c_str()), value); }
+
+template<> void GLShader::setUniform<glm::vec2>(const std::string &name, glm::vec2 value) const
+{ glProgramUniform2fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value)); }
+
+template<> void GLShader::setUniform<glm::vec3>(const std::string &name, glm::vec3 value) const
+{ glProgramUniform3fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value)); }
+
+template<> void GLShader::setUniform<glm::vec4>(const std::string &name, glm::vec4 value) const
+{ glProgramUniform4fv(id, glGetUniformLocation(id, name.c_str()), 1, glm::value_ptr(value)); }
+
+template<> void GLShader::setUniform<glm::mat3>(const std::string &name, glm::mat3 value) const
+{ glProgramUniformMatrix3fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value)); }
+
+template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::mat4 value) const
+{ glProgramUniformMatrix4fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value)); }
+
+//
+// Mesh
+//
+Mesh::Mesh()
+{}
+
+Mesh::Mesh(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals, std::vector<glm::vec2> init_uvs, std::vector<glm::vec3> init_colors, std::vector<gmath::vec3uint> init_indices)
+{
+	// These for loops make sure that every vertex has normal, uv, and color data
+	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
+		init_normals.insert(init_normals.end(), glm::vec3(0.0f, 0.0f, 0.0f));
+
+	for(int i = init_uvs.size() ; i < init_positions.size() ; i++)
+		init_uvs.insert(init_uvs.end(), glm::vec2(0.0f, 0.0f));
+
+	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
+		init_colors.insert(init_colors.end(), glm::vec3(1.0f, 1.0f, 1.0f));
+
+	vertex_positions = init_positions;
+	vertex_normals = init_normals;
+	vertex_uvs = init_uvs;
+	vertex_colors = init_colors;
+
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(i, i+1, i+2));
+	else
+		vertex_indices = init_indices;
+}
+
+Mesh::Mesh(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals, std::vector<float> init_uvs, std::vector<float> init_colors, std::vector<unsigned int> init_indices)
+{
+	// These for loops make sure that every vertex has normal, uv, and color data
+	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
+		init_normals.insert(init_normals.end(), 0.0f);
+
+	for(int i = init_uvs.size() ; i < (2 * init_positions.size() / 3) ; i++)
+		init_uvs.insert(init_uvs.end(), 0.0f);
+
+	for(int i = init_colors.size() ; i < init_positions.size() ; i++)
+		init_colors.insert(init_colors.end(), 1.0f);
+
+	if(!init_indices.empty())
+		for(int i = init_indices.size() ; i < init_positions.size() ; i++)
+			init_colors.insert(init_colors.end(), 1.0f);
+
+	for(int it = 0,uv_it = 0 ; it < init_positions.size() ; it += 3,uv_it += 2)
+	{
+		vertex_positions.insert(vertex_positions.end(), glm::vec3(init_positions[it], init_positions[it + 1], init_positions[it + 2]));
+		vertex_normals.insert(vertex_normals.end(), glm::vec3(init_normals[it], init_normals[it + 1], init_normals[it + 2]));
+		vertex_uvs.insert(vertex_uvs.end(), glm::vec2(init_uvs[uv_it], init_uvs[uv_it + 1]));
+		vertex_colors.insert(vertex_colors.end(), glm::vec3(init_colors[it], init_colors[it + 1], init_colors[it + 2]));
+		if(!init_indices.empty())
+			vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
+	}
+
+	if(init_indices.empty())
+		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
+			vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(i, i+1, i+2));
+}
+
+void Mesh::addVertex(glm::vec3 position, glm::vec3 normal, glm::vec2 uv, glm::vec3 color)
+{
+	vertex_positions.insert(vertex_positions.end(), position);
+	vertex_normals.insert(vertex_normals.end(), normal);
+	vertex_uvs.insert(vertex_uvs.end(), uv);
+	vertex_colors.insert(vertex_colors.end(), color);
+}
+
+void Mesh::addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z)
+{
+	vertex_positions.insert(vertex_positions.end(), glm::vec3(position_x, position_y, position_z));
+	vertex_normals.insert(vertex_normals.end(), glm::vec3(normal_x, normal_y, normal_z));
+	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(uv_x, uv_y));
+	vertex_colors.insert(vertex_colors.end(), glm::vec3(color_x, color_y, color_z));
+}
+
+void Mesh::addVertex(std::vector<float> vertex)
+{
+	vertex_positions.insert(vertex_positions.end(), glm::vec3(vertex[0], vertex[1], vertex[2]));
+	vertex_normals.insert(vertex_normals.end(), glm::vec3(vertex[3], vertex[4], vertex[5]));
+	vertex_uvs.insert(vertex_uvs.end(), glm::vec2(vertex[6], vertex[7]));
+	vertex_colors.insert(vertex_colors.end(), glm::vec3(vertex[8], vertex[9], vertex[10]));
+}
+
+void Mesh::addIndex(gmath::vec3uint indices)
+{
+	vertex_indices.insert(vertex_indices.end(), indices);
+}
+
+void Mesh::addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3)
+{
+	vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(index_1, index_2, index_3));
+}
+
+void Mesh::fixOBJData()
+{
+	float max_coordinate = 0.0f;
+	float min_coordinate = 0.0f;
+
+	for(glm::vec3 vertex : vertex_positions)
+	{
+		if(std::abs(vertex.x) > 1 || std::abs(vertex.y) > 1 || std::abs(vertex.z) > 1)
+		{
+			float biggest_pos = glm::compMax(vertex);
+			float smallest_pos = glm::compMin(vertex);
+			if(biggest_pos > max_coordinate)
+				max_coordinate = biggest_pos;
+			if(smallest_pos < min_coordinate)
+				min_coordinate = smallest_pos;
+		}
+	}
+
+	for(glm::vec3 vertex : vertex_positions)
+	{
+		for(float component : vertex)
+		{
+			component = (component - min_coordinate) / (max_coordinate - min_coordinate);
+		}
+	}
+
+	vertex_indices.clear();
+	for(int i = 0 ; i < vertex_positions.size(); i += 3)
+	{
+		vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(i, i + 1, i + 2));
+	}
+}
+
+const std::vector<float> Mesh::vertices()
+{
+	std::vector<float> vertices;
+	for(int i = 0 ; i < vertex_positions.size() ; i++)
+	{
+		vertices.insert(vertices.end(),
+		{
+			vertex_positions.at(i).x,
+			vertex_positions.at(i).y,
+			vertex_positions.at(i).z,
+			vertex_normals.at(i).x,
+			vertex_normals.at(i).y,
+			vertex_normals.at(i).z,
+			vertex_uvs.at(i).x,
+			vertex_uvs.at(i).y,
+			vertex_colors.at(i).x,
+			vertex_colors.at(i).y,
+			vertex_colors.at(i).z
+		});
+	}
+	return vertices;
+}
+
+const std::vector<unsigned int> Mesh::indices()
+{
+	std::vector<unsigned int> indices;
+	for(int i = 0 ; i < vertex_indices.size() ; i++)
+	{
+		indices.insert(indices.end(),
+		{
+			vertex_indices.at(i).x(),
+			vertex_indices.at(i).y(),
+			vertex_indices.at(i).z()
+		});
+	}
+	return indices;
+}
+
+size_t Mesh::vertices_count()
+{
+	return (vertex_positions.size());
+}
+
+size_t Mesh::vertices_size()
+{
+	return
+	(
+		(3 * sizeof(float) * vertex_positions.size()) +
+		(3 * sizeof(float) * vertex_normals.size())   +
+		(2 * sizeof(float) * vertex_uvs.size())       +
+		(3 * sizeof(float) * vertex_colors.size())
+	);
+}
+
+size_t Mesh::indices_count()
+{
+	return (vertex_indices.size() * 3);
+}
+
+size_t Mesh::indices_size()
+{
+	return (3 * sizeof(unsigned int) * vertex_indices.size());
+}
+
+//
+// Character
+//
+Character::Character(unsigned int init_texture_id, int init_size_x, int init_size_y, int init_bearing_x, int init_bearing_y, int init_advance)
+{
+	texture_id = init_texture_id;
+	size_x = init_size_x;
+	size_y = init_size_y;
+	bearing_x = init_bearing_x;
+	bearing_y = init_bearing_y;
+	advance = init_advance;
+}
+
+Character::Character(unsigned int init_texture_id, glm::vec2 init_size, glm::vec2 init_bearing, int init_advance)
+: Character(init_texture_id, init_size.x, init_size.y, init_bearing.x, init_bearing.y, init_advance)
+{}
+
+//
+// Font
+//
+Font::Font(std::string init_font_name)
+: font_name(init_font_name)
+{}
+
+//
+// LightRenderCmd
+//
+bool LightRenderCmd::isValid() const
+{
+	return (light_type != graphx::gClass::INVALID_TYPE);
+}
+
+//
+// RenderCmd
+//
+bool RenderCmd::isValid() const
+{
+	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
+}
+
+//
+// TextRenderCmd
+//
+TextRenderCmd::TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
+{
+	font_name = "Arial";
+	text = init_text;
+	position_x = init_position_x;
+	position_y = init_position_y;
+	scale = init_scale;
+	color = init_color;
+}
+
+TextRenderCmd::TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
+: TextRenderCmd(init_text, init_position_x, init_position_y, init_scale, init_color)
+{
+	font_name = (font_map.contains(init_font_name)) ? init_font_name : "Arial";
+}
+
+bool TextRenderCmd::isValid() const
+{
+	return (font_map.contains(font_name) && scale > 0.0f);
+}
+
+bool TextRenderCmd::is3D() const
+{
+	return (render_state != nullptr);
+}
+
+std::map<std::string, Mesh> mesh_data_storage =
+{
+	{GRAPHX_CUBE,    Mesh(graphx::rendering::VAO_DEFAULT, CUBE_POSITIONS,    CUBE_NORMALS,    CUBE_UVS,    CUBE_COLORS,    CUBE_INDICES)},
+	{GRAPHX_QUAD,    Mesh(graphx::rendering::VAO_DEFAULT, QUAD_POSITIONS,    QUAD_NORMALS,    QUAD_UVS,    QUAD_COLORS,    QUAD_INDICES)},
+	{GRAPHX_PYRAMID, Mesh(graphx::rendering::VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_NORMALS, PYRAMID_UVS, PYRAMID_COLORS, PYRAMID_INDICES)},
 	{ERROR_MODEL,    M_LoadOBJ(ERROR_obj)},
 	{suzanne_MODEL,  M_LoadOBJ(suzanne_obj)},
 	{ramiel_MODEL,   M_LoadOBJ(ramiel_obj)},
@@ -164,9 +508,9 @@ std::string M_LoadModelFile(std::string file_path, std::string file_extension)
 	return ERROR_MODEL;
 }
 
-MeshData M_LoadOBJ(std::string embedded_obj_file)
+Mesh M_LoadOBJ(std::string embedded_obj_file)
 {
-	MeshData mesh_data;
+	Mesh mesh_data;
 
 	tinyobj::ObjReaderConfig reader_config;
 	tinyobj::ObjReader reader;
@@ -817,7 +1161,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		shaders[graphx::rendering::current_shader].setUniform("debug_highlight", rendercmd_iterator->debug_highlight_color);
 
-		MeshData &mesh_data = mesh_data_storage.at(rendercmd_iterator->mesh_data_name);
+		Mesh &mesh_data = mesh_data_storage.at(rendercmd_iterator->mesh_data_name);
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 
 		rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);

@@ -3,7 +3,7 @@
 #include "g_theatre.hpp" // Technically unnecessary
 #include "graphx_namespace.hpp"
 #include "g_actors.hpp"
-#include "r_common.hpp"
+#include "g_devices.hpp"
 #define GRAPHX_ACTOR_INTERFACER
 
 class ActorInterfacer

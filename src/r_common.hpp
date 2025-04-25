@@ -1,341 +1,74 @@
-#ifndef GRAPHX_RENDERING
-#define GRAPHX_RENDERING
+#ifndef GRAPHX_RENDERING_COMMON
 #include "graphx_namespace.hpp"
-#include "g_jolt.hpp"
-#include "t_settings.hpp"
-#include <images.h>
 #include <models.hpp>
-#include <glfw_fwd.hpp>
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include <array>
-#include <mutex>
-
-#define GLSHADER_TYPE_VERTEX   0
-#define GLSHADER_TYPE_FRAGMENT 1
-#define GLSHADER_TYPE_PROGRAM  2
-
-struct GLShader
-{
-public:
-	unsigned int id = 0;
-
-	GLShader() = default;
-	GLShader(std::string, std::string);
-
-	template<typename T> void setUniform(const std::string &name, T value) const;
-
-private:
-	void GLShaderErrorHandler(const unsigned int&, const bool = false);
-};
-
-struct Device
-{
-	const graphx::gClass* const type = &graphx::gClass::INVALID_TYPE;
-
-	Device(const graphx::gClass*, const graphx::gUID&, const graphx::gSettings& = graphx::empty_settings);
-	Device(const graphx::gClass*, const int, const std::string& = "Untitled Device", const graphx::gSettings& = graphx::empty_settings);
-	Device(const int, const std::string& = "Untitled Device", const graphx::gSettings& = graphx::empty_settings);
-	Device(const graphx::gUID&, const graphx::gSettings& = graphx::empty_settings);
-	virtual ~Device();
-
-	void setName(const std::string&);
-	graphx::gUID getUID() const;
-
-	virtual void initialize();
-	virtual void loadSettings(const graphx::gSettings& = graphx::empty_settings);
-
-protected:
-	graphx::gUID uid = graphx::gUID(-1, "Untitled Device"); // A UID of -1 means it's not been set yet
-	graphx::gSettings settings = empty_settings;
-};
-
-struct Collider : public Device
-{
-	bool                overrides_actor_transform = true;
-	// Defaults to a rigidbody type of shape
-	glm::vec3 			local_position = glm::vec3(0.0f);
-	glm::vec3			position = glm::vec3(0.0f);
-	glm::vec3			euler_angles = glm::vec3(0.0f);
-	glm::vec3 			local_euler_angles = glm::vec3(0.0f);
-	glm::vec3			scale = glm::vec3(1.0f);
-	JPH::EMotionType	motion_type = JPH::EMotionType::Dynamic;
-	JPH::ObjectLayer	object_layer = Layers::MOVING;
-	JPH::EActivation	activation = JPH::EActivation::Activate;
-	float				friction = 1.0f;
-	bool				forever_alone = false;
-	int 				shape = graphx::jolt::shapes::BOX;
-
-	graphx::jolt::shape_arguments shape_arguments;
-
-	Collider(const graphx::gUID&, const graphx::gSettings& = empty_settings);
-	Collider(const int, const std::string& = "Untitled Collider", const graphx::gSettings& = empty_settings);
-	~Collider() override;
-
-	void createBody();
-	void destroyBody();
-
-	const JPH::BodyID& getBodyID();
-	JPH::BodyCreationSettings *getBodySettings();
-
-	void reset_to_default_transformation_for_testing();
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
-	void initialize() override;
-
-protected:
-	JPH::BodyID body_id;
-	JPH::BodyCreationSettings body_settings;
-	JPH::Vec3 reset_position = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	JPH::Quat reset_quaternion = JPH::Quat::sIdentity();
-	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
-	JPH::Vec3 reset_scale = JPH::Vec3(1.0f, 1.0f, 1.0f);
-};
-
-struct Environment final : public Device // Will be extended in the future
-{
-	glm::vec3 ambient_light_color = glm::vec3(1.0f);
-	float ambient_light_amount = 0.05f;
-
-	Environment(float = 0.05f, glm::vec3 = glm::vec3(1.0f));
-
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
-};
-
-struct Texture final : public Device
-{
-public:
-	bool is_in_use = false;
-	unsigned int texture_id = 0;
-	std::vector<unsigned char *> texture_data = {MISSING_TEXTURE_jpg};
-	std::vector<unsigned int> texture_size = {MISSING_TEXTURE_jpg_len};
-
-	Texture();
-	Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size);
-	Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size);
-	Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size);
-	Texture(unsigned char * init_texture_data, unsigned int init_texture_size);
-	Texture(const char * init_texture_data, unsigned int init_texture_size);
-	Texture(std::string  init_texture_data, unsigned int init_texture_size);
-
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
-};
-
-struct Material final : public Device
-{
-	std::string diffuse_texture_name = MISSING_TEXTURE;
-	std::string specular_texture_name = MISSING_TEXTURE;
-
-	glm::vec3 color = glm::vec3(1.0f);
-	float color_alpha = 1.0f;
-	int specular_sharpness = 16;
-	float specular_strength = 1.0f;
-	bool mat_fullbright = false;
-	bool use_texture = true;
-
-	Material();
-	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
-	Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
-	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
-
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
-};
-
-
-struct MeshData
-{
-	unsigned int base_vertex = 0;
-	unsigned int base_index = 0;
-	std::string debug_name = ""; // Debugging variable; remove later (watch me forget this)
-	bool is_in_use = false;
-
-	// Todo: Find a better/more efficient way of holding these values
-	std::vector<glm::vec3> vertex_positions;
-	std::vector<glm::vec3> vertex_normals;
-	std::vector<glm::vec2> vertex_uvs;
-	std::vector<glm::vec3> vertex_colors;
-	std::vector<gmath::vec3uint> vertex_indices;
-
-	MeshData();
-	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::vec3uint> init_indices = {});
-	MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {}, std::vector<float> init_uvs = {}, std::vector<float> init_colors = {}, std::vector<unsigned int> init_indices = {});
-
-	// This implementation of `MeshData::addVertex` assumes that the floats contained in `vertex` are in this order:
-	//
-	//   `vertex[0-2]`  - position - (X, Y, Z)
-	//
-	//   `vertex[3-5]`  - normal   - (X, Y, X)
-	//
-	//   `vertex[6-7]`  - uv       - (X, Y)
-	//
-	//   `vertex[8-10]` - color    - (R, G, B)
-	void addVertex(std::vector<float> vertex);
-	void addVertex(glm::vec3 position, glm::vec3 normal = glm::vec3(0.0f), glm::vec2 uv = glm::vec2(0.0f), glm::vec3 color = glm::vec3(1.0f));
-	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
-	void addIndex(gmath::vec3uint indices);
-	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
-	void fixOBJData();
-	const std::vector<float> vertices();
-	const std::vector<unsigned int> indices();
-	// Simple functions to abstract simple math that I always fuck up (I still end up using the wrong function, anyways)
-	size_t vertices_count();
-	size_t vertices_size();
-	size_t indices_count();
-	size_t indices_size();
-};
-
-struct Mesh : public Device
-{
-	Material *material = new Material();
-
-	unsigned int VBO = 0;
-	unsigned int IBO = 0;
-	bool is_buffered = false;
-	glm::vec3 mesh_scale = glm::vec3(1.0f);
-	std::string mesh_data_name = ERROR_MODEL;
-
-	Mesh();
-	Mesh(Material *new_material, std::string init_mesh_data_name = ERROR_MODEL);
-	Mesh(std::string init_mesh_data_name);
-
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
-};
-
-// Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
-struct Sprite : public Mesh
-{
-	Sprite(std::string init_name = "UNTITLED_SPRITE");
-
-	void loadSettings(const graphx::gSettings& = empty_settings) override;
-};
-
-struct Character
-{
-	unsigned int texture_id;
-	int size_x;
-	int size_y;
-	int bearing_x; // Offset from baseline to left of glyph
-	int bearing_y; // Offset from baseline to top of glyph
-	int advance;   // Offset to advance to next glyph
-
-	Character() = default;
-	Character(unsigned int init_texture_id, int init_size_x, int init_size_y, int init_bearing_x, int init_bearing_y, int init_advance);
-	Character(unsigned int init_texture_id, glm::vec2 init_size, glm::vec2 init_bearing, int init_advance);
-};
-
-struct Font
-{
-	std::string font_name;
-	std::map<char, Character> character_set;
-	unsigned int texture_array_id;
-	unsigned int VBO;
-
-	Font() = default;
-	Font(std::string init_font_name);
-};
-
-// Idea for later:
-// Instead of using a struct to send data to a LightRenderCmd,
-// what if I just used a float vector/data stream instead? I could
-// access specific data like how OpenGL access vertex attributes!
-// Pretty over-engineered, but could be a cool idea, I think
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#define GRAPHX_RENDERING_COMMON
 struct LightData
 {
-	glm::vec3 color = glm::vec3(0.0f);
-	float specular_strength = 0.0f;
-	float ambient_strength = 0.0f;
-	float energy = 0.0f;
+    glm::vec3 color = glm::vec3(0.0f);
+    float specular_strength = 0.0f;
+    float ambient_strength = 0.0f;
+    float energy = 0.0f;
 
-	float attenuation = 0.0f;
-	float range = 0.0f;
+    float attenuation = 0.0f;
+    float range = 0.0f;
 
-	glm::vec3 position = glm::vec3(0.0f);
-	glm::vec3 direction = glm::vec3(0.0f);
+    glm::vec3 position = glm::vec3(0.0f);
+    glm::vec3 direction = glm::vec3(0.0f);
 
-	float spot_cutoff = 0.0f;
-	float spot_cutoff_fade = 0.0f;
+    float spot_cutoff = 0.0f;
+    float spot_cutoff_fade = 0.0f;
 
-	// Texture *projection_texture; // For later...
+    // Texture *projection_texture; // For later...
 };
 
 struct LightRenderCmd
 {
 public:
-	LightData light_data;
-	const graphx::gClass* light_type = &graphx::gClass::INVALID_TYPE;
+    LightData light_data;
+    const graphx::gClass* light_type = &graphx::gClass::INVALID_TYPE;
 
-	bool isValid() const;
+    bool isValid() const;
 };
 
 struct RenderCmd
 {
 public:
-	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
-	bool is_light_debug_mesh = false;
-	std::string mesh_data_name = ERROR_MODEL;
-	RenderState *current_render_state = nullptr;
-	RenderState *previous_render_state = nullptr;
-	Material* mesh_material = nullptr;
+    glm::vec4 debug_highlight_color = glm::vec4(0.0f);
+    bool is_light_debug_mesh = false;
+    std::string mesh_data_name = ERROR_MODEL;
+    RenderState *current_render_state = nullptr;
+    RenderState *previous_render_state = nullptr;
+    Material* mesh_material = nullptr;
 
-	bool isValid() const;
+    bool isValid() const;
 };
 
 struct TextRenderCmd
 {
 public:
-	std::string font_name = ""; // Temporary solution
-	std::string text = "";
-	float position_x = 0.0f;
-	float position_y = 0.0f;
-	float scale = 0.0f;
-	glm::vec3 color = glm::vec3(0.0f);
-	bool is_debug_label = false;
-	RenderState *render_state = nullptr;
+    std::string font_name = "";
+    std::string text = "";
+    float position_x = 0.0f;
+    float position_y = 0.0f;
+    float scale = 0.0f;
+    glm::vec3 color = glm::vec3(0.0f);
+    bool is_debug_label = false;
+    RenderState *render_state = nullptr;
 
-	TextRenderCmd() = default;
-	TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
-	TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
+    TextRenderCmd() = default;
+    TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
+    TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color);
 
-	bool isValid() const;
-	bool is3D() const;
+    bool isValid() const;
+    bool is3D() const;
 };
 
 struct RenderCommands
 {
-	RenderCmd render_command;
-	LightRenderCmd light_render_command;
-	TextRenderCmd text_render_command;
+    RenderCmd render_command;
+    LightRenderCmd light_render_command;
+    TextRenderCmd text_render_command;
 };
-
-extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
-extern std::array<GLShader, graphx::rendering::SHADERS_AMOUNT> shaders;
-extern std::map<std::string, MeshData> mesh_data_storage;
-extern std::map<std::string, Texture> texture_storage;
-extern std::map<std::string, Font> font_map;
-extern bool time_to_render;
-extern bool time_to_store_buffers;
-extern FT_Library freetype;
-extern bool enable_default_shader;
-// Todo: make this better or remove it
-#define USE_DEFAULT       0
-#define USE_FULLBRIGHT    1
-#define USE_NORMALS       2
-#define USE_VERTEX_COLORS 3
-extern int debug_render_switches;
-
-GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-void        F_InitializeFreeType();
-void        F_LoadFont(std::string ttf_file_path, std::string font_name);
-void        R_InitializeRenderingAPI();
-void        R_BufferMeshesAndTextures();
-void        R_BufferRenderCommands(RenderCommands render_commands);
-void        R_BufferRenderCmd(RenderCmd render_command);
-void        R_BufferRenderCmd(LightRenderCmd light_render_command);
-void        R_BufferRenderCmd(TextRenderCmd text_render_command);
-void        R_Render(std::mutex &state_mutex, float interpolation_time);
-std::string T_LoadImageFile(std::string file_path);
-std::string M_LoadModelFile(std::string file_path, std::string file_extension);
-MeshData    M_LoadOBJ(std::string embedded_obj_file);
-
-template<typename T> Device* createNewDevice(const graphx::gUID& new_uid, const graphx::gSettings& new_settings = empty_settings) { return new T(new_uid, new_settings); }
 #endif

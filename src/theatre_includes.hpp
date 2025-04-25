@@ -4,7 +4,7 @@
 #include <models.hpp>
 #include <gmath.hpp>
 #ifndef GRAPHX_COMPILING
-#include "r_common.hpp"
+#include "g_devices.hpp"
 #include "g_actor.hpp"
 #include "g_theatre.hpp"
 #include "g_actors.hpp"

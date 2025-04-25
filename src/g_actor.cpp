@@ -1,5 +1,8 @@
+#include "graphx_classes.hpp"
 #include "g_actor.hpp"
-#include "graphx_classes_namespace.hpp"
+#include "g_devices.hpp"
+#include "r_common.hpp"
+#include "t_settings.hpp"
 #include <gmath.hpp>
 using namespace graphx;
 
@@ -10,43 +13,38 @@ glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 //------
 // Actor
 //------
-Actor::Actor(const graphx::gClass* my_type, const graphx::gUID& my_uid, const graphx::gSettings& my_settings)
-: type(my_type), uid(my_uid), settings(my_settings)
+Actor::Actor(const graphx::gClass& my_type, const graphx::gID& my_id, const graphx::gSettings& my_settings)
+: type(my_type), name_and_uid(my_id), settings(my_settings)
 {
 	RenderState render_state(position_global + position_local, quaternion_global * quaternion_local, scale_global * scale_local);
 	current_state_buffer = { render_state, render_state };
 	previous_state_buffer = { render_state, render_state };
-	updateVectors();
+	updateOrientationVectors();
 }
 
-Actor::Actor(const graphx::gClass* my_type, const int my_id, const std::string& my_name, const graphx::gSettings& my_settings)
-: Actor(my_type, graphx::gUID(my_id, my_name), my_settings)
-{}
-
-Actor::Actor(const int my_id, const std::string& my_name, const graphx::gSettings& my_settings)
-: Actor(&graphx::classes::ACTOR, my_id, my_name, my_settings)
-{}
-
-Actor::Actor(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
-: Actor(&graphx::classes::ACTOR, my_id, my_settings)
+Actor::Actor(const graphx::gID& my_id)
+: Actor(graphx::classes::ACTOR, my_id)
 {}
 
 Actor::~Actor()
 {
-	mesh->~Mesh();
+	mesh->~Model();
 	delete mesh;
 	collider->~Collider();
 	delete collider;
 }
 
-graphx::gUID Actor::getUID() const
-{ return uid; }
+graphx::gID Actor::getID() const
+{ return name_and_uid; }
 
 void Actor::setName(const std::string& new_name)
-{ uid.name = new_name; }
+{ name_and_uid.name = new_name; }
+
+void Actor::setUID(const int new_uid)
+{ name_and_uid.uid = new_uid; }
 
 void Actor::debug_highlight(const bool turn_highlight_on)
-{ debug_highlight_color = glm::vec4(type->debugging_color, 0.3f * turn_highlight_on); }
+{ debug_highlight_color = glm::vec4(type.debugging_color, 0.3f * turn_highlight_on); }
 
 // Get/Set Global/Local Position/Rotation/Quaternion
 glm::vec3 Actor::getGlobalPosition() const
@@ -68,22 +66,22 @@ glm::quat Actor::getLocalQuaternion() const
 { return quaternion_local; }
 
 void Actor::setGlobalPosition(const glm::vec3& new_position)
-{ position_global = new_position; }
+{ position_global = new_position; updateOrientationVectors(); }
 
 void Actor::setGlobalRotationAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
-{ quaternion_global = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); }
+{ quaternion_global = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); updateOrientationVectors(); }
 
 void Actor::setGlobalQuaternion(const glm::quat& new_quaternion)
-{ quaternion_global = new_quaternion; }
+{ quaternion_global = new_quaternion; updateOrientationVectors(); }
 
 void Actor::setLocalPosition(const glm::vec3& new_position)
-{ position_local = new_position; }
+{ position_local = new_position; updateOrientationVectors(); }
 
 void Actor::setLocalRotationAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
-{ quaternion_local = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); }
+{ quaternion_local = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); updateOrientationVectors(); }
 
 void Actor::setLocalQuaternion(const glm::quat& new_quaternion)
-{ quaternion_local = new_quaternion; }
+{ quaternion_local = new_quaternion; updateOrientationVectors(); }
 
 void Actor::selfOverrideColliderTransform(const bool ignore_scale)
 {
@@ -115,16 +113,19 @@ void Actor::colliderOverrideSelfTransform(const bool ignore_scale)
 const bool Actor::givesAFuckAboutPhysics() const
 { return !(collider == nullptr || collider->getBodyID().IsInvalid()); }
 
-void Actor::loadSettings(const graphx::gSettings& new_settings)
-{
-	if(settings == graphx::empty_settings)
-		settings = new_settings;
+graphx::gSettings Actor::getSettings() const
+{ return settings; }
 
+void Actor::setSettings(const graphx::gSettings& new_settings)
+{ settings = new_settings; }
+
+void Actor::loadSettings()
+{
 	glm::vec3 local_euler_degrees = getLocalRotationAngles(true);
 	glm::vec3 global_euler_degrees = getGlobalRotationAngles(true);
 
-	getSetting(uid.name, settings["Name"]);
-	getSetting(mesh, settings["Mesh"]);
+	getSetting(name_and_uid.name, settings["Name"]);
+	getSetting(mesh, settings["Model"]);
 	getSetting(position_global, settings["Position"]);
 	getSetting(position_local, settings["LocalPosition"]);
 	getSetting(global_euler_degrees, settings["Rotation"]);
@@ -138,7 +139,7 @@ void Actor::loadSettings(const graphx::gSettings& new_settings)
 	setLocalQuaternion(glm::quat(glm::radians(local_euler_degrees)));
 	setGlobalQuaternion(glm::quat(glm::radians(global_euler_degrees)));
 
-	updateVectors();
+	updateOrientationVectors();
 
 	if(collider != nullptr)
 		collider->loadSettings();
@@ -168,8 +169,8 @@ RenderCommands Actor::getRenderCommands()
 		{   // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
 			TextRenderCmd text_command;
 			text_command.font_name = "Verdana";
-			text_command.text = std::string("Name: " + uid.name + "\nType: " + std::string(type->name) + "\nUID: " + std::to_string(uid.id));
-			text_command.color = type->debugging_color;
+			text_command.text = std::string("Name: " + name_and_uid.name + "\nType: " + std::string(type.name) + "\nUID: " + std::to_string(name_and_uid.uid));
+			text_command.color = type.debugging_color;
 			text_command.scale = graphx::debug::actor_debug_menu_text_scale;
 			text_command.render_state = &current_state_buffer[state_index];
 			text_command.position_y = -25.0f;
@@ -185,21 +186,20 @@ RenderCommands Actor::getRenderCommands()
 	return(render_commands);
 }
 
-void Actor::processMouse(GLFWwindow *window, double x_position_in, double y_position_in)
+void Actor::checkForInput(GLFWwindow* window)
 {}
 
-void Actor::processInput(GLFWwindow *window)
+void Actor::processMouse(GLFWwindow* window, double x_position_in, double y_position_in)
 {}
 
-void Actor::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
+void Actor::processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {}
 
-void Actor::updateVectors()
+void Actor::updateOrientationVectors()
 {
 	orientation_up = getGlobalQuaternion() * getLocalQuaternion() * vector3_up;
 	orientation_front = getGlobalQuaternion() * getLocalQuaternion() * vector3_front;
 	orientation_right = getGlobalQuaternion() * getLocalQuaternion() * vector3_right;
-	orientation_grounded_front = glm::vec3(orientation_front[0], 0.0f, orientation_front[2]);
 }
 
 void Actor::updateStates(std::mutex &state_mutex)
@@ -228,7 +228,7 @@ void Actor::tick(int current_tick)
 		JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
 		setGlobalPosition(gmath::convertMath<glm::vec3>(body_position));
 		setGlobalQuaternion(gmath::convertMath<glm::quat>(body_quaternion));
-		updateVectors();
+		updateOrientationVectors();
 	}
 }
 
