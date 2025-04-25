@@ -1,3 +1,4 @@
+#include "g_actor.hpp"
 #include "g_actors.hpp"
 #include "graphx_classes_namespace.hpp"
 #include <gmath.hpp>
@@ -7,171 +8,147 @@
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
+using namespace graphx;
+
 glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 
-//
+//------
 // Actor
-//
-Actor::Actor(const long init_id, const std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: mesh(init_mesh), scale(init_scale), position_global(init_position)
+//------
+Actor::Actor(const graphx::gClass* my_type, const graphx::gUID& my_uid, const graphx::gSettings& my_settings)
+: type(my_type), uid(my_uid), settings(my_settings)
 {
-	my_type = &graphx::classes::ACTOR;
-	uid = graphx::gUID(init_id, init_name);
-	quaternion = glm::quat(glm::radians(init_euler_degrees));
-	RenderState render_state = RenderState(init_position, quaternion, init_scale);
+	RenderState render_state(position_global + position_local, quaternion_global * quaternion_local, scale_global * scale_local);
 	current_state_buffer = { render_state, render_state };
 	previous_state_buffer = { render_state, render_state };
 	updateVectors();
 }
 
-Actor::Actor(const graphx::gUID& new_uid, const graphx::gSettings& new_settings)
+Actor::Actor(const graphx::gClass* my_type, const int my_id, const std::string& my_name, const graphx::gSettings& my_settings)
+: Actor(my_type, graphx::gUID(my_id, my_name), my_settings)
+{}
+
+Actor::Actor(const int my_id, const std::string& my_name, const graphx::gSettings& my_settings)
+: Actor(&graphx::classes::ACTOR, my_id, my_name, my_settings)
+{}
+
+Actor::Actor(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
+: Actor(&graphx::classes::ACTOR, my_id, my_settings)
+{}
+
+Actor::~Actor()
 {
-	my_type = &graphx::classes::ACTOR;
-	uid = new_uid;
-	settings = new_settings; // THIS IS PROBABLY GONNA BREAK EVERYTHING
-	RenderState render_state = RenderState(position_global, quaternion, scale);
-	current_state_buffer = { render_state, render_state };
-	previous_state_buffer = { render_state, render_state };
-	updateVectors();
+	mesh->~Mesh();
+	delete mesh;
+	collider->~Collider();
+	delete collider;
 }
 
-const graphx::gUID& Actor::getUID() const
-{
-	return uid;
-}
-
-void Actor::setUID(const graphx::gUID& manual_uid)
-{
-	uid = manual_uid;
-}
+graphx::gUID Actor::getUID() const
+{ return uid; }
 
 void Actor::setName(const std::string& new_name)
+{ uid.name = new_name; }
+
+void Actor::debug_highlight(const bool turn_highlight_on)
+{ debug_highlight_color = glm::vec4(type->debugging_color, 0.3f * turn_highlight_on); }
+
+// Get/Set Global/Local Position/Rotation/Quaternion
+glm::vec3 Actor::getGlobalPosition() const
+{ return position_global; }
+
+glm::vec3 Actor::getGlobalRotationAngles(const bool degrees_instead_of_radians) const
+{ return (degrees_instead_of_radians) ? (glm::degrees(glm::eulerAngles(quaternion_global))) : glm::eulerAngles(quaternion_global); }
+
+glm::quat Actor::getGlobalQuaternion() const
+{ return quaternion_global; }
+
+glm::vec3 Actor::getLocalPosition() const
+{ return position_local; }
+
+glm::vec3 Actor::getLocalRotationAngles(const bool degrees_instead_of_radians) const
+{ return (degrees_instead_of_radians) ? (glm::degrees(glm::eulerAngles(quaternion_local))) : glm::eulerAngles(quaternion_local); }
+
+glm::quat Actor::getLocalQuaternion() const
+{ return quaternion_local; }
+
+void Actor::setGlobalPosition(const glm::vec3& new_position)
+{ position_global = new_position; }
+
+void Actor::setGlobalRotationAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
+{ quaternion_global = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); }
+
+void Actor::setGlobalQuaternion(const glm::quat& new_quaternion)
+{ quaternion_global = new_quaternion; }
+
+void Actor::setLocalPosition(const glm::vec3& new_position)
+{ position_local = new_position; }
+
+void Actor::setLocalRotationAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
+{ quaternion_local = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); }
+
+void Actor::setLocalQuaternion(const glm::quat& new_quaternion)
+{ quaternion_local = new_quaternion; }
+
+void Actor::selfOverrideColliderTransform(const bool ignore_scale)
 {
-	uid.name = new_name;
+	if(!givesAFuckAboutPhysics()) return;
+
+	JPH::BodyInterface& body_interface = jolt_physics_system.GetBodyInterface();
+	JPH::Vec3 position = gmath::convertMath<JPH::Vec3>(getGlobalPosition() * getLocalPosition());
+	JPH::Quat quaternion = gmath::convertMath<JPH::Quat>(getGlobalQuaternion() * getLocalQuaternion());
+	body_interface.SetPositionAndRotation(collider->getBodyID(), position, quaternion, JPH::EActivation::Activate);
+
+	if(ignore_scale) return; // The default, because changing a collider's scale is costly-ish
+	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
+	JPH::Vec3 scale = gmath::convertMath<JPH::Vec3>(getGlobalScale() * getLocalScale());
+	body_interface.GetShape(collider->getBodyID())->ScaleShape(scale); // I think this is correct...
 }
 
-const graphx::gClass* Actor::getType() const
+void Actor::colliderOverrideSelfTransform(const bool ignore_scale)
 {
-	return my_type;
+	if(!givesAFuckAboutPhysics()) return;
+
+	JPH::BodyInterface& body_interface = jolt_physics_system.GetBodyInterface();
+	setGlobalPosition(gmath::convertMath<glm::vec3>(body_interface.GetPosition(collider->getBodyID())));
+	setGlobalQuaternion(gmath::convertMath<glm::quat>(body_interface.GetRotation(collider->getBodyID())));
+	if(ignore_scale) return;
+	// I don't know a nice way of getting the scale from the collider and I don't wanna find it right now
+	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
 }
 
-void Actor::highlightMe()
-{
-	debug_highlight_color = glm::vec4(my_type->debugging_color, 0.5f);
-}
+const bool Actor::givesAFuckAboutPhysics() const
+{ return !(collider == nullptr || collider->getBodyID().IsInvalid()); }
 
-void Actor::unHighlightMe()
+void Actor::loadSettings(const graphx::gSettings& new_settings)
 {
-	debug_highlight_color = glm::vec4(0.0f);
-}
+	if(settings == graphx::empty_settings)
+		settings = new_settings;
 
-template<> std::vector<float> Actor::getPosition()
-{
-	return {position_global.x + position_local.x, position_global.y + position_local.y, position_global.z + position_local.z};
-}
+	glm::vec3 local_euler_degrees = getLocalRotationAngles(true);
+	glm::vec3 global_euler_degrees = getGlobalRotationAngles(true);
 
-template<> glm::vec3 Actor::getPosition()
-{
-	return position_global + position_local;
-}
+	getSetting(uid.name, settings["Name"]);
+	getSetting(mesh, settings["Mesh"]);
+	getSetting(position_global, settings["Position"]);
+	getSetting(position_local, settings["LocalPosition"]);
+	getSetting(global_euler_degrees, settings["Rotation"]);
+	getSetting(local_euler_degrees, settings["LocalRotation"]);
+	getSetting(scale_global, settings["Scale"]);
+	getSetting(scale_local, settings["LocalScale"]);
+	getSetting(visible, settings["Visible"]);
 
-template<> JPH::Vec3 Actor::getPosition()
-{
-	return gmath::convertMath<JPH::Vec3>(position_global) + gmath::convertMath<JPH::Vec3>(position_local);
-}
+	getSetting(collider, settings["Collider"]);
 
-template<> std::vector<float> Actor::getRotation()
-{
-	glm::vec3 the_euler_angles = glm::eulerAngles(quaternion * local_quaternion);
-	return {the_euler_angles.x, the_euler_angles.y, the_euler_angles.z};
-}
+	setLocalQuaternion(glm::quat(glm::radians(local_euler_degrees)));
+	setGlobalQuaternion(glm::quat(glm::radians(global_euler_degrees)));
 
-template<> glm::vec3 Actor::getRotation()
-{
-	return glm::eulerAngles(quaternion * local_quaternion);
-}
+	updateVectors();
 
-template<> JPH::Vec3 Actor::getRotation()
-{
-	return gmath::convertMath<JPH::Vec3>(glm::eulerAngles(quaternion * local_quaternion));
-}
-
-template<> glm::quat Actor::getRotation()
-{
-	return quaternion * local_quaternion;
-}
-
-template<> JPH::Quat Actor::getRotation()
-{
-	return gmath::convertMath<JPH::Quat>(quaternion) * gmath::convertMath<JPH::Quat>(local_quaternion);
-}
-
-template<> std::vector<float> Actor::getRotationDegrees()
-{
-	glm::vec3 the_euler_angles = glm::degrees(glm::eulerAngles(quaternion * local_quaternion));
-	return {the_euler_angles.x, the_euler_angles.y, the_euler_angles.z};
-}
-
-void Actor::setGlobalPosition(glm::vec3 new_value)
-{
-	position_global = new_value;
-}
-
-void Actor::setGlobalPosition(JPH::Vec3 new_value)
-{
-	position_global = gmath::convertMath<glm::vec3>(new_value);
-}
-
-void Actor::setGlobalRotation(glm::quat new_value)
-{
-	quaternion = new_value;
-}
-
-void Actor::setGlobalRotation(JPH::Quat new_value)
-{
-	quaternion = gmath::convertMath<glm::quat>(new_value);
-}
-
-void Actor::setGlobalRotation(glm::vec3 new_value)
-{
-	quaternion = glm::quat(new_value);
-}
-
-void Actor::setGlobalRotation(JPH::Vec3 new_value)
-{
-	quaternion = glm::quat(gmath::convertMath<glm::vec3>(new_value));
-}
-
-void Actor::setLocalPosition(glm::vec3 new_value)
-{
-	position_local = new_value;
-}
-
-void Actor::setLocalPosition(JPH::Vec3 new_value)
-{
-	position_local = gmath::convertMath<glm::vec3>(new_value);
-}
-
-void Actor::setLocalRotation(glm::quat new_value)
-{
-	local_quaternion = new_value;
-}
-
-void Actor::setLocalRotation(JPH::Quat new_value)
-{
-	local_quaternion = gmath::convertMath<glm::quat>(new_value);
-}
-
-void Actor::setLocalRotation(glm::vec3 new_value)
-{
-	local_quaternion = glm::quat(new_value);
-}
-
-void Actor::setLocalRotation(JPH::Vec3 new_value)
-{
-	local_quaternion = glm::quat(gmath::convertMath<glm::vec3>(new_value));
+	if(collider != nullptr)
+		collider->loadSettings();
 }
 
 RenderCommands Actor::getRenderCommands()
@@ -180,10 +157,10 @@ RenderCommands Actor::getRenderCommands()
 
 	render_commands.render_command.current_render_state = &current_state_buffer[state_index];
 	render_commands.render_command.previous_render_state = &previous_state_buffer[state_index];
-	if(mesh != nullptr && visible && (my_type != graphx::classes::GRAPHXPLAYER))
+	if(mesh != nullptr && visible && (type != graphx::classes::GRAPHXPLAYER))
 	{
 		render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
-		render_commands.render_command.mesh_material = *mesh->material;
+		render_commands.render_command.mesh_material = mesh->material;
 	}
 	else
 	{
@@ -194,12 +171,12 @@ RenderCommands Actor::getRenderCommands()
 	// Debug shit!
 	if(graphx::debug::actor_debug_menu_open)
 	{
-		if(my_type != graphx::classes::LABEL && visible) // Labels shouldn't have debug labels imho
+		if(type != graphx::classes::LABEL && visible) // Labels shouldn't have debug labels imho
 		{   // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
 			TextRenderCmd text_command;
 			text_command.font_name = "Verdana";
-			text_command.text = std::string("Name: " + name + "\nType: " + std::string(my_type->name) + "\nUID: " + std::to_string(UID));
-			text_command.color = my_type->debugging_color;
+			text_command.text = std::string("Name: " + uid.name + "\nType: " + std::string(type->name) + "\nUID: " + std::to_string(uid.id));
+			text_command.color = type->debugging_color;
 			text_command.scale = graphx::debug::actor_debug_menu_text_scale;
 			text_command.render_state = &current_state_buffer[state_index];
 			text_command.position_y = -25.0f;
@@ -215,37 +192,6 @@ RenderCommands Actor::getRenderCommands()
 	return(render_commands);
 }
 
-bool Actor::isPhysicsActor()
-{
-	return false;
-}
-
-void Actor::youGotACallBack(graphx::gSettings new_settings)
-{
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-
-	if(new_settings.contains(empty_settings_identifier))
-		new_settings = settings;
-
-	glm::vec3 local_euler_degrees = glm::vec3(0.0f);
-	glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
-
-	getSetting(name, settings["Name"]);
-	getSetting(mesh, settings["Mesh"]);
-	getSetting(position_global, settings["Position"]);
-	getSetting(position_local, settings["LocalPosition"]);
-	getSetting(global_euler_degrees, settings["Rotation"]);
-	getSetting(local_euler_degrees, settings["LocalRotation"]);
-	getSetting(scale, settings["Scale"]);
-	getSetting(visible, settings["Visible"]);
-
-	local_quaternion = glm::quat(glm::radians(local_euler_degrees));
-	quaternion = glm::quat(glm::radians(global_euler_degrees));
-
-	updateVectors();
-}
-
 void Actor::processMouse(GLFWwindow *window, double x_position_in, double y_position_in)
 {}
 
@@ -257,9 +203,9 @@ void Actor::processKey(GLFWwindow *window, int key, int scancode, int action, in
 
 void Actor::updateVectors()
 {
-	orientation_up = quaternion * vector3_up;
-	orientation_front = quaternion * vector3_front;
-	orientation_right = quaternion * vector3_right;
+	orientation_up = getGlobalQuaternion() * getLocalQuaternion() * vector3_up;
+	orientation_front = getGlobalQuaternion() * getLocalQuaternion() * vector3_front;
+	orientation_right = getGlobalQuaternion() * getLocalQuaternion() * vector3_right;
 	orientation_grounded_front = glm::vec3(orientation_front[0], 0.0f, orientation_front[2]);
 }
 
@@ -271,39 +217,43 @@ void Actor::updateStates(std::mutex &state_mutex)
 	previous_state_buffer[state_index] = current_state_buffer[state_index];
 
 	// Update current state
-	current_state_buffer[state_index].render_position	=	getPosition<glm::vec3>();
-	current_state_buffer[state_index].render_quaternion	=	getRotation<glm::quat>();
-	current_state_buffer[state_index].render_scale		=	scale;
+	current_state_buffer[state_index].render_position	=	getGlobalPosition() + getLocalPosition();
+	current_state_buffer[state_index].render_quaternion	=	getGlobalQuaternion() * getLocalQuaternion();
+	current_state_buffer[state_index].render_scale		=	getGlobalScale() + getLocalScale();
 
 	// Flip state buffer
 	state_index = 1 - state_index;
 }
 
 void Actor::tick(int current_tick)
-{}
-
-void Actor::callToStage(Theatre *parent_theatre)
-{}
-
-void Actor::takeABow()
 {
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
+	// Opted to not use an early return here, since that could be nasty for any derived Actor that overrides this function but still calls Actor::tick
+	if(givesAFuckAboutPhysics() && !collider->overrides_actor_transform)
+	{
+		JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+		JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
+		JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
+		setGlobalPosition(gmath::convertMath<glm::vec3>(body_position));
+		setGlobalQuaternion(gmath::convertMath<glm::quat>(body_quaternion));
+		updateVectors();
+	}
 }
 
 //
 // Label
 //
-Label::Label(std::string init_name, Actor *init_parent)
-: Actor(init_name, &label_mesh), parent(init_parent), text_render_command(TextRenderCmd("Verdana", init_name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
-{
-	my_type = &graphx::classes::LABEL;
-}
+Label::Label(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
+: Actor(&graphx::classes::LABEL, my_id, my_settings), parent(this), text_render_command(TextRenderCmd("Verdana", my_id.name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
+{}
+
+Label::Label(const int my_id_number, const std::string& my_name, const graphx::gSettings& my_settings)
+: Label(graphx::gUID(my_id_number, my_name), my_settings)
+{}
 
 RenderCommands Label::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
-	render_commands.render_command.mesh_material.color_alpha = label_alpha;
+	render_commands.render_command.mesh_material->color_alpha = label_alpha;
 	text_render_command.render_state = &current_state_buffer[state_index];
 	text_render_command.position_x = position_global.x;
 	text_render_command.position_y = position_global.y;
@@ -315,8 +265,8 @@ void Label::tick(int current_tick)
 {
 	if(parent != nullptr)
 	{
-		setGlobalPosition(parent->getPosition<glm::vec3>());
-		setGlobalRotation(parent->getRotation<glm::vec3>());
+		setGlobalPosition(parent->getGlobalPosition());
+		setGlobalQuaternion(parent->getGlobalQuaternion());
 	}
 	else
 	{
@@ -324,9 +274,9 @@ void Label::tick(int current_tick)
 	}
 }
 
-void Label::youGotACallBack(graphx::gSettings new_settings)
+void Label::loadSettings(const graphx::gSettings& new_settings)
 {
-	Actor::youGotACallBack(new_settings);
+	Actor::loadSettings(new_settings);
 	/**
 	 * `getSetting` Tip:
 	 *   When "overloading" `getSetting` settings, I like to make sure that the most verbose/explicit option always
@@ -353,72 +303,26 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 //
 // PhysicsActor
 //
-PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
-{
-	my_type = &graphx::classes::PHYSICSACTOR;
-}
+PhysicsActor::PhysicsActor(const graphx::gClass* my_class, const graphx::gUID& my_id, const graphx::gSettings& my_settings)
+: Actor(my_class, my_id, my_settings)
+{}
 
-void PhysicsActor::setGlobalPosition(glm::vec3 new_value)
-{
-	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	body_interface.SetPosition(collider->getBodyID(), gmath::convertMath<JPH::Vec3>(new_value), JPH::EActivation::Activate);
-}
+PhysicsActor::PhysicsActor(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
+: PhysicsActor(&graphx::classes::PHYSICSACTOR, my_id, my_settings)
+{}
 
-void PhysicsActor::setGlobalRotation(glm::vec3 new_value)
+void PhysicsActor::loadSettings(const graphx::gSettings& new_settings)
 {
-	glm::quat new_quaternion(new_value);
-	JPH::Quat new_new_quaternion = gmath::convertMath<JPH::Quat>(new_quaternion);
-	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	body_interface.SetRotation(collider->getBodyID(), new_new_quaternion, JPH::EActivation::Activate);
-}
-
-bool PhysicsActor::isPhysicsActor()
-{
-	return true;
-}
-
-void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
-{
-	Actor::youGotACallBack(new_settings);
+	Actor::loadSettings(new_settings);
 
 	getSetting(mass, settings["Mass"]);
 	getSetting(collider, settings["Collider"]);
-
 	collider->loadSettings();
 
+	reset_position = gmath::convertMath<JPH::Vec3>(getGlobalPosition() + getLocalPosition());
+	reset_quaternion = gmath::convertMath<JPH::Quat>(getGlobalQuaternion() * getLocalQuaternion());
+
 	reset_to_initial_orientation_for_testing();
-}
-
-void PhysicsActor::callToStage(Theatre* parent_theatre)
-{
-	Actor::callToStage(parent_theatre);
-
-	collider->createBody();
-
-	reset_position = getPosition<JPH::Vec3>();
-	reset_quaternion = getRotation<JPH::Quat>();
-}
-
-void PhysicsActor::takeABow()
-{
-	Actor::takeABow();
-
-	if(collider != nullptr)
-		collider->prepForDestruction();
-	collider = nullptr;
-	delete collider;
-}
-
-void PhysicsActor::tick(int current_tick)
-{
-	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
-	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
-
-	position_global = gmath::convertMath<glm::vec3>(body_position);
-	quaternion = gmath::convertMath<glm::quat>(body_quaternion);
-	updateVectors();
 }
 
 void PhysicsActor::reset_to_initial_orientation_for_testing()
@@ -428,29 +332,18 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 	body_interface.SetLinearAndAngularVelocity(collider->getBodyID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
 }
 
-//
+/*//
 // RigidBodyActor
 //
-RigidBodyActor::RigidBodyActor()
-: PhysicsActor()
-{
-	my_type = &graphx::classes::RIGIDBODYACTOR;
-}
+RigidBodyActor::RigidBodyActor(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
+: PhysicsActor(&graphx::classes::RIGIDBODYACTOR, my_id, my_settings)
+{}
 
-void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
+void RigidBodyActor::loadSettings(const graphx::gSettings& new_settings)
 {
-	PhysicsActor::youGotACallBack(new_settings);
-}
+	PhysicsActor::loadSettings(new_settings);
 
-void RigidBodyActor::callToStage(Theatre *parent_theatre)
-{
-	PhysicsActor::callToStage(parent_theatre);
-	my_type = &graphx::classes::RIGIDBODYACTOR;
-
-	if(collider == nullptr)
-		return;
 	collider->prepForDestruction();
-	collider = new Collider();
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Dynamic;
 	collider->object_layer = Layers::MOVING;
@@ -519,7 +412,7 @@ void StaticBodyActor::takeABow()
 	if(collider != nullptr)
 		collider->prepForDestruction();
 	PhysicsActor::takeABow();
-}
+}*/
 
 //
 // Camera

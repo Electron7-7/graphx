@@ -55,15 +55,16 @@ EMBED_OBJS =          \
 	$(O)/theatres.opp \
 	$(O)/models.opp
 
-GRAPHX_OBJS =              		 \
-	$(O)/g_math.opp        		 \
-	$(O)/g_jolt.opp        		 \
-	$(O)/r_common.opp      		 \
-	$(O)/g_actors.opp      		 \
-	$(O)/g_actor_interfacer.opp  \
-	$(O)/g_imgui.opp       		 \
-	$(O)/r_renderer.opp    		 \
-	$(O)/t_interpreter.opp 		 \
+GRAPHX_OBJS =              		      \
+	$(O)/graphx_namespace_classes.opp \
+	$(O)/g_math.opp        		 	  \
+	$(O)/g_jolt.opp        		 	  \
+	$(O)/r_common.opp      		 	  \
+	$(O)/g_actors.opp      		 	  \
+	$(O)/g_actor_interfacer.opp  	  \
+	$(O)/g_imgui.opp       		 	  \
+	$(O)/r_renderer.opp    		 	  \
+	$(O)/t_interpreter.opp 		 	  \
 	$(O)/g_theatre.opp
 
 OBJS =             	\

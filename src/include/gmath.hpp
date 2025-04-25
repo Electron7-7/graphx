@@ -1,23 +1,28 @@
 #ifndef GRAPHX_MATH
 #define GRAPHX_MATH
 #include <glm/fwd.hpp>
-
 namespace gmath
 {
-	struct uintvec3
+	struct vec3uint
 	{
 	public:
 		unsigned int data[3];
 
-		uintvec3(unsigned int new_x = 0, unsigned int new_y = 0, unsigned int new_z = 0);
-		uintvec3(unsigned int new_xyz[3]);
-		uintvec3(unsigned int new_xyz);
-		uintvec3(glm::vec3 glm_vector);
+		vec3uint(unsigned int new_x = 0, unsigned int new_y = 0, unsigned int new_z = 0);
+		vec3uint(unsigned int new_xyz[3]);
+		vec3uint(unsigned int new_xyz);
+		vec3uint(glm::vec3 glm_vector);
 
 		unsigned int x();
 		unsigned int y();
 		unsigned int z();
 	};
+
+	// struct vec3f
+	// {
+	// public:
+	// 	float data[3];
+	// };
 
 	template<typename T, typename A> T convertMath(const A &convert_me);
 	template<typename T, typename A> void convertMath(A &convert_me, T convert_from);

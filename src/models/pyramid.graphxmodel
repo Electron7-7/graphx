@@ -79,14 +79,14 @@ const std::vector<glm::vec3> PYRAMID_POSITIONS =
 	glm::vec3( 1.0f, -1.0f, -1.0f),	//	Right	Bottom	Front	4
 };
 
-const std::vector<gmath::uintvec3> PYRAMID_INDICES =
+const std::vector<gmath::vec3uint> PYRAMID_INDICES =
 {
-	gmath::uintvec3(0, 1, 2),
-	gmath::uintvec3(3, 4, 2),
-	gmath::uintvec3(1, 4, 2),
-	gmath::uintvec3(0, 3, 2),
+	gmath::vec3uint(0, 1, 2),
+	gmath::vec3uint(3, 4, 2),
+	gmath::vec3uint(1, 4, 2),
+	gmath::vec3uint(0, 3, 2),
 
-	gmath::uintvec3(0, 1, 3),
-	gmath::uintvec3(4, 1, 3),
+	gmath::vec3uint(0, 1, 3),
+	gmath::vec3uint(4, 1, 3),
 };
 #endif

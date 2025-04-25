@@ -5,33 +5,33 @@
 #include <Jolt/Jolt.h>
 #include "Jolt/Core/Color.h"
 
-gmath::uintvec3::uintvec3(unsigned int new_x, unsigned int new_y, unsigned int new_z)
+gmath::vec3uint::vec3uint(unsigned int new_x, unsigned int new_y, unsigned int new_z)
 : data(new_x, new_y, new_z)
 {}
 
-gmath::uintvec3::uintvec3(unsigned int new_xyz[3])
+gmath::vec3uint::vec3uint(unsigned int new_xyz[3])
 : data(new_xyz[0], new_xyz[1], new_xyz[2])
 {}
 
-gmath::uintvec3::uintvec3(unsigned int new_xyz)
+gmath::vec3uint::vec3uint(unsigned int new_xyz)
 : data(new_xyz, new_xyz, new_xyz)
 {}
 
-gmath::uintvec3::uintvec3(glm::vec3 glm_vector)
+gmath::vec3uint::vec3uint(glm::vec3 glm_vector)
 : data(static_cast<unsigned int>(static_cast<int>(glm_vector.x)), static_cast<unsigned int>(static_cast<int>(glm_vector.y)), static_cast<unsigned int>(static_cast<int>(glm_vector.z)))
 {}
 
-unsigned int gmath::uintvec3::x()
+unsigned int gmath::vec3uint::x()
 {
 	return data[0];
 }
 
-unsigned int gmath::uintvec3::y()
+unsigned int gmath::vec3uint::y()
 {
 	return data[1];
 }
 
-unsigned int gmath::uintvec3::z()
+unsigned int gmath::vec3uint::z()
 {
 	return data[2];
 }

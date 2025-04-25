@@ -4,9 +4,9 @@
 #include <gmath.hpp>
 #include <glm/gtx/component_wise.hpp>
 
-//
+//---------
 // GLShader
-//
+//---------
 GLShader::GLShader(std::string vertex_shader_code, std::string fragment_shader_code)
 {
 	const char *v_shader_code = vertex_shader_code.c_str();
@@ -102,91 +102,65 @@ template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::ma
 	glProgramUniformMatrix4fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
-//
+//-------
 // Device
-//
-Device::Device()
-{
-	name = "Untitled Device";
-	my_type = &graphx::classes::DEVICE;
-}
-
-Device::Device(const long new_uid, const graphx::gSettings& new_settings)
-: Device()
-{
-	UID = new_uid;
-	settings = new_settings;
-}
-
-const graphx::gClass* Device::getType() const
-{
-	return my_type;
-}
-
-void Device::setName(std::string new_name)
-{
-	name = new_name;
-}
-
-void Device::setName(char *new_name)
-{
-	name = new_name;
-}
-
-const std::string Device::getName() const
-{
-	return name;
-}
-
-void Device::loadSettings(graphx::gSettings new_settings)
-{
-	if(settings.contains(empty_settings_identifier))
-		settings = new_settings;
-	if(new_settings.contains(empty_settings_identifier))
-		new_settings = settings;
-
-	getSetting(name, new_settings["Name"]);
-}
-
-void Device::initialize()
+//-------
+Device::Device(const graphx::gClass* my_type, const graphx::gUID& my_uid, const graphx::gSettings& my_settings)
+: type(my_type), uid(my_uid), settings(my_settings)
 {}
 
-void Device::prepForDestruction()
+Device::Device(const graphx::gClass* my_type, const int my_id, const std::string& my_name, const graphx::gSettings& my_settings)
+: Device(my_type, graphx::gUID(my_id, my_name), my_settings)
+{}
+
+Device::Device(const int my_id, const std::string& my_name, const graphx::gSettings& my_settings)
+: Device(&graphx::classes::DEVICE, graphx::gUID(my_id, my_name), my_settings)
+{}
+
+Device::Device(const graphx::gUID& my_uid, const graphx::gSettings& my_settings)
+: Device(&graphx::classes::DEVICE, my_uid, my_settings)
+{}
+
+Device::~Device()
+{}
+
+void Device::setName(const std::string& new_name)
 {
-	if(ready_to_destroy)
-		return;
-	ready_to_destroy = true;
+	uid.name = new_name;
 }
 
-void Device::setUID(long manual_uid)
+void Device::loadSettings(const graphx::gSettings& new_settings)
 {
-	if(manual_uid != -1)
-		UID = manual_uid;
+	if(settings == graphx::empty_settings)
+		settings = new_settings;
+
+	getSetting(uid.name, settings["Name"]);
 }
 
-long Device::getUID()
-{
-	return UID;
-}
-
-//
+//---------
 // Collider
-//
-Collider::Collider()
-{
-	my_type = &graphx::classes::COLLIDER;
-	name = "Untitled Collider";
-}
+//---------
+Collider::Collider(const graphx::gUID& my_id, const graphx::gSettings& my_settings)
+: Device(&graphx::classes::DEVICE, my_id, my_settings)
+{}
+
+Collider::Collider(const int my_id, const std::string& my_name, const graphx::gSettings& my_settings)
+: Collider(graphx::gUID(my_id, my_name), my_settings)
+{}
 
 Collider::~Collider()
 {
-	J_RemoveAndDestroyBody(body_id);
+	if(jolt_physics_system.GetBodyInterface().IsAdded(body_id)/* || !body_id.IsInvalid()*/)
+		J_RemoveAndDestroyBody(body_id);
 }
 
-void Collider::loadSettings(graphx::gSettings new_settings)
+void Collider::loadSettings(const graphx::gSettings& new_settings)
 {
 	Device::loadSettings(new_settings);
 
+	getSetting(overrides_actor_transform, settings["Rigidbody"]);
+	getSetting(overrides_actor_transform, settings["ControlActor"]);
+	getSetting(overrides_actor_transform, settings["OverrideActor"]);
 	getSetting(motion_type, settings["MotionType"]);
 	getSetting(object_layer, settings["ObjectLayer"]);
 	getSetting(activation, settings["Activation"]);
@@ -197,20 +171,7 @@ void Collider::loadSettings(graphx::gSettings new_settings)
 	getSetting(local_position, settings["LocalPosition"]);
 	getSetting(local_euler_angles, settings["LocalRotation"]);
 	getSetting(scale, settings["Scale"]);
-}
 
-JPH::BodyCreationSettings* Collider::getBodySettings()
-{
-	return &body_settings;
-}
-
-const JPH::BodyID& Collider::getBodyID()
-{
-	return body_id;
-}
-
-void Collider::createBody()
-{
 	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
 	JPH::RVec3 body_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
 	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
@@ -220,25 +181,11 @@ void Collider::createBody()
 	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
 }
 
-void Collider::destroyBody()
-{
-	if(!body_id.IsInvalid())
-		J_RemoveAndDestroyBody(body_id);
-}
+JPH::BodyCreationSettings* Collider::getBodySettings()
+{ return &body_settings; }
 
-void Collider::initialize()
-{
-	if(forever_alone)
-		createBody();
-}
-
-void Collider::prepForDestruction()
-{
-	Device::prepForDestruction();
-
-	if(jolt_physics_system.GetBodyInterface().IsAdded(body_id))
-		J_RemoveAndDestroyBody(body_id);
-}
+const JPH::BodyID& Collider::getBodyID()
+{ return body_id; }
 
 //
 // Environment
@@ -246,7 +193,7 @@ void Collider::prepForDestruction()
 Environment::Environment(float init_ambient_light_amount, glm::vec3 init_ambient_light_color)
 : ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount)
 {
-	name = "Untitled Environment";
+	uid.name = "Untitled Environment";
 	my_type = &graphx::classes::ENVIRONMENT;
 }
 
@@ -269,13 +216,13 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 Texture::Texture()
 {
 	my_type = &graphx::classes::TEXTURE;
-	name = "Untitled Texture";
+	uid.name = "Untitled Texture";
 }
 
 Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
 {
 	my_type = &graphx::classes::TEXTURE;
-	name = "Untitled Texture";
+	uid.name = "Untitled Texture";
 	texture_data = init_texture_data;
 	texture_size = init_texture_size;
 }
@@ -283,7 +230,7 @@ Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<uns
 Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size)
 {
 	my_type = &graphx::classes::TEXTURE;
-	name = "Untitled Texture";
+	uid.name = "Untitled Texture";
 	texture_size = init_texture_size;
 	texture_data.clear();
 	for(const char *some_texture_data : init_texture_data)
@@ -293,7 +240,7 @@ Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsign
 Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size)
 {
 	my_type = &graphx::classes::TEXTURE;
-	name = "Untitled Texture";
+	uid.name = "Untitled Texture";
 	texture_size = init_texture_size;
 	texture_data.clear();
 	for(std::string some_texture_data : init_texture_data)
@@ -303,7 +250,7 @@ Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsign
 Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_size)
 {
 	my_type = &graphx::classes::TEXTURE;
-	name = "Untitled Texture";
+	uid.name = "Untitled Texture";
 	texture_data = {init_texture_data};
 	texture_size = {init_texture_size};
 }
@@ -311,7 +258,7 @@ Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_siz
 Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
 {
 	my_type = &graphx::classes::TEXTURE;
-	name = "Untitled Texture";
+	uid.name = "Untitled Texture";
 	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data))};
 }
@@ -319,7 +266,7 @@ Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
 Texture::Texture(std::string init_texture_data, unsigned int init_texture_size)
 {
 	my_type = &graphx::classes::TEXTURE;
-	name = "Untitled Texture";
+	uid.name = "Untitled Texture";
 	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
 }
@@ -335,7 +282,7 @@ void Texture::loadSettings(graphx::gSettings new_settings)
 Material::Material()
 {
 	my_type = &graphx::classes::MATERIAL;
-	name = "Untitled Material";
+	uid.name = "Untitled Material";
 }
 
 Material::Material(bool is_fullbright, glm::vec3 init_color)
@@ -376,7 +323,7 @@ void Material::loadSettings(graphx::gSettings new_settings)
 MeshData::MeshData()
 {}
 
-MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals, std::vector<glm::vec2> init_uvs, std::vector<glm::vec3> init_colors, std::vector<gmath::uintvec3> init_indices)
+MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals, std::vector<glm::vec2> init_uvs, std::vector<glm::vec3> init_colors, std::vector<gmath::vec3uint> init_indices)
 {
 	// These for loops make sure that every vertex has normal, uv, and color data
 	for(int i = init_normals.size() ; i < init_positions.size() ; i++)
@@ -395,7 +342,7 @@ MeshData::MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, st
 
 	if(init_indices.empty())
 		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
-			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
+			vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(i, i+1, i+2));
 	else
 		vertex_indices = init_indices;
 }
@@ -423,12 +370,12 @@ MeshData::MeshData(int init_vao_index, std::vector<float> init_positions, std::v
 		vertex_uvs.insert(vertex_uvs.end(), glm::vec2(init_uvs[uv_it], init_uvs[uv_it + 1]));
 		vertex_colors.insert(vertex_colors.end(), glm::vec3(init_colors[it], init_colors[it + 1], init_colors[it + 2]));
 		if(!init_indices.empty())
-			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
+			vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(init_indices[it], init_indices[it + 1], init_indices[it + 2]));
 	}
 
 	if(init_indices.empty())
 		for(int i = 0 ; i < vertex_positions.size() * 3; i += 3)
-			vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i+1, i+2));
+			vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(i, i+1, i+2));
 }
 
 void MeshData::addVertex(glm::vec3 position, glm::vec3 normal, glm::vec2 uv, glm::vec3 color)
@@ -455,14 +402,14 @@ void MeshData::addVertex(std::vector<float> vertex)
 	vertex_colors.insert(vertex_colors.end(), glm::vec3(vertex[8], vertex[9], vertex[10]));
 }
 
-void MeshData::addIndex(gmath::uintvec3 indices)
+void MeshData::addIndex(gmath::vec3uint indices)
 {
 	vertex_indices.insert(vertex_indices.end(), indices);
 }
 
 void MeshData::addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3)
 {
-	vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(index_1, index_2, index_3));
+	vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(index_1, index_2, index_3));
 }
 
 void MeshData::fixOBJData()
@@ -494,7 +441,7 @@ void MeshData::fixOBJData()
 	vertex_indices.clear();
 	for(int i = 0 ; i < vertex_positions.size(); i += 3)
 	{
-		vertex_indices.insert(vertex_indices.end(), gmath::uintvec3(i, i + 1, i + 2));
+		vertex_indices.insert(vertex_indices.end(), gmath::vec3uint(i, i + 1, i + 2));
 	}
 }
 
@@ -568,20 +515,20 @@ size_t MeshData::indices_size()
 Mesh::Mesh()
 {
 	my_type = &graphx::classes::MESH;
-	name = "Untitled Mesh";
+	uid.name = "Untitled Mesh";
 }
 
 Mesh::Mesh(Material *new_material, std::string init_mesh_data_name)
 {
 	my_type = &graphx::classes::MESH;
-	name = "Untitled Mesh";
+	uid.name = "Untitled Mesh";
 	material = new_material;
 }
 
 Mesh::Mesh(std::string init_mesh_data_name)
 {
 	my_type = &graphx::classes::MESH;
-	name = "Untitled Mesh";
+	uid.name = "Untitled Mesh";
 	mesh_data_name = init_mesh_data_name;
 }
 
@@ -612,7 +559,7 @@ Sprite::Sprite(std::string init_name)
 {
 	my_type = &graphx::classes::SPRITE;
 	mesh_data_name = GRAPHX_QUAD;
-	name = init_name;
+	uid.name = init_name;
 }
 
 void Sprite::loadSettings(graphx::gSettings new_settings)

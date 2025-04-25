@@ -2315,3 +2315,187 @@ I want to keep working on the new update. I'm going to start with the Actor inte
 After lots of testing, I've got a much better understanding of pointer memory allocation. To avoid memory leaks, if I use a raw pointer and `new` at any point, then I need to define a destructor for that class that explicitly deletes that pointer. To avoid having to do any of this, I could also just make a private, static, constant Actor variable that the pointer gets set to if an invalid/null reference is given to the constructor.
 
 Putting this on pause while I dig in and fix all the nasty undefined behaviour I've inadvertantly created in Theatre (and Actor).
+
+[04/24/25]
+Today, I want to hopefully finish the changes I'm making to Theatre and the implementation of `graphx::gUID`.
+
+All right... in order to move forward with what I'm doing, I need to move the uid assignment out of the constructor body and into the initializer list. This means that I need to find out how to make sure that an Actor/Device will always return the correct uid values, even if it's being accessed via base class pointer.
+
+I asked DeepSeek to explain the whole "accessing Base class variables from a Base class pointer to a Derived class" finnickyness, and I got this very helpful and very detailed response:
+
+-------- BEGIN DEEPSEEK OUTPUT --------
+
+In C++, the behavior you're describing occurs due to how **member variables** are initialized and accessed in inheritance hierarchies. Here's a breakdown of the scenarios and why they happen:
+
+---
+
+### **Key Concept: Member Variables Are Not Polymorphic**
+- **Member variables** are **statically bound** (resolved at compile-time based on the pointer/reference type).
+- Unlike virtual functions, accessing a member variable through a `Base*` **always** refers to the `Base` class's variable, even if the object is of a `Derived` type.
+
+---
+
+### **Scenario 1: Correct Behavior (Derived Class Modifies Base Variable)**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base() : uid(0) {} // Base initializes uid to 0
+};
+
+class Derived : public Base {
+public:
+    Derived() {
+        uid = 20; // Modifies Base::uid in the constructor body
+    }
+};
+
+int main() {
+    Derived d;
+    Base* b = &d;
+    std::cout << b->uid; // Output: 20
+}
+```
+#### **Why This Works**:
+- The `Derived` constructor **modifies the `Base::uid`** after the `Base` constructor initializes it to 0.
+- Since `uid` is a member of `Base`, the change is visible through the `Base*`.
+
+---
+
+### **Scenario 2: Incorrect Behavior (Derived Class "Shadows" the Variable)**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base() : uid(0) {}
+};
+
+class Derived : public Base {
+public:
+    int uid; // Shadows Base::uid (same name, different variable)
+    Derived() : uid(20) {} // Initializes Derived::uid, NOT Base::uid
+};
+
+int main() {
+    Derived d;
+    Base* b = &d;
+    std::cout << b->uid; // Output: 0 (Base::uid is unchanged)
+    std::cout << d.uid;  // Output: 20 (Derived::uid)
+}
+```
+#### **Why This Fails**:
+- The `Derived` class declares its own `uid`, **shadowing** the `Base::uid`.
+- The `Base*` still accesses `Base::uid`, which remains 0, while `Derived::uid` is a separate variable.
+
+---
+
+### **Scenario 3: Initialization Order Matters**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base(int id) : uid(id) {} // uid initialized via parameter
+};
+
+class Derived : public Base {
+public:
+    Derived() : Base(20) {} // Correct: Initializes Base::uid to 20
+};
+
+int main() {
+    Derived d;
+    Base* b = &d;
+    std::cout << b->uid; // Output: 20
+}
+```
+#### **Why This Works**:
+- The `Derived` constructor explicitly initializes `Base::uid` via the `Base` constructor's initializer list.
+- The `Base` class has no default constructor, forcing derived classes to initialize `uid`.
+
+---
+
+### **Scenario 4: Base Constructor Overrides Derived Intent**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base() : uid(0) {} // Base initializes uid to 0
+};
+
+class Derived : public Base {
+public:
+    Derived() {
+        // Base::uid is already initialized to 0 here
+        uid = 20; // Modifies Base::uid to 20
+    }
+};
+
+class AnotherDerived : public Base {
+public:
+    AnotherDerived() : Base() {} // Explicitly calls Base constructor
+    // Base::uid remains 0 (no modification)
+};
+
+int main() {
+    Derived d;
+    Base* b1 = &d;
+    std::cout << b1->uid; // Output: 20
+
+    AnotherDerived ad;
+    Base* b2 = &ad;
+    std::cout << b2->uid; // Output: 0
+}
+```
+#### **Why Behavior Varies**:
+- `Derived` modifies `Base::uid` after initialization (works).
+- `AnotherDerived` does not modify `Base::uid`, so it retains the `Base` constructor’s value.
+
+---
+
+### **Common Pitfalls & Fixes**
+1. **Shadowing Variables**:
+   - **Fix**: Avoid re-declaring the same variable name in derived classes. Use `Base::uid` to access the base member explicitly.
+
+2. **Forgetting to Initialize in Constructor**:
+   - **Fix**: Always initialize `Base` members via the `Base` constructor’s initializer list:
+     ```cpp
+     Derived() : Base(20) { ... }
+     ```
+
+3. **Assuming Variables Are Virtual**:
+   - **Fix**: Use virtual **getter/setter functions** if dynamic behavior is needed:
+     ```cpp
+     class Base {
+     public:
+         virtual int getUid() const { return uid; }
+     protected:
+         int uid;
+     };
+
+     class Derived : public Base {
+     public:
+         int getUid() const override { return 20; }
+     };
+     ```
+
+---
+
+### **Summary**
+- **Accessing `uid` via `Base*` always refers to `Base::uid`** (no polymorphism for variables).
+- **Shadowing** (re-declaring `uid` in `Derived`) creates a separate variable, leading to unexpected results.
+- To ensure consistency:
+  - Initialize `Base` members via the `Base` constructor’s initializer list.
+  - Avoid variable shadowing.
+  - Use virtual functions for polymorphic behavior.
+
+-------- END DEEPSEEK OUTPUT --------
+
+While refactoring Actor, I had the idea to create a function template for automatically getting a derived class pointer from the base Actor pointer, based on that Actor's "type" variable.
+
+But that would be useless, because the only way to safely do anything with that pointer, I'd have to know what type it is already... which kinda defeats the purpose of the function template.
+
+I need to put all the namespace definitions in a source file.

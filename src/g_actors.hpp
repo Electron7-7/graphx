@@ -1,7 +1,6 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
 #include "g_actor.hpp"
-#include "g_theatre.hpp"
 #include "r_common.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -20,74 +19,19 @@
 class Label : public Actor
 {
 public:
-	Actor *parent = nullptr;
 	float label_alpha = 0.0f;
 
-	Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
+	Label(const graphx::gUID&, const graphx::gSettings& = graphx::empty_settings);
+	Label(const int, const std::string& = "UNTITLED_LABEL", const graphx::gSettings& = graphx::empty_settings);
 
+	void tick(const int) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 	RenderCommands getRenderCommands() override;
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 
 protected:
+	Actor *parent = this;
 	Sprite label_mesh = Sprite();
 	TextRenderCmd text_render_command;
-};
-
-class PhysicsActor: public Actor
-{
-public:
-	Collider *collider = new Collider();
-
-	float mass = 1.0f; // in kg
-
-	PhysicsActor(std::string init_name = "Untitled Physics Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
-
-	void setGlobalPosition(glm::vec3 new_value) override final;
-	void setGlobalRotation(glm::vec3 new_value) override final;
-
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	void callToStage(Theatre *parent_theatre) override;
-	void takeABow() override;
-
-	virtual bool isPhysicsActor() override final;
-	virtual void reset_to_initial_orientation_for_testing();
-
-protected:
-	JPH::Vec3 reset_position = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	JPH::Quat reset_quaternion = JPH::Quat::sIdentity();
-	std::vector<JPH::BodyCreationSettings> body_creation_settings;
-	std::vector<JPH::EActivation> body_activation;
-	JPH::Vec3 body_scale = JPH::Vec3(1.0f, 1.0f, 1.0f);
-	JPH::Vec3 body_position = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	JPH::Quat body_quat = JPH::Quat::sIdentity();
-	JPH::EActivation test_body_activation;
-	JPH::EMotionType test_motion_type;
-	JPH::ObjectLayer test_object_layer;
-};
-
-class RigidBodyActor : public PhysicsActor
-{
-public:
-	RigidBodyActor();
-
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	void callToStage(Theatre *parent_theatre) override;
-	void takeABow() override;
-
-	void reset_to_initial_orientation_for_testing() override;
-};
-
-class StaticBodyActor : public PhysicsActor
-{
-public:
-	StaticBodyActor();
-
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	void callToStage(Theatre *parent_theatre) override;
-	void takeABow() override;
 };
 
 class Camera : public Actor
@@ -99,13 +43,13 @@ public:
 
 	Camera();
 
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void tick(const int) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 	void doRotation(glm::vec2 mouse_input);
 
-protected:
-	glm::vec3 position_global = glm::vec3(0.0f);
-	glm::vec3 position_local = glm::vec3(0.0f, 3.0f, 0.0f); // temporary default offset
+// protected:
+	// glm::vec3 position_global = glm::vec3(0.0f);
+	// glm::vec3 position_local = glm::vec3(0.0f, 3.0f, 0.0f); // temporary default offset
 };
 
 class GraphXPlayer: public Actor //public CharacterController(?)
@@ -135,9 +79,7 @@ public:
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	void callToStage(Theatre *parent_theatre) override;
-	void takeABow() override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 
 private:
 	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -170,7 +112,7 @@ public:
 	const bool isLightType(const graphx::gClass& light_type) const;
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 
 protected:
 	const graphx::gClass* my_light_type = nullptr;
@@ -185,7 +127,7 @@ public:
 	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 class LightSpot : public Light
@@ -198,7 +140,7 @@ public:
 	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 class LightFlashlight: public LightSpot
@@ -217,7 +159,7 @@ public:
 	void setLightColor(bool color_toggle);
 
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 
 private:
 	glm::vec3 _color = light_color;
@@ -233,14 +175,12 @@ public:
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
 	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
-	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
+	Actor pivot_point = Actor(-4269, "pivot point");
 
 	LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
 
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
-	void callToStage(Theatre *parent_theatre) override;
-	void takeABow() override;
+	void tick(const int) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 #define RAMIEL_CIRLE    0
@@ -260,8 +200,8 @@ public:
 
 	Ramiel();
 
-	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void tick(const int) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 extern glm::vec3 vector3_up;

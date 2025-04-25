@@ -36,9 +36,9 @@ const std::vector<glm::vec3> QUAD_POSITIONS =
 	glm::vec3( 1.0f, -1.0f, 0.0f),	//	Right	Down	3
 };
 
-const std::vector<gmath::uintvec3> QUAD_INDICES =
+const std::vector<gmath::vec3uint> QUAD_INDICES =
 {
-	gmath::uintvec3(0, 1, 3),
-	gmath::uintvec3(2, 3, 0),
+	gmath::vec3uint(0, 1, 3),
+	gmath::vec3uint(2, 3, 0),
 };
 #endif

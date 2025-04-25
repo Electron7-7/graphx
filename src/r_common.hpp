@@ -31,29 +31,29 @@ private:
 
 struct Device
 {
-	graphx::gSettings settings = empty_settings;
+	const graphx::gClass* const type = &graphx::gClass::INVALID_TYPE;
 
-	Device(const graphx::gUID&, const graphx::gSettings&);
-	Device(const long, const std::string& = "Untitled Device");
-	virtual ~Device() = default;
+	Device(const graphx::gClass*, const graphx::gUID&, const graphx::gSettings& = graphx::empty_settings);
+	Device(const graphx::gClass*, const int, const std::string& = "Untitled Device", const graphx::gSettings& = graphx::empty_settings);
+	Device(const int, const std::string& = "Untitled Device", const graphx::gSettings& = graphx::empty_settings);
+	Device(const graphx::gUID&, const graphx::gSettings& = graphx::empty_settings);
+	virtual ~Device();
 
-	void setName(const std::string& new_name);
-	void setUID(const graphx::gUID&);
-	const graphx::gUID& getUID() const;
-	const graphx::gClass* getType() const;
+	void setName(const std::string&);
+	graphx::gUID getUID() const;
 
 	virtual void initialize();
-	virtual void loadSettings(graphx::gSettings = empty_settings);
-	virtual void prepForDestruction();
+	virtual void loadSettings(const graphx::gSettings& = graphx::empty_settings);
 
 protected:
-	const graphx::gClass* my_type = nullptr;
-	long UID = -1; // A UID of -1 means it's not been set yet
-	bool ready_to_destroy = false;
+	graphx::gUID uid = graphx::gUID(-1, "Untitled Device"); // A UID of -1 means it's not been set yet
+	graphx::gSettings settings = empty_settings;
 };
 
 struct Collider : public Device
 {
+	bool                overrides_actor_transform = true;
+	// Defaults to a rigidbody type of shape
 	glm::vec3 			local_position = glm::vec3(0.0f);
 	glm::vec3			position = glm::vec3(0.0f);
 	glm::vec3			euler_angles = glm::vec3(0.0f);
@@ -68,22 +68,27 @@ struct Collider : public Device
 
 	graphx::jolt::shape_arguments shape_arguments;
 
-	Collider();
+	Collider(const graphx::gUID&, const graphx::gSettings& = empty_settings);
+	Collider(const int, const std::string& = "Untitled Collider", const graphx::gSettings& = empty_settings);
 	~Collider() override;
 
 	void createBody();
 	void destroyBody();
 
-	const JPH::BodyID &getBodyID();
+	const JPH::BodyID& getBodyID();
 	JPH::BodyCreationSettings *getBodySettings();
 
-	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+	void reset_to_default_transformation_for_testing();
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 	void initialize() override;
-	void prepForDestruction() override;
 
 protected:
 	JPH::BodyID body_id;
 	JPH::BodyCreationSettings body_settings;
+	JPH::Vec3 reset_position = JPH::Vec3(0.0f, 0.0f, 0.0f);
+	JPH::Quat reset_quaternion = JPH::Quat::sIdentity();
+	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
+	JPH::Vec3 reset_scale = JPH::Vec3(1.0f, 1.0f, 1.0f);
 };
 
 struct Environment final : public Device // Will be extended in the future
@@ -93,7 +98,7 @@ struct Environment final : public Device // Will be extended in the future
 
 	Environment(float = 0.05f, glm::vec3 = glm::vec3(1.0f));
 
-	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 struct Texture final : public Device
@@ -112,7 +117,7 @@ public:
 	Texture(const char * init_texture_data, unsigned int init_texture_size);
 	Texture(std::string  init_texture_data, unsigned int init_texture_size);
 
-	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 struct Material final : public Device
@@ -132,7 +137,7 @@ struct Material final : public Device
 	Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
-	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 
@@ -148,10 +153,10 @@ struct MeshData
 	std::vector<glm::vec3> vertex_normals;
 	std::vector<glm::vec2> vertex_uvs;
 	std::vector<glm::vec3> vertex_colors;
-	std::vector<gmath::uintvec3> vertex_indices;
+	std::vector<gmath::vec3uint> vertex_indices;
 
 	MeshData();
-	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::uintvec3> init_indices = {});
+	MeshData(int init_vao_index, std::vector<glm::vec3> init_positions, std::vector<glm::vec3> init_normals = {}, std::vector<glm::vec2> init_uvs = {}, std::vector<glm::vec3> init_colors = {}, std::vector<gmath::vec3uint> init_indices = {});
 	MeshData(int init_vao_index, std::vector<float> init_positions, std::vector<float> init_normals = {}, std::vector<float> init_uvs = {}, std::vector<float> init_colors = {}, std::vector<unsigned int> init_indices = {});
 
 	// This implementation of `MeshData::addVertex` assumes that the floats contained in `vertex` are in this order:
@@ -166,7 +171,7 @@ struct MeshData
 	void addVertex(std::vector<float> vertex);
 	void addVertex(glm::vec3 position, glm::vec3 normal = glm::vec3(0.0f), glm::vec2 uv = glm::vec2(0.0f), glm::vec3 color = glm::vec3(1.0f));
 	void addVertex(float position_x, float position_y, float position_z, float normal_x, float normal_y, float normal_z, float uv_x, float uv_y, float color_x, float color_y, float color_z);
-	void addIndex(gmath::uintvec3 indices);
+	void addIndex(gmath::vec3uint indices);
 	void addIndex(unsigned int index_1, unsigned int index_2, unsigned int index_3);
 	void fixOBJData();
 	const std::vector<float> vertices();
@@ -192,8 +197,7 @@ struct Mesh : public Device
 	Mesh(Material *new_material, std::string init_mesh_data_name = ERROR_MODEL);
 	Mesh(std::string init_mesh_data_name);
 
-	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
-	void prepForDestruction() override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
@@ -201,7 +205,7 @@ struct Sprite : public Mesh
 {
 	Sprite(std::string init_name = "UNTITLED_SPRITE");
 
-	void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+	void loadSettings(const graphx::gSettings& = empty_settings) override;
 };
 
 struct Character
@@ -270,7 +274,7 @@ public:
 	std::string mesh_data_name = ERROR_MODEL;
 	RenderState *current_render_state = nullptr;
 	RenderState *previous_render_state = nullptr;
-	Material mesh_material; // Todo: make this a reference
+	Material* mesh_material = nullptr;
 
 	bool isValid() const;
 };

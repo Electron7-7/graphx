@@ -37,7 +37,7 @@ void Theatre::createActorOrDevice(const graphx::gClass* type, const graphx::gUID
     {
         if(actors.contains(uid))
         {
-            PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::createActorOrDevice", "an Actor", uid.string()))
+            PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::createActorOrDevice", "an Actor", uid.toString()))
             return;
         }
 
@@ -49,7 +49,7 @@ void Theatre::createActorOrDevice(const graphx::gClass* type, const graphx::gUID
     {
         if(devices.contains(uid))
         {
-            PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::createActorOrDevice", "an Actor", uid.string()))
+            PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::createActorOrDevice", "an Actor", uid.toString()))
             return;
         }
 
@@ -64,7 +64,7 @@ void Theatre::addActor(Actor* new_actor)
 {
     if(actors.contains(new_actor->getUID()))
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addActor", "an Actor", new_actor->getUID().string()))
+        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addActor", "an Actor", new_actor->getUID().toString()))
         return;
     }
 
@@ -75,7 +75,7 @@ void Theatre::addDevice(Device* new_device)
 {
     if(devices.contains(new_device->getUID()))
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addDevice", "a Device", new_device->getUID().string()))
+        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addDevice", "a Device", new_device->getUID().toString()))
         return;
     }
 
