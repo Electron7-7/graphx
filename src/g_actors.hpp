@@ -48,6 +48,7 @@ private:
 	glm::vec2 mouse_last = glm::vec2(0.0f);
 };
 
+class LightFlashlight; // Forward Declaration
 class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:
@@ -102,15 +103,10 @@ public:
 
 	using Actor::Actor;
 
-	const graphx::gClass* getLightType() const;
-	const bool isLightType(const graphx::gClass* light_type) const;
-	const bool isLightType(const graphx::gClass& light_type) const;
-
 	RenderCommands getRenderCommands() override;
 	void loadSettings() override;
 
 protected:
-	const graphx::gClass* my_light_type = nullptr;
 	bool debug_visible = false;
 };
 
@@ -202,6 +198,4 @@ public:
 extern glm::vec3 vector3_up;
 extern glm::vec3 vector3_front;
 extern glm::vec3 vector3_right;
-
-template<typename T> Actor* createNewActor(const graphx::gID& new_uid, const graphx::gSettings& new_settings = graphx::gSettings()) { return new T(new_uid, new_settings); }
 #endif

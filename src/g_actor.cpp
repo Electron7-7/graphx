@@ -1,11 +1,21 @@
-#include "graphx_classes.hpp"
 #include "g_actor.hpp"
-#include "g_devices.hpp"
+#include "g_device.hpp"
+#include "g_theatre.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
 #include <gmath.hpp>
+
 using namespace graphx;
 
+//--------------------
+// ActorPointerWrapper
+//--------------------
+ActorPointerWrapper::ActorPointerWrapper(Actor* new_pointer, const bool ownership)
+: pointer(new_pointer), owned_by_me(ownership)
+{}
+
+
+// Todo: move these out of here and probably into graphx_namespace.hpp
 glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -13,8 +23,8 @@ glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 //------
 // Actor
 //------
-Actor::Actor(const graphx::gClass& my_type, const graphx::gID& my_id, const graphx::gSettings& my_settings)
-: type(my_type), name_and_uid(my_id), settings(my_settings)
+Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
+: settings(my_settings), UID(my_uid), parent_theatre(my_parent_theatre)
 {
 	RenderState render_state(position_global + position_local, quaternion_global * quaternion_local, scale_global * scale_local);
 	current_state_buffer = { render_state, render_state };
@@ -24,23 +34,67 @@ Actor::Actor(const graphx::gClass& my_type, const graphx::gID& my_id, const grap
 
 Actor::~Actor()
 {
-	mesh->~Model();
-	delete mesh;
-	collider->~Collider();
-	delete collider;
+	for(ActorPointerWrapper child : child_actors)
+		if(child.owned_by_me)
+			delete child.pointer;
+
+	for(DevicePointerWrapper child : child_devices)
+		if(child.owned_by_me)
+			delete child.pointer;
+
+	child_actors.clear();
+	child_devices.clear();
 }
 
-graphx::gID Actor::getID() const
-{ return name_and_uid; }
-
-void Actor::setName(const std::string& new_name)
-{ name_and_uid.name = new_name; }
+int Actor::getUID() const
+{ return UID; }
 
 void Actor::setUID(const int new_uid)
-{ name_and_uid.uid = new_uid; }
+{ UID = (parent_theatre != nullptr) ? parent_theatre->setActorUID(new_uid) : new_uid; }
 
-void Actor::debug_highlight(const bool turn_highlight_on)
-{ debug_highlight_color = glm::vec4(type.debugging_color, 0.3f * turn_highlight_on); }
+void Actor::updateStates(std::mutex &state_mutex)
+{
+	std::lock_guard guard(state_mutex);
+
+	// Copy current state into previous state
+	previous_state_buffer[state_index] = current_state_buffer[state_index];
+
+	// Update current state
+	current_state_buffer[state_index].render_position	=	getGlobalPosition() + getLocalPosition();
+	current_state_buffer[state_index].render_quaternion	=	getGlobalQuaternion() * getLocalQuaternion();
+	current_state_buffer[state_index].render_scale		=	getGlobalScale() + getLocalScale();
+
+	// Flip state buffer
+	state_index = 1 - state_index;
+}
+
+gSettings Actor::getSettings() const
+{ return settings; }
+
+void Actor::setSettings(const gSettings& new_settings)
+{ settings = new_settings; }
+
+void Actor::addChildActor(Actor* new_child)
+{ child_actors.insert(child_actors.end(), ActorPointerWrapper(new_child, false)); }
+
+void Actor::addChildDevice(Device* new_child)
+{ child_devices.insert(child_devices.end(), DevicePointerWrapper(new_child, false)); }
+
+glm::vec3 Actor::getOrientation(const unsigned int orientation) const
+{
+	switch(orientation)
+	{
+	case Actor::ORIENTATION_UP:
+		return orientation_up;
+	case Actor::ORIENTATION_RIGHT:
+		return orientation_right;
+	case Actor::ORIENTATION_FRONT:
+		return orientation_front;
+	default:
+		PRINTERR("Actor::getOrientation(const unsigned int orientation) - orientation selection invalid! Returning upwards orientation!")
+		return orientation_up;
+	}
+}
 
 // Get/Set Global/Local Position/Rotation/Quaternion
 glm::vec3 Actor::getGlobalPosition() const
@@ -79,6 +133,110 @@ void Actor::setLocalRotationAngles(const glm::vec3& new_rotation, const bool deg
 void Actor::setLocalQuaternion(const glm::quat& new_quaternion)
 { quaternion_local = new_quaternion; updateOrientationVectors(); }
 
+void Actor::tick(int current_tick)
+{
+	// Opted to not use an early return here, since that could be nasty for any derived Actor that overrides this function but still calls Actor::tick
+	if(givesAFuckAboutPhysics() && !collider->overrides_actor_transform)
+	{
+		JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
+		JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
+		JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
+		setGlobalPosition(gmath::convertMath<glm::vec3>(body_position));
+		setGlobalQuaternion(gmath::convertMath<glm::quat>(body_quaternion));
+		updateOrientationVectors();
+	}
+}
+
+void Actor::loadSettings()
+{
+	glm::vec3 local_euler_degrees = getLocalRotationAngles(true);
+	glm::vec3 global_euler_degrees = getGlobalRotationAngles(true);
+
+	getSetting(name, settings["Name"]);
+	getSetting(mesh, settings["Model"]);
+	getSetting(position_global, settings["Position"]);
+	getSetting(position_local, settings["LocalPosition"]);
+	getSetting(global_euler_degrees, settings["Rotation"]);
+	getSetting(local_euler_degrees, settings["LocalRotation"]);
+	getSetting(scale_global, settings["Scale"]);
+	getSetting(scale_local, settings["LocalScale"]);
+	getSetting(visible, settings["Visible"]);
+
+	getSetting(collider, settings["Collider"]);
+
+	setLocalQuaternion(glm::quat(glm::radians(local_euler_degrees)));
+	setGlobalQuaternion(glm::quat(glm::radians(global_euler_degrees)));
+
+	updateOrientationVectors();
+
+	if(collider != nullptr)
+		collider->loadSettings();
+}
+
+RenderCommands Actor::getRenderCommands()
+{
+	RenderCommands render_commands;
+
+	render_commands.render_command.current_render_state = current_state_buffer[state_index];
+	render_commands.render_command.previous_render_state = previous_state_buffer[state_index];
+
+	if(mesh != nullptr && visible) // Todo: when changing mesh to mesh_uid, change this
+	{
+		render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
+		render_commands.render_command.mesh_material = mesh->material;
+	}
+	else
+	{
+		// Todo: change this
+		render_commands.render_command.mesh_data_name = ""; // So that RenderCmd::isValid returns false (might wanna make this a bit more sophisticated, later)
+	}
+
+	// Debug shit!
+	if(debug::actor_debug_menu_open)
+	{
+		if(visible)
+		{   // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
+			TextRenderCmd text_command;
+			text_command.setFontName("Verdana");
+			text_command.text = std::string("Name: " + name + "\nType: " + getTypeName() + "\nUID: " + std::to_string(UID));
+			text_command.color = debug_highlight_color;
+			text_command.scale = debug::actor_debug_menu_text_scale;
+			text_command.render_state = &current_state_buffer[state_index];
+			text_command.position_y = -25.0f;
+			text_command.position_x = 50.0f;
+			text_command.is_debug_label = true;
+
+			R_BufferRenderCmd(text_command);
+		}
+
+		render_commands.render_command.debug_highlight_color = debug_highlight_color;
+	}
+
+	return(render_commands);
+}
+
+const bool Actor::givesAFuckAboutPhysics() const
+{ return !(collider == nullptr || collider->getBodyID().IsInvalid()); }
+
+void Actor::checkForInput(GLFWwindow* window)
+{}
+
+void Actor::processMouse(GLFWwindow* window, double x_position_in, double y_position_in)
+{}
+
+void Actor::processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+{}
+
+std::string Actor::getTypeName() const
+{ return std::string("Actor"); }
+
+void Actor::updateOrientationVectors()
+{
+	orientation_up = getGlobalQuaternion() * getLocalQuaternion() * vector3_up;
+	orientation_front = getGlobalQuaternion() * getLocalQuaternion() * vector3_front;
+	orientation_right = getGlobalQuaternion() * getLocalQuaternion() * vector3_right;
+}
+
 void Actor::selfOverrideColliderTransform(const bool ignore_scale)
 {
 	if(!givesAFuckAboutPhysics()) return;
@@ -106,141 +264,11 @@ void Actor::colliderOverrideSelfTransform(const bool ignore_scale)
 	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
 }
 
-const bool Actor::givesAFuckAboutPhysics() const
-{ return !(collider == nullptr || collider->getBodyID().IsInvalid()); }
+void Actor::addOwnedChildActor(Actor* new_child)
+{ child_actors.insert(child_actors.end(), ActorPointerWrapper(new_child, true)); }
 
-graphx::gSettings Actor::getSettings() const
-{ return settings; }
+void Actor::addOwnedChildDevice(Device* new_child)
+{ child_devices.insert(child_devices.end(), DevicePointerWrapper(new_child, true)); }
 
-void Actor::setSettings(const graphx::gSettings& new_settings)
-{ settings = new_settings; }
-
-void Actor::loadSettings()
-{
-	glm::vec3 local_euler_degrees = getLocalRotationAngles(true);
-	glm::vec3 global_euler_degrees = getGlobalRotationAngles(true);
-
-	getSetting(name_and_uid.name, settings["Name"]);
-	getSetting(mesh, settings["Model"]);
-	getSetting(position_global, settings["Position"]);
-	getSetting(position_local, settings["LocalPosition"]);
-	getSetting(global_euler_degrees, settings["Rotation"]);
-	getSetting(local_euler_degrees, settings["LocalRotation"]);
-	getSetting(scale_global, settings["Scale"]);
-	getSetting(scale_local, settings["LocalScale"]);
-	getSetting(visible, settings["Visible"]);
-
-	getSetting(collider, settings["Collider"]);
-
-	setLocalQuaternion(glm::quat(glm::radians(local_euler_degrees)));
-	setGlobalQuaternion(glm::quat(glm::radians(global_euler_degrees)));
-
-	updateOrientationVectors();
-
-	if(collider != nullptr)
-		collider->loadSettings();
-}
-
-RenderCommands Actor::getRenderCommands()
-{
-	RenderCommands render_commands;
-
-	render_commands.render_command.current_render_state = &current_state_buffer[state_index];
-	render_commands.render_command.previous_render_state = &previous_state_buffer[state_index];
-	if(mesh != nullptr && visible && (type != graphx::classes::GRAPHXPLAYER))
-	{
-		render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
-		// render_commands.render_command.mesh_material = mesh->material;
-	}
-	else
-	{
-		// Todo: change this
-		render_commands.render_command.mesh_data_name = ""; // So that RenderCmd::isValid returns false (might wanna make this a bit more sophisticated, later)
-	}
-
-	// Debug shit!
-	if(graphx::debug::actor_debug_menu_open)
-	{
-		if(type != graphx::classes::LABEL && visible) // Labels shouldn't have debug labels imho
-		{   // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
-			TextRenderCmd text_command;
-			text_command.font_name = "Verdana";
-			text_command.text = std::string("Name: " + name_and_uid.name + "\nType: " + std::string(type.name) + "\nUID: " + std::to_string(name_and_uid.uid));
-			text_command.color = type.debugging_color;
-			text_command.scale = graphx::debug::actor_debug_menu_text_scale;
-			text_command.render_state = &current_state_buffer[state_index];
-			text_command.position_y = -25.0f;
-			text_command.position_x = 50.0f;
-			text_command.is_debug_label = true;
-
-			R_BufferRenderCmd(text_command);
-		}
-
-		render_commands.render_command.debug_highlight_color = debug_highlight_color;
-	}
-
-	return(render_commands);
-}
-
-void Actor::checkForInput(GLFWwindow* window)
-{}
-
-void Actor::processMouse(GLFWwindow* window, double x_position_in, double y_position_in)
-{}
-
-void Actor::processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
-{}
-
-void Actor::updateOrientationVectors()
-{
-	orientation_up = getGlobalQuaternion() * getLocalQuaternion() * vector3_up;
-	orientation_front = getGlobalQuaternion() * getLocalQuaternion() * vector3_front;
-	orientation_right = getGlobalQuaternion() * getLocalQuaternion() * vector3_right;
-}
-
-glm::vec3 Actor::getOrientation(const unsigned int orientation)
-{
-	switch(orientation)
-	{
-	case graphx::orientation::UP:
-		return orientation_up;
-	case graphx::orientation::RIGHT:
-		return orientation_right;
-	case graphx::orientation::FRONT:
-		return orientation_front;
-	default:
-		PRINTERR("Actor::getOrientation(const unsigned int orientation) - orientation selection invalid! Returning upwards orientation!")
-		return orientation_up;
-	}
-}
-
-void Actor::updateStates(std::mutex &state_mutex)
-{
-	std::lock_guard guard(state_mutex);
-
-	// Copy current state into previous state
-	previous_state_buffer[state_index] = current_state_buffer[state_index];
-
-	// Update current state
-	current_state_buffer[state_index].render_position	=	getGlobalPosition() + getLocalPosition();
-	current_state_buffer[state_index].render_quaternion	=	getGlobalQuaternion() * getLocalQuaternion();
-	current_state_buffer[state_index].render_scale		=	getGlobalScale() + getLocalScale();
-
-	// Flip state buffer
-	state_index = 1 - state_index;
-}
-
-void Actor::tick(int current_tick)
-{
-	// Opted to not use an early return here, since that could be nasty for any derived Actor that overrides this function but still calls Actor::tick
-	if(givesAFuckAboutPhysics() && !collider->overrides_actor_transform)
-	{
-		JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
-		JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
-		JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
-		setGlobalPosition(gmath::convertMath<glm::vec3>(body_position));
-		setGlobalQuaternion(gmath::convertMath<glm::quat>(body_quaternion));
-		updateOrientationVectors();
-	}
-}
-
+const bool Actor::canBeRendered() const
+{ return (visible && mesh != nullptr); } // Todo: when replacing mesh, remove this check

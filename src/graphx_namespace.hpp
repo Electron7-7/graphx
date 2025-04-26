@@ -1,13 +1,17 @@
 #ifndef GRAPHX_NAMESPACE
 #define GRAPHX_NAMESPACE
-#include "g_common_fwd.hpp"
-#include "r_common_fwd.hpp"
 #include <glm/vec3.hpp>
+#include <unordered_map>
 #include <any>
 #include <string>
 
+// Forward Declarations
+class Actor;
+struct Device;
+struct Theatre;
+
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
-#define SAFETY_ID -42 // Just to keep things consistent
+#define UID_EMPTY -1 // Just to keep things consistent
 
 namespace graphx
 {
@@ -17,9 +21,21 @@ namespace graphx
 		extern Device device;
 	}
 
-	namespace current
+	namespace global
 	{
-		extern Theatre theatre; // This guy is defined in `g_theatre.cpp`
+		namespace variables
+		{
+			extern Theatre current_theatre;
+
+			extern glm::vec3 orientation_up;
+			extern glm::vec3 orientation_front;
+			extern glm::vec3 orientation_right;
+		}
+
+		namespace state
+		{
+			extern bool loading_new_main_theatre;
+		}
 	}
 
 	namespace error
@@ -38,13 +54,6 @@ namespace graphx
 	{
 		extern bool actor_debug_menu_open;
 		extern float actor_debug_menu_text_scale;
-	}
-
-	namespace global
-	{
-		extern glm::vec3 orientation_up;
-		extern glm::vec3 orientation_front;
-		extern glm::vec3 orientation_right;
 	}
 
 	namespace identifiers
@@ -94,86 +103,5 @@ namespace graphx
 
 	typedef std::pair<int, std::any> gSetting; // The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`
 	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	struct gID
-	{
-	public:
-		static const gID EMPTY;
-		int uid = -1;
-		std::string name = "A Class With No Name";
-
-		gID(const int, const std::string&);
-		gID(const std::string&);
-		gID(const char*);
-		gID(const int);
-		gID(const gID&);
-		gID();
-
-		const std::string toString() const;
-
-		// Comparing gID to gID
-		const bool operator==(const gID&) const;
-		const bool operator!=(const gID&) const;
-		const bool operator< (const gID&) const;
-		const bool operator> (const gID&) const;
-		const bool operator<=(const gID&) const;
-		const bool operator>=(const gID&) const;
-
-		constexpr operator std::string() { return name; }
-	};
-
-	struct gClass
-	{
-	public:
-		static const gClass INVALID_TYPE;
-
-		const int id = 0;
-		const char* name = "INVALID_TYPE";
-		Actor*(*new_actor)(const graphx::gID&, const graphx::gSettings&) = nullptr;
-		Device*(*new_device)(const graphx::gID&, const graphx::gSettings&) = nullptr;
-		const glm::vec3 debugging_color = glm::vec3(1.0f, 0.0f, 0.0f);
-
-		static constexpr unsigned int CLASS_NAME_MAX_SIZE_BYTES = 80; // Raise this at your memory's peril
-		gClass(const char[CLASS_NAME_MAX_SIZE_BYTES], const int, Actor*(*)(const graphx::gID&, const graphx::gSettings&), Device*(*)(const graphx::gID&, const graphx::gSettings&), const glm::vec3&);
-		gClass(const char[CLASS_NAME_MAX_SIZE_BYTES], const int, Actor*(*)(const graphx::gID&, const graphx::gSettings&), const glm::vec3&);
-		gClass(const char[CLASS_NAME_MAX_SIZE_BYTES], const int, Device*(*)(const graphx::gID&, const graphx::gSettings&), const glm::vec3&);
-		gClass();
-
-		// These constructors are specifically for the interpreter to use
-		gClass(const std::string& lookup_by_name);
-		gClass(const char* lookup_by_name);
-		gClass(const int& lookup_by_id);
-
-		// Comparing gClass to gClass
-		const bool operator==(const gClass&) const;
-		const bool operator!=(const gClass&) const;
-		const bool operator< (const gClass&) const;
-		const bool operator> (const gClass&) const;
-		const bool operator<=(const gClass&) const;
-		const bool operator>=(const gClass&) const;
-
-		// Comparing gClass to int
-		const bool operator==(const int&) const;
-		const bool operator!=(const int&) const;
-		const bool operator< (const int&) const;
-		const bool operator> (const int&) const;
-		const bool operator<=(const int&) const;
-		const bool operator>=(const int&) const;
-
-		// Comparing gClass to std::string
-		const bool operator==(const std::string&) const;
-		const bool operator!=(const std::string&) const;
-	private:
-		const graphx::gClass& lookupByName(const std::string&);
-		const graphx::gClass& lookupById(const int&);
-	};
-
-	// Comparing gClass to gClass* (left and right sided)
-	const bool operator==(const gClass&, const gClass*);
-	const bool operator!=(const gClass&, const gClass*);
-	const bool operator==(const gClass*, const gClass&);
-	const bool operator!=(const gClass*, const gClass&);
-
-	inline const gClass gClass::INVALID_TYPE = gClass();  // The default constructor is INVALID_TYPE
 }
 #endif

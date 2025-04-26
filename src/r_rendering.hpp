@@ -1,6 +1,7 @@
 #ifndef GRAPHX_RENDERING
-#include "graphx_namespace.hpp"
 #include "r_common.hpp"
+#include "g_devices.hpp"
+#include "graphx_namespace.hpp"
 #include <images.h>
 #include <models.hpp>
 #include <glfw_fwd.hpp>
@@ -70,36 +71,11 @@ struct Mesh
     size_t indices_size();
 };
 
-struct Character
-{
-    unsigned int texture_id;
-    int size_x;
-    int size_y;
-    int bearing_x; // Offset from baseline to left of glyph
-    int bearing_y; // Offset from baseline to top of glyph
-    int advance;   // Offset to advance to next glyph
-
-    Character() = default;
-    Character(unsigned int init_texture_id, int init_size_x, int init_size_y, int init_bearing_x, int init_bearing_y, int init_advance);
-    Character(unsigned int init_texture_id, glm::vec2 init_size, glm::vec2 init_bearing, int init_advance);
-};
-
-struct Font
-{
-    std::string font_name;
-    std::map<char, Character> character_set;
-    unsigned int texture_array_id;
-    unsigned int VBO;
-
-    Font() = default;
-    Font(std::string init_font_name);
-};
-
 extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
 extern std::array<GLShader, graphx::rendering::SHADERS_AMOUNT> shaders;
 extern std::map<std::string, Mesh> mesh_data_storage;
 extern std::map<std::string, Texture> texture_storage;
-extern std::map<std::string, Font> font_map;
+extern std::map<std::string, Font> font_storage;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern FT_Library freetype;

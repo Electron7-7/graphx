@@ -1,8 +1,9 @@
 #ifndef GRAPHX_THEATRE_FILE_FORMAT
 #define GRAPHX_THEATRE_FILE_FORMAT
-#include "g_common_fwd.hpp"
 #include <string>
-#include <vector>
+#include <filesystem> // Yes, the devil hath been invoked... I'm sorry
+
+struct Theatre; // Forward Declaration
 
 // Might move these into graphx::interpreter someday...
 static constexpr int RAW_DATA           = 1; //< Identifies a vector of strings, using the typedef `gRawData`.
@@ -11,22 +12,10 @@ static constexpr int EXTERNAL_REFERENCE = 3; //< Identifies an external file's p
 static constexpr int THEATRE_REFERENCE  = 4; //< Identifies a pointer to a pre-existing Actor/Device in the current Theatre.
 static constexpr int SANDWICH           = 5; //< Identifies a unique copy of a pre-existing Actor/Device in the current Theatre.
 
-namespace graphx
-{
-	namespace interpreter
-	{
-		typedef std::string                              gKey;
-		typedef std::pair<int, std::string>              gValue;
-		typedef std::pair<gKey, gValue>                  gStringSetting;
-		typedef std::vector<std::vector<gStringSetting>> gStringSettings;
-		typedef std::vector<std::string>                 gRawData;
-	}
-}
-
-extern bool loading_new_main_theatre;
 extern std::string valid_extensions;
 
-bool        checkForAndLoadExternalTheatres();
-void        loadMainTheatre(long theatre_uid);
-void        loadChildTheatre(long theatre_uid, Theatre *parent_theatre);
+bool checkForAndLoadExternalTheatres();
+void loadMainTheatre(long theatre_uid);
+void loadChildTheatre(long theatre_uid, Theatre* parent_theatre);
+void embedExternalTheatre(std::filesystem::path theatre_file_path);
 #endif

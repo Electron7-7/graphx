@@ -328,45 +328,25 @@ Font::Font(std::string init_font_name)
 //
 // LightRenderCmd
 //
-bool LightRenderCmd::isValid() const
-{
-	return (light_type != graphx::gClass::INVALID_TYPE);
-}
-
-//
-// RenderCmd
-//
-bool RenderCmd::isValid() const
-{
-	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
-}
+LightRenderCmd::LightRenderCmd(const unsigned int my_light_type)
+: light_type(my_light_type)
+{}
 
 //
 // TextRenderCmd
 //
-TextRenderCmd::TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
-{
-	font_name = "Arial";
-	text = init_text;
-	position_x = init_position_x;
-	position_y = init_position_y;
-	scale = init_scale;
-	color = init_color;
-}
+TextRenderCmd::TextRenderCmd(std::string init_text, std::string init_font_name, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
+: text(init_text), position_x(init_position_x), position_y(init_position_y), scale(init_scale), color(init_color), is_debug_label(false), render_state(nullptr), font_name(init_font_name)
+{}
 
-TextRenderCmd::TextRenderCmd(std::string init_font_name, std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)
-: TextRenderCmd(init_text, init_position_x, init_position_y, init_scale, init_color)
-{
-	font_name = (font_map.contains(init_font_name)) ? init_font_name : "Arial";
-}
+void TextRenderCmd::setFontName(const std::string& new_font_name)
+{ font_name = new_font_name; }
 
-bool TextRenderCmd::isValid() const
-{
-	return (font_map.contains(font_name) && scale > 0.0f);
-}
+std::string TextRenderCmd::getFontName() const
+{ return (font_storage.contains(font_name)) ? font_name : "Arial"; }
 
 bool TextRenderCmd::is3D() const
-{
+{   // TODO: FIND A WAY TO REMOVE THIS
 	return (render_state != nullptr);
 }
 
@@ -706,7 +686,7 @@ std::vector<LightRenderCmd> light_render_commands_buffer;
 std::vector<TextRenderCmd> text_render_commands_buffer;
 
 FT_Library freetype;
-std::map<std::string, Font> font_map;
+std::map<std::string, Font> font_storage;
 
 void F_InitializeFreeType()
 {
@@ -726,7 +706,7 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 	FT_Set_Pixel_Sizes(new_face, 0, 48);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	font_map[font_name] = Font(font_name);
+	font_storage[font_name] = Font(font_name);
 
 	for(unsigned char character = 0 ; character < 128 ; character++)
 	{
@@ -748,14 +728,14 @@ void F_LoadFont(std::string ttf_file_path, std::string font_name)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		font_map.at(font_name).character_set[character] = Character(texture_id, glyph_slot->bitmap.width, glyph_slot->bitmap.rows, glyph_slot->bitmap_left, glyph_slot->bitmap_top, static_cast<int>(glyph_slot->advance.x));
+		font_storage.at(font_name).character_set[character] = Character(texture_id, glyph_slot->bitmap.width, glyph_slot->bitmap.rows, glyph_slot->bitmap_left, glyph_slot->bitmap_top, static_cast<int>(glyph_slot->advance.x));
 	}
 
 	FT_Done_Face(new_face);
 
 	glBindVertexArray(VAOs[graphx::rendering::VAO_TEXT]);
-	glGenBuffers(1, &font_map.at(font_name).VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, font_map.at(font_name).VBO);
+	glGenBuffers(1, &font_storage.at(font_name).VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, font_storage.at(font_name).VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(0));
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
@@ -930,7 +910,7 @@ void R_GL_RenderSkybox()
 
 void R_GL_RenderFont(TextRenderCmd &render_command)
 {
-	Font &font = font_map.at(render_command.font_name);
+	Font &font = font_storage.at(render_command.font_name);
 	float render_command_x_position = render_command.position_x;
 	float render_command_y_position = render_command.position_y;
 	for(std::string::const_iterator character_iterator = render_command.text.begin() ; character_iterator != render_command.text.end() ; character_iterator++)
@@ -991,7 +971,7 @@ void R_GL_RenderFonts()
 
 	for(auto rendercmd_iterator = text_render_commands_buffer.begin() ; rendercmd_iterator != text_render_commands_buffer.end() ;)
 	{
-		if(!font_map.contains(rendercmd_iterator->font_name))
+		if(!font_storage.contains(rendercmd_iterator->font_name))
 		{
 			rendercmd_iterator = text_render_commands_buffer.erase(rendercmd_iterator);
 			continue;

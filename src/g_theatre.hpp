@@ -1,10 +1,12 @@
 #ifndef GRAPHX_THEATRE
-#include "g_common_fwd.hpp"
-#include "r_common_fwd.hpp"
 #include "graphx_namespace.hpp"
+#include "g_actor.hpp"
+#include "g_device.hpp"
+#include <glfw_fwd.hpp>
 #include <vector>
 #include <map>
 #define GRAPHX_THEATRE
+
 // Note about Theatres:
 // I abstracted getting Actor and Device pointers to functions, because directly grabbing them from their maps
 // might return null (if using []) or crash the engine (if using .at()). This crash will appear to happen for no
@@ -23,11 +25,16 @@ struct LightsCount
 
 struct Theatre
 {
-    Theatre(const graphx::gID);
-    Theatre(const int, const std::string = "Untitled Theatre");
+    std::string name = "Untitled Theatre";
+
+    // The constructor that should be used 99% of the time
+    Theatre(const std::string& Name = "Untitled Theatre");
+
+    // The constructor that the interpreter uses when creating Theatres
+    Theatre(const int, const std::string&);
     ~Theatre();
 
-    const graphx::gID getID() const;
+    int getUID() const;
     void probeRenderCommands() const;
     void delegateKeyInput(GLFWwindow*, const int, const int, const int, const int) const;
     void delegateMouseInput(GLFWwindow*, const double, const double) const;
@@ -36,37 +43,41 @@ struct Theatre
     //---------------------------------------
     // Start of Actor/Device Helper Functions
     //---------------------------------------
-    void createActorOrDevice(const graphx::gClass&, const graphx::gID&, const graphx::gSettings& = graphx::gSettings());
-
     void addActor(Actor*);
     void addDevice(Device*);
 
     // Safe and reliable, since every Actor must have a unique UID
-    Actor* getActor(const graphx::gID&) const;
+    Actor* getActor(const int UID) const;
     // Safe and reliable, since every Device must have a unique UID
-    Device* getDevice(const graphx::gID&) const;
+    Device* getDevice(const int UID) const;
 
     // Safe, but unreliable; if multiple Actors share the same name, this returns the first Actor it encounters
     Actor* getActor(const std::string&) const;
     // Safe, but unreliable; if multiple Devices share the same name, this returns the first Device it encounters
     Device* getDevice(const std::string&) const;
 
-    void getActors(std::vector<Actor*>&) const;
-    void getDevices(std::vector<Device*>&) const;
+    void getActors(std::vector<ActorPointerWrapper>&) const;
+    void getDevices(std::vector<DevicePointerWrapper>&) const;
 
-    void getActorsOfType(const graphx::gClass*, std::vector<Actor*>&) const;
-    void getDevicesOfType(const graphx::gClass*, std::vector<Device*>&) const;
-
-    void removeActor(const graphx::gID);
-    void removeDevice(const graphx::gID);
+    void removeActor(const int);
+    void removeDevice(const int);
     //-------------------------------------
     // End of Actor/Device Helper Functions
     //-------------------------------------
 
 private:
-    graphx::gID name_and_uid = graphx::gID(-1, "Untitled Theatre");
-    std::map<graphx::gID, Actor*> actors;
-    std::map<graphx::gID, Device*> devices;
+    int UID = -1;
+    std::map<int, ActorPointerWrapper> actors;
+    std::map<int, DevicePointerWrapper> devices;
+
+    int setActorUID(const int);
+    int setDeviceUID(const int);
+
+    friend void Actor::setUID(const int);
+    friend void Device::setUID(const int);
+
+    void addInterpretedActor(Actor*);
+    void addInterpretedDevice(Device*);
 };
 
 #define THEATRE_ERR_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + uid +  " already exists!"

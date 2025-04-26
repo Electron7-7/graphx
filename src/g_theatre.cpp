@@ -13,30 +13,34 @@ LightsCount::LightsCount(const unsigned int point_lights_count, const unsigned i
 //--------
 // Theatre
 //--------
-Theatre::Theatre(const graphx::gID init_id)
-: name_and_uid(init_id)
+Theatre::Theatre(const std::string& new_name)
+: name(new_name), UID(-1)
 {}
 
-Theatre::Theatre(const int init_id, const std::string init_name)
-: name_and_uid(init_id, init_name)
+Theatre::Theatre(const int new_uid, const std::string& new_name)
+: name(new_name), UID(new_uid)
 {}
 
 Theatre::~Theatre()
 {
     for(auto& pair : actors)
         delete pair.second;
-    actors.clear();
 
     for(auto& pair : devices)
         delete pair.second;
+
+    actors.clear();
     devices.clear();
 }
 
-void Theatre::createActorOrDevice(const graphx::gClass& type, const graphx::gID& id, const graphx::gSettings& settings)
+int Theatre::getUID() const
+{ return UID; }
+
+/*void Theatre::createActorOrDevice(const graphx::gClass& type, graphx::gID id, const graphx::gSettings& settings)
 {
     if(graphx::classes::getBaseType(type) == graphx::classes::ACTOR)
     {
-        if(actors.contains(id))
+        if(actors.contains(&id))
         {
             PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::createActorOrDevice", "an Actor", id.toString()))
             return;
@@ -59,42 +63,42 @@ void Theatre::createActorOrDevice(const graphx::gClass& type, const graphx::gID&
     }
 
     PRINTERR(THEATRE_ERR_WRONG_BASE_TYPE("Theatre::createActorOrDevice", "ACTOR\" or \"DEVICE", type.name))
-}
+}*/
 
 void Theatre::addActor(Actor* new_actor)
 {
-    if(actors.contains(new_actor->getID()))
+    if(actors.contains(new_actor->getUID()))
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addActor", "an Actor", new_actor->getID().toString()))
+        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addActor", "an Actor", std::to_string(new_actor->getUID())))
         return;
     }
 
-    actors[new_actor->getID()] = new_actor;
+    actors[new_actor->getUID()] = new_actor;
 }
 
 void Theatre::addDevice(Device* new_device)
 {
-    if(devices.contains(new_device->getID()))
+    if(devices.contains(new_device->getUID()))
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addDevice", "a Device", new_device->getID().toString()))
+        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addDevice", "a Device", std::to_string(new_device->getUID())))
         return;
     }
 
-    devices[new_device->getID()] = new_device;
+    devices[new_device->getUID()] = new_device;
 }
 
-Actor* Theatre::getActor(const graphx::gID& id) const
+Actor* Theatre::getActor(const int UID) const
 {
-    if(actors.contains(id))
-        return actors.at(id);
-    PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", id.toString()))
+    if(actors.contains(UID))
+        return actors.at(UID);
+    PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", std::to_string(UID)))
     return &graphx::safety::actor;
 }
 
-Device* Theatre::getDevice(const graphx::gID& id) const
+Device* Theatre::getDevice(const int UID) const
 {
-    if(devices.contains(id))
-        return devices.at(id);
-    PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", id.toString()))
+    if(devices.contains(UID))
+        return devices.at(UID);
+    PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", std::to_string(UID)))
     return &graphx::safety::device;
 }

@@ -74,8 +74,8 @@ void Camera::processMouse(GLFWwindow* window, double x_position_in, double y_pos
 	mouse_last = mouse_position;
 
 	glm::vec3 euler_rotation = getGlobalRotationAngles(true) + getLocalRotationAngles(true);
-	euler_rotation[0] -= x_position_in;
-	euler_rotation[1] -= y_position_in;
+	euler_rotation[0] -= mouse_offset[1];
+	euler_rotation[1] -= mouse_offset[0];
 
 	if(std::abs(euler_rotation[0]) > view_pitch_clamp_degrees)
 		euler_rotation[0] = view_pitch_clamp_degrees * ((euler_rotation[0] > 0) - euler_rotation[0] < 0);
@@ -456,16 +456,16 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(pivot_radius, settings["PivotRadius"]);
 	getSetting(pivot_speed, settings["PivotSpeed"]);
 
-	pivot_point.setGlobalPosition(pivot_position);
-	pivot_point.mesh->setName("Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
-	pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
-	pivot_point.mesh->setUID(4815 + UID);
-	graphx::gSettings pivot_settings
+	// pivot_point.setGlobalPosition(pivot_position);
+	// pivot_point.mesh->setName("Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
+	// pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
+	// pivot_point.mesh->setUID(4815 + UID);
+	/*graphx::gSettings pivot_settings
 	{
 		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
 		{"Mesh", settings["Mesh"]},
-	};
-	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);
+	};*/
+	// getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);
 }
 
 void LightTesterMover::tick(int current_tick)

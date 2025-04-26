@@ -93,7 +93,9 @@ struct Material final : public Device
 
 struct Model : public Device
 {
-	graphx::gID material_id = graphx::gID::EMPTY;
+	int material_uid = UID_EMPTY;
+	Material material_base = Material(); // This is a bad way to make sure material is never nullptr
+	Material* material = &material_base; // This is going to be replaced with material_id
 
 	unsigned int VBO = 0;
 	unsigned int IBO = 0;
@@ -102,7 +104,9 @@ struct Model : public Device
 	std::string mesh_data_name = ERROR_MODEL;
 
 	using Device::Device;
-	Model(const std::string& = ERROR_MODEL, const graphx::gID& = graphx::gID::EMPTY);
+	Model(const int, const std::string& = ERROR_MODEL);
+	Model(const Material&, const std::string& = ERROR_MODEL);
+	Model(Material*, const std::string& = ERROR_MODEL);
 
 	void loadSettings() override;
 };
@@ -110,10 +114,9 @@ struct Model : public Device
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 struct Sprite : public Model
 {
-	using Model::Device; // Bypassing Model's constructors bc that's the whole point of Sprite, lmfao
+	using Model::Model; // Bypassing Model's constructors bc that's the whole point of Sprite, lmfao
+	explicit Sprite();
 
 	void loadSettings() override;
 };
-
-template<typename T> Device* createNewDevice(const graphx::gID& new_uid, const graphx::gSettings& new_settings = graphx::gSettings()) { return new T(new_uid, new_settings); }
 #endif

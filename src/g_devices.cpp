@@ -113,21 +113,33 @@ void Material::loadSettings()
 //
 // Model
 //
-Model::Model(const std::string& new_mesh_data_name, const graphx::gID& new_material)
+Model::Model(const graphx::gID& new_material, const std::string& new_mesh_data_name)
 : Device(graphx::classes::MODEL), material_id(new_material), mesh_data_name(new_mesh_data_name)
+{}
+
+Model::Model(const Material& new_material, const std::string& new_mesh_data_name)
+: Device(graphx::classes::MODEL), material_base(new_material), material(&material_base), mesh_data_name(new_mesh_data_name)
+{}
+
+Model::Model(Material* new_material, const std::string& new_mesh_data_name)
+: Device(graphx::classes::MODEL), material(new_material), mesh_data_name(new_mesh_data_name)
 {}
 
 void Model::loadSettings()
 {
 	Device::loadSettings();
 
-	getSetting(material_id, settings["Material"]);
+	getSetting(material, settings["Material"]);
 	getSetting(mesh_data_name, settings["Mesh"]);
 }
 
 //
 // Sprite
 //
+Sprite::Sprite()
+: Model(Material(glm::vec3(1.0f), 0), GRAPHX_QUAD)
+{}
+
 void Sprite::loadSettings()
 {
 	Model::loadSettings();
