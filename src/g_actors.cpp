@@ -69,6 +69,10 @@ void Label::loadSettings()
 //
 void Camera::processMouse(GLFWwindow* window, double x_position_in, double y_position_in)
 {
+	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
+	glm::vec2 mouse_offset = mouse_position - mouse_last;
+	mouse_last = mouse_position;
+
 	glm::vec3 euler_rotation = getGlobalRotationAngles(true) + getLocalRotationAngles(true);
 	euler_rotation[0] -= x_position_in;
 	euler_rotation[1] -= y_position_in;
@@ -79,8 +83,8 @@ void Camera::processMouse(GLFWwindow* window, double x_position_in, double y_pos
 	setGlobalRotationAngles(euler_rotation, true);
 }
 
-void Camera::loadSettings(const graphx::gSettings& new_settings)
-{ Actor::loadSettings(new_settings); } // Eventually, I will have Camera settings
+void Camera::loadSettings()
+{ Actor::loadSettings(); } // Eventually, I will have Camera settings
 
 //
 // GraphXPlayer
@@ -100,7 +104,7 @@ void GraphXPlayer::loadSettings()
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
 
-void GraphXPlayer::callToStage(Theatre *parent_theatre)
+/*void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
@@ -116,7 +120,7 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
 	jph_character = new JPH::Character(player_settings, getPosition<JPH::Vec3>(), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
-}
+}*/
 
 void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double y_position_in)
 {
@@ -127,7 +131,7 @@ void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double
 	doMouseMovement(mouse_offset);
 }
 
-void GraphXPlayer::processInput(GLFWwindow *window)
+void GraphXPlayer::checkForInput(GLFWwindow* window)
 {
 	int input_vector[2] =
 	{
@@ -138,10 +142,10 @@ void GraphXPlayer::processInput(GLFWwindow *window)
 	doMovement(input_vector);
 }
 
-void GraphXPlayer::tick(int current_tick)
+void GraphXPlayer::tick(const int current_tick)
 {
-	position_global = gmath::convertMath<glm::vec3>(jph_character->GetPosition());
-	player_camera.setGlobalPosition(position_global);
+	setGlobalPosition(gmath::convertMath<glm::vec3>(jph_character->GetPosition()));
+	player_camera.setGlobalPosition(getGlobalPosition());
 }
 
 void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -171,8 +175,8 @@ void GraphXPlayer::doMovement(int direction[2])
 		return;
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(orientation_front[0], 0.0f, orientation_front[2])) * static_cast<float>(direction[0] * movement_speed);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(orientation_right) * static_cast<float>(direction[1] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientation(orientation::FRONT)[0], 0.0f, getOrientation(orientation::FRONT)[2])) * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientation(orientation::RIGHT)) * static_cast<float>(direction[1] * movement_speed);
 
 	if(direction[0] == last_direction[0] && direction[1] == last_direction[1])
 	{

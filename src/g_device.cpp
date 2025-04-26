@@ -7,10 +7,6 @@ Device::Device(const graphx::gClass& my_type, const graphx::gID& my_id, const gr
 : type(my_type), name_and_uid(my_id), settings(my_settings)
 {}
 
-Device::Device(const graphx::gID& my_id)
-: Device(graphx::classes::DEVICE, my_id)
-{}
-
 Device::~Device()
 {}
 

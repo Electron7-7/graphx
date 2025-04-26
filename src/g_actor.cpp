@@ -22,10 +22,6 @@ Actor::Actor(const graphx::gClass& my_type, const graphx::gID& my_id, const grap
 	updateOrientationVectors();
 }
 
-Actor::Actor(const graphx::gID& my_id)
-: Actor(graphx::classes::ACTOR, my_id)
-{}
-
 Actor::~Actor()
 {
 	mesh->~Model();
@@ -154,7 +150,7 @@ RenderCommands Actor::getRenderCommands()
 	if(mesh != nullptr && visible && (type != graphx::classes::GRAPHXPLAYER))
 	{
 		render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
-		render_commands.render_command.mesh_material = mesh->material;
+		// render_commands.render_command.mesh_material = mesh->material;
 	}
 	else
 	{
@@ -200,6 +196,22 @@ void Actor::updateOrientationVectors()
 	orientation_up = getGlobalQuaternion() * getLocalQuaternion() * vector3_up;
 	orientation_front = getGlobalQuaternion() * getLocalQuaternion() * vector3_front;
 	orientation_right = getGlobalQuaternion() * getLocalQuaternion() * vector3_right;
+}
+
+glm::vec3 Actor::getOrientation(const unsigned int orientation)
+{
+	switch(orientation)
+	{
+	case graphx::orientation::UP:
+		return orientation_up;
+	case graphx::orientation::RIGHT:
+		return orientation_right;
+	case graphx::orientation::FRONT:
+		return orientation_front;
+	default:
+		PRINTERR("Actor::getOrientation(const unsigned int orientation) - orientation selection invalid! Returning upwards orientation!")
+		return orientation_up;
+	}
 }
 
 void Actor::updateStates(std::mutex &state_mutex)

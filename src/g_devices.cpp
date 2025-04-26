@@ -65,93 +65,35 @@ void Environment::loadSettings()
 //
 // Texture
 //
-Texture::Texture()
-{
-	my_type = &graphx::classes::TEXTURE;
-	uid.name = "Untitled Texture";
-}
+Texture::Texture(std::vector<unsigned char*> init_texture_data, std::vector<unsigned int> init_texture_size)
+: Device(graphx::classes::TEXTURE), texture_data(init_texture_data), texture_size(init_texture_size)
+{}
 
-Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
-{
-	my_type = &graphx::classes::TEXTURE;
-	uid.name = "Untitled Texture";
-	texture_data = init_texture_data;
-	texture_size = init_texture_size;
-}
+Texture::Texture(unsigned char* init_texture_data, unsigned int init_texture_size)
+: Texture(std::vector<unsigned char*>{init_texture_data}, std::vector<unsigned int>{init_texture_size})
+{}
 
-Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size)
-{
-	my_type = &graphx::classes::TEXTURE;
-	uid.name = "Untitled Texture";
-	texture_size = init_texture_size;
-	texture_data.clear();
-	for(const char *some_texture_data : init_texture_data)
-		texture_data.insert(texture_data.end(), reinterpret_cast<unsigned char *>(const_cast<char *>(some_texture_data)));
-}
-
-Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size)
-{
-	my_type = &graphx::classes::TEXTURE;
-	uid.name = "Untitled Texture";
-	texture_size = init_texture_size;
-	texture_data.clear();
-	for(std::string some_texture_data : init_texture_data)
-		texture_data.insert(texture_data.end(), reinterpret_cast<unsigned char *>(const_cast<char *>(some_texture_data.c_str())));
-}
-
-Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_size)
-{
-	my_type = &graphx::classes::TEXTURE;
-	uid.name = "Untitled Texture";
-	texture_data = {init_texture_data};
-	texture_size = {init_texture_size};
-}
-
-Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
-{
-	my_type = &graphx::classes::TEXTURE;
-	uid.name = "Untitled Texture";
-	texture_size = {init_texture_size};
-	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data))};
-}
-
-Texture::Texture(std::string init_texture_data, unsigned int init_texture_size)
-{
-	my_type = &graphx::classes::TEXTURE;
-	uid.name = "Untitled Texture";
-	texture_size = {init_texture_size};
-	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
-}
-
-void Texture::loadSettings(graphx::gSettings new_settings)
-{
-	Device::loadSettings(new_settings);
-}
+void Texture::loadSettings()
+{ Device::loadSettings(); }
 
 //
 // Material
 //
-Material::Material()
-{
-	my_type = &graphx::classes::MATERIAL;
-	uid.name = "Untitled Material";
-}
-
 Material::Material(bool is_fullbright, glm::vec3 init_color)
-: color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+: Device(graphx::classes::TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
 Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: Device(graphx::classes::TEXTURE), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: Device(graphx::classes::TEXTURE), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 void Material::loadSettings()
 {
-	Device::loadSettings(new_settings);
+	Device::loadSettings();
 
 	getSetting(diffuse_texture_name, settings["DiffuseTexture"]);
 	getSetting(specular_texture_name, settings["SpecularTexture"]);
@@ -171,58 +113,23 @@ void Material::loadSettings()
 //
 // Model
 //
-Model::Model()
-{
-	my_type = &graphx::classes::MESH;
-	uid.name = "Untitled Model";
-}
-
-Model::Model(Material *new_material, std::string init_mesh_data_name)
-{
-	my_type = &graphx::classes::MESH;
-	uid.name = "Untitled Model";
-	material = new_material;
-}
-
-Model::Model(std::string init_mesh_data_name)
-{
-	my_type = &graphx::classes::MESH;
-	uid.name = "Untitled Model";
-	mesh_data_name = init_mesh_data_name;
-}
-
-void Model::prepForDestruction()
-{
-	Device::prepForDestruction();
-
-	if(material != nullptr)
-		material->prepForDestruction();
-
-	material = nullptr;
-	delete material;
-}
+Model::Model(const std::string& new_mesh_data_name, const graphx::gID& new_material)
+: Device(graphx::classes::MODEL), material_id(new_material), mesh_data_name(new_mesh_data_name)
+{}
 
 void Model::loadSettings()
 {
-	Device::loadSettings(new_settings);
+	Device::loadSettings();
 
-	getSetting(material, settings["Material"]);
+	getSetting(material_id, settings["Material"]);
 	getSetting(mesh_data_name, settings["Mesh"]);
 }
 
 //
 // Sprite
 //
-Sprite::Sprite(std::string init_name)
-: Model(init_name)
-{
-	my_type = &graphx::classes::SPRITE;
-	mesh_data_name = GRAPHX_QUAD;
-	uid.name = init_name;
-}
-
 void Sprite::loadSettings()
 {
-	Model::loadSettings(new_settings);
+	Model::loadSettings();
 	mesh_data_name = GRAPHX_QUAD; // Override
 }

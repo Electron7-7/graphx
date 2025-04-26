@@ -60,17 +60,12 @@ struct Texture final : public Device
 public:
 	bool is_in_use = false;
 	unsigned int texture_id = 0;
-	std::vector<unsigned char *> texture_data = {MISSING_TEXTURE_jpg};
+	std::vector<unsigned char*> texture_data = {MISSING_TEXTURE_jpg};
 	std::vector<unsigned int> texture_size = {MISSING_TEXTURE_jpg_len};
 
 	using Device::Device;
-	Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size);
-	Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size);
-	Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size);
-	Texture(unsigned char * init_texture_data, unsigned int init_texture_size);
-	Texture(const char * init_texture_data, unsigned int init_texture_size);
-	Texture(std::string  init_texture_data, unsigned int init_texture_size);
-	Texture();
+	Texture(unsigned char*, unsigned int);
+	Texture(std::vector<unsigned char*>, std::vector<unsigned int>);
 
 	void loadSettings() override;
 };
@@ -98,7 +93,7 @@ struct Material final : public Device
 
 struct Model : public Device
 {
-	graphx::gID material_id;
+	graphx::gID material_id = graphx::gID::EMPTY;
 
 	unsigned int VBO = 0;
 	unsigned int IBO = 0;
@@ -107,9 +102,7 @@ struct Model : public Device
 	std::string mesh_data_name = ERROR_MODEL;
 
 	using Device::Device;
-	Model();
-	Model(Material *new_material, std::string init_mesh_data_name = ERROR_MODEL);
-	Model(std::string init_mesh_data_name);
+	Model(const std::string& = ERROR_MODEL, const graphx::gID& = graphx::gID::EMPTY);
 
 	void loadSettings() override;
 };
@@ -118,7 +111,6 @@ struct Model : public Device
 struct Sprite : public Model
 {
 	using Model::Device; // Bypassing Model's constructors bc that's the whole point of Sprite, lmfao
-	Sprite(std::string init_name = "UNTITLED_SPRITE");
 
 	void loadSettings() override;
 };

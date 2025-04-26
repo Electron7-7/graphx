@@ -8,6 +8,16 @@
 #include <glm/gtx/quaternion.hpp>
 #include <mutex>
 
+namespace graphx
+{
+	namespace orientation
+	{
+		inline const unsigned int UP    = 0;
+		inline const unsigned int FRONT = 1;
+		inline const unsigned int RIGHT = 2;
+	}
+}
+
 extern bool loading_new_main_theatre;
 
 struct RenderState
@@ -22,8 +32,7 @@ class Actor
 public:
 	const graphx::gClass& type = graphx::classes::ACTOR;
 
-	Actor(const graphx::gClass&, const graphx::gID&, const graphx::gSettings& = graphx::gSettings());
-	Actor(const graphx::gID& = graphx::gID("Untitled Actor"));
+	Actor(const graphx::gClass&, const graphx::gID& = graphx::gID("Untitled Actor"), const graphx::gSettings& = graphx::gSettings());
 	virtual ~Actor();
 
 	// Virtual functions
@@ -41,6 +50,7 @@ public:
 	void updateStates(std::mutex&);
 	graphx::gSettings getSettings() const;
 	void setSettings(const graphx::gSettings&);
+
 	void setGlobalPosition(const glm::vec3&);
 	void setGlobalRotationAngles(const glm::vec3&, const bool degrees_instead_of_radians = false);
 	void setGlobalQuaternion(const glm::quat&);
@@ -92,6 +102,7 @@ protected:
 	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
 
 	void updateOrientationVectors();
+	glm::vec3 getOrientation(const unsigned int);
 	void selfOverrideColliderTransform(const bool = true);
 	void colliderOverrideSelfTransform(const bool = true);
 };

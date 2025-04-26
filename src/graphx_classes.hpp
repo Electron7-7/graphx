@@ -37,7 +37,7 @@ namespace graphx
 		extern const gClass DEVICE;
 		extern const gClass ENVIRONMENT;
 		extern const gClass MATERIAL;
-		extern const gClass MESH;
+		extern const gClass MODEL;
 		extern const gClass SPRITE;
 		extern const gClass COLLIDER;
 		extern const gClass TEXTURE;

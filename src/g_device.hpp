@@ -7,8 +7,7 @@ struct Device
 public:
     const graphx::gClass& type = graphx::classes::DEVICE;
 
-    Device(const graphx::gClass&, const graphx::gID&, const graphx::gSettings& = graphx::gSettings());
-    Device(const graphx::gID& = graphx::gID("Untitled Device"));
+    Device(const graphx::gClass&, const graphx::gID& = graphx::gID("Untitled Device"), const graphx::gSettings& = graphx::gSettings());
     virtual ~Device();
 
     void setUID(const int);

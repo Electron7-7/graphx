@@ -43,6 +43,9 @@ public:
 
 	void loadSettings() override;
 	void processMouse(GLFWwindow* window, double x_position_in, double y_position_in) override;
+
+private:
+	glm::vec2 mouse_last = glm::vec2(0.0f);
 };
 
 class GraphXPlayer: public Actor //public CharacterController(?)
@@ -71,12 +74,11 @@ public:
 	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) override;
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
-	void tick(int current_tick) override;
+	void tick(const int) override;
 	void loadSettings() override;
 
 private:
 	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
-	glm::vec2 mouse_last = glm::vec2(0.0f);
 	JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
@@ -167,7 +169,7 @@ public:
 	float pivot_theta = 0.0f;
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
-	Model temporary_pivot_mesh = Model(&temporary_pivot_material);
+	Model temporary_pivot_mesh = Model();
 	Actor pivot_point = Actor("pivot point");
 
 	using Light::Light;
