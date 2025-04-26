@@ -2,7 +2,7 @@
 <a href="https://github.com/Electron7-7/graphx"><img src="https://github.com/user-attachments/assets/4ca82421-9f0d-41d9-a705-7aeb2986dd18" width="150"/></a>
 <a href="https://github.com/Electron7-7/graphx"><img src="https://github.com/user-attachments/assets/6adf09d2-67e6-4467-8ae9-2afbcd57ac6e" width="150"/></a>
   <p>Logo design: <a href="https://www.instagram.com/m0in126">Moin</a></p>
-<div id="user-content-toc">
+<!-- <div id="user-content-toc">
   <ul align="center" style="list-style: none;">
     <summary>
       <h1>GraphX</h1>&nbsp;&nbsp;&nbsp;&nbsp;<h3>(Or, "How I stopped worrying and learned to love C++")</h3>
@@ -11,7 +11,7 @@
 </div>
 
 <img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="400"/>
-<img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
+<img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/> -->
 
 ## The Development Branch
 ### Current State: __NOT BUILDABLE__
