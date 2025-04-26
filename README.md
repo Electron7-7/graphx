@@ -16,8 +16,9 @@
 ## The Development Branch
 ### Current State: __NOT BUILDABLE__
 ### Current Focus: __REFACTORING THE ENTIRE CODEBASE__
+### Current Mood: __TIRED AS FUCK__
 
-## An Okay Game Engine
+<!--## An Okay Game Engine
 
 When I started this journey, I had very little programming experience; a few basic Python programs (like, command-line output basic), some shell scripting, a bit of web-design, and some fun ventures in [Blitz3D](https://github.com/blitz-research/blitz3d) (which I highly recommend to anyone interested in the programming side of gamedev). Needless to say, I was in no position _whatsoever_ to think to myself, "hmm, you know what? I want to learn C++ _and_ OpenGL/Graphics Programming at the same exact time! Surely, nothing will go wrong". I am here to tell you I am lucky that I have autism and an autistic intrigue and passion for programming, because if I didn't, this project would have permanently died before a week's time.
 **DO NOT DO WHAT I DID**.
@@ -82,4 +83,4 @@ Thank you to UE5 and Unity for making me annoyed, passionate, and foolish enough
 
 Thank you to [Godot](https://github.com/godotengine/godot) for being a potentially helpful reference once I understand more about what the hell I'm doing, but mainly for being open-source, well made (mostly), and having [a clear and concise chart detailing their graphics rendering pipeline](https://docs.godotengine.org/en/latest/_images/rendering_architecture_diagram.webp).
 
-Finally, but most importantly, thank you to my dad for giving me his love of problem solving, a passion for knowledge, and "Algorithms in C: Third Edition" which is a very good read (that I have yet to finish).
+Finally, but most importantly, thank you to my dad for giving me his love of problem solving, a passion for knowledge, and "Algorithms in C: Third Edition" which is a very good read (that I have yet to finish).-->
