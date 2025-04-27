@@ -8,15 +8,6 @@
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Character/Character.h>
 
-#define ACTOR_ACTOR 		0
-#define ACTOR_LIGHT 		1
-#define ACTOR_PHYSICS		2
-#define ACTOR_PLAYER		3
-
-#define LIGHT_POINT			0
-#define LIGHT_DIRECTIONAL	1
-#define LIGHT_SPOT			2
-
 class Label : public Actor
 {
 public:
@@ -108,6 +99,7 @@ public:
 
 protected:
 	bool debug_visible = false;
+	Material debug_light_mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_color * light_energy);
 };
 
 class LightDirectional : public Light
@@ -137,12 +129,10 @@ public:
 class LightFlashlight: public LightSpot
 {
 public:
-	GraphXPlayer *parent = nullptr;
-	glm::vec3 position_offset = glm::vec3(0.0f);
-	glm::vec3 rotation_offset = glm::vec3(0.0f);
-	bool start_enabled = true;
+	Actor* parent = nullptr;
 
-	using LightSpot::LightSpot;
+	using LightSpot::Light::Actor;
+	LightFlashlight(Actor* = nullptr);
 
 	void setLight(bool is_on);
 	void toggleLight(glm::vec3 toggle_color = glm::vec3(0.0f));
@@ -153,6 +143,7 @@ public:
 	void loadSettings() override;
 
 private:
+	bool start_enabled = true;
 	glm::vec3 _color = light_color;
 };
 
@@ -165,7 +156,7 @@ public:
 	float pivot_theta = 0.0f;
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
-	Model temporary_pivot_mesh = Model();
+	Model temporary_pivot_mesh = Model(&temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point");
 
 	using Light::Light;
@@ -194,8 +185,4 @@ public:
 	void tick(const int) override;
 	void loadSettings() override;
 };
-
-extern glm::vec3 vector3_up;
-extern glm::vec3 vector3_front;
-extern glm::vec3 vector3_right;
 #endif

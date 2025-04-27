@@ -18,18 +18,18 @@ Device::Device(const std::string& my_name)
 : name(my_name), settings(gSettings()), UID(-1), parent_theatre(nullptr)
 {}
 
-Device::Device(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
-: settings(my_settings), UID(my_uid), parent_theatre(my_parent_theatre)
+Device::Device(Theatre* my_parent_theatre, const gSettings& my_settings)
+: settings(my_settings), parent_theatre(my_parent_theatre)
 {}
 
 Device::~Device()
 {}
 
-void Device::setUID(const int new_uid)
-{ UID = (parent_theatre != nullptr) ? parent_theatre->setDeviceUID(new_uid) : new_uid; }
-
 int Device::getUID() const
 { return UID; }
+
+void Device::setUID(const int new_uid)
+{ UID = (parent_theatre != nullptr) ? parent_theatre->changeDeviceUID(UID, new_uid) : new_uid; }
 
 gSettings Device::getSettings() const
 { return settings; }

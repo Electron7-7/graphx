@@ -1,4 +1,5 @@
 #include "g_actors.hpp"
+#include "g_theatre.hpp"
 #include "t_settings.hpp"
 #include <gmath.hpp>
 #include <models.hpp>
@@ -75,14 +76,14 @@ void Camera::processMouse(GLFWwindow* window, double x_position_in, double y_pos
 	glm::vec2 mouse_offset = mouse_position - mouse_last;
 	mouse_last = mouse_position;
 
-	glm::vec3 euler_rotation = getGlobalRotationAngles(true) + getLocalRotationAngles(true);
+	glm::vec3 euler_rotation = getGlobalEulerAngles(true) + getLocalEulerAngles(true);
 	euler_rotation[0] -= mouse_offset[1];
 	euler_rotation[1] -= mouse_offset[0];
 
 	if(std::abs(euler_rotation[0]) > view_pitch_clamp_degrees)
 		euler_rotation[0] = view_pitch_clamp_degrees * ((euler_rotation[0] > 0) - euler_rotation[0] < 0);
 
-	setGlobalRotationAngles(euler_rotation, true);
+	setGlobalEulerAngles(euler_rotation, true);
 }
 
 void Camera::loadSettings()
@@ -130,18 +131,7 @@ void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double
 	glm::vec2 mouse_offset = mouse_position - mouse_last;
 	mouse_last = mouse_position;
 
-	float yaw_degrees = getGlobalRotationAngles(true)[1] + getLocalRotationAngles(true)[1] - mouse_offset[0];
-
-	setGlobalRotationAngles(, true);
-
-	doMouseMovement(mouse_offset);
-}
-
-void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
-{
-	glm::vec3 horizontal_rotation = glm::vec3(0.0f, player_camera., 0.0f);
-	quaternion = glm::quat(horizontal_rotation);
-	updateOrientationVectors();
+	setGlobalYaw(getGlobalEulerAngles(true)[1] + getLocalEulerAngles(true)[1] - mouse_offset[0], true);
 }
 
 void GraphXPlayer::checkForInput(GLFWwindow* window)
@@ -188,8 +178,8 @@ void GraphXPlayer::doMovement(int direction[2])
 		return;
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientation(ORIENTATION_FRONT)[0], 0.0f, getOrientation(ORIENTATION_FRONT)[2])) * static_cast<float>(direction[0] * movement_speed);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientation(ORIENTATION_RIGHT)) * static_cast<float>(direction[1] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientationFront()[0], 0.0f, getOrientationFront()[2])) * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientationRight()) * static_cast<float>(direction[1] * movement_speed);
 
 	if(direction[0] == last_direction[0] && direction[1] == last_direction[1])
 	{
@@ -216,50 +206,20 @@ void GraphXPlayer::doMovement(int direction[2])
 
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
-	return glm::lookAt(player_camera.getPosition<glm::vec3>(), player_camera.getPosition<glm::vec3>() + player_camera.orientation_front, player_camera.orientation_up);
+	return glm::lookAt(player_camera.getGlobalPosition(), player_camera.getGlobalPosition() + player_camera.getOrientationFront(), player_camera.getOrientationUp());
 }
 
 glm::vec3 GraphXPlayer::getViewPosition()
 {
-	return player_camera.getPosition<glm::vec3>();
-}
-
-void GraphXPlayer::takeABow()
-{
-	Actor::takeABow();
-	jolt_physics_system.GetBodyInterface().RemoveBody(jph_character->GetBodyID());
+	return player_camera.getGlobalPosition();
 }
 
 //
 // Light
 //
-Light::Light(std::string init_name)
-: Actor(init_name)
+void Light::loadSettings()
 {
-	my_type = &graphx::classes::LIGHT;
-	my_light_type = &graphx::classes::LIGHT;
-	debug_visible = true;
-	scale = glm::vec3(0.25f);
-}
-
-const bool Light::isLightType(const graphx::gClass* light_type) const
-{
-	return light_type == my_light_type;
-}
-
-const bool Light::isLightType(const graphx::gClass& light_type) const
-{
-	return light_type == my_light_type;
-}
-
-const graphx::gClass* Light::getLightType() const
-{
-	return my_light_type;
-}
-
-void Light::youGotACallBack(graphx::gSettings new_settings)
-{
-	Actor::youGotACallBack(new_settings);
+	Actor::loadSettings();
 
 	getSetting(light_color, settings["Color"]);
 	getSetting(light_energy, settings["Energy"]);
@@ -270,32 +230,27 @@ void Light::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(light_range, settings["Range"]);
 
 	// Just to be safe...
-	if(mesh != nullptr)
-	{
-		mesh->prepForDestruction();
-		mesh = nullptr;
-		delete mesh;
-	}
+	delete mesh;
 }
 
 RenderCommands Light::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
 
-	render_commands.light_render_command.light_type = my_light_type;
-	render_commands.light_render_command.light_data.energy = light_energy;
-	render_commands.light_render_command.light_data.ambient_strength = light_ambient_strength;
-	render_commands.light_render_command.light_data.specular_strength = light_specular_strength;
-	render_commands.light_render_command.light_data.color = light_color;
-	render_commands.light_render_command.light_data.position = getPosition<glm::vec3>();
-	render_commands.light_render_command.light_data.attenuation = light_attenuation;
-	render_commands.light_render_command.light_data.range = light_range;
+	render_commands.light_render_command.light_type = LightRenderCmd::POINT_LIGHT;
+	render_commands.light_render_command.energy = light_energy;
+	render_commands.light_render_command.ambient_strength = light_ambient_strength;
+	render_commands.light_render_command.specular_strength = light_specular_strength;
+	render_commands.light_render_command.color = light_color;
+	render_commands.light_render_command.position = getGlobalPosition();
+	render_commands.light_render_command.attenuation = light_attenuation;
+	render_commands.light_render_command.range = light_range;
 
 	if(debug_visible)
 	{
 		render_commands.render_command.is_light_debug_mesh = true;
 		render_commands.render_command.mesh_data_name = GRAPHX_CUBE;
-		render_commands.render_command.mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_color * light_energy);
+		render_commands.render_command.mesh_material = &debug_light_mesh_material;
 	}
 
 	return(render_commands);
@@ -304,24 +259,13 @@ RenderCommands Light::getRenderCommands()
 //
 // LightDirectional
 //
-LightDirectional::LightDirectional(std::string init_name)
-: Light(init_name)
+void LightDirectional::loadSettings()
 {
-	my_type = &graphx::classes::LIGHTDIRECTIONAL;
-	my_light_type = &graphx::classes::LIGHTDIRECTIONAL;
-	debug_visible = false;
-}
-
-void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
-{
-	Light::youGotACallBack(new_settings);
+	Light::loadSettings();
 
 	getSetting(directional_direction, settings["Direction"]);
 
 	// LightDirectional doesn't really need a debug mesh, since it's physical orientation doesn't matter
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
-	mesh = nullptr;
 	delete mesh;
 }
 
@@ -329,7 +273,8 @@ RenderCommands LightDirectional::getRenderCommands()
 {
 	RenderCommands render_commands = Light::getRenderCommands();
 
-	render_commands.light_render_command.light_data.direction = directional_direction;
+	render_commands.light_render_command.light_type = LightRenderCmd::DIRECTIONAL_LIGHT;
+	render_commands.light_render_command.direction = directional_direction;
 
 	return(render_commands);
 }
@@ -337,18 +282,9 @@ RenderCommands LightDirectional::getRenderCommands()
 //
 // LightSpot
 //
-LightSpot::LightSpot(std::string init_name)
-: Light(init_name)
+void LightSpot::loadSettings()
 {
-	my_type = &graphx::classes::LIGHTSPOT;
-	my_light_type = &graphx::classes::LIGHTSPOT;
-	debug_visible = true;
-	scale = glm::vec3(0.25f);
-}
-
-void LightSpot::youGotACallBack(graphx::gSettings new_settings)
-{
-	Light::youGotACallBack(new_settings);
+	Light::loadSettings();
 
 	getSetting(spot_direction, settings["Direction"]);
 	getSetting(spot_angle, settings["Angle"]);
@@ -359,9 +295,10 @@ RenderCommands LightSpot::getRenderCommands()
 {
 	RenderCommands render_commands = Light::getRenderCommands();
 
-	render_commands.light_render_command.light_data.direction = spot_direction;
-	render_commands.light_render_command.light_data.spot_cutoff = glm::cos(glm::radians(spot_angle));
-	render_commands.light_render_command.light_data.spot_cutoff_fade = glm::cos(glm::radians(spot_angle - spot_angle_fade));
+	render_commands.light_render_command.light_type = LightRenderCmd::SPOT_LIGHT;
+	render_commands.light_render_command.direction = spot_direction;
+	render_commands.light_render_command.spot_cutoff = glm::cos(glm::radians(spot_angle));
+	render_commands.light_render_command.spot_cutoff_fade = glm::cos(glm::radians(spot_angle - spot_angle_fade));
 
 	return(render_commands);
 }
@@ -369,45 +306,36 @@ RenderCommands LightSpot::getRenderCommands()
 //
 // LightFlashlight
 //
-LightFlashlight::LightFlashlight(std::string init_name)
-: LightSpot(init_name)
+void LightFlashlight::loadSettings()
 {
-	my_type = &graphx::classes::LIGHTFLASHLIGHT;
-	my_light_type = &graphx::classes::LIGHTSPOT;
-	debug_visible = false;
-	light_ambient_strength = 0.0f;
-	light_range = 120.f;
-	light_attenuation = 0.5f;
-	light_energy = 2.0f;
-}
+	Light::loadSettings();
 
-void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
-{
-	Light::youGotACallBack(new_settings);
+	glm::vec3 local_position = getLocalPosition();
+	glm::quat local_quaternion = getLocalQuaternion();
 
+	getSetting(parent, settings["Parent"]);
 	getSetting(start_enabled, settings["StartOn"]);
 	getSetting(start_enabled, settings["StartEnabled"]);
-	getSetting(position_offset, settings["PositionOffset"]);
-	getSetting(rotation_offset, settings["RotationOffset"]);
+	getSetting(local_position, settings["PositionOffset"]);
+	getSetting(local_quaternion, settings["RotationOffset"]);
+
+	setLocalPosition(local_position);
+	setLocalQuaternion(local_quaternion);
 
 	_color = light_color;
 	setLight(start_enabled);
 
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
-	mesh = nullptr;
 	delete mesh;
 }
 
 void LightFlashlight::tick(int current_tick)
 {
 	// Hardcoding LightFlashlight to only be applicable to the player for now
-	if(getCurrentTheatre()->getPlayer() == nullptr)
+	if(graphx::current::player == nullptr)
 		return;
 
-	setGlobalPosition(getCurrentTheatre()->getPlayer()->player_camera.getPosition<glm::vec3>() + position_offset);
-	setGlobalRotation(getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset)));
-	spot_direction = quaternion * vector3_front;
+	setGlobalPosition(dynamic_cast<GraphXPlayer*>(graphx::current::player)->player_camera.getGlobalPosition() + getLocalPosition());
+	setGlobalQuaternion(dynamic_cast<GraphXPlayer*>(graphx::current::player)->player_camera.getGlobalQuaternion() * getLocalQuaternion());
 }
 
 void LightFlashlight::toggleLight(glm::vec3 toggle_color)
@@ -445,32 +373,19 @@ void LightFlashlight::setLightColor(bool color_toggle)
 //
 // LightTesterMover
 //
-LightTesterMover::LightTesterMover(std::string init_name)
-: Light(init_name)
+void LightTesterMover::loadSettings()
 {
-	my_type = &graphx::classes::LIGHTTESTERMOVER;
-	my_light_type = &graphx::classes::LIGHT;
-	debug_visible = true;
-}
-
-void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
-{
-	Light::youGotACallBack(new_settings);
+	Light::loadSettings();
 
 	getSetting(pivot_position, settings["PivotPosition"]);
 	getSetting(pivot_radius, settings["PivotRadius"]);
 	getSetting(pivot_speed, settings["PivotSpeed"]);
 
-	// pivot_point.setGlobalPosition(pivot_position);
-	// pivot_point.mesh->setName("Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
-	// pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
-	// pivot_point.mesh->setUID(4815 + UID);
-	/*graphx::gSettings pivot_settings
-	{
-		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
-		{"Mesh", settings["Mesh"]},
-	};*/
-	// getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);
+	pivot_point.setGlobalPosition(pivot_position);
+	temporary_pivot_mesh.name = "Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
+	temporary_pivot_mesh.mesh_data_name = GRAPHX_CUBE;
+	pivot_point.mesh = &temporary_pivot_mesh;
+	parent_theatre->addActor(&pivot_point);
 }
 
 void LightTesterMover::tick(int current_tick)
@@ -486,22 +401,12 @@ void LightTesterMover::tick(int current_tick)
 		pivot_theta = 0.0f;
 }
 
-void LightTesterMover::callToStage(Theatre *parent_theatre)
-{}
-
-void LightTesterMover::takeABow()
-{}
-
 //
 // Ramiel
 //
-Ramiel::Ramiel()
-: Actor("Ramiel")
-{}
-
-void Ramiel::youGotACallBack(graphx::gSettings new_settings)
+void Ramiel::loadSettings()
 {
-	Actor::youGotACallBack(new_settings);
+	Actor::loadSettings();
 
 	getSetting(movement_type, settings["MovementType"]);
 	getSetting(pivot_position, settings["PivotPosition"]);

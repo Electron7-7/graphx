@@ -7,7 +7,9 @@
 
 // Forward Declarations
 class Actor;
+class GraphXPlayer;
 struct Device;
+struct Environment;
 struct Theatre;
 struct GraphXTheatreInterpreter;
 
@@ -24,6 +26,8 @@ namespace graphx
 	namespace current
 	{
 		extern Theatre theatre;
+		extern GraphXPlayer* player;
+		extern Environment* environment;
 	}
 
 	namespace orientation
@@ -41,7 +45,9 @@ namespace graphx
 	namespace safety
 	{   // Example use-case: Theatre::getActor should always return a valid Actor pointer, so the worst case scenario is that it returns &graphx::safety::actor
 		extern Actor actor;
+		extern GraphXPlayer player;
 		extern Device device;
+		extern Environment environment;
 	}
 
 	namespace debug

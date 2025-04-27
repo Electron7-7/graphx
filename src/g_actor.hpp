@@ -24,6 +24,11 @@ struct ActorPointerWrapper
 class Actor
 {
 public: // Externally accessible members
+	Collider* collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
+
+	Model* mesh = nullptr; // THIS IS GOING
+	long mesh_uid = -1;   // THIS IS REPLACING IT
+
 	bool debug_highlight_enabled = false;
 
 	std::string name = "Untitled Actor";
@@ -32,15 +37,15 @@ public: // Externally accessible members
 	Actor(const std::string& Name = "Untitled Actor");
 
 	// The constructor that a Theatre uses when creating Actors
-	Actor(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
+	Actor(Theatre* ParentTheatre, const graphx::gSettings& Settings = graphx::gSettings());
 
 	virtual ~Actor();
 
-	void setUID(const int);
-	int getUID() const;
 	void updateStates(std::mutex&);
+	int getUID() const;
+	void setUID(const int NewUID);
 	graphx::gSettings getSettings() const;
-	void setSettings(const graphx::gSettings&);
+	void setSettings(const graphx::gSettings& NewSettings);
 
 	void addChildActor(Actor*);
 	void addChildDevice(Device*);
@@ -91,6 +96,8 @@ public: // Externally accessible members
 	virtual std::string getTypeName() const;
 
 protected: // Members that aren't externally accessible
+	Theatre* parent_theatre = nullptr;
+
 	graphx::gSettings settings = graphx::gSettings();
 
 	std::vector<ActorPointerWrapper> child_actors;
@@ -106,11 +113,6 @@ protected: // Members that aren't externally accessible
 	glm::quat quaternion_local = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::vec3 scale_global  = glm::vec3(1.0f);
 	glm::vec3 scale_local = glm::vec3(1.0f);
-
-	Collider* collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
-
-	Model* mesh = nullptr; // THIS IS GOING
-	long mesh_uid = -1;   // THIS IS REPLACING IT
 
 	bool visible = true;
 
@@ -131,6 +133,5 @@ protected: // Members that aren't externally accessible
 
 private:
 	int UID = -1;
-	Theatre* parent_theatre = nullptr;
 };
 #endif

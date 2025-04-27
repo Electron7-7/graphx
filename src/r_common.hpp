@@ -23,7 +23,7 @@ struct Character
 
 struct Font
 {
-    // std::string font_name;
+    std::string font_name;
     std::map<char, Character> character_set;
     unsigned int texture_array_id;
     unsigned int VBO;
@@ -55,7 +55,7 @@ public:
 struct LightRenderCmd
 {
 public:
-    const unsigned int light_type = POINT_LIGHT;
+    unsigned int light_type = POINT_LIGHT;
 
     glm::vec3 color = glm::vec3(0.0f);
     float specular_strength = 0.0f;

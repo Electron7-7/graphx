@@ -22,12 +22,12 @@ public:
     Device(const std::string& Name = "Untitled Device");
 
     // The constructor that a Theatre uses when creating Devices
-    Device(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
+    Device(Theatre* ParentTheatre, const graphx::gSettings& Settings = graphx::gSettings());
 
     virtual ~Device();
 
-    void setUID(const int);
     int getUID() const;
+    void setUID(const int);
     graphx::gSettings getSettings() const;
     void setSettings(const graphx::gSettings&);
 

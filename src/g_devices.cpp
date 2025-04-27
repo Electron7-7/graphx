@@ -1,6 +1,4 @@
 #include "g_devices.hpp"
-// #include "sanity.hpp"
-#include "graphx_classes.hpp"
 #include "t_settings.hpp"
 #include <gmath.hpp>
 #include <glm/gtx/component_wise.hpp>
@@ -66,7 +64,7 @@ void Environment::loadSettings()
 // Texture
 //
 Texture::Texture(std::vector<unsigned char*> init_texture_data, std::vector<unsigned int> init_texture_size)
-: Device(graphx::classes::TEXTURE), texture_data(init_texture_data), texture_size(init_texture_size)
+: Device("Untitled Texture"), texture_data(init_texture_data), texture_size(init_texture_size)
 {}
 
 Texture::Texture(unsigned char* init_texture_data, unsigned int init_texture_size)
@@ -80,15 +78,15 @@ void Texture::loadSettings()
 // Material
 //
 Material::Material(bool is_fullbright, glm::vec3 init_color)
-: Device(graphx::classes::TEXTURE), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+: Device("Untitled Material"), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
 Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: Device(graphx::classes::TEXTURE), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: Device("Untitled Material"), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: Device(graphx::classes::TEXTURE), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: Device("Untitled Material"), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 void Material::loadSettings()
@@ -113,16 +111,12 @@ void Material::loadSettings()
 //
 // Model
 //
-Model::Model(const graphx::gID& new_material, const std::string& new_mesh_data_name)
-: Device(graphx::classes::MODEL), material_id(new_material), mesh_data_name(new_mesh_data_name)
-{}
-
 Model::Model(const Material& new_material, const std::string& new_mesh_data_name)
-: Device(graphx::classes::MODEL), material_base(new_material), material(&material_base), mesh_data_name(new_mesh_data_name)
+: Device("Untitled Model"), material_base(new_material), material(&material_base), mesh_data_name(new_mesh_data_name)
 {}
 
 Model::Model(Material* new_material, const std::string& new_mesh_data_name)
-: Device(graphx::classes::MODEL), material(new_material), mesh_data_name(new_mesh_data_name)
+: Device("Untitled Model"), material(new_material), mesh_data_name(new_mesh_data_name)
 {}
 
 void Model::loadSettings()
