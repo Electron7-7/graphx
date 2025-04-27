@@ -1,7 +1,5 @@
 #include "g_actors.hpp"
-#include "g_actor.hpp"
 #include "t_settings.hpp"
-#include "graphx_classes.hpp"
 #include <gmath.hpp>
 #include <models.hpp>
 #include <glm/glm.hpp>
@@ -41,6 +39,9 @@ void Label::tick(int current_tick)
 void Label::loadSettings()
 {
 	Actor::loadSettings();
+
+	std::string font_name_catcher = text_render_command.getFontName();
+
 	/**
 	 * `getSetting` Tip:
 	 *   When "overloading" `getSetting` settings, I like to make sure that the most verbose/explicit option always
@@ -51,8 +52,8 @@ void Label::loadSettings()
 	*/
 	getSetting(label_alpha, settings["Transparency"]);
 	getSetting(label_alpha, settings["Alpha"]);
-	getSetting(text_render_command.font_name, settings["Font"]);
-	getSetting(text_render_command.font_name, settings["FontName"]);
+	getSetting(font_name_catcher, settings["Font"]);
+	getSetting(font_name_catcher, settings["FontName"]);
 	getSetting(text_render_command.color, settings["Color"]);
 	getSetting(text_render_command.color, settings["TextColor"]);
 	getSetting(text_render_command.text, settings["Message"]);
@@ -62,6 +63,7 @@ void Label::loadSettings()
 
 	text_render_command.position_x = 0.0f;
 	text_render_command.position_y = 0.0f;
+	text_render_command.setFontName(font_name_catcher);
 }
 
 //
@@ -128,7 +130,18 @@ void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double
 	glm::vec2 mouse_offset = mouse_position - mouse_last;
 	mouse_last = mouse_position;
 
+	float yaw_degrees = getGlobalRotationAngles(true)[1] + getLocalRotationAngles(true)[1] - mouse_offset[0];
+
+	setGlobalRotationAngles(, true);
+
 	doMouseMovement(mouse_offset);
+}
+
+void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
+{
+	glm::vec3 horizontal_rotation = glm::vec3(0.0f, player_camera., 0.0f);
+	quaternion = glm::quat(horizontal_rotation);
+	updateOrientationVectors();
 }
 
 void GraphXPlayer::checkForInput(GLFWwindow* window)
@@ -175,8 +188,8 @@ void GraphXPlayer::doMovement(int direction[2])
 		return;
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientation(orientation::FRONT)[0], 0.0f, getOrientation(orientation::FRONT)[2])) * static_cast<float>(direction[0] * movement_speed);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientation(orientation::RIGHT)) * static_cast<float>(direction[1] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientation(ORIENTATION_FRONT)[0], 0.0f, getOrientation(ORIENTATION_FRONT)[2])) * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientation(ORIENTATION_RIGHT)) * static_cast<float>(direction[1] * movement_speed);
 
 	if(direction[0] == last_direction[0] && direction[1] == last_direction[1])
 	{
@@ -199,14 +212,6 @@ void GraphXPlayer::doMovement(int direction[2])
 	if(new_velocity == current_velocity)
 		return;
 	jph_character->SetLinearVelocity(new_velocity);
-}
-
-void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
-{
-	player_camera.doRotation(mouse_offset * mouse_sensitivity);
-	glm::vec3 horizontal_rotation = glm::vec3(0.0f, player_camera.euler_rotation[1], 0.0f);
-	quaternion = glm::quat(horizontal_rotation);
-	updateOrientationVectors();
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()

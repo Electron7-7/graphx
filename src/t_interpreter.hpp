@@ -4,7 +4,7 @@
 #include <vector>
 #define GRAPHX_THEATRE_INTERPRETER
 
-class Interpreter final
+class GraphXTheatreInterpreter final
 {
 public:
     typedef std::string                              gKey;
@@ -27,7 +27,7 @@ public:
     std::string getVariableTypeName(int variable_type);
     std::string getTheatreStructure(gStringSettings theatre_storage);
 
-    Theatre loadTheatre(long theatre_uid);
+    void loadTheatre(const long TheatreID, Theatre& OutputTheatre);
     void interpretCppReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string cpp_reference);
     void interpretRawData(graphx::gSettings &current_object_settings, std::string variable_name, std::string raw_data);
     void interpretExternalReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string external_reference);

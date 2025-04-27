@@ -15,11 +15,6 @@ ActorPointerWrapper::ActorPointerWrapper(Actor* new_pointer, const bool ownershi
 {}
 
 
-// Todo: move these out of here and probably into graphx_namespace.hpp
-glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
-glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
-
 //------
 // Actor
 //------
@@ -80,28 +75,26 @@ void Actor::addChildActor(Actor* new_child)
 void Actor::addChildDevice(Device* new_child)
 { child_devices.insert(child_devices.end(), DevicePointerWrapper(new_child, false)); }
 
-glm::vec3 Actor::getOrientation(const unsigned int orientation) const
-{
-	switch(orientation)
-	{
-	case Actor::ORIENTATION_UP:
-		return orientation_up;
-	case Actor::ORIENTATION_RIGHT:
-		return orientation_right;
-	case Actor::ORIENTATION_FRONT:
-		return orientation_front;
-	default:
-		PRINTERR("Actor::getOrientation(const unsigned int orientation) - orientation selection invalid! Returning upwards orientation!")
-		return orientation_up;
-	}
-}
 
-// Get/Set Global/Local Position/Rotation/Quaternion
+
+// Get Orientation Up/Front/Right
+glm::vec3 Actor::getOrientationUp(const bool global) const
+{ return (global) ? (quaternion_global * graphx::orientation::up) : (quaternion_global * quaternion_local * graphx::orientation::up); }
+
+glm::vec3 Actor::getOrientationFront(const bool global) const
+{ return (global) ? (quaternion_global * graphx::orientation::front) : (quaternion_global * quaternion_local * graphx::orientation::front); }
+
+glm::vec3 Actor::getOrientationRight(const bool global) const
+{ return (global) ? (quaternion_global * graphx::orientation::right) : (quaternion_global * quaternion_local * graphx::orientation::right); }
+
+
+
+// Get Global/Local Position/Rotation/Quaternion
 glm::vec3 Actor::getGlobalPosition() const
 { return position_global; }
 
-glm::vec3 Actor::getGlobalRotationAngles(const bool degrees_instead_of_radians) const
-{ return (degrees_instead_of_radians) ? (glm::degrees(glm::eulerAngles(quaternion_global))) : glm::eulerAngles(quaternion_global); }
+glm::vec3 Actor::getGlobalEulerAngles(const bool use_degrees) const
+{ return (use_degrees) ? (glm::degrees(glm::eulerAngles(quaternion_global))) : glm::eulerAngles(quaternion_global); }
 
 glm::quat Actor::getGlobalQuaternion() const
 { return quaternion_global; }
@@ -109,16 +102,19 @@ glm::quat Actor::getGlobalQuaternion() const
 glm::vec3 Actor::getLocalPosition() const
 { return position_local; }
 
-glm::vec3 Actor::getLocalRotationAngles(const bool degrees_instead_of_radians) const
-{ return (degrees_instead_of_radians) ? (glm::degrees(glm::eulerAngles(quaternion_local))) : glm::eulerAngles(quaternion_local); }
+glm::vec3 Actor::getLocalEulerAngles(const bool use_degrees) const
+{ return (use_degrees) ? (glm::degrees(glm::eulerAngles(quaternion_local))) : glm::eulerAngles(quaternion_local); }
 
 glm::quat Actor::getLocalQuaternion() const
 { return quaternion_local; }
 
+
+
+// Set Global/Local Position/Rotation/Quaternion
 void Actor::setGlobalPosition(const glm::vec3& new_position)
 { position_global = new_position; updateOrientationVectors(); }
 
-void Actor::setGlobalRotationAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
+void Actor::setGlobalEulerAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
 { quaternion_global = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); updateOrientationVectors(); }
 
 void Actor::setGlobalQuaternion(const glm::quat& new_quaternion)
@@ -127,12 +123,15 @@ void Actor::setGlobalQuaternion(const glm::quat& new_quaternion)
 void Actor::setLocalPosition(const glm::vec3& new_position)
 { position_local = new_position; updateOrientationVectors(); }
 
-void Actor::setLocalRotationAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
+void Actor::setLocalEulerAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
 { quaternion_local = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); updateOrientationVectors(); }
 
 void Actor::setLocalQuaternion(const glm::quat& new_quaternion)
 { quaternion_local = new_quaternion; updateOrientationVectors(); }
 
+
+
+// Virtual functions
 void Actor::tick(int current_tick)
 {
 	// Opted to not use an early return here, since that could be nasty for any derived Actor that overrides this function but still calls Actor::tick
@@ -149,8 +148,8 @@ void Actor::tick(int current_tick)
 
 void Actor::loadSettings()
 {
-	glm::vec3 local_euler_degrees = getLocalRotationAngles(true);
-	glm::vec3 global_euler_degrees = getGlobalRotationAngles(true);
+	glm::vec3 local_euler_degrees = getLocalEulerAngles(true);
+	glm::vec3 global_euler_degrees = getGlobalEulerAngles(true);
 
 	getSetting(name, settings["Name"]);
 	getSetting(mesh, settings["Model"]);
@@ -216,27 +215,20 @@ RenderCommands Actor::getRenderCommands()
 }
 
 const bool Actor::givesAFuckAboutPhysics() const
-{ return !(collider == nullptr || collider->getBodyID().IsInvalid()); }
+{   // Eventually, change implementation
+	return !(collider == nullptr || collider->getBodyID().IsInvalid());
+}
 
-void Actor::checkForInput(GLFWwindow* window)
-{}
-
-void Actor::processMouse(GLFWwindow* window, double x_position_in, double y_position_in)
-{}
-
-void Actor::processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
-{}
+void Actor::checkForInput(GLFWwindow* window) {}
+void Actor::processMouse(GLFWwindow* window, double x_position_in, double y_position_in) {}
+void Actor::processKey(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
 std::string Actor::getTypeName() const
 { return std::string("Actor"); }
 
-void Actor::updateOrientationVectors()
-{
-	orientation_up = getGlobalQuaternion() * getLocalQuaternion() * vector3_up;
-	orientation_front = getGlobalQuaternion() * getLocalQuaternion() * vector3_front;
-	orientation_right = getGlobalQuaternion() * getLocalQuaternion() * vector3_right;
-}
 
+
+// Private functions
 void Actor::selfOverrideColliderTransform(const bool ignore_scale)
 {
 	if(!givesAFuckAboutPhysics()) return;

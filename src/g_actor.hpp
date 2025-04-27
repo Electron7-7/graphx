@@ -10,22 +10,21 @@
 #include <mutex>
 #include <vector>
 
+// A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
 struct ActorPointerWrapper
 {
 	Actor* pointer;
 	bool owned_by_me;
 
 	ActorPointerWrapper(Actor*, const bool);
+
+	// constexpr operator Actor*() const { return pointer; }
 };
 
 class Actor
 {
-public:
+public: // Externally accessible members
 	bool debug_highlight_enabled = false;
-
-	inline static const unsigned int ORIENTATION_UP    = 0;
-	inline static const unsigned int ORIENTATION_FRONT = 1;
-	inline static const unsigned int ORIENTATION_RIGHT = 2;
 
 	std::string name = "Untitled Actor";
 
@@ -49,26 +48,37 @@ public:
 	Actor* getChildActor(const int);
 	Device* getChildDevice(const int);
 
-	void setGlobalPosition(const glm::vec3&);
-	void setGlobalRotationAngles(const glm::vec3&, const bool degrees_instead_of_radians = false);
-	void setGlobalQuaternion(const glm::quat&);
-	void setLocalPosition(const glm::vec3&);
-	void setLocalRotationAngles(const glm::vec3&, const bool degrees_instead_of_radians = false);
-	void setLocalQuaternion(const glm::quat&);
-	void setGlobalScale(const glm::vec3&);
-	void setLocalScale(const glm::vec3&);
+	void setGlobalPosition(const glm::vec3& Position);
+	void setGlobalQuaternion(const glm::quat& Quaternion);
+	void setGlobalEulerAngles(const glm::vec3& EulerAngles, const bool UseDegrees = false);
+	void setGlobalPitch(const float Pitch, const bool UseDegrees = false);
+	void setGlobalYaw(const float Yaw, const bool UseDegrees = false);
+	void setGlobalRoll(const float Roll, const bool UseDegrees = false);
+	void setGlobalScale(const glm::vec3& Scale);
 
-	glm::vec3 getOrientation(const unsigned int) const;
+	void setLocalPosition(const glm::vec3& Position);
+	void setLocalQuaternion(const glm::quat& Quaternion);
+	void setLocalEulerAngles(const glm::vec3& EulerAngles, const bool UseDegrees = false);
+	void setLocalPitch(const float Pitch, const bool UseDegrees = false);
+	void setLocalYaw(const float Yaw, const bool UseDegrees = false);
+	void setLocalRoll(const float Roll, const bool UseDegrees = false);
+	void setLocalScale(const glm::vec3& Scale);
+
+	glm::vec3 getOrientationUp(const bool Global = true) const;
+	glm::vec3 getOrientationFront(const bool Global = true) const;
+	glm::vec3 getOrientationRight(const bool Global = true) const;
+
 	glm::vec3 getGlobalPosition() const;
-	glm::vec3 getGlobalRotationAngles(const bool = false) const;
 	glm::quat getGlobalQuaternion() const;
-	glm::vec3 getLocalPosition() const;
-	glm::vec3 getLocalRotationAngles(const bool = false) const;
-	glm::quat getLocalQuaternion() const;
+	glm::vec3 getGlobalEulerAngles(const bool AsDegrees = false) const;
 	glm::vec3 getGlobalScale() const;
+
+	glm::vec3 getLocalPosition() const;
+	glm::quat getLocalQuaternion() const;
+	glm::vec3 getLocalEulerAngles(const bool AsDegrees = false) const;
 	glm::vec3 getLocalScale() const;
 
-	// Virtual functions
+
 	virtual void tick(const int current_tick);
 	virtual void loadSettings();
 	virtual RenderCommands getRenderCommands();
@@ -86,9 +96,9 @@ protected: // Members that aren't externally accessible
 	std::vector<ActorPointerWrapper> child_actors;
 	std::vector<DevicePointerWrapper> child_devices;
 
-	glm::vec3 orientation_up = graphx::global::variables::orientation_up;
-	glm::vec3 orientation_front = graphx::global::variables::orientation_front;
-	glm::vec3 orientation_right = graphx::global::variables::orientation_right;
+	glm::vec3 orientation_up = graphx::orientation::up;
+	glm::vec3 orientation_front = graphx::orientation::front;
+	glm::vec3 orientation_right = graphx::orientation::right;
 
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);

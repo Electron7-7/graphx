@@ -9,33 +9,45 @@
 class Actor;
 struct Device;
 struct Theatre;
+struct GraphXTheatreInterpreter;
 
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 #define UID_EMPTY -1 // Just to keep things consistent
 
 namespace graphx
 {
+	typedef std::pair<int, std::any> gSetting; // The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`
+	typedef std::unordered_map<std::string, gSetting> gSettings;
+
+	extern GraphXTheatreInterpreter Interpreter;
+
+	namespace current
+	{
+		extern Theatre theatre;
+	}
+
+	namespace orientation
+	{
+		extern glm::vec3 up;
+		extern glm::vec3 front;
+		extern glm::vec3 right;
+	}
+
+	namespace state
+	{
+		extern bool loading_new_main_theatre;
+	}
+
 	namespace safety
 	{   // Example use-case: Theatre::getActor should always return a valid Actor pointer, so the worst case scenario is that it returns &graphx::safety::actor
 		extern Actor actor;
 		extern Device device;
 	}
 
-	namespace global
+	namespace debug
 	{
-		namespace variables
-		{
-			extern Theatre current_theatre;
-
-			extern glm::vec3 orientation_up;
-			extern glm::vec3 orientation_front;
-			extern glm::vec3 orientation_right;
-		}
-
-		namespace state
-		{
-			extern bool loading_new_main_theatre;
-		}
+		extern bool actor_debug_menu_open;
+		extern float actor_debug_menu_text_scale;
 	}
 
 	namespace error
@@ -47,23 +59,6 @@ namespace graphx
 			inline constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
 			inline constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
 
-		}
-	}
-
-	namespace debug
-	{
-		extern bool actor_debug_menu_open;
-		extern float actor_debug_menu_text_scale;
-	}
-
-	namespace identifiers
-	{
-		namespace primitive
-		{
-			inline constexpr int FOO      = -1;
-			inline constexpr int LINE     =  0;
-			inline constexpr int TRIANGLE =  1;
-			inline constexpr int TEXT     = -1; //< Text not supported yet!
 		}
 	}
 
@@ -100,8 +95,5 @@ namespace graphx
 		inline bool  lighting_switch_specular = true;
 		inline bool  lighting_switch_ambient = true;
 	}
-
-	typedef std::pair<int, std::any> gSetting; // The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`
-	typedef std::unordered_map<std::string, gSetting> gSettings;
 }
 #endif

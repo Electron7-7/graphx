@@ -2,6 +2,7 @@
 #include "graphx_namespace.hpp"
 #include "g_actors.hpp"
 #include "g_devices.hpp"
+#include "g_theatre.hpp"
 #define GRAPHX_INTERPRETER_LOOKUPS
 /*
 	This is where all the variable names and lookups for GraphXTheatre files (and the Interpreter)
@@ -71,4 +72,12 @@ cpp_definitions =
     { "CapsuleShape",          graphx::jolt::shapes::CAPSULE  },
     { "CylinderShape",         graphx::jolt::shapes::CYLINDER },
 };
+
+// Some helper functions to keep code tidy-ish, lol
+namespace gClasses
+{
+	inline const bool isDefined(const std::string& name) { return (valid_actors.contains(name) || valid_devices.contains(name)); }
+	inline const bool isActor(const std::string& name) { return valid_actors.contains(name); }
+	inline const bool isDevice(const std::string& name) { return valid_devices.contains(name); }
+}
 #endif

@@ -2,12 +2,15 @@
 #include "graphx_namespace.hpp"
 #define GRAPHX_DEVICE
 
+// A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
 struct DevicePointerWrapper
 {
     Device* pointer;
     bool owned_by_me;
 
     DevicePointerWrapper(Device*, const bool);
+
+    // constexpr operator Device*() const { return pointer; }
 };
 
 struct Device
@@ -25,11 +28,10 @@ public:
 
     void setUID(const int);
     int getUID() const;
-
-    virtual void loadSettings();
-
     graphx::gSettings getSettings() const;
     void setSettings(const graphx::gSettings&);
+
+    virtual void loadSettings();
 
 protected:
     graphx::gSettings settings = graphx::gSettings();

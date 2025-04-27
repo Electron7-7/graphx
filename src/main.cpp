@@ -1,14 +1,18 @@
 // Hello, production branch!
 // :3
 
-#include "g_theatre.hpp"
 #include "sanity.hpp"
+#include "sanity_printouts.hpp"
 #include "graphx_namespace.hpp"
 #include "g_actors.hpp"
+#include "g_devices.hpp"
+#include "g_theatre.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
-#include "sanity_printouts.hpp"
+#include "r_common.hpp"
+#include "r_rendering.hpp"
 #include "t_common.hpp"
+#include "t_interpreter.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -215,7 +219,7 @@ void gameTick(GLFWwindow *main_window)
 		current_tick_length += (now_time - last_time) / TICKLENGTH;
 		last_time = now_time;
 
-		while(current_tick_length >= 1.0f && !loading_new_main_theatre)
+		while(current_tick_length >= 1.0f && !graphx::state::loading_new_main_theatre)
 		{
 			current_tick_since_second++;
 			current_tick_since_start++;
@@ -353,7 +357,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
 	{
-		if(loading_new_main_theatre)
+		if(graphx::state::loading_new_main_theatre)
 			return;
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
 		{
@@ -373,7 +377,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 	if(key == GLFW_KEY_LEFT && action == GLFW_PRESS)
 	{
-		if(loading_new_main_theatre)
+		if(graphx::state::loading_new_main_theatre)
 			return;
 		checkForAndLoadExternalTheatres();
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
@@ -398,7 +402,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
-		std::vector<Actor*> troupe = graphx::current::theatre.getTroupe();
+		std::vector<Device*> devices = graphx::current::theatre.getDevices();
 		for(Actor* actor : troupe)
 			actor->reset_to_initial_orientation_for_testing();
 	}

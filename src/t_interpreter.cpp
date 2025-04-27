@@ -1,7 +1,7 @@
 #include "t_interpreter.hpp"
 #include "graphx_interpreter_lookups.hpp"
+#include "r_rendering.hpp"
 #include "sanity.hpp"
-#include "g_theatre.hpp"
 #include <images.h>
 #include <models.hpp>
 #include <theatres.hpp>
@@ -9,15 +9,17 @@
 #include <fstream>
 #include <sstream>
 
+using namespace graphx;
+
 //------------
 // Interpreter
 //------------
-std::string Interpreter::validExtensions() const
+std::string GraphXTheatreInterpreter::validExtensions() const
 {
 	return three_dee_model_extensions + graphx_theatre_extensions + image_extensions;
 }
 
-Interpreter::gStringSettings Interpreter::theatreParser(std::string theatre_data)
+GraphXTheatreInterpreter::gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data)
 {
 	std::set<char> whitespace =
 	{
@@ -220,7 +222,7 @@ Interpreter::gStringSettings Interpreter::theatreParser(std::string theatre_data
 	return all_settings;
 }
 
-std::string Interpreter::getVariableTypeName(int variable_type)
+std::string GraphXTheatreInterpreter::getVariableTypeName(int variable_type)
 {
 	std::string type_return;
 
@@ -252,7 +254,7 @@ std::string Interpreter::getVariableTypeName(int variable_type)
 	return type_return + " (" + std::to_string(variable_type) + ")";
 }
 
-std::string Interpreter::getTheatreStructure(gStringSettings theatre_storage)
+std::string GraphXTheatreInterpreter::getTheatreStructure(gStringSettings theatre_storage)
 {
 	std::string structure_out = "Theatre Structure\n\nTheatre \"" + theatre_storage[0][0].second.second + "\"\n";
 
@@ -269,7 +271,7 @@ std::string Interpreter::getTheatreStructure(gStringSettings theatre_storage)
 	return structure_out;
 }
 
-void Interpreter::interpretCppReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string cpp_reference)
+void GraphXTheatreInterpreter::interpretCppReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string cpp_reference)
 {
 	if(!cpp_definitions.contains(cpp_reference))
 	{
@@ -280,7 +282,7 @@ void Interpreter::interpretCppReference(graphx::gSettings &current_object_settin
 	current_object_settings[variable_name] = graphx::gSetting(CPP_REFERENCE, cpp_definitions.at(cpp_reference));
 }
 
-void Interpreter::interpretRawData(graphx::gSettings &current_object_settings, std::string variable_name, std::string raw_data)
+void GraphXTheatreInterpreter::interpretRawData(graphx::gSettings &current_object_settings, std::string variable_name, std::string raw_data)
 {
 	std::set<char> forgiveness =
 	{
@@ -338,7 +340,7 @@ void Interpreter::interpretRawData(graphx::gSettings &current_object_settings, s
 	current_object_settings[variable_name] = graphx::gSetting(RAW_DATA, gRawData{raw_data});
 }
 
-void Interpreter::interpretExternalReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string external_reference)
+void GraphXTheatreInterpreter::interpretExternalReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string external_reference)
 {
 	std::string file_extension = external_reference.substr(external_reference.find_last_of(".") + 1);
 
@@ -366,13 +368,13 @@ void Interpreter::interpretExternalReference(graphx::gSettings &current_object_s
 	}
 }
 
-void Interpreter::interpretTheatreReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, gStringSettings &theatre_settings)
+void GraphXTheatreInterpreter::interpretTheatreReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, gStringSettings &theatre_settings)
 {
 	std::string class_name = variable_name;
 	if(variable_name.find(':') != std::string::npos)
 		class_name = variable_name.substr(variable_name.find_last_of(':') + 1);
 
-	if(!graphx::classes::isValid(class_name)) // If true, this is a reference to a variable of the same name in another Actor/Device
+	if(!gClasses::isDefined(class_name)) // If true, this is a reference to a variable of the same name in another Actor/Device
 	{
 		gStringSetting referenced_setting(variable_name, gValue(-1, "EMPTY"));
 
@@ -418,19 +420,19 @@ void Interpreter::interpretTheatreReference(graphx::gSettings &current_object_se
 	}
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
-	if(graphx::classes::getBaseType(class_name) == graphx::classes::ACTOR)
+	if(gClasses::isActor(class_name))
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
 
-	else if(graphx::classes::getBaseType(class_name) == graphx::classes::DEVICE)
+	else if(gClasses::isDevice(class_name))
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
 
-void Interpreter::interpretSandwich(graphx::gSettings& current_object_settings, gStringSettings& theatre_settings, std::string current_object_name, int& i, int& it, unsigned long settings_size, Theatre& new_theatre)
+void GraphXTheatreInterpreter::interpretSandwich(graphx::gSettings& current_object_settings, gStringSettings& theatre_settings, std::string current_object_name, int& i, int& it, unsigned long settings_size, Theatre& new_theatre)
 {
 	graphx::gSettings sandwich_settings;
 	gStringSetting sandwich_bun_setting = theatre_settings.at(i).at(it);
 
-	if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
+	if(gClasses::isActor(sandwich_bun_setting.first))
 		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->getSettings();
 	else
 		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->getSettings();
@@ -466,36 +468,38 @@ void Interpreter::interpretSandwich(graphx::gSettings& current_object_settings, 
 		it++;
 	}
 
-	if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
+	if(gClasses::isActor(sandwich_bun_setting.first))
 	{
-		Actor* sandwich_bun = graphx::classes::getClassType(sandwich_bun_setting.first).new_actor("Sandwiched Actor", sandwich_settings);
+		Actor* sandwich_bun = valid_actors.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
-	else if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::DEVICE)
+	else if(gClasses::isDevice(sandwich_bun_setting.first))
 	{
-		Device* sandwich_bun = graphx::classes::getClassType(sandwich_bun_setting.first).new_device("Sandwiched Device", sandwich_settings);
+		Device* sandwich_bun = valid_devices.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
 	it--;
 }
 
-Theatre Interpreter::loadTheatre(long theatre_uid)
+void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_theatre)
 {
 	if(!embedded_theatres.count(theatre_uid))
 	{
 		PRINTERR("Tried to load a Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " but no Theatre with that UID exists!")
-		return Theatre("DEFAULT ERROR RETURN THEATRE RETURNED BY \"loadTheatre\"");
+		if(new_theatre.getUID() == -1) // Probably not needed but eh, whatever
+			new_theatre = Theatre("DEFAULT ERROR RETURN THEATRE RETURNED BY \"loadTheatre\"");
 	}
 
 	gStringSettings theatre_settings = theatreParser(embedded_theatres.at(theatre_uid));
 
-	Theatre new_theatre = Theatre(theatre_uid, theatre_settings[0][0].second.second);
+	new_theatre.~Theatre(); // Probably unnecessary
+	new_theatre = Theatre(theatre_uid, theatre_settings[0][0].second.second);
 	// new_theatre.graphx_theatre_settings = theatre_settings;
 	// new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
 
-	PRINTDEBUG("Loading Theatre \"" << new_theatre.getID().name << "\"")
+	PRINTDEBUG("Loading Theatre \"" << new_theatre.name << "\"")
 
 	for(int i = 1 ; i < theatre_settings.size() ; i++)
 	{
@@ -535,37 +539,42 @@ Theatre Interpreter::loadTheatre(long theatre_uid)
 			continue;
 		}
 
-		new_theatre.createActorOrDevice(theatre_settings[i][0].first, i, current_object_settings);
-	}
+		std::string& type_name = theatre_settings[i][0].first; // For clarity
+		int uid = i; // To remind me that I want to change how UIDs are fuckin' made
 
-	return new_theatre;
+		if(gClasses::isActor(type_name))
+			new_theatre.addInterpretedActor(valid_actors.at(type_name)(&new_theatre, uid, current_object_settings));
+
+		else if(gClasses::isDevice(type_name))
+			new_theatre.addInterpretedDevice(valid_devices.at(type_name)(&new_theatre, uid, current_object_settings));
+	}
 }
 
 
-void loadMainTheatre(long theatre_uid)
+void I_LoadNewMainTheatre(long theatre_uid)
 {
-	if(graphx::global::variables::current_theatre.getUID() == theatre_uid)
+	if(graphx::current::theatre.getUID() == theatre_uid)
 	{
 		PRINTERR("A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded because it's already the current Theatre (or the current Theatre has the same UID)!")
 		return;
 	}
 
-	graphx::global::state::loading_new_main_theatre = true;
+	graphx::state::loading_new_main_theatre = true;
 	time_to_render = false;
 	time_to_store_buffers = false;
 
 	// graphx::current::theatre.dropCurtains();
-	graphx::current::theatre = loadTheatre(theatre_uid);
+	Interpreter.loadTheatre(theatre_uid, graphx::current::theatre);
 	// graphx::current::theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
 
 	time_to_store_buffers = true;
-	graphx::global_state::loading_new_main_theatre = false;
+	graphx::state::loading_new_main_theatre = false;
 }
 
-void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
+void I_LoadChildTheatre(long theatre_uid, Theatre *parent_theatre)
 {
-	if(parent_theatre == nullptr || parent_theatre->getID() == -1)
+	if(parent_theatre == nullptr || parent_theatre->getUID() == -1)
 	{
 		PRINTERR("Tried loading a child Theatre for an invalid parent Theatre (either nullptr or with a UID of -1)!")
 		return;
@@ -575,7 +584,7 @@ void loadChildTheatre(long theatre_uid, Theatre *parent_theatre)
 	// NEEDS TO BE FILLED OUT
 }
 
-void embedExternalTheatre(std::filesystem::path theatre_file_path)
+void I_EmbedExternalTheatre(std::filesystem::path theatre_file_path)
 {
 	if(!std::isdigit(theatre_file_path.filename().string()[0]))
 	{
@@ -614,7 +623,7 @@ void embedExternalTheatre(std::filesystem::path theatre_file_path)
 	embedded_theatres[theatre_uid] = theatre_file_data_stream.str();
 }
 
-bool checkForExternalTheatres()
+bool _checkForExternalTheatres()
 {
 	// Last minute realization that I had to move these out of the header file "sanity.hpp"
 	std::string binary_path = BINARY_PATH;
@@ -630,7 +639,7 @@ bool checkForExternalTheatres()
 
 bool checkForAndLoadExternalTheatres()
 {
-	if(!checkForExternalTheatres())
+	if(!_checkForExternalTheatres())
 	{
 		PRINTNOTE("No external GraphXTheatre directory found.")
 		return false;

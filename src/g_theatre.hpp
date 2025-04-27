@@ -1,4 +1,5 @@
 #ifndef GRAPHX_THEATRE
+#include "t_interpreter.hpp"
 #include "graphx_namespace.hpp"
 #include "g_actor.hpp"
 #include "g_device.hpp"
@@ -40,47 +41,57 @@ struct Theatre
     void delegateMouseInput(GLFWwindow*, const double, const double) const;
     const LightsCount getLightsCount() const;
 
-    //---------------------------------------
-    // Start of Actor/Device Helper Functions
-    //---------------------------------------
-    void addActor(Actor*);
-    void addDevice(Device*);
+    void addActor(Actor* Actor);
+    void addDevice(Device* Device);
+
+    std::vector<Actor*> getAllActors() const;
+    std::vector<Device*> getAllDevices() const;
 
     // Safe and reliable, since every Actor must have a unique UID
-    Actor* getActor(const int UID) const;
+    Actor* getActor(const int UniqueID) const;
     // Safe and reliable, since every Device must have a unique UID
-    Device* getDevice(const int UID) const;
+    Device* getDevice(const int UniqueID) const;
 
     // Safe, but unreliable; if multiple Actors share the same name, this returns the first Actor it encounters
-    Actor* getActor(const std::string&) const;
+    Actor* getActor(const std::string& Name) const;
     // Safe, but unreliable; if multiple Devices share the same name, this returns the first Device it encounters
-    Device* getDevice(const std::string&) const;
+    Device* getDevice(const std::string& Name) const;
 
-    void getActors(std::vector<ActorPointerWrapper>&) const;
-    void getDevices(std::vector<DevicePointerWrapper>&) const;
-
-    void removeActor(const int);
-    void removeDevice(const int);
+    void removeActor(const int UniqueID);
+    void removeDevice(const int UniqueID);
     //-------------------------------------
     // End of Actor/Device Helper Functions
     //-------------------------------------
 
 private:
     int UID = -1;
-    std::map<int, ActorPointerWrapper> actors;
-    std::map<int, DevicePointerWrapper> devices;
+    std::map<int, ActorPointerWrapper> wrapped_actors;
+    std::map<int, DevicePointerWrapper> wrapped_devices;
+    std::vector<Actor*> unwrapped_actors;
+    std::vector<Device*> unwrapped_devices;
 
-    int setActorUID(const int);
-    int setDeviceUID(const int);
-
-    friend void Actor::setUID(const int);
-    friend void Device::setUID(const int);
+    int setActorUID(Actor*, const int);
+    int setDeviceUID(Device*, const int);
 
     void addInterpretedActor(Actor*);
     void addInterpretedDevice(Device*);
+
+    void parallelAddActor(Actor*, const int, const bool);
+    void parallelAddDevice(Device*, const int, const bool);
+
+    void parallelRemoveActor(const int);
+    void parallelRemoveDevice(const int);
+
+    void checkAndManageParallelActorDesync();
+    void checkAndManageParallelDeviceDesync();
+
+    friend void Actor::setUID(const int);
+    friend void Device::setUID(const int);
+    friend void GraphXTheatreInterpreter::loadTheatre(const long, Theatre&);
 };
 
 #define THEATRE_ERR_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + uid +  " already exists!"
-#define THEATRE_ERR_WRONG_BASE_TYPE(function, expected, received) std::string(function) + " - expected a class of type \"" + std::string(expected) + "\" but received a class of type \"" + std::string(received) + "\" instead!"
 #define THEATRE_ERR_INVALID_UID(function, type, uid) std::string(function) + " - no " + std::string(type) + " with the UID " + uid + " was found! Returning \"&graphx::safety::" + std::string(static_cast<char>(std::tolower(std::string(type).at(0))) + std::string(type).substr(1)) + "\"!"
+#define THEATRE_ERR_PARALLEL_DESYNC(function, type) std::string(function) + " - a desync between the " << std::string(type) << " map and vector has been detected! To maintain synchronization, both the map and the vector will be compared to locate and remove the extra " << std::string(type)
+#define THEATRE_ERR_DESYNC_DETECTION(type, location, uid) "Extraneous " << std::string(type) << " detected in " << std::string(location) << " with UID: " << std::to_string(uid) << " will be deleted"
 #endif
