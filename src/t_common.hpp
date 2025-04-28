@@ -1,9 +1,15 @@
 #ifndef GRAPHX_THEATRE_FILE_FORMAT
 #define GRAPHX_THEATRE_FILE_FORMAT
 #include <string>
+#include <vector>
 #include <filesystem> // Yes, the devil hath been invoked... I'm sorry
-
 struct Theatre; // Forward Declaration
+
+typedef std::string                              gKey;
+typedef std::pair<int, std::string>              gValue;
+typedef std::pair<gKey, gValue>                  gStringSetting;
+typedef std::vector<std::vector<gStringSetting>> gStringSettings;
+typedef std::vector<std::string>                 gRawData;
 
 // Might move these into graphx::interpreter someday...
 static constexpr int RAW_DATA           = 1; //< Identifies a vector of strings, using the typedef `gRawData`.

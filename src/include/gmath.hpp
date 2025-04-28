@@ -1,6 +1,7 @@
 #ifndef GRAPHX_MATH
-#define GRAPHX_MATH
 #include <glm/fwd.hpp>
+#include <vector>
+#define GRAPHX_MATH
 namespace gmath
 {
 	struct vec3uint
@@ -24,12 +25,13 @@ namespace gmath
 	// 	float data[3];
 	// };
 
-	template<typename T, typename A> T convertMath(const A &convert_me);
-	template<typename T, typename A> void convertMath(A &convert_me, T convert_from);
-	template<typename T> void radToDeg(T &convert_me);
-	template<typename T> void degToRad(T &convert_me);
-	template<typename T> T linearInterpolate(T from, T to, float by);
-	template<typename T> bool areEqual(T left, T right);
-	template<typename T, typename A> T truncateExcessive(T from, A to);
+	template<typename T, typename A> T convertMath(const A& ConvertMe);
+	template<typename T, typename A> void convertMath(A& StoreConversion, T ConvertMe);
+	template<typename T> void radToDeg(T& ConvertMe);
+	template<typename T> void degToRad(T& ConvertMe);
+	template<typename T> T linearInterpolate(T From, T To, float ByAmount);
+	template<typename T> bool areEqual(T Left, T Right);
+	template<typename T, typename A> T truncateExcessive(T From, A To);
+	template<typename T> std::vector<float> glmVectorToFloats(const T& Vector);
 };
 #endif

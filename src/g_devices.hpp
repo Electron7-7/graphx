@@ -27,11 +27,8 @@ struct Collider : public Device
 	using Device::Device;
 	~Collider() override;
 
-	void createBody();
-	void destroyBody();
-
-	const JPH::BodyID& getBodyID();
 	JPH::BodyCreationSettings *getBodySettings();
+	const JPH::BodyID& getBodyID();
 
 	void reset_to_default_transformation_for_testing();
 	void loadSettings() override;
@@ -64,6 +61,7 @@ public:
 	std::vector<unsigned int> texture_size = {MISSING_TEXTURE_jpg_len};
 
 	using Device::Device;
+	Texture(const std::string& = "Untitled Texture"); // Todo: I only need to have this here because of the map of textures...
 	Texture(unsigned char*, unsigned int);
 	Texture(std::vector<unsigned char*>, std::vector<unsigned int>);
 
@@ -114,8 +112,7 @@ struct Model : public Device
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 struct Sprite : public Model
 {
-	// using Model::Model;
-	Sprite();
+	using Model::Device;
 
 	void loadSettings() override;
 };

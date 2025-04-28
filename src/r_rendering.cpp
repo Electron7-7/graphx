@@ -1,11 +1,9 @@
 #include "r_rendering.hpp"
 #include "g_devices.hpp"
-#include "g_actor.hpp"
 #include "g_theatre.hpp"
 #include "g_actors.hpp"
 #include "sanity.hpp"
 #include "t_common.hpp"
-#include "graphx_classes.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT

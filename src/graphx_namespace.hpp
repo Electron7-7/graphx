@@ -11,7 +11,7 @@ class GraphXPlayer;
 struct Device;
 struct Environment;
 struct Theatre;
-struct GraphXTheatreInterpreter;
+class GraphXTheatreInterpreter;
 
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 #define UID_EMPTY -1 // Just to keep things consistent

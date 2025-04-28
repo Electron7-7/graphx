@@ -19,7 +19,7 @@ std::string GraphXTheatreInterpreter::validExtensions() const
 	return three_dee_model_extensions + graphx_theatre_extensions + image_extensions;
 }
 
-GraphXTheatreInterpreter::gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data)
+gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data)
 {
 	std::set<char> whitespace =
 	{

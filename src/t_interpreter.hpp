@@ -1,17 +1,11 @@
 #ifndef GRAPHX_THEATRE_INTERPRETER
 #include "t_common.hpp"
 #include "graphx_namespace.hpp"
-#include <vector>
 #define GRAPHX_THEATRE_INTERPRETER
 
 class GraphXTheatreInterpreter final
 {
 public:
-    typedef std::string                              gKey;
-    typedef std::pair<int, std::string>              gValue;
-    typedef std::pair<gKey, gValue>                  gStringSetting;
-    typedef std::vector<std::vector<gStringSetting>> gStringSettings;
-    typedef std::vector<std::string>                 gRawData;
 
     // This is how I keep track of supported file types/extensions without having to write them out more than once.
     // I define specific file types as strings that contain all the supported file extensions and I

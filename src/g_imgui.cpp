@@ -4,6 +4,7 @@
 #include "g_theatre.hpp"
 #include "graphx_namespace.hpp"
 #include "imgui_stdlib.h"
+#include "sanity_printouts.hpp"
 #include <models.hpp>
 
 namespace IMGUI = ImGui;
@@ -136,7 +137,7 @@ void GraphXConsole::showActorEditor(Actor* actor, int index)
 	//
 	IMGUI::TextColored(glm::vec4(0.7f, 0.8f, 1.0f, 0.8f), "Actor");
 	IMGUI::SameLine();
-	IMGUI::Text(std::string(std::string(actor->getType()->name) + " \"" + actor->getName() + "\" (UID: " + std::to_string(actor->getUID()) + ")").c_str(), "%s");
+	IMGUI::Text(std::string(actor->getTypeName() + " \"" + actor->name + "\" (UID: " + std::to_string(actor->getUID()) + ")").c_str(), "%s");
 	IMGUI::Separator();
 	//
 	//  Actor visibility
@@ -148,29 +149,29 @@ void GraphXConsole::showActorEditor(Actor* actor, int index)
 	//  Reset Actor
 	//
 	if(IMGUI::Button(indexMe("Reset Actor", index).c_str()))
-		actor->youGotACallBack();
+		actor->loadSettings();
 	//
 	//  Actor rotation, position, and scale manipulation
 	//
-	std::vector<float> position_vectors = actor->getPosition<std::vector<float>>();
-	std::vector<float> rotation_vectors = actor->getRotationDegrees<std::vector<float>>();
-	std::vector<float> scale_vectors = {actor->scale.x, actor->scale.y, actor->scale.z};
+	std::vector<float> position_vectors = gmath::glmVectorToFloats(actor->getGlobalPosition());
+	std::vector<float> rotation_vectors = gmath::glmVectorToFloats(actor->getGlobalEulerAngles(true));
+	std::vector<float> scale_vectors = gmath::glmVectorToFloats(actor->getGlobalScale());
 	if(IMGUI::DragFloat3(indexMe("Position", index).c_str(), position_vectors.data(), -0.1f, -100.0f, 100.0f))
 		actor->setGlobalPosition(glm::vec3(position_vectors[0], position_vectors[1], position_vectors[2]));
 	if(IMGUI::DragFloat3(indexMe("Rotation", index).c_str(), rotation_vectors.data(), -0.1f, -100.0f, 100.0f))
-		actor->setGlobalRotation(glm::radians(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2])));
+		actor->setGlobalEulerAngles(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2]));
 	if(IMGUI::DragFloat3(indexMe("Scale", index).c_str(), scale_vectors.data(), -0.1f, -100.0f, 100.0f))
-		actor->scale = glm::vec3(scale_vectors[0], scale_vectors[1], scale_vectors[2]);
+		actor->setGlobalScale({scale_vectors[0], scale_vectors[1], scale_vectors[2]});
 	IMGUI::EndGroup();
 	if(IMGUI::IsItemHovered())
-		actor->highlightMe();
+		actor->debug_highlight_enabled = true;
 	else
-		actor->unHighlightMe();
+		actor->debug_highlight_enabled = false;
 }
 
 void GraphXConsole::liveTheatreEditor()
 {
-	std::vector<Actor*> troupe = graphx::current::theatre.getTroupe();
+	std::vector<Actor*> troupe = graphx::current::theatre.getAllActors();
 	IMGUI::Begin("Live Theatre Editor", &tertiary_active);
 	for(int i = 0 ; i < troupe.size() ; i++) // AYO I THINK THAT THE TROUPE IS GETTING BLOATED AS FUCK MY GUY
 	{
@@ -182,7 +183,7 @@ void GraphXConsole::liveTheatreEditor()
 
 void GraphXConsole::exportTheatreFile()
 {
-	graphx::interpreter::gStringSettings init_settings = graphx::current::theatre.graphx_theatre_settings;
+	// GraphXTheatreInterpreter::gStringSettings init_settings = graphx::current::theatre.graphx_theatre_settings;
 	IMGUI::Begin("Export Theatre", &quaternary_active);
 
 	IMGUI::End();
@@ -201,15 +202,6 @@ void GraphXConsole::displayTheatrePrintout()
 	if(active)
 		window_flags = ImGuiWindowFlags_None;
 	IMGUI::Begin(this_name.c_str(), &secondary_active, window_flags);
-	IMGUI::Text("%s", graphx::current::theatre.theatre_file_data_printout.c_str());
+	// IMGUI::Text("%s", graphx::current::theatre.theatre_file_data_printout.c_str());
 	IMGUI::End();
-}
-
-std::string toStringNice(float number)
-{
-	std::string buffer = "";
-	if(number >= 0)
-		buffer += " ";
-	buffer += std::to_string(number).substr(0, 4);
-	return buffer;
 }

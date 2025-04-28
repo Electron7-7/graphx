@@ -198,6 +198,13 @@ in vec3 vertex_normal;
 in vec2 vertex_uv;
 in vec3 vertex_color;
 
+struct LightsCount
+{
+    int point_lights;
+    int spot_lights;
+    int directional_lights;
+};
+
 struct Material
 {
 	// Todo: combine color and alpha into a vec4
@@ -245,9 +252,7 @@ uniform Light directional_lights[MAX_NUMBER_OF_DIRECTIONAL_LIGHTS];
 uniform Light point_lights[MAX_NUMBER_OF_POINT_LIGHTS];
 uniform Light spot_lights[MAX_NUMBER_OF_SPOT_LIGHTS];
 
-uniform int directional_lights_count; // Honestly, should only be 1, but you do you, I guess
-uniform int point_lights_count;
-uniform int spot_lights_count;
+uniform LightsCount lights_count; // Honestly, should only be 1, but you do you, I guess
 
 uniform int enable_ambient;
 uniform int enable_diffuse;
@@ -266,11 +271,11 @@ void main()
 {
 	vec3 output_color = vec3(0.0f);
 
-	for(int i = 0 ; i < directional_lights_count ; i++)
+	for(int i = 0 ; i < lights_count.directional_lights ; i++)
 		output_color += calculateDirectionalLight(directional_lights[i]);
-	for(int i = 0 ; i < point_lights_count ; i++)
+	for(int i = 0 ; i < lights_count.point_lights ; i++)
 		output_color += calculatePointLight(point_lights[i]);
-	for(int i = 0 ; i < spot_lights_count ; i++)
+	for(int i = 0 ; i < lights_count.spot_lights ; i++)
 		output_color += calculateSpotLight(spot_lights[i]);
 
 	// Todo: once more than one material is supported, make sure that the alpha isn't just affected by one

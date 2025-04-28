@@ -10,16 +10,9 @@
 #include <mutex>
 #include <vector>
 
-// A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
-struct ActorPointerWrapper
-{
-	Actor* pointer;
-	bool owned_by_me;
-
-	ActorPointerWrapper(Actor*, const bool);
-
-	// constexpr operator Actor*() const { return pointer; }
-};
+// Forward Declarations
+struct ActorPointerWrapper;
+struct DevicePointerWrapper;
 
 class Actor
 {
@@ -29,15 +22,17 @@ public: // Externally accessible members
 	Model* mesh = nullptr; // THIS IS GOING
 	long mesh_uid = -1;   // THIS IS REPLACING IT
 
+	bool visible = true;
+
 	bool debug_highlight_enabled = false;
 
 	std::string name = "Untitled Actor";
 
 	// The constructor that should be used 99% of the time
-	Actor(const std::string& Name = "Untitled Actor");
+	explicit Actor(const std::string& Name);
 
-	// The constructor that a Theatre uses when creating Actors
-	Actor(Theatre* ParentTheatre, const graphx::gSettings& Settings = graphx::gSettings());
+	// The constructor that the Interpreter uses when creating Actors
+	explicit Actor(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
 
 	virtual ~Actor();
 
@@ -113,8 +108,6 @@ protected: // Members that aren't externally accessible
 	glm::quat quaternion_local = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::vec3 scale_global  = glm::vec3(1.0f);
 	glm::vec3 scale_local = glm::vec3(1.0f);
-
-	bool visible = true;
 
 	std::vector<RenderState> current_state_buffer;
 	std::vector<RenderState> previous_state_buffer;

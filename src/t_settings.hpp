@@ -49,7 +49,7 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 
 	if(setting_type == RAW_DATA)
 	{
-		graphx::interpreter::gRawData raw_data = std::any_cast<graphx::interpreter::gRawData>(set_value);
+		gRawData raw_data = std::any_cast<gRawData>(set_value);
 		std::string raw_data_lower = raw_data[0];
 		std::transform(raw_data_lower.begin(), raw_data_lower.end(), raw_data_lower.begin(), [](unsigned char c)
 		{

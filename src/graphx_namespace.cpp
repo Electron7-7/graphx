@@ -23,8 +23,8 @@ bool graphx::state::loading_new_main_theatre = true; // Definitely wanna replace
 // Safety
 Actor  graphx::safety::actor  = Actor("Safety Actor (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
 Device graphx::safety::device = Device("Safety Device (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
-GraphXPlayer graphx::safety::player = GraphXPlayer();
-Environment graphx::safety::environment = Environment();
+GraphXPlayer graphx::safety::player = GraphXPlayer("Safety Player (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
+Environment graphx::safety::environment = Environment("Safety Environment (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
 
 // Debug
 bool  graphx::debug::actor_debug_menu_open       = false;

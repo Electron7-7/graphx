@@ -7,19 +7,11 @@
 
 using namespace graphx;
 
-//--------------------
-// ActorPointerWrapper
-//--------------------
-ActorPointerWrapper::ActorPointerWrapper(Actor* new_pointer, const bool ownership)
-: pointer(new_pointer), owned_by_me(ownership)
-{}
-
-
 //------
 // Actor
 //------
-Actor::Actor(Theatre* my_parent_theatre, const gSettings& my_settings)
-: settings(my_settings), parent_theatre(my_parent_theatre)
+Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
+: parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
 {
 	RenderState render_state(position_global + position_local, quaternion_global * quaternion_local, scale_global * scale_local);
 	current_state_buffer = { render_state, render_state };
@@ -108,6 +100,11 @@ glm::quat Actor::getLocalQuaternion() const
 glm::vec3 Actor::getLocalEulerAngles(const bool use_degrees) const
 { return (use_degrees) ? (glm::degrees(glm::eulerAngles(quaternion_local))) : glm::eulerAngles(quaternion_local); }
 
+glm::vec3 Actor::getGlobalScale() const
+{ return scale_global; }
+
+glm::vec3 Actor::getLocalScale() const
+{ return scale_local; }
 
 
 // Set Global/Local Position/Rotation/Quaternion
@@ -129,6 +126,9 @@ void Actor::setGlobalYaw(const float new_yaw, const bool use_degrees)
 void Actor::setGlobalRoll(const float new_roll, const bool use_degrees)
 { setGlobalEulerAngles(glm::vec3(getGlobalEulerAngles(use_degrees)[0], getGlobalEulerAngles(use_degrees)[1], new_roll), use_degrees); updateOrientationVectors(); }
 
+void Actor::setGlobalScale(const glm::vec3& new_scale)
+{ scale_global = new_scale; }
+
 void Actor::setLocalPosition(const glm::vec3& new_position)
 { position_local = new_position; updateOrientationVectors(); }
 
@@ -146,6 +146,9 @@ void Actor::setLocalYaw(const float new_yaw, const bool use_degrees)
 
 void Actor::setLocalRoll(const float new_roll, const bool use_degrees)
 { setLocalEulerAngles(glm::vec3(getLocalEulerAngles(use_degrees)[0], getLocalEulerAngles(use_degrees)[1], new_roll), use_degrees); updateOrientationVectors(); }
+
+void Actor::setLocalScale(const glm::vec3& new_scale)
+{ scale_local = new_scale; }
 
 
 // Virtual functions

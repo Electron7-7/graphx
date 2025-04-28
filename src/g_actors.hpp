@@ -21,7 +21,7 @@ public:
 
 protected:
 	Actor* parent = this;
-	Sprite label_mesh = Sprite();
+	Sprite label_mesh = Sprite("Untitled Sprite");
 	TextRenderCmd text_render_command;
 };
 
@@ -43,8 +43,8 @@ class LightFlashlight; // Forward Declaration
 class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:
-	Model player_mesh = Model();
-	Camera player_camera;
+	Model player_mesh = Model("Untitled Model");
+	Camera player_camera = Camera("Player Camera");
 	LightFlashlight* player_flashlight = nullptr;
 
 	bool do_gravity = true; // Debugging, mostly
@@ -107,7 +107,7 @@ class LightDirectional : public Light
 public:
 	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
 
-	using Light::Light;
+	using Light::Actor;
 
 	RenderCommands getRenderCommands() override;
 	void loadSettings() override;
@@ -120,7 +120,7 @@ public:
 	float spot_angle = 17.5f;
 	float spot_angle_fade = 5.0f;
 
-	using Light::Light;
+	using Light::Actor;
 
 	RenderCommands getRenderCommands() override;
 	void loadSettings() override;
@@ -131,7 +131,7 @@ class LightFlashlight: public LightSpot
 public:
 	Actor* parent = nullptr;
 
-	using LightSpot::Light::Actor;
+	using LightSpot::Actor;
 	LightFlashlight(Actor* = nullptr);
 
 	void setLight(bool is_on);
@@ -159,7 +159,7 @@ public:
 	Model temporary_pivot_mesh = Model(&temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point");
 
-	using Light::Light;
+	using Light::Actor;
 
 	void tick(const int) override;
 	void loadSettings() override;

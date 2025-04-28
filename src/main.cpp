@@ -4,15 +4,12 @@
 #include "sanity.hpp"
 #include "sanity_printouts.hpp"
 #include "graphx_namespace.hpp"
-#include "g_actors.hpp"
 #include "g_devices.hpp"
 #include "g_theatre.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
-#include "r_common.hpp"
 #include "r_rendering.hpp"
 #include "t_common.hpp"
-#include "t_interpreter.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -224,7 +221,7 @@ void gameTick(GLFWwindow *main_window)
 			current_tick_since_second++;
 			current_tick_since_start++;
 
-			std::vector<Actor*> troupe = graphx::current::theatre.getTroupe(); // Todo: change the troupe to be a pointer/reference to the objects map?
+			std::vector<Actor*> troupe = graphx::current::theatre.getAllActors(); // Todo: change the troupe to be a pointer/reference to the objects map?
 			for(Actor *actor : troupe)
 			{
 				if(!ImGui::GetIO().WantCaptureKeyboard)
@@ -402,9 +399,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
-		std::vector<Device*> devices = graphx::current::theatre.getDevices();
-		for(Actor* actor : troupe)
-			actor->reset_to_initial_orientation_for_testing();
+		std::vector<Device*> devices = graphx::current::theatre.getAllDevices();
+		for(Device* device : devices)
+			if(Collider* collider = dynamic_cast<Collider*>(device)) collider->reset_to_default_transformation_for_testing();
 	}
 
 	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))
@@ -448,10 +445,10 @@ void mouseCallback(GLFWwindow *window, double x_position_in, double y_position_i
 	if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL || ImGui::GetIO().WantCaptureMouse)
 		return;
 
-	if(loading_new_main_theatre)
+	if(graphx::state::loading_new_main_theatre)
 		return;
 
-	getCurrentTheatre(false)->delegateMouseInput(window, x_position_in, y_position_in);
+	graphx::current::theatre.delegateMouseInput(window, x_position_in, y_position_in);
 }
 
 //----------------------------------------------

@@ -1,14 +1,34 @@
 #ifndef GRAPHX_THEATRE
-#include "t_interpreter.hpp"
 #include "graphx_namespace.hpp"
-#include "g_actor.hpp"
-#include "g_device.hpp"
 #include <glfw_fwd.hpp>
 #include <vector>
 #include <random>
 #include <map>
 #include <set>
 #define GRAPHX_THEATRE
+
+// Forward Declarations
+class Actor;
+struct Device;
+class GraphXTheatreInterpreter;
+
+// A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
+struct ActorPointerWrapper
+{
+    Actor* pointer = nullptr;
+    bool owned_by_me = false;
+
+    ActorPointerWrapper(Actor* = nullptr, const bool = false);
+};
+
+// A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
+struct DevicePointerWrapper
+{
+    Device* pointer = nullptr;
+    bool owned_by_me = false;
+
+    DevicePointerWrapper(Device* = nullptr, const bool = false);
+};
 
 // Note about Theatres:
 // I abstracted getting Actor and Device pointers to functions, because directly grabbing them from their maps
@@ -79,8 +99,8 @@ private:
     std::vector<Actor*> unwrapped_actors;
     std::vector<Device*> unwrapped_devices;
 
-    std::random_device uid_random_device;
-    std::mt19937 uid_random_generator;
+    static std::random_device uid_random_device;
+    static std::mt19937 uid_random_generator;
 
     int point_lights_count = 0;
     int spot_lights_count = 0;
@@ -103,9 +123,9 @@ private:
     void checkAndManageParallelActorDesync();
     void checkAndManageParallelDeviceDesync();
 
-    friend void GraphXTheatreInterpreter::loadTheatre(const long, Theatre&);
-    friend void Actor::setUID(const int);
-    friend void Device::setUID(const int);
+    friend GraphXTheatreInterpreter;
+    friend Actor;
+    friend Device;
 };
 
 #define THEATRE_ERR_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + std::to_string(uid) +  " already exists!"

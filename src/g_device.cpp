@@ -4,22 +4,15 @@
 
 using namespace graphx;
 
-//---------------------
-// DevicePointerWrapper
-//---------------------
-DevicePointerWrapper::DevicePointerWrapper(Device* new_pointer, const bool ownership)
-: pointer(new_pointer), owned_by_me(ownership)
-{}
-
 //-------
 // Device
 //-------
 Device::Device(const std::string& my_name)
-: name(my_name), settings(gSettings()), UID(-1), parent_theatre(nullptr)
+: name(my_name), parent_theatre(nullptr), settings(gSettings()), UID(-1)
 {}
 
-Device::Device(Theatre* my_parent_theatre, const gSettings& my_settings)
-: settings(my_settings), parent_theatre(my_parent_theatre)
+Device::Device(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
+: parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
 {}
 
 Device::~Device()

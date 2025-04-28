@@ -30,13 +30,16 @@ void Collider::loadSettings()
 	getSetting(scale, settings["Scale"]);
 
 	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
-	JPH::RVec3 body_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
-	JPH::Quat body_quaternion = JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
+	reset_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
+	reset_quaternion = JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
 
-	body_settings = JPH::BodyCreationSettings(J_CreateAShape(shape, shape_arguments), body_position, body_quaternion, motion_type, object_layer);
+	body_settings = JPH::BodyCreationSettings(J_CreateAShape(shape, shape_arguments), reset_position, reset_quaternion, motion_type, object_layer);
 	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
 	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
 }
+
+void Collider::reset_to_default_transformation_for_testing()
+{ jolt_physics_system.GetBodyInterface().SetPositionAndRotation(body_id, reset_position, reset_quaternion, JPH::EActivation::Activate); }
 
 JPH::BodyCreationSettings* Collider::getBodySettings()
 { return &body_settings; }
@@ -69,6 +72,10 @@ Texture::Texture(std::vector<unsigned char*> init_texture_data, std::vector<unsi
 
 Texture::Texture(unsigned char* init_texture_data, unsigned int init_texture_size)
 : Texture(std::vector<unsigned char*>{init_texture_data}, std::vector<unsigned int>{init_texture_size})
+{}
+
+Texture::Texture(const std::string& init_name)
+: Device(init_name)
 {}
 
 void Texture::loadSettings()
@@ -130,12 +137,9 @@ void Model::loadSettings()
 //
 // Sprite
 //
-Sprite::Sprite()
-: Model(Material(glm::vec3(1.0f), 0), GRAPHX_QUAD)
-{}
-
 void Sprite::loadSettings()
 {
 	Model::loadSettings();
+
 	mesh_data_name = GRAPHX_QUAD; // Override
 }

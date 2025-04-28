@@ -56,18 +56,17 @@ EMBED_OBJS =          \
 	$(O)/models.opp
 
 GRAPHX_OBJS =                   \
-	$(O)/graphx_namespace.opp   \
-	$(O)/graphx_classes.opp     \
 	$(O)/g_math.opp        		\
+	$(O)/graphx_namespace.opp   \
+	$(O)/g_theatre.opp			\
 	$(O)/g_jolt.opp        		\
-	$(O)/r_common.opp      		\
+	$(O)/g_device.opp			\
 	$(O)/g_actor.opp      		\
+	$(O)/g_devices.opp      	\
 	$(O)/g_actors.opp      		\
-	$(O)/g_actor_interfacer.opp \
+	$(O)/r_rendering.opp   		\
 	$(O)/g_imgui.opp       		\
-	$(O)/r_renderer.opp    		\
 	$(O)/t_interpreter.opp 		\
-	$(O)/g_theatre.opp
 
 OBJS =             \
 	$(EXT_OBJS)    \

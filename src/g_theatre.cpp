@@ -4,6 +4,21 @@
 #include "g_device.hpp"
 #include "r_rendering.hpp"
 #include <set>
+
+//--------------------
+// ActorPointerWrapper
+//--------------------
+ActorPointerWrapper::ActorPointerWrapper(Actor* new_pointer, const bool ownership)
+: pointer(new_pointer), owned_by_me(ownership)
+{}
+
+//---------------------
+// DevicePointerWrapper
+//---------------------
+DevicePointerWrapper::DevicePointerWrapper(Device* new_pointer, const bool ownership)
+: pointer(new_pointer), owned_by_me(ownership)
+{}
+
 //------------
 // LightsCount
 //------------
@@ -11,11 +26,14 @@ LightsCount::LightsCount(const unsigned int point_lights_count, const unsigned i
 : point_lights(point_lights_count), spot_lights(spot_lights_count), directional_lights(directional_lights_count)
 {}
 
+std::random_device Theatre::uid_random_device;
+std::mt19937 Theatre::uid_random_generator(uid_random_device());
+
 //--------
 // Theatre
 //--------
 Theatre::Theatre(const int new_uid, const std::string& new_name)
-: name(new_name), UID(new_uid), uid_random_generator(uid_random_device())
+: name(new_name), UID(new_uid)
 {}
 
 Theatre::Theatre(const std::string& new_name)
