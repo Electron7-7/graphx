@@ -123,6 +123,21 @@ void Theatre::probeRenderCommands()
     }
 }
 
+void Theatre::delegateKeyInput(GLFWwindow* window, const int key, const int scancode, const int action, const int mods) const
+{
+    for(Actor* actor : unwrapped_actors)
+        actor->processKey(window, key, scancode, action, mods);
+}
+
+void Theatre::delegateMouseInput(GLFWwindow* window, const double x_position_in, const double y_position_in) const
+{
+    for(Actor* actor : unwrapped_actors)
+        actor->processMouse(window, x_position_in, y_position_in);
+}
+
+const LightsCount Theatre::getLightsCount() const
+{ return LightsCount(point_lights_count, spot_lights_count, directional_lights_count); }
+
 void Theatre::addActor(Actor* new_actor)
 {
     if(wrapped_actors.contains(new_actor->getUID()))
@@ -166,6 +181,31 @@ Device* Theatre::getDevice(const int UID) const
     if(wrapped_devices.contains(UID))
         return wrapped_devices.at(UID).pointer;
     PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", UID))
+    return &graphx::safety::device;
+}
+
+Actor* Theatre::getActor(const std::string& actor_name) const
+{
+    for(Actor* actor : unwrapped_actors)
+        if(!actor_name.compare(actor->name))
+            return actor;
+    PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", actor_name))
+    return &graphx::safety::actor;
+}
+
+Device* Theatre::getDevice(const std::string& device_name) const
+{
+    PRINTDEBUG("getDevice(\""<< device_name <<"\")")
+    PRINTDEBUG("Candidates:")
+    for(Device* device : unwrapped_devices)
+    {
+        PRINTDEBUG(device->name)
+        if(!device_name.compare(device->name))
+        {
+            return device;
+        }
+    }
+    PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getDevice", "Device", device_name))
     return &graphx::safety::device;
 }
 
@@ -213,26 +253,24 @@ int Theatre::changeDeviceUID(const int old_uid, const int new_uid)
     return new_uid;
 }
 
-void Theatre::addInterpretedActor(Actor* new_actor)
+Actor* Theatre::addInterpretedActor(Actor* new_actor)
 {
     if(wrapped_actors.contains(new_actor->getUID()))
-    {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedActor", "an Actor", new_actor->getUID()))
-        return;
-    }
+    else
+        parallelAddActor(new_actor, new_actor->getUID(), true);
 
-    parallelAddActor(new_actor, new_actor->getUID(), true);
+    return wrapped_actors.at(new_actor->getUID()).pointer;
 }
 
-void Theatre::addInterpretedDevice(Device* new_device)
+Device* Theatre::addInterpretedDevice(Device* new_device)
 {
     if(wrapped_devices.contains(new_device->getUID()))
-    {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedDevice", "a Device", new_device->getUID()))
-        return;
-    }
+    else
+        parallelAddDevice(new_device, new_device->getUID(), true);
 
-    parallelAddDevice(new_device, new_device->getUID(), true);
+    return wrapped_devices.at(new_device->getUID()).pointer;
 }
 
 // These functions make sure that the maps and vectors are kept parallel; since these are private
@@ -244,6 +282,7 @@ void Theatre::parallelAddActor(Actor* pointer, const int UID, const bool ownersh
 {
     wrapped_actors[UID] = ActorPointerWrapper(pointer, ownership);
     unwrapped_actors.insert(unwrapped_actors.end(), pointer);
+    pointer->loadSettings();
     checkAndManageParallelActorDesync();
     checkAndSetCurrentVariables(pointer, nullptr);
 }
@@ -252,15 +291,34 @@ void Theatre::parallelAddDevice(Device* pointer, const int UID, const bool owner
 {
     wrapped_devices[UID] = DevicePointerWrapper(pointer, ownership);
     unwrapped_devices.insert(unwrapped_devices.end(), pointer);
+    pointer->loadSettings();
     checkAndManageParallelActorDesync();
     checkAndSetCurrentVariables(nullptr, pointer);
 }
 
 void Theatre::parallelRemoveActor(const int UID)
-{}
+{
+    for(int i = 0; i < unwrapped_actors.size(); i++)
+        if(unwrapped_actors.at(i) == wrapped_actors.at(UID).pointer)
+            unwrapped_actors.erase(unwrapped_actors.begin() + i);
+
+    wrapped_actors.erase(UID);
+
+    if(wrapped_actors.at(UID).owned_by_me)
+        delete wrapped_actors.at(UID).pointer;
+}
 
 void Theatre::parallelRemoveDevice(const int UID)
-{}
+{
+    for(int i = 0; i < unwrapped_devices.size(); i++)
+        if(unwrapped_devices.at(i) == wrapped_devices.at(UID).pointer)
+            unwrapped_devices.erase(unwrapped_devices.begin() + i);
+
+    wrapped_devices.erase(UID);
+
+    if(wrapped_devices.at(UID).owned_by_me)
+        delete wrapped_devices.at(UID).pointer;
+}
 
 void Theatre::checkAndManageParallelActorDesync()
 {

@@ -3,7 +3,7 @@
 #include "graphx_namespace.hpp"
 #define GRAPHX_THEATRE_INTERPRETER
 
-class GraphXTheatreInterpreter final
+class GraphXTheatreInterpreter
 {
 public:
 
@@ -36,4 +36,9 @@ private:
         "(Image)\n\t"         + image_extensions;
 
 };
+
+namespace graphx
+{
+    extern GraphXTheatreInterpreter Interpreter;
+}
 #endif

@@ -21,7 +21,7 @@ WINCLUDES = -I src/include -I src/windows_dependencies/include
 WLIBS = -L src/windows_dependencies/lib/jolt-mingw-w64 -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
 
 JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
-GRAPHXFLAGS = -D GRAPHX_COMPILING
+GRAPHXFLAGS = -D COMPILER_FORWARD_DECLARATIONS
 
 LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
 WINDOWS = GraphX_Windows_x86_64.exe
@@ -139,7 +139,7 @@ rebuild_models:
 	-make -s $(MODELS_C)
 
 compile_commands:
-	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
+	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
 
 test: eval_test
 	$(info GraphX Will Test-Run After Compiling)
@@ -152,12 +152,11 @@ debug: rebuild_shaders rebuild_theatres
 	$(info Version: Debug)
 	$(eval LINUX := GraphXDebug)
 	$(eval WINDOWS := GraphXDebug.exe)
-	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG)
+	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
 	-rm -f build/*.tmp
 
 release: clean_resources embed_resources
 	$(info Version: Release)
-	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING)
 	-rm -f build/*.tmp
 
 linux: NAME = $(LINUX)

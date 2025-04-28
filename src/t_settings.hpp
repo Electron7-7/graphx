@@ -9,9 +9,10 @@
 #include <algorithm>
 #include <Jolt/Jolt.h>
 
-// Forward Declarations
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
 class Actor;
 struct Device;
+#endif
 
 #define DEFAULT_VALUE_SETTING 99
 

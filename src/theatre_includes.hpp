@@ -3,7 +3,6 @@
 #define THEATRE_INCLUDES
 #include <models.hpp>
 #include <gmath.hpp>
-#ifndef GRAPHX_COMPILING
 #include "g_devices.hpp"
 #include "g_actor.hpp"
 #include "g_theatre.hpp"
@@ -14,5 +13,4 @@
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/PlaneShape.h>
-#endif
 #endif

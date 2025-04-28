@@ -12,7 +12,7 @@ Device::Device(const std::string& my_name)
 {}
 
 Device::Device(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
-: parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
+: name("Untitled Device"), parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
 {}
 
 Device::~Device()

@@ -1,12 +1,16 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
-#include "g_actor.hpp"
 #include "g_devices.hpp"
 #include "r_common.hpp"
+#include "g_actor.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Character/Character.h>
+
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
+class LightFlashlight; // Forward Declaration
+#endif
 
 class Label : public Actor
 {
@@ -39,7 +43,7 @@ private:
 	glm::vec2 mouse_last = glm::vec2(0.0f);
 };
 
-class LightFlashlight; // Forward Declaration
+
 class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:
@@ -107,7 +111,7 @@ class LightDirectional : public Light
 public:
 	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
 
-	using Light::Actor;
+	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
 	void loadSettings() override;
@@ -120,7 +124,7 @@ public:
 	float spot_angle = 17.5f;
 	float spot_angle_fade = 5.0f;
 
-	using Light::Actor;
+	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
 	void loadSettings() override;
@@ -131,7 +135,7 @@ class LightFlashlight: public LightSpot
 public:
 	Actor* parent = nullptr;
 
-	using LightSpot::Actor;
+	using LightSpot::LightSpot;
 	LightFlashlight(Actor* = nullptr);
 
 	void setLight(bool is_on);
@@ -159,7 +163,7 @@ public:
 	Model temporary_pivot_mesh = Model(&temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point");
 
-	using Light::Actor;
+	using Light::Light;
 
 	void tick(const int) override;
 	void loadSettings() override;
@@ -185,4 +189,17 @@ public:
 	void tick(const int) override;
 	void loadSettings() override;
 };
+
+namespace graphx
+{
+	namespace current
+	{
+		extern GraphXPlayer* player;
+	}
+
+	namespace safety
+	{
+		extern GraphXPlayer player;
+	}
+}
 #endif

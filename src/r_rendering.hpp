@@ -87,18 +87,18 @@ extern bool enable_default_shader;
 #define USE_VERTEX_COLORS 3
 extern int debug_render_switches;
 
-GLFWwindow *W_CreateWindow(int width, int height, const char *title = "Fucking GraphX", bool make_context_current = true);
-void        W_SwapAndClear(GLFWwindow *w_window, glm::vec3 w_clear_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+GLFWwindow* W_CreateWindow(int Width, int Height, const char* Title = "Fucking GraphX", bool IsCurrentContext = true);
+void        W_SwapAndClear(GLFWwindow* Window, glm::vec4 ClearColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 void        F_InitializeFreeType();
-void        F_LoadFont(std::string ttf_file_path, std::string font_name);
+void        F_LoadFont(std::string FilePath, std::string FontName);
 void        R_InitializeRenderingAPI();
 void        R_BufferMeshesAndTextures();
-void        R_BufferRenderCommands(RenderCommands render_commands);
-void        R_BufferRenderCmd(RenderCmd render_command);
-void        R_BufferRenderCmd(LightRenderCmd light_render_command);
-void        R_BufferRenderCmd(TextRenderCmd text_render_command);
-void        R_Render(std::mutex &state_mutex, float interpolation_time);
-std::string T_LoadImageFile(std::string file_path);
-std::string M_LoadModelFile(std::string file_path, std::string file_extension);
-Mesh    M_LoadOBJ(std::string embedded_obj_file);
+void        R_BufferRenderCommands(RenderCommands);
+void        R_BufferRenderCmd(RenderCmd);
+void        R_BufferRenderCmd(LightRenderCmd);
+void        R_BufferRenderCmd(TextRenderCmd);
+void        R_Render(std::mutex& ActorStateMutex, float InterpolationTime);
+std::string T_LoadImageFile(std::string FilePath);
+std::string M_LoadModelFile(std::string FilePath, std::string FileExtension);
+Mesh        M_LoadOBJ(std::string EmbeddedOBJ);
 #endif

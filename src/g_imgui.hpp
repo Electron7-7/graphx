@@ -7,7 +7,10 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include <string>
+
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
 class Actor; // Forward Declaration
+#endif
 
 struct GraphXConsole
 {

@@ -3,6 +3,8 @@
 #include "g_device.hpp"
 #include "g_theatre.hpp"
 #include "t_interpreter.hpp"
+#include "g_device.hpp"
+#include "g_actor.hpp"
 
 // GraphX
 GraphXTheatreInterpreter graphx::Interpreter = GraphXTheatreInterpreter();

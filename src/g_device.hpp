@@ -2,16 +2,20 @@
 #include "graphx_namespace.hpp"
 #define GRAPHX_DEVICE
 
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
+struct Theatre;
+#endif
+
 struct Device
 {
 public:
     std::string name = "Untitled Device";
 
     // The constructor that should be used 99% of the time
-    explicit Device(const std::string& Name);
+    Device(const std::string& Name);
 
     // The constructor that the Interpreter uses when creating Devices
-    explicit Device(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
+    Device(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
 
     virtual ~Device();
 
@@ -29,4 +33,12 @@ protected:
 private:
     int UID = -1;
 };
+
+namespace graphx
+{
+    namespace safety
+    {
+        extern Device device;
+    }
+}
 #endif

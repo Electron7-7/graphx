@@ -2529,3 +2529,6 @@ if (Derived3* derived3_ptr = dynamic_cast<Derived3*>(base_ptr)) {
 Yeah, it's that fucking simple.
 
 Okay, Actors & Devices should have a unique identifier number, but changing that number should be a Theatre function if I'm going to store them in a map as opposed to a vector (which I do want to).
+
+[04/28/25]
+I've gotten the code compiling and linking, but now I'm running into a weird crash due to "malloc_consolidate(): unaligned fastbin chunk detected". I'm pretty sure that this is a stack overflow, but whatever it is I'll figure it out tomorrow. I'm just happy that it compiles and links.

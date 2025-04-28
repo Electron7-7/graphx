@@ -344,7 +344,7 @@ void GraphXTheatreInterpreter::interpretExternalReference(graphx::gSettings &cur
 {
 	std::string file_extension = external_reference.substr(external_reference.find_last_of(".") + 1);
 
-	if(valid_extensions.find(file_extension) == std::string::npos)
+	if(validExtensions().find(file_extension) == std::string::npos)
 	{
 		PRINTERR("Tried to interpret an External Reference setting for a file type that is not supported! Supported files are:\n" << what_are_the_valid_extensions)
 		return;
@@ -470,13 +470,13 @@ void GraphXTheatreInterpreter::interpretSandwich(graphx::gSettings& current_obje
 
 	if(gClasses::isActor(sandwich_bun_setting.first))
 	{
-		Actor* sandwich_bun = valid_actors.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings);
+		Actor* sandwich_bun = new_theatre.addInterpretedActor(valid_actors.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
 	else if(gClasses::isDevice(sandwich_bun_setting.first))
 	{
-		Device* sandwich_bun = valid_devices.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings);
+		Device* sandwich_bun = new_theatre.addInterpretedDevice(valid_devices.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
@@ -637,7 +637,7 @@ bool _checkForExternalTheatres()
 	return false;
 }
 
-bool checkForAndLoadExternalTheatres()
+bool I_CheckForAndLoadExternalTheatres()
 {
 	if(!_checkForExternalTheatres())
 	{
@@ -656,7 +656,7 @@ bool checkForAndLoadExternalTheatres()
 		if(entry.path().extension().string().compare(GRAPHXTHEATRE_EXTENSION) == 0)
 		{
 			has_theatre_file = true;
-			embedExternalTheatre(entry.path());
+			I_EmbedExternalTheatre(entry.path());
 		}
 	}
 

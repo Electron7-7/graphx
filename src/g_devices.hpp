@@ -1,7 +1,7 @@
 #ifndef GRAPHX_DEVICES
 #include "graphx_namespace.hpp"
-#include "g_device.hpp"
 #include "g_jolt.hpp"
+#include "g_device.hpp"
 #include <images.h>
 #include <models.hpp>
 #define GRAPHX_DEVICES
@@ -81,7 +81,6 @@ struct Material final : public Device
 	bool use_texture = true;
 	
 	using Device::Device;
-	Material();
 	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
 	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
@@ -92,7 +91,7 @@ struct Material final : public Device
 struct Model : public Device
 {
 	// int material_uid;
-	Material material_base = Material(); // This is a bad way to make sure material is never nullptr
+	Material material_base = Material(glm::vec3(1.0f)); // This is a bad way to make sure material is never nullptr
 	Material* material = &material_base; // This is going to be replaced with material_id
 
 	unsigned int VBO = 0;
@@ -112,8 +111,22 @@ struct Model : public Device
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 struct Sprite : public Model
 {
-	using Model::Device;
+	using Model::Model;
 
 	void loadSettings() override;
 };
+
+namespace graphx
+{
+	namespace current
+	{
+		extern Environment* environment;
+	}
+
+	namespace safety
+	{
+		extern Device device;
+		extern Environment environment;
+	}
+}
 #endif

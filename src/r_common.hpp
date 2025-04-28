@@ -7,6 +7,10 @@
 #include <map>
 #define GRAPHX_RENDERING_COMMON
 
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
+struct Material; // REMOVE THIS LATER
+#endif
+
 struct Character
 {
     unsigned int texture_id;
@@ -36,10 +40,8 @@ struct RenderState
 {
     glm::vec3 render_position = glm::vec3(0.0f);
     glm::quat render_quaternion = glm::quat();
-    glm::vec3 render_scale = glm::vec3(0.0f);
+    glm::vec3 render_scale = glm::vec3(1.0f);
 };
-
-struct Material; // Forward Declaration (get rid of this later)
 
 struct RenderCmd
 {

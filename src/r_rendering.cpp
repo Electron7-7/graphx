@@ -4,6 +4,7 @@
 #include "g_actors.hpp"
 #include "sanity.hpp"
 #include "t_common.hpp"
+#include "t_interpreter.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT
@@ -106,6 +107,13 @@ template<> void GLShader::setUniform<glm::mat3>(const std::string &name, glm::ma
 
 template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::mat4 value) const
 { glProgramUniformMatrix4fv(id, glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value)); }
+
+template<> void GLShader::setUniform<LightsCount>(const std::string &name, LightsCount value) const
+{
+	glProgramUniform1i(id, glGetUniformLocation(id, std::string(name + ".point_lights").c_str()), value.point_lights);
+	glProgramUniform1i(id, glGetUniformLocation(id, std::string(name + ".spot_lights").c_str()), value.spot_lights);
+	glProgramUniform1i(id, glGetUniformLocation(id, std::string(name + ".directional_lights").c_str()), value.directional_lights);
+}
 
 //
 // Mesh
@@ -372,13 +380,13 @@ std::map<std::string, Texture> texture_storage =
 	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png, SOURCE_ORANGE_png_len)},
 };
 
-GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_context_current)
+GLFWwindow* W_CreateWindow(int width, int height, const char *title, bool make_context_current)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow *new_window = glfwCreateWindow(width, height, title, NULL, NULL);
+	GLFWwindow* new_window = glfwCreateWindow(width, height, title, NULL, NULL);
 	
 	if(new_window == NULL)
 	{
@@ -395,10 +403,10 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 	return new_window;
 }
 
-void W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color)
+void W_SwapAndClear(GLFWwindow* window, glm::vec4 clear_color)
 {
-	glfwSwapBuffers(w_window);
-	glClearColor(w_clear_color[0], w_clear_color[1], w_clear_color[2], w_clear_color[3]);
+	glfwSwapBuffers(window);
+	glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -443,7 +451,7 @@ std::string T_LoadImageFile(std::string file_path)
 
 std::string M_LoadModelFile(std::string file_path, std::string file_extension)
 {
-	if(valid_extensions.find(file_extension) == std::string::npos)
+	if(graphx::Interpreter.validExtensions().find(file_extension) == std::string::npos)
 	{
 		PRINTERR("M_LoadModelFile called with an unsupported file type! An error mesh will be returned!")
 		return ERROR_MODEL;

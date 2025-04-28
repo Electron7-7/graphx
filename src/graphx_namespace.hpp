@@ -5,14 +5,6 @@
 #include <any>
 #include <string>
 
-// Forward Declarations
-class Actor;
-class GraphXPlayer;
-struct Device;
-struct Environment;
-struct Theatre;
-class GraphXTheatreInterpreter;
-
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 #define UID_EMPTY -1 // Just to keep things consistent
 
@@ -20,15 +12,6 @@ namespace graphx
 {
 	typedef std::pair<int, std::any> gSetting; // The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`
 	typedef std::unordered_map<std::string, gSetting> gSettings;
-
-	extern GraphXTheatreInterpreter Interpreter;
-
-	namespace current
-	{
-		extern Theatre theatre;
-		extern GraphXPlayer* player;
-		extern Environment* environment;
-	}
 
 	namespace orientation
 	{
@@ -40,14 +23,6 @@ namespace graphx
 	namespace state
 	{
 		extern bool loading_new_main_theatre;
-	}
-
-	namespace safety
-	{   // Example use-case: Theatre::getActor should always return a valid Actor pointer, so the worst case scenario is that it returns &graphx::safety::actor
-		extern Actor actor;
-		extern GraphXPlayer player;
-		extern Device device;
-		extern Environment environment;
 	}
 
 	namespace debug

@@ -1,195 +1,39 @@
 #include <string>
 #include <map>
 std::map<int, std::string> embedded_theatres =
-{{0, std::string{R"~(@HelloWorldTheatre
-Material (Doom_Shiny)
+{{0, std::string{R"~(@Testing
+GraphXPlayer (Player)
 {
-	DiffuseTexture    [DOOM_TEXTURE_DIFF]
-	SpecularTexture   [DOOM_TEXTURE_SPEC]
-	SpecularSharpness (64)
-	SpecularStrength  (0.8)
-}
-Material (Doom_Dull)
-{
-	DiffuseTexture    [DOOM_TEXTURE_DIFF]
-	SpecularTexture   [DOOM_TEXTURE_SPEC]
-	SpecularSharpness (8)
-	SpecularStrength  (0.4)
-}
-Material (Source_Mat_1)
-{
-	DiffuseTexture [SOURCE_ORANGE]
-	SpecularTexture [NO_TEXTURE]
-	SpecularStrength (0)
-}
-Material (Suzanne_Mat)
-{
-	DiffuseTexture [SOURCE_LIGHT_GREY]
-	SpecularTexture [NO_TEXTURE]
-	Color (1.0, 0.05, 0.1)
-	SpecularSharpness (128)
-	SpecularStrength (0.5)
-}
-Material (Pyramid_Mat)
-{
-	DiffuseTexture [SOURCE_LIGHT_GREY]
-	SpecularTexture [NO_TEXTURE]
-	Color (0.1, 0.7, 0.9)
-	SpecularSharpness (128)
-	SpecularStrength (0.5)
-}
-Mesh (Cube)
-{
-	MeshData [GRAPHX_CUBE]
-}
-Mesh (Pyramid)
-{
-	MeshData [GRAPHX_PYRAMID]
-}
-Mesh (OBJ_Mesh)
-{
-	MeshData [OBJ_SUZANNE]
-}
-Material (LabelMat)
-{
-	DiffuseTexture [NO_TEXTURE]
-	SpecularStrength (0)
-	Color (0,0,0)
-}
-Mesh (LabelMesh)
-{
-	MeshData [GRAPHX_QUAD]
-	Material <LabelMat>
-}
-Label (Label3D)
-{
-	Mesh <LabelMesh>
-	Font (Verdana)
-	Color (0.2, 0.8, 1.0)
-	Alpha (1.0)
-	Text (Hello, I am a Label)
-	Scale (3,1,1)
-	Position (2, 3, -12)
-	TextPosition (0,0)
-	TextScale (2)
-}
-Label (Label3D)
-{
-	Mesh <LabelMesh>
-	Font (Verdana)
-	Color (0.2, 0.8, 1.0)
-	Alpha (0.0)
-	Text (I am also a Label, hi)
-	Scale (1,1,1)
-	Position (2, 1, -12)
-	TextPosition (0,0)
-	TextScale (1.7)
-}
-Actor (Suzanne_Tester)
-{
-	Mesh:Material <OBJ_Mesh>:<Suzanne_Mat>
-	Scale (1.0, 1.0, 1.0)
-	Position (10.0, 4.0, 0.0)
-}
-Actor (Pyramid_Tester)
-{
-	Mesh:Material <Pyramid>:<Source_Mat_1>
-	Scale (1.5, 1.5, 1.5)
-	Position (8.0, 4.0, -4.0)
-}
-Actor (Pyramid_Tester_2)
-{
-	Mesh:Material <Pyramid>:<Source_Mat_1>
-	Scale (1.5, 1.5, 1.5)
-	Position (8.0, 1.0, -8.0)
-}
-StaticBodyActor (Floor)
-{
-	Mesh:MeshData:Material <OBJ_Mesh>:[GRAPHX_CUBE]:<Doom_Dull>
-	Scale		  (50.0, 1.0, 50.0)
-	Position      (0.0, -1.0, 0.0)
-}
-StaticBodyActor (Wall)
-{
-	Mesh:Material <Cube>:<Doom_Dull>
-	Scale		  (50.0, 50.0, 1.0)
-	Position      (0.0, 50.0, -51.0)
+    DoGravity (false)
 }
 Environment (environment)
 {
-	AmbientLightColor (1.0, 1.0, 1.0)
-	AmbientLightAmount (0.2)
+    AmbientLightColor (1.0, 1.0, 1.0)
+    AmbientLightAmount (0.2)
 }
 LightDirectional (Sun)
 {
-	Direction (-0.2, -1.0, -0.3)
-	Energy    (0.5)
-	Color     (0.8, 0.9, 1.0)
+    Direction (-0.2, -1.0, -0.3)
+    Energy    (1.0)
+    Color     (0.8, 0.9, 1.0)
 }
-LightTesterMover (spinny_light)
+Model (Cube)
 {
-	PivotPosition (5.3, 1.0, -3.8)
-	PivotRadius   (1.2)
-	PivotSpeed    (1.8)
-	Color         (1.0, 0.15, 0.3)
-	Energy        (0.7)
+    MeshData [GRAPHX_CUBE]
 }
-LightTesterMover (spinny_light_2)
+Material (Doom_Dull)
 {
-	PivotPosition (-11.0, 1.7, -4.3)
-	PivotRadius   (2.4)
-	PivotSpeed    (0.87)
-	Color         (0.10, 1.0, 0.4)
+    DiffuseTexture    [DOOM_TEXTURE_DIFF]
+    SpecularTexture   [DOOM_TEXTURE_SPEC]
+    SpecularSharpness (8)
+    SpecularStrength  (0.4)
 }
-RigidBodyActor (Falling_Cube_1)
+Actor (Floor)
 {
-	Mesh:Material <Cube>:<Doom_Shiny>
-	Scale		  (1.0, 1.0, 1.0)
-	Position      (-2.0, 9.0, -6.0)
-}
-RigidBodyActor (Falling_Cube_2)
-{
-	Mesh:Material   <Cube>:<Doom_Shiny>
-	Scale		    (3.0, 0.8, 1.0)
-	Position        (-2.3, 11.5, -5.2)
-	Rotation        (5.0, -2.0, 37.0)
-}
-RigidBodyActor (Falling_Cube_3)
-{
-	Mesh:Material   <Cube>:<Doom_Dull>
-	Scale		    (4.2, 0.9, 2.7)
-	Position        (-3.5, 6.7, -4.0)
-	Rotation        (0.0, 60.0, 25.0)
-}
-RigidBodyActor (Falling_Cube_4)
-{
-	Mesh:Material   <Cube>:<Doom_Dull>
-	Scale		    (0.78, 0.5, 0.8)
-	Position        (-3.3, 7.2, -5.2)
-	Rotation        (5.0, -2.0, 37.0)
-}
-RigidBodyActor (Falling_Cube_5)
-{
-	Mesh:Material   <Cube>:<Source_Mat_1>
-	Scale		    (5.0, 3.5, 1.2)
-	Position        (-5.3, 12.2, -6.2)
-	Rotation        (15.0, -25.0, 37.0)
-}
-RigidBodyActor (Falling_Cube_6)
-{
-	Mesh:Material   <Cube>:<Source_Mat_1>
-	Scale		    (0.3, 0.5, 0.3)
-	Position        (-5.3, 9.2, -6.2)
-	Rotation        (-45.0, 25.0, 8.0)
-}
-GraphXPlayer (main_player)
-{
-	Position             (0.0, 3.0, 8.0)
-	MovementSpeed        (10.0)
-	MovementAcceleration (2.0)
-}
-LightFlashlight (Player_Flashlight)
-{})~"}},{1, std::string{R"~(@CollisionTesting
+    Model:Material <Cube>:<Doom_Dull>
+    Scale         (50.0, 1.0, 50.0)
+    Position      (0.0, -1.0, 0.0)
+})~"}},{1, std::string{R"~(@CollisionTesting
 GraphXPlayer (main_player)
 {
 	Position             (0.0, 3.0, 6.0)
@@ -479,5 +323,193 @@ RigidBodyActor (FallOnMe3)
 	Mesh <Cube_Mesh>
 	Position (0.0, 5.0, -5.0)
 	Scale (1.1, 3.3, 0.7)
-})~"}}
+})~"}},{3, std::string{R"~(@HelloWorldTheatre
+Material (Doom_Shiny)
+{
+	DiffuseTexture    [DOOM_TEXTURE_DIFF]
+	SpecularTexture   [DOOM_TEXTURE_SPEC]
+	SpecularSharpness (64)
+	SpecularStrength  (0.8)
+}
+Material (Doom_Dull)
+{
+	DiffuseTexture    [DOOM_TEXTURE_DIFF]
+	SpecularTexture   [DOOM_TEXTURE_SPEC]
+	SpecularSharpness (8)
+	SpecularStrength  (0.4)
+}
+Material (Source_Mat_1)
+{
+	DiffuseTexture [SOURCE_ORANGE]
+	SpecularTexture [NO_TEXTURE]
+	SpecularStrength (0)
+}
+Material (Suzanne_Mat)
+{
+	DiffuseTexture [SOURCE_LIGHT_GREY]
+	SpecularTexture [NO_TEXTURE]
+	Color (1.0, 0.05, 0.1)
+	SpecularSharpness (128)
+	SpecularStrength (0.5)
+}
+Material (Pyramid_Mat)
+{
+	DiffuseTexture [SOURCE_LIGHT_GREY]
+	SpecularTexture [NO_TEXTURE]
+	Color (0.1, 0.7, 0.9)
+	SpecularSharpness (128)
+	SpecularStrength (0.5)
+}
+Model (Cube)
+{
+	MeshData [GRAPHX_CUBE]
+}
+Model (Pyramid)
+{
+	MeshData [GRAPHX_PYRAMID]
+}
+Model (OBJ_Mesh)
+{
+	MeshData [OBJ_SUZANNE]
+}
+Material (LabelMat)
+{
+	DiffuseTexture [NO_TEXTURE]
+	SpecularStrength (0)
+	Color (0,0,0)
+}
+Model (LabelMesh)
+{
+	MeshData [GRAPHX_QUAD]
+	Material <LabelMat>
+}
+Label (Label3D)
+{
+	Model <LabelMesh>
+	Font (Verdana)
+	Color (0.2, 0.8, 1.0)
+	Alpha (1.0)
+	Text (Hello, I am a Label)
+	Scale (3,1,1)
+	Position (2, 3, -12)
+	TextPosition (0,0)
+	TextScale (2)
+}
+Label (Label3D)
+{
+	Model <LabelMesh>
+	Font (Verdana)
+	Color (0.2, 0.8, 1.0)
+	Alpha (0.0)
+	Text (I am also a Label, hi)
+	Scale (1,1,1)
+	Position (2, 1, -12)
+	TextPosition (0,0)
+	TextScale (1.7)
+}
+Actor (Suzanne_Tester)
+{
+	Model:Material <OBJ_Mesh>:<Suzanne_Mat>
+	Scale (1.0, 1.0, 1.0)
+	Position (10.0, 4.0, 0.0)
+}
+Actor (Pyramid_Tester)
+{
+	Model:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 4.0, -4.0)
+}
+Actor (Pyramid_Tester_2)
+{
+	Model:Material <Pyramid>:<Source_Mat_1>
+	Scale (1.5, 1.5, 1.5)
+	Position (8.0, 1.0, -8.0)
+}
+StaticBodyActor (Floor)
+{
+	Model:MeshData:Material <OBJ_Mesh>:[GRAPHX_CUBE]:<Doom_Dull>
+	Scale		  (50.0, 1.0, 50.0)
+	Position      (0.0, -1.0, 0.0)
+}
+StaticBodyActor (Wall)
+{
+	Model:Material <Cube>:<Doom_Dull>
+	Scale		  (50.0, 50.0, 1.0)
+	Position      (0.0, 50.0, -51.0)
+}
+Environment (environment)
+{
+	AmbientLightColor (1.0, 1.0, 1.0)
+	AmbientLightAmount (0.2)
+}
+LightDirectional (Sun)
+{
+	Direction (-0.2, -1.0, -0.3)
+	Energy    (0.5)
+	Color     (0.8, 0.9, 1.0)
+}
+LightTesterMover (spinny_light)
+{
+	PivotPosition (5.3, 1.0, -3.8)
+	PivotRadius   (1.2)
+	PivotSpeed    (1.8)
+	Color         (1.0, 0.15, 0.3)
+	Energy        (0.7)
+}
+LightTesterMover (spinny_light_2)
+{
+	PivotPosition (-11.0, 1.7, -4.3)
+	PivotRadius   (2.4)
+	PivotSpeed    (0.87)
+	Color         (0.10, 1.0, 0.4)
+}
+RigidBodyActor (Falling_Cube_1)
+{
+	Model:Material <Cube>:<Doom_Shiny>
+	Scale		  (1.0, 1.0, 1.0)
+	Position      (-2.0, 9.0, -6.0)
+}
+RigidBodyActor (Falling_Cube_2)
+{
+	Model:Material   <Cube>:<Doom_Shiny>
+	Scale		    (3.0, 0.8, 1.0)
+	Position        (-2.3, 11.5, -5.2)
+	Rotation        (5.0, -2.0, 37.0)
+}
+RigidBodyActor (Falling_Cube_3)
+{
+	Model:Material   <Cube>:<Doom_Dull>
+	Scale		    (4.2, 0.9, 2.7)
+	Position        (-3.5, 6.7, -4.0)
+	Rotation        (0.0, 60.0, 25.0)
+}
+RigidBodyActor (Falling_Cube_4)
+{
+	Model:Material   <Cube>:<Doom_Dull>
+	Scale		    (0.78, 0.5, 0.8)
+	Position        (-3.3, 7.2, -5.2)
+	Rotation        (5.0, -2.0, 37.0)
+}
+RigidBodyActor (Falling_Cube_5)
+{
+	Model:Material   <Cube>:<Source_Mat_1>
+	Scale		    (5.0, 3.5, 1.2)
+	Position        (-5.3, 12.2, -6.2)
+	Rotation        (15.0, -25.0, 37.0)
+}
+RigidBodyActor (Falling_Cube_6)
+{
+	Model:Material   <Cube>:<Source_Mat_1>
+	Scale		    (0.3, 0.5, 0.3)
+	Position        (-5.3, 9.2, -6.2)
+	Rotation        (-45.0, 25.0, 8.0)
+}
+GraphXPlayer (main_player)
+{
+	Position             (0.0, 3.0, 8.0)
+	MovementSpeed        (10.0)
+	MovementAcceleration (2.0)
+}
+LightFlashlight (Player_Flashlight)
+{})~"}}
 };

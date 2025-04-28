@@ -10,9 +10,11 @@
 #include <mutex>
 #include <vector>
 
-// Forward Declarations
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
 struct ActorPointerWrapper;
 struct DevicePointerWrapper;
+struct Theatre;
+#endif
 
 class Actor
 {
@@ -29,10 +31,10 @@ public: // Externally accessible members
 	std::string name = "Untitled Actor";
 
 	// The constructor that should be used 99% of the time
-	explicit Actor(const std::string& Name);
+	Actor(const std::string& Name);
 
 	// The constructor that the Interpreter uses when creating Actors
-	explicit Actor(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
+	Actor(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
 
 	virtual ~Actor();
 
@@ -92,7 +94,6 @@ public: // Externally accessible members
 
 protected: // Members that aren't externally accessible
 	Theatre* parent_theatre = nullptr;
-
 	graphx::gSettings settings = graphx::gSettings();
 
 	std::vector<ActorPointerWrapper> child_actors;
@@ -109,8 +110,9 @@ protected: // Members that aren't externally accessible
 	glm::vec3 scale_global  = glm::vec3(1.0f);
 	glm::vec3 scale_local = glm::vec3(1.0f);
 
-	std::vector<RenderState> current_state_buffer;
-	std::vector<RenderState> previous_state_buffer;
+	// Consider changing vector to array
+	std::vector<RenderState> current_state_buffer  = { RenderState(), RenderState() };
+	std::vector<RenderState> previous_state_buffer = { RenderState(), RenderState() };
 	int state_index = 0;
 
 	glm::vec4 debug_highlight_color = glm::vec4(0.3f, 0.4f, 0.7f, 0.3f);
@@ -127,4 +129,12 @@ protected: // Members that aren't externally accessible
 private:
 	int UID = -1;
 };
+
+namespace graphx
+{
+	namespace safety
+	{
+		extern Actor actor;
+	}
+}
 #endif

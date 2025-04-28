@@ -1,0 +1,33 @@
+@Testing
+GraphXPlayer (Player)
+{
+    DoGravity (false)
+}
+Environment (environment)
+{
+    AmbientLightColor (1.0, 1.0, 1.0)
+    AmbientLightAmount (0.2)
+}
+LightDirectional (Sun)
+{
+    Direction (-0.2, -1.0, -0.3)
+    Energy    (1.0)
+    Color     (0.8, 0.9, 1.0)
+}
+Model (Cube)
+{
+    MeshData [GRAPHX_CUBE]
+}
+Material (Doom_Dull)
+{
+    DiffuseTexture    [DOOM_TEXTURE_DIFF]
+    SpecularTexture   [DOOM_TEXTURE_SPEC]
+    SpecularSharpness (8)
+    SpecularStrength  (0.4)
+}
+Actor (Floor)
+{
+    Model:Material <Cube>:<Doom_Dull>
+    Scale         (50.0, 1.0, 50.0)
+    Position      (0.0, -1.0, 0.0)
+}

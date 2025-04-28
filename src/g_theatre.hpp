@@ -1,5 +1,4 @@
 #ifndef GRAPHX_THEATRE
-#include "graphx_namespace.hpp"
 #include <glfw_fwd.hpp>
 #include <vector>
 #include <random>
@@ -7,10 +6,11 @@
 #include <set>
 #define GRAPHX_THEATRE
 
-// Forward Declarations
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
 class Actor;
 struct Device;
 class GraphXTheatreInterpreter;
+#endif
 
 // A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
 struct ActorPointerWrapper
@@ -36,6 +36,13 @@ struct DevicePointerWrapper
 // reason, so abstracting to these functions lets me put a PRINTERR in them that will print a detailed warning
 // message if the function can't find the Actor/Device (before returning a nullptr). This means that getting
 // Actor or Device pointers won't (directly) crash the engine, but will print a warning if it returns a nullptr.
+
+// Error message macros
+#define THEATRE_ERR_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + std::to_string(uid) +  " already exists!"
+#define THEATRE_ERR_INVALID_UID(function, type, uid) std::string(function) + " - no " + std::string(type) + " with the UID " + std::to_string(uid) + " was found! Returning \"&graphx::safety::" + std::string(static_cast<char>(std::tolower(std::string(type).at(0))) + std::string(type).substr(1)) + "\"!"
+#define THEATRE_ERR_INVALID_NAME(function, type, name) std::string(function) + " - no " + std::string(type) + " with the Name " + std::string(name) + " was found! Returning \"&graphx::safety::" + std::string(static_cast<char>(std::tolower(std::string(type).at(0))) + std::string(type).substr(1)) + "\"!"
+#define THEATRE_ERR_PARALLEL_DESYNC(function, type) std::string(function) + " - a desync between the " << std::string(type) << " map and vector has been detected! To maintain synchronization, both the map and the vector will be compared to locate and remove the extra " << std::string(type)
+#define THEATRE_ERR_DESYNC_DETECTION(type, location, uid) "Extraneous " << std::string(type) << " detected in " << std::string(location) << " with UID: " << std::to_string(uid) << " will be deleted"
 
 struct LightsCount
 {
@@ -111,8 +118,8 @@ private:
     int changeActorUID(const int, const int);
     int changeDeviceUID(const int, const int);
 
-    void addInterpretedActor(Actor*);
-    void addInterpretedDevice(Device*);
+    Actor* addInterpretedActor(Actor*);
+    Device* addInterpretedDevice(Device*);
 
     void parallelAddActor(Actor*, const int, const bool);
     void parallelAddDevice(Device*, const int, const bool);
@@ -128,8 +135,11 @@ private:
     friend Device;
 };
 
-#define THEATRE_ERR_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + std::to_string(uid) +  " already exists!"
-#define THEATRE_ERR_INVALID_UID(function, type, uid) std::string(function) + " - no " + std::string(type) + " with the UID " + std::to_string(uid) + " was found! Returning \"&graphx::safety::" + std::string(static_cast<char>(std::tolower(std::string(type).at(0))) + std::string(type).substr(1)) + "\"!"
-#define THEATRE_ERR_PARALLEL_DESYNC(function, type) std::string(function) + " - a desync between the " << std::string(type) << " map and vector has been detected! To maintain synchronization, both the map and the vector will be compared to locate and remove the extra " << std::string(type)
-#define THEATRE_ERR_DESYNC_DETECTION(type, location, uid) "Extraneous " << std::string(type) << " detected in " << std::string(location) << " with UID: " << std::to_string(uid) << " will be deleted"
+namespace graphx
+{
+    namespace current
+    {
+        extern Theatre theatre;
+    }
+}
 #endif

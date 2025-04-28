@@ -10,14 +10,13 @@ using namespace graphx;
 //------
 // Actor
 //------
+Actor::Actor(const std::string& my_name)
+: name(my_name), parent_theatre(nullptr), settings(gSettings()), UID(-1)
+{}
+
 Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
-: parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
-{
-	RenderState render_state(position_global + position_local, quaternion_global * quaternion_local, scale_global * scale_local);
-	current_state_buffer = { render_state, render_state };
-	previous_state_buffer = { render_state, render_state };
-	updateOrientationVectors();
-}
+: name("Untitled Actor"), parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
+{}
 
 Actor::~Actor()
 {
@@ -109,43 +108,43 @@ glm::vec3 Actor::getLocalScale() const
 
 // Set Global/Local Position/Rotation/Quaternion
 void Actor::setGlobalPosition(const glm::vec3& new_position)
-{ position_global = new_position; updateOrientationVectors(); }
+{ position_global = new_position; }
 
 void Actor::setGlobalQuaternion(const glm::quat& new_quaternion)
-{ quaternion_global = new_quaternion; updateOrientationVectors(); }
+{ quaternion_global = new_quaternion; }
 
 void Actor::setGlobalEulerAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
-{ quaternion_global = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); updateOrientationVectors(); }
+{ quaternion_global = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); }
 
 void Actor::setGlobalPitch(const float new_pitch, const bool use_degrees)
-{ setGlobalEulerAngles(glm::vec3(new_pitch, getGlobalEulerAngles(use_degrees)[1], getGlobalEulerAngles(use_degrees)[2]), use_degrees); updateOrientationVectors(); }
+{ setGlobalEulerAngles(glm::vec3(new_pitch, getGlobalEulerAngles(use_degrees)[1], getGlobalEulerAngles(use_degrees)[2]), use_degrees); }
 
 void Actor::setGlobalYaw(const float new_yaw, const bool use_degrees)
-{ setGlobalEulerAngles(glm::vec3(getGlobalEulerAngles(use_degrees)[0], new_yaw, getGlobalEulerAngles(use_degrees)[2]), use_degrees); updateOrientationVectors(); }
+{ setGlobalEulerAngles(glm::vec3(getGlobalEulerAngles(use_degrees)[0], new_yaw, getGlobalEulerAngles(use_degrees)[2]), use_degrees); }
 
 void Actor::setGlobalRoll(const float new_roll, const bool use_degrees)
-{ setGlobalEulerAngles(glm::vec3(getGlobalEulerAngles(use_degrees)[0], getGlobalEulerAngles(use_degrees)[1], new_roll), use_degrees); updateOrientationVectors(); }
+{ setGlobalEulerAngles(glm::vec3(getGlobalEulerAngles(use_degrees)[0], getGlobalEulerAngles(use_degrees)[1], new_roll), use_degrees); }
 
 void Actor::setGlobalScale(const glm::vec3& new_scale)
 { scale_global = new_scale; }
 
 void Actor::setLocalPosition(const glm::vec3& new_position)
-{ position_local = new_position; updateOrientationVectors(); }
+{ position_local = new_position; }
 
 void Actor::setLocalQuaternion(const glm::quat& new_quaternion)
-{ quaternion_local = new_quaternion; updateOrientationVectors(); }
+{ quaternion_local = new_quaternion; }
 
 void Actor::setLocalEulerAngles(const glm::vec3& new_rotation, const bool degrees_instead_of_radians)
-{ quaternion_local = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); updateOrientationVectors(); }
+{ quaternion_local = (degrees_instead_of_radians) ? (glm::quat(glm::radians(new_rotation))) : glm::quat(new_rotation); }
 
 void Actor::setLocalPitch(const float new_pitch, const bool use_degrees)
-{ setLocalEulerAngles(glm::vec3(new_pitch, getLocalEulerAngles(use_degrees)[1], getLocalEulerAngles(use_degrees)[2]), use_degrees); updateOrientationVectors(); }
+{ setLocalEulerAngles(glm::vec3(new_pitch, getLocalEulerAngles(use_degrees)[1], getLocalEulerAngles(use_degrees)[2]), use_degrees); }
 
 void Actor::setLocalYaw(const float new_yaw, const bool use_degrees)
-{ setLocalEulerAngles(glm::vec3(getLocalEulerAngles(use_degrees)[0], new_yaw, getLocalEulerAngles(use_degrees)[2]), use_degrees); updateOrientationVectors(); }
+{ setLocalEulerAngles(glm::vec3(getLocalEulerAngles(use_degrees)[0], new_yaw, getLocalEulerAngles(use_degrees)[2]), use_degrees); }
 
 void Actor::setLocalRoll(const float new_roll, const bool use_degrees)
-{ setLocalEulerAngles(glm::vec3(getLocalEulerAngles(use_degrees)[0], getLocalEulerAngles(use_degrees)[1], new_roll), use_degrees); updateOrientationVectors(); }
+{ setLocalEulerAngles(glm::vec3(getLocalEulerAngles(use_degrees)[0], getLocalEulerAngles(use_degrees)[1], new_roll), use_degrees); }
 
 void Actor::setLocalScale(const glm::vec3& new_scale)
 { scale_local = new_scale; }
@@ -162,7 +161,6 @@ void Actor::tick(int current_tick)
 		JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
 		setGlobalPosition(gmath::convertMath<glm::vec3>(body_position));
 		setGlobalQuaternion(gmath::convertMath<glm::quat>(body_quaternion));
-		updateOrientationVectors();
 	}
 }
 
@@ -185,8 +183,6 @@ void Actor::loadSettings()
 
 	setLocalQuaternion(glm::quat(glm::radians(local_euler_degrees)));
 	setGlobalQuaternion(glm::quat(glm::radians(global_euler_degrees)));
-
-	updateOrientationVectors();
 
 	if(collider != nullptr)
 		collider->loadSettings();
