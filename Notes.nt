@@ -2532,3 +2532,6 @@ Okay, Actors & Devices should have a unique identifier number, but changing that
 
 [04/28/25]
 I've gotten the code compiling and linking, but now I'm running into a weird crash due to "malloc_consolidate(): unaligned fastbin chunk detected". I'm pretty sure that this is a stack overflow, but whatever it is I'll figure it out tomorrow. I'm just happy that it compiles and links.
+
+[04/29/25]
+Today I want to compare this build of GraphX to the previously working build and see if I can't figure out what's up with this thing.
