@@ -5,20 +5,6 @@
 #include "r_rendering.hpp"
 #include <set>
 
-//--------------------
-// ActorPointerWrapper
-//--------------------
-ActorPointerWrapper::ActorPointerWrapper(Actor* new_pointer, const bool ownership)
-: pointer(new_pointer), owned_by_me(ownership)
-{}
-
-//---------------------
-// DevicePointerWrapper
-//---------------------
-DevicePointerWrapper::DevicePointerWrapper(Device* new_pointer, const bool ownership)
-: pointer(new_pointer), owned_by_me(ownership)
-{}
-
 //------------
 // LightsCount
 //------------
@@ -40,30 +26,13 @@ Theatre::Theatre(const std::string& new_name)
 : Theatre(-1, new_name)
 {}
 
-Theatre::~Theatre()
-{
-    for(auto& pair : wrapped_actors)
-        if(pair.second.owned_by_me)
-            delete pair.second.pointer;
-
-    for(auto& pair : wrapped_devices)
-        if(pair.second.owned_by_me)
-            delete pair.second.pointer;
-
-    wrapped_actors.clear();
-    wrapped_devices.clear();
-
-    unwrapped_actors.clear();
-    unwrapped_devices.clear();
-}
-
 // Terrible, no good, very bad functions
 std::set<std::string> Theatre::getMeshDataNames()
 {
     std::set<std::string> mesh_data_names = {ERROR_MODEL};
 
-    for(int i = 0; i < unwrapped_devices.size(); i++)
-        if(Model* model = dynamic_cast<Model*>(unwrapped_devices[i]))
+    for(int i = 0; i < device_vector.size(); i++)
+        if(std::shared_ptr<Model> model = dynamic_pointer_cast<Model>(device_vector[i]))
             mesh_data_names.insert(model->mesh_data_name);
 
     return mesh_data_names;
@@ -73,8 +42,8 @@ std::set<std::string> Theatre::getTextureNames()
 {
     std::set<std::string> texture_names;
 
-    for(int i = 0; i < unwrapped_devices.size(); i++)
-        if(Material* material = dynamic_cast<Material*>(unwrapped_devices[i]))
+    for(int i = 0; i < device_vector.size(); i++)
+        if(std::shared_ptr<Material> material = dynamic_pointer_cast<Material>(device_vector[i]))
         {
             texture_names.insert(material->diffuse_texture_name);
             texture_names.insert(material->specular_texture_name);
@@ -97,20 +66,20 @@ void Theatre::probeRenderCommands()
     spot_lights_count = 0;
     directional_lights_count = 0;
 
-    for(Actor* actor : unwrapped_actors)
+    for(std::shared_ptr<Actor> actor : actor_vector)
     {
         if(graphx::state::loading_new_main_theatre)
             return;
 
-        if(dynamic_cast<Light*>(actor))
+        if(dynamic_pointer_cast<Light>(actor))
         {
-            if(dynamic_cast<LightSpot*>(actor))
+            if(dynamic_pointer_cast<LightSpot>(actor))
             {
                 spot_lights_count++;
                 return;
             }
 
-            else if(dynamic_cast<LightDirectional*>(actor))
+            else if(dynamic_pointer_cast<LightDirectional>(actor))
             {
                 directional_lights_count++;
                 return;
@@ -125,22 +94,22 @@ void Theatre::probeRenderCommands()
 
 void Theatre::delegateKeyInput(GLFWwindow* window, const int key, const int scancode, const int action, const int mods) const
 {
-    for(Actor* actor : unwrapped_actors)
+    for(std::shared_ptr<Actor> actor : actor_vector)
         actor->processKey(window, key, scancode, action, mods);
 }
 
 void Theatre::delegateMouseInput(GLFWwindow* window, const double x_position_in, const double y_position_in) const
 {
-    for(Actor* actor : unwrapped_actors)
+    for(std::shared_ptr<Actor> actor : actor_vector)
         actor->processMouse(window, x_position_in, y_position_in);
 }
 
 const LightsCount Theatre::getLightsCount() const
 { return LightsCount(point_lights_count, spot_lights_count, directional_lights_count); }
 
-void Theatre::addActor(Actor* new_actor)
+void Theatre::addActor(std::shared_ptr<Actor> new_actor)
 {
-    if(wrapped_actors.contains(new_actor->getUID()))
+    if(actor_map.contains(new_actor->getUID()))
     {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addActor", "an Actor", new_actor->getUID()))
         PRINTNOTE("Changing Actor's UID before adding")
@@ -150,9 +119,9 @@ void Theatre::addActor(Actor* new_actor)
     parallelAddActor(new_actor, new_actor->getUID(), false);
 }
 
-void Theatre::addDevice(Device* new_device)
+void Theatre::addDevice(std::shared_ptr<Device> new_device)
 {
-    if(wrapped_devices.contains(new_device->getUID()))
+    if(device_map.contains(new_device->getUID()))
     {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addDevice", "a Device", new_device->getUID()))
         PRINTNOTE("Changing Device's UID before adding")
@@ -162,42 +131,42 @@ void Theatre::addDevice(Device* new_device)
     parallelAddDevice(new_device, new_device->getUID(), false);
 }
 
-std::vector<Actor*> Theatre::getAllActors() const
-{ return unwrapped_actors; }
+std::vector<std::shared_ptr<Actor>> Theatre::getAllActors() const
+{ return actor_vector; }
 
-std::vector<Device*> Theatre::getAllDevices() const
-{ return unwrapped_devices; }
+std::vector<std::shared_ptr<Device>> Theatre::getAllDevices() const
+{ return device_vector; }
 
-Actor* Theatre::getActor(const int UID) const
+std::shared_ptr<Actor> Theatre::getActor(const int UID) const
 {
-    if(wrapped_actors.contains(UID))
-        return wrapped_actors.at(UID).pointer;
+    if(actor_map.contains(UID))
+        return actor_map.at(UID);
     PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", UID))
-    return &graphx::safety::actor;
+    return std::shared_ptr<Actor>(&graphx::safety::actor);
 }
 
-Device* Theatre::getDevice(const int UID) const
+std::shared_ptr<Device> Theatre::getDevice(const int UID) const
 {
-    if(wrapped_devices.contains(UID))
-        return wrapped_devices.at(UID).pointer;
+    if(device_map.contains(UID))
+        return device_map.at(UID);
     PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", UID))
-    return &graphx::safety::device;
+    return std::shared_ptr<Device>(&graphx::safety::device);
 }
 
-Actor* Theatre::getActor(const std::string& actor_name) const
+std::shared_ptr<Actor> Theatre::getActor(const std::string& actor_name) const
 {
-    for(Actor* actor : unwrapped_actors)
+    for(std::shared_ptr<Actor> actor : actor_vector)
         if(!actor_name.compare(actor->name))
             return actor;
     PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", actor_name))
-    return &graphx::safety::actor;
+    return std::shared_ptr<Actor>(&graphx::safety::actor);
 }
 
-Device* Theatre::getDevice(const std::string& device_name) const
+std::shared_ptr<Device> Theatre::getDevice(const std::string& device_name) const
 {
     PRINTDEBUG("getDevice(\""<< device_name <<"\")")
     PRINTDEBUG("Candidates:")
-    for(Device* device : unwrapped_devices)
+    for(std::shared_ptr<Device> device : device_vector)
     {
         PRINTDEBUG(device->name)
         if(!device_name.compare(device->name))
@@ -206,7 +175,7 @@ Device* Theatre::getDevice(const std::string& device_name) const
         }
     }
     PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getDevice", "Device", device_name))
-    return &graphx::safety::device;
+    return std::shared_ptr<Device>(&graphx::safety::device);
 }
 
 // Private functions
@@ -216,10 +185,10 @@ int Theatre::generateUID(const bool for_actor)
     int new_uid = 0;
 
     if(for_actor)
-        while(wrapped_actors.contains(new_uid))
+        while(actor_map.contains(new_uid))
             new_uid = uid_distribution(uid_random_generator);
     else
-        while(wrapped_devices.contains(new_uid))
+        while(device_map.contains(new_uid))
             new_uid = uid_distribution(uid_random_generator);
 
     return new_uid;
@@ -227,50 +196,50 @@ int Theatre::generateUID(const bool for_actor)
 
 int Theatre::changeActorUID(const int old_uid, const int new_uid)
 {
-    if(wrapped_actors.contains(new_uid))
+    if(actor_map.contains(new_uid))
     {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::changeActorUID", "Actor", old_uid))
         return old_uid;
     }
 
-    auto actor_node = wrapped_actors.extract(old_uid);
+    auto actor_node = actor_map.extract(old_uid);
     actor_node.key() = new_uid;
-    wrapped_actors.insert(std::move(actor_node));
+    actor_map.insert(std::move(actor_node));
     return new_uid;
 }
 
 int Theatre::changeDeviceUID(const int old_uid, const int new_uid)
 {
-    if(wrapped_devices.contains(new_uid))
+    if(device_map.contains(new_uid))
     {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::changeDeviceUID", "Device", old_uid))
         return old_uid;
     }
 
-    auto device_node = wrapped_devices.extract(old_uid);
+    auto device_node = device_map.extract(old_uid);
     device_node.key() = new_uid;
-    wrapped_devices.insert(std::move(device_node));
+    device_map.insert(std::move(device_node));
     return new_uid;
 }
 
-Actor* Theatre::addInterpretedActor(Actor* new_actor)
+std::shared_ptr<Actor> Theatre::addInterpretedActor(std::shared_ptr<Actor> new_actor)
 {
-    if(wrapped_actors.contains(new_actor->getUID()))
+    if(actor_map.contains(new_actor->getUID()))
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedActor", "an Actor", new_actor->getUID()))
     else
         parallelAddActor(new_actor, new_actor->getUID(), true);
 
-    return wrapped_actors.at(new_actor->getUID()).pointer;
+    return actor_map.at(new_actor->getUID());
 }
 
-Device* Theatre::addInterpretedDevice(Device* new_device)
+std::shared_ptr<Device> Theatre::addInterpretedDevice(std::shared_ptr<Device> new_device)
 {
-    if(wrapped_devices.contains(new_device->getUID()))
+    if(device_map.contains(new_device->getUID()))
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedDevice", "a Device", new_device->getUID()))
     else
         parallelAddDevice(new_device, new_device->getUID(), true);
 
-    return wrapped_devices.at(new_device->getUID()).pointer;
+    return device_map.at(new_device->getUID());
 }
 
 // These functions make sure that the maps and vectors are kept parallel; since these are private
@@ -278,19 +247,19 @@ Device* Theatre::addInterpretedDevice(Device* new_device)
 // are one to two steps away from just being a #define macro for std::vector::insert and std::map[]
 // so treat them as such and MAKE YOUR SAFETY CHECKS BEFORE CALLING THEM! To avoid undefined behaviour,
 // these functions will ALWAYS put their pointer argument into their respective map & vector.
-void Theatre::parallelAddActor(Actor* pointer, const int UID, const bool ownership)
+void Theatre::parallelAddActor(std::shared_ptr<Actor> pointer, const int UID, const bool ownership)
 {
-    wrapped_actors[UID] = ActorPointerWrapper(pointer, ownership);
-    unwrapped_actors.insert(unwrapped_actors.end(), pointer);
+    actor_map[UID] = pointer;
+    actor_vector.insert(actor_vector.end(), pointer);
     pointer->loadSettings();
     checkAndManageParallelActorDesync();
     checkAndSetCurrentVariables(pointer, nullptr);
 }
 
-void Theatre::parallelAddDevice(Device* pointer, const int UID, const bool ownership)
+void Theatre::parallelAddDevice(std::shared_ptr<Device> pointer, const int UID, const bool ownership)
 {
-    wrapped_devices[UID] = DevicePointerWrapper(pointer, ownership);
-    unwrapped_devices.insert(unwrapped_devices.end(), pointer);
+    device_map[UID] = pointer;
+    device_vector.insert(device_vector.end(), pointer);
     pointer->loadSettings();
     checkAndManageParallelActorDesync();
     checkAndSetCurrentVariables(nullptr, pointer);
@@ -298,65 +267,56 @@ void Theatre::parallelAddDevice(Device* pointer, const int UID, const bool owner
 
 void Theatre::parallelRemoveActor(const int UID)
 {
-    for(int i = 0; i < unwrapped_actors.size(); i++)
-        if(unwrapped_actors.at(i) == wrapped_actors.at(UID).pointer)
-            unwrapped_actors.erase(unwrapped_actors.begin() + i);
+    for(int i = 0; i < actor_vector.size(); i++)
+        if(actor_vector.at(i) == actor_map.at(UID))
+            actor_vector.erase(actor_vector.begin() + i);
 
-    wrapped_actors.erase(UID);
-
-    if(wrapped_actors.at(UID).owned_by_me)
-        delete wrapped_actors.at(UID).pointer;
+    actor_map.erase(UID);
 }
 
 void Theatre::parallelRemoveDevice(const int UID)
 {
-    for(int i = 0; i < unwrapped_devices.size(); i++)
-        if(unwrapped_devices.at(i) == wrapped_devices.at(UID).pointer)
-            unwrapped_devices.erase(unwrapped_devices.begin() + i);
+    for(int i = 0; i < device_vector.size(); i++)
+        if(device_vector.at(i) == device_map.at(UID))
+            device_vector.erase(device_vector.begin() + i);
 
-    wrapped_devices.erase(UID);
-
-    if(wrapped_devices.at(UID).owned_by_me)
-        delete wrapped_devices.at(UID).pointer;
+    device_map.erase(UID);
 }
 
 void Theatre::checkAndManageParallelActorDesync()
 {
-    if(wrapped_actors.size() == unwrapped_actors.size())
+    if(actor_map.size() == actor_vector.size())
         return;
 
-    PRINTERR(THEATRE_ERR_PARALLEL_DESYNC("Theatre::parallelAddActor(Actor*, const bool)", "Actor"))
+    PRINTERR(THEATRE_ERR_PARALLEL_DESYNC("Theatre::parallelAddActor(std::shared_ptr<Actor>, const bool)", "Actor"))
 
     std::set<int> synced_uids;
 
-    if(wrapped_actors.size() > unwrapped_actors.size())
+    if(actor_map.size() > actor_vector.size())
     {
-        for(Actor* pointer : unwrapped_actors)
+        for(std::shared_ptr<Actor> pointer : actor_vector)
             synced_uids.insert(pointer->getUID());
 
-        for(auto& pair : wrapped_actors)
+        for(auto& pair : actor_map)
         {
             if(!synced_uids.contains(pair.first))
             {
-                PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Actor", "std::map<int, ActorPointerWrapper> Theatre::wrapped_actors", pair.first))
-                if(pair.second.owned_by_me)
-                    delete pair.second.pointer;
-                wrapped_actors.erase(pair.first);
+                PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Actor", "std::map<int, ActorPointerWrapper> Theatre::actor_map", pair.first))
+                actor_map.erase(pair.first);
                 return;
             }
         }
     }
 
-    for(auto& pair : wrapped_actors)
+    for(auto& pair : actor_map)
         synced_uids.insert(pair.first);
 
-    for(int i = 0; i < unwrapped_actors.size(); i++)
+    for(int i = 0; i < actor_vector.size(); i++)
     {
-        if(!synced_uids.contains(unwrapped_actors[i]->getUID()))
+        if(!synced_uids.contains(actor_vector[i]->getUID()))
         {
-            PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Actor", "std::vector<Actor*> Theatre::unwrapped_actors", unwrapped_actors[i]->getUID()))
-            delete unwrapped_actors[i];
-            unwrapped_actors.erase(unwrapped_actors.begin() + i);
+            PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Actor", "std::vector<std::shared_ptr<Actor>> Theatre::actor_vector", actor_vector[i]->getUID()))
+            actor_vector.erase(actor_vector.begin() + i);
             return;
         }
     }
@@ -366,41 +326,38 @@ void Theatre::checkAndManageParallelActorDesync()
 
 void Theatre::checkAndManageParallelDeviceDesync()
 {
-    if(wrapped_devices.size() == unwrapped_devices.size())
+    if(device_map.size() == device_vector.size())
         return;
 
-    PRINTERR(THEATRE_ERR_PARALLEL_DESYNC("Theatre::parallelAddDevice(Device*, const bool)", "Device"))
+    PRINTERR(THEATRE_ERR_PARALLEL_DESYNC("Theatre::parallelAddDevice(std::shared_ptr<Device>, const bool)", "Device"))
 
     std::set<int> synced_uids;
 
-    if(wrapped_devices.size() > unwrapped_devices.size())
+    if(device_map.size() > device_vector.size())
     {
-        for(Device* pointer : unwrapped_devices)
+        for(std::shared_ptr<Device> pointer : device_vector)
             synced_uids.insert(pointer->getUID());
 
-        for(auto& pair : wrapped_devices)
+        for(auto& pair : device_map)
         {
             if(!synced_uids.contains(pair.first))
             {
-                PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Device", "std::map<int, DevicePointerWrapper> Theatre::wrapped_devices", pair.first))
-                if(pair.second.owned_by_me)
-                    delete pair.second.pointer;
-                wrapped_devices.erase(pair.first);
+                PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Device", "std::map<int, DevicePointerWrapper> Theatre::device_map", pair.first))
+                device_map.erase(pair.first);
                 return;
             }
         }
     }
 
-    for(auto& pair : wrapped_devices)
+    for(auto& pair : device_map)
         synced_uids.insert(pair.first);
 
-    for(int i = 0; i < unwrapped_devices.size(); i++)
+    for(int i = 0; i < device_vector.size(); i++)
     {
-        if(!synced_uids.contains(unwrapped_devices[i]->getUID()))
+        if(!synced_uids.contains(device_vector[i]->getUID()))
         {
-            PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Device", "std::vector<Device*> Theatre::unwrapped_devices", unwrapped_devices[i]->getUID()))
-            delete unwrapped_devices[i];
-            unwrapped_devices.erase(unwrapped_devices.begin() + i);
+            PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Device", "std::vector<std::shared_ptr<Device>> Theatre::device_vector", device_vector[i]->getUID()))
+            device_vector.erase(device_vector.begin() + i);
             return;
         }
     }
@@ -408,19 +365,19 @@ void Theatre::checkAndManageParallelDeviceDesync()
     PRINTERR("Theatre::checkAndManageParallelDeviceDesync() - Desync detected, but not rectified!")
 }
 
-void Theatre::checkAndSetCurrentVariables(Actor* new_actor, Device* new_device)
+void Theatre::checkAndSetCurrentVariables(std::shared_ptr<Actor> new_actor, std::shared_ptr<Device> new_device)
 {
-    if(new_actor != nullptr)
+    if(new_actor)
     {
-        if(GraphXPlayer* new_player = dynamic_cast<GraphXPlayer*>(new_actor))
-            graphx::current::player = new_player;
+        if(std::dynamic_pointer_cast<GraphXPlayer>(new_actor))
+            graphx::current::player = std::dynamic_pointer_cast<GraphXPlayer>(new_actor);
         // else if...
     }
 
-    if(new_device != nullptr)
+    if(new_device)
     {
-        if(Environment* new_environment = dynamic_cast<Environment*>(new_device))
-            graphx::current::environment = new_environment;
+        if(dynamic_pointer_cast<Environment>(new_device))
+            graphx::current::environment = dynamic_pointer_cast<Environment>(new_device);
         // else if...
     }
 }

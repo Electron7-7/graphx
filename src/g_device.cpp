@@ -15,8 +15,7 @@ Device::Device(Theatre* my_parent_theatre, const int my_uid, const gSettings& my
 : name("Untitled Device"), parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
 {}
 
-Device::~Device()
-{}
+Device::~Device() = default;
 
 int Device::getUID() const
 { return UID; }

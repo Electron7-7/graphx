@@ -1,7 +1,7 @@
 CXX = clang++
 CC = clang
 
-CXXFLAGS = -g -Wall -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
+CXXFLAGS = -g -Wall -frtti -fsanitize=address -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
 INCLUDES = -I src/include

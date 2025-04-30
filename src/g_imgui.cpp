@@ -129,7 +129,7 @@ std::string indexMe(const std::string string, const int index)
 	return (string + "##" + std::to_string(index));
 }
 
-void GraphXConsole::showActorEditor(Actor* actor, int index)
+void GraphXConsole::showActorEditor(std::shared_ptr<Actor> actor, int index)
 {
 	IMGUI::BeginGroup();
 	//
@@ -171,7 +171,7 @@ void GraphXConsole::showActorEditor(Actor* actor, int index)
 
 void GraphXConsole::liveTheatreEditor()
 {
-	std::vector<Actor*> troupe = graphx::current::theatre.getAllActors();
+	std::vector<std::shared_ptr<Actor>> troupe = graphx::current::theatre.getAllActors();
 	IMGUI::Begin("Live Theatre Editor", &tertiary_active);
 	for(int i = 0 ; i < troupe.size() ; i++) // AYO I THINK THAT THE TROUPE IS GETTING BLOATED AS FUCK MY GUY
 	{

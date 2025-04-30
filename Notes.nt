@@ -2535,3 +2535,13 @@ I've gotten the code compiling and linking, but now I'm running into a weird cra
 
 [04/29/25]
 Today I want to compare this build of GraphX to the previously working build and see if I can't figure out what's up with this thing.
+
+I think I found the problem: Theatre's destructor deletes the same pointer multiple times! OH MY GOD WAIT I DON'T NEED TO DELETE ANY POINTERS BECAUSE THE WRAPPER CAN DO IT FOR ME!
+
+Okay, it's not that simple; it looks like it might actually be Theatre's copy(?) constructor (Theatre::operator=(Theatre const&)).
+
+It's at Actor::loadSettings!!!! I FOUND IT!!
+
+Okay, it wasn't that function, IT'S THE ACTION OF ADDING THE POINTER TO EITHER THE MAP OR VECTOR CAUSES IT TO BE FREED?????
+
+I've decided to replace all raw pointers with smart pointers, and it's proving to be a life-saver. I hate memory management so fucking much. Anyways, I still have some work to do, mostly with the interpreter/settings and I think a few things in the renderer, but I'm actually finally so close to a working build (I hope).

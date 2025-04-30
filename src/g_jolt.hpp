@@ -37,6 +37,5 @@ namespace graphx
 
 extern JPH::PhysicsSystem jolt_physics_system;
 
-const JPH::Shape* J_CreateAShape(int, std::tuple<glm::vec3, float, float>);
-void J_RemoveAndDestroyBody(JPH::BodyID);
+void J_RemoveAndDestroyBody(const JPH::BodyID&);
 #endif

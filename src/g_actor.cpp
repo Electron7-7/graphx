@@ -18,19 +18,7 @@ Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_s
 : name("Untitled Actor"), parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
 {}
 
-Actor::~Actor()
-{
-	for(ActorPointerWrapper child : child_actors)
-		if(child.owned_by_me)
-			delete child.pointer;
-
-	for(DevicePointerWrapper child : child_devices)
-		if(child.owned_by_me)
-			delete child.pointer;
-
-	child_actors.clear();
-	child_devices.clear();
-}
+Actor::~Actor() = default;
 
 void Actor::updateStates(std::mutex &state_mutex)
 {
@@ -60,11 +48,11 @@ gSettings Actor::getSettings() const
 void Actor::setSettings(const gSettings& new_settings)
 { settings = new_settings; }
 
-void Actor::addChildActor(Actor* new_child)
-{ child_actors.insert(child_actors.end(), ActorPointerWrapper(new_child, false)); }
+void Actor::addChildActor(std::shared_ptr<Actor> new_child)
+{ child_actors.insert(child_actors.end(), new_child); }
 
-void Actor::addChildDevice(Device* new_child)
-{ child_devices.insert(child_devices.end(), DevicePointerWrapper(new_child, false)); }
+void Actor::addChildDevice(std::shared_ptr<Device> new_child)
+{ child_devices.insert(child_devices.end(), new_child); }
 
 
 
@@ -271,12 +259,6 @@ void Actor::colliderOverrideSelfTransform(const bool ignore_scale)
 	// I don't know a nice way of getting the scale from the collider and I don't wanna find it right now
 	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
 }
-
-void Actor::addOwnedChildActor(Actor* new_child)
-{ child_actors.insert(child_actors.end(), ActorPointerWrapper(new_child, true)); }
-
-void Actor::addOwnedChildDevice(Device* new_child)
-{ child_devices.insert(child_devices.end(), DevicePointerWrapper(new_child, true)); }
 
 const bool Actor::canBeRendered() const
 { return (visible && mesh != nullptr); } // Todo: when replacing mesh, remove this check

@@ -147,7 +147,7 @@ void GraphXPlayer::checkForInput(GLFWwindow* window)
 
 void GraphXPlayer::tick(const int current_tick)
 {
-	setGlobalPosition(gmath::convertMath<glm::vec3>(jph_character->GetPosition()));
+	// setGlobalPosition(gmath::convertMath<glm::vec3>(jph_character->GetPosition()));
 	player_camera.setGlobalPosition(getGlobalPosition());
 }
 
@@ -174,9 +174,9 @@ void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int act
 
 void GraphXPlayer::doMovement(int direction[2])
 {
-	if(jph_character == nullptr)
-		return;
-	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
+	// if(jph_character == nullptr)
+		// return;
+	// JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
 	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientationFront()[0], 0.0f, getOrientationFront()[2])) * static_cast<float>(direction[0] * movement_speed);
 	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientationRight()) * static_cast<float>(direction[1] * movement_speed);
@@ -197,11 +197,11 @@ void GraphXPlayer::doMovement(int direction[2])
 	last_direction[0] = direction[0];
 	last_direction[1] = direction[1];
 
-	JPH::Vec3 new_velocity = gmath::linearInterpolate(current_velocity, wish_velocity, movement_lerp);
-	new_velocity.SetY(current_velocity.GetY());
-	if(new_velocity == current_velocity)
-		return;
-	jph_character->SetLinearVelocity(new_velocity);
+	// JPH::Vec3 new_velocity = gmath::linearInterpolate(current_velocity, wish_velocity, movement_lerp);
+	// new_velocity.SetY(current_velocity.GetY());
+	// if(new_velocity == current_velocity)
+		// return;
+	// jph_character->SetLinearVelocity(new_velocity);
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()
@@ -228,9 +228,6 @@ void Light::loadSettings()
 	getSetting(light_attenuation, settings["FadeIntensity"]);
 	getSetting(light_attenuation, settings["Attenuation"]);
 	getSetting(light_range, settings["Range"]);
-
-	// Just to be safe...
-	delete mesh;
 }
 
 RenderCommands Light::getRenderCommands()
@@ -250,7 +247,7 @@ RenderCommands Light::getRenderCommands()
 	{
 		render_commands.render_command.is_light_debug_mesh = true;
 		render_commands.render_command.mesh_data_name = GRAPHX_CUBE;
-		render_commands.render_command.mesh_material = &debug_light_mesh_material;
+		render_commands.render_command.mesh_material = std::make_shared<Material>(debug_light_mesh_material);
 	}
 
 	return(render_commands);
@@ -264,9 +261,6 @@ void LightDirectional::loadSettings()
 	Light::loadSettings();
 
 	getSetting(directional_direction, settings["Direction"]);
-
-	// LightDirectional doesn't really need a debug mesh, since it's physical orientation doesn't matter
-	delete mesh;
 }
 
 RenderCommands LightDirectional::getRenderCommands()
@@ -324,8 +318,6 @@ void LightFlashlight::loadSettings()
 
 	_color = light_color;
 	setLight(start_enabled);
-
-	delete mesh;
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -334,8 +326,8 @@ void LightFlashlight::tick(int current_tick)
 	if(graphx::current::player == nullptr)
 		return;
 
-	setGlobalPosition(dynamic_cast<GraphXPlayer*>(graphx::current::player)->player_camera.getGlobalPosition() + getLocalPosition());
-	setGlobalQuaternion(dynamic_cast<GraphXPlayer*>(graphx::current::player)->player_camera.getGlobalQuaternion() * getLocalQuaternion());
+	setGlobalPosition(dynamic_pointer_cast<GraphXPlayer>(graphx::current::player)->player_camera.getGlobalPosition() + getLocalPosition());
+	setGlobalQuaternion(dynamic_pointer_cast<GraphXPlayer>(graphx::current::player)->player_camera.getGlobalQuaternion() * getLocalQuaternion());
 }
 
 void LightFlashlight::toggleLight(glm::vec3 toggle_color)
@@ -384,8 +376,8 @@ void LightTesterMover::loadSettings()
 	pivot_point.setGlobalPosition(pivot_position);
 	temporary_pivot_mesh.name = "Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
 	temporary_pivot_mesh.mesh_data_name = GRAPHX_CUBE;
-	pivot_point.mesh = &temporary_pivot_mesh;
-	parent_theatre->addActor(&pivot_point);
+	pivot_point.mesh = std::make_shared<Model>(&temporary_pivot_mesh);
+	parent_theatre->addActor(std::make_shared<Actor>(pivot_point));
 }
 
 void LightTesterMover::tick(int current_tick)

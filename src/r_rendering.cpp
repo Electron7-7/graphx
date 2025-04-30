@@ -3,6 +3,8 @@
 #include "g_theatre.hpp"
 #include "g_actors.hpp"
 #include "sanity.hpp"
+#include "sanity_printouts.hpp"
+#include "sanity_executable_locator.hpp"
 #include "t_common.hpp"
 #include "t_interpreter.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -407,7 +409,7 @@ void W_SwapAndClear(GLFWwindow* window, glm::vec4 clear_color)
 {
 	glfwSwapBuffers(window);
 	glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 std::string T_LoadImageFile(std::string file_path)

@@ -1,6 +1,7 @@
 #ifndef GRAPHX_IMGUI
 #define GRAPHX_IMGUI
 #include <glm/glm.hpp>
+#include <memory>
 #define IM_VEC4_CLASS_EXTRA \
 	constexpr ImVec4(const glm::vec4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {} \
 	operator glm::vec4() const { return glm::vec4(x,y,z,w); }
@@ -26,7 +27,7 @@ public:
 	GraphXConsole();
 
 	void updateFrame(GLFWwindow* window);
-	void showActorEditor(Actor*, int = -1);
+	void showActorEditor(std::shared_ptr<Actor>, int = -1);
 	void displayTheatrePrintout();
 	void exportTheatreFile();
 	void liveTheatreEditor();
@@ -37,7 +38,7 @@ private:
 	bool keep_debug_labels_on = false;
 	bool actor_selection_made = false;
 	bool actor_selection_valid = false;
-	Actor* single_actor = nullptr;
+	std::shared_ptr<Actor> single_actor = nullptr;
 	std::string actor_name_selection = "";
 	std::string actor_uid_selection = "";
 	std::string error_string = "";

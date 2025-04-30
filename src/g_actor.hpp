@@ -19,9 +19,9 @@ struct Theatre;
 class Actor
 {
 public: // Externally accessible members
-	Collider* collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
+	std::shared_ptr<Collider> collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
 
-	Model* mesh = nullptr; // THIS IS GOING
+	std::shared_ptr<Model> mesh = nullptr; // THIS IS GOING
 	long mesh_uid = -1;   // THIS IS REPLACING IT
 
 	bool visible = true;
@@ -44,11 +44,11 @@ public: // Externally accessible members
 	graphx::gSettings getSettings() const;
 	void setSettings(const graphx::gSettings& NewSettings);
 
-	void addChildActor(Actor*);
-	void addChildDevice(Device*);
+	void addChildActor(std::shared_ptr<Actor> ChildActor);
+	void addChildDevice(std::shared_ptr<Device> ChildDevice);
 
-	Actor* getChildActor(const int);
-	Device* getChildDevice(const int);
+	std::shared_ptr<Actor> getChildActor(const int ChildUID);
+	std::shared_ptr<Device> getChildDevice(const int ChildUID);
 
 	void setGlobalPosition(const glm::vec3& Position);
 	void setGlobalQuaternion(const glm::quat& Quaternion);
@@ -96,8 +96,8 @@ protected: // Members that aren't externally accessible
 	Theatre* parent_theatre = nullptr;
 	graphx::gSettings settings = graphx::gSettings();
 
-	std::vector<ActorPointerWrapper> child_actors;
-	std::vector<DevicePointerWrapper> child_devices;
+	std::vector<std::shared_ptr<Actor>> child_actors;
+	std::vector<std::shared_ptr<Device>> child_devices;
 
 	glm::vec3 orientation_up = graphx::orientation::up;
 	glm::vec3 orientation_front = graphx::orientation::front;
@@ -121,8 +121,6 @@ protected: // Members that aren't externally accessible
 	void updateOrientationVectors();
 	void selfOverrideColliderTransform(const bool = true);
 	void colliderOverrideSelfTransform(const bool = true);
-	void addOwnedChildActor(Actor*);
-	void addOwnedChildDevice(Device*);
 
 	virtual const bool canBeRendered() const; // Todo: remove the need to use this (its only use is in Actor::getRenderCommands())
 

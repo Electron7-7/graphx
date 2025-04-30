@@ -4,14 +4,12 @@
 #include "sanity.hpp"
 #include "sanity_printouts.hpp"
 #include "graphx_namespace.hpp"
-#include "g_devices.hpp"
+#include "g_actor.hpp"
+#include "g_device.hpp"
 #include "g_theatre.hpp"
-#include "g_jolt.hpp"
 #include "g_imgui.hpp"
 #include "r_rendering.hpp"
 #include "t_common.hpp"
-#include "g_actor.hpp"
-#include "g_device.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -223,8 +221,8 @@ void gameTick(GLFWwindow *main_window)
 			current_tick_since_second++;
 			current_tick_since_start++;
 
-			std::vector<Actor*> troupe = graphx::current::theatre.getAllActors(); // Todo: change the troupe to be a pointer/reference to the objects map?
-			for(Actor *actor : troupe)
+			std::vector<std::shared_ptr<Actor>> troupe = graphx::current::theatre.getAllActors(); // Todo: change the troupe to be a pointer/reference to the objects map?
+			for(std::shared_ptr<Actor> actor : troupe)
 			{
 				if(!ImGui::GetIO().WantCaptureKeyboard)
 					actor->checkForInput(main_window);
@@ -401,9 +399,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if(key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
-		std::vector<Device*> devices = graphx::current::theatre.getAllDevices();
-		for(Device* device : devices)
-			if(Collider* collider = dynamic_cast<Collider*>(device)) collider->reset_to_default_transformation_for_testing();
+		std::vector<std::shared_ptr<Device>> devices = graphx::current::theatre.getAllDevices();
+		for(std::shared_ptr<Device> device : devices)
+			if(std::shared_ptr<Collider> collider = dynamic_pointer_cast<Collider>(device)) collider->reset_to_default_transformation_for_testing();
 	}
 
 	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))

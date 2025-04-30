@@ -136,27 +136,27 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 
 	else if(setting_type == THEATRE_REFERENCE)
 	{
-		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
+		if constexpr(std::is_base_of_v<Device, T>)
 		{
-			if(set_value.type() != typeid(Device *))
+			if(set_value.type() != typeid(std::shared_ptr<Device>))
 			{
 				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (Theatre Reference or Sandwich)\n\tVariable type: " << typeid(variable).name())
 				return GRAB_SETTING_ERR_DEVICE_POINTER;
 			}
 
-			variable = static_cast<T>(std::any_cast<Device *>(set_value));
+			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Device>>(set_value));
 			return 0;
 		}
 
 		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
 		{
-			if(set_value.type() != typeid(Actor *))
+			if(set_value.type() != typeid(std::shared_ptr<Actor>))
 			{
 				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (Theatre Reference or Sandwich)\n\tVariable type: " << typeid(variable).name())
 				return GRAB_SETTING_ERR_ACTOR_POINTER;
 			}
 
-			variable = static_cast<T>(std::any_cast<Actor *>(set_value));
+			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Actor>>(set_value));
 			return 0;
 		}
 	}
@@ -165,13 +165,13 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 	{
 		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
 		{
-			variable = static_cast<T>(std::any_cast<Device *>(set_value));
+			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Device>>(set_value));
 			return 0;
 		}
 		
 		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
 		{
-			variable = static_cast<T>(std::any_cast<Actor *>(set_value));
+			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Actor>>(set_value));
 			return 0;
 		}
 

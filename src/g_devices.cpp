@@ -1,4 +1,8 @@
 #include "g_devices.hpp"
+#include "Jolt/Physics/Collision/Shape/BoxShape.h"
+#include "Jolt/Physics/Collision/Shape/CapsuleShape.h"
+#include "Jolt/Physics/Collision/Shape/CylinderShape.h"
+#include "Jolt/Physics/Collision/Shape/SphereShape.h"
 #include "t_settings.hpp"
 #include <gmath.hpp>
 #include <glm/gtx/component_wise.hpp>
@@ -33,7 +37,19 @@ void Collider::loadSettings()
 	reset_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
 	reset_quaternion = JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(euler_angles))) * JPH::Quat::sEulerAngles(gmath::convertMath<JPH::Vec3>(glm::radians(local_euler_angles)));
 
-	body_settings = JPH::BodyCreationSettings(J_CreateAShape(shape, shape_arguments), reset_position, reset_quaternion, motion_type, object_layer);
+	switch(shape)
+	{
+	case graphx::jolt::shapes::BOX:
+		body_shape = std::shared_ptr<JPH::BoxShape>(new JPH::BoxShape(gmath::convertMath<JPH::Vec3>(std::get<0>(shape_arguments))));
+	case graphx::jolt::shapes::SPHERE:
+		body_shape = std::shared_ptr<JPH::SphereShape>(new JPH::SphereShape(std::get<1>(shape_arguments)));
+	case graphx::jolt::shapes::CAPSULE:
+		body_shape = std::shared_ptr<JPH::CapsuleShape>(new JPH::CapsuleShape(std::get<2>(shape_arguments), std::get<1>(shape_arguments)));
+	case graphx::jolt::shapes::CYLINDER:
+		body_shape = std::shared_ptr<JPH::CylinderShape>(new JPH::CylinderShape(std::get<2>(shape_arguments), std::get<1>(shape_arguments)));
+	};
+
+	body_settings = JPH::BodyCreationSettings(body_shape.get(), reset_position, reset_quaternion, motion_type, object_layer);
 	body_id = jolt_physics_system.GetBodyInterface().CreateAndAddBody(body_settings, activation);
 	jolt_physics_system.GetBodyInterface().SetFriction(body_id, friction);
 }
@@ -122,7 +138,7 @@ Model::Model(const Material& new_material, const std::string& new_mesh_data_name
 : Device("Untitled Model"), material_base(new_material), material(&material_base), mesh_data_name(new_mesh_data_name)
 {}
 
-Model::Model(Material* new_material, const std::string& new_mesh_data_name)
+Model::Model(std::shared_ptr<Material> new_material, const std::string& new_mesh_data_name)
 : Device("Untitled Model"), material(new_material), mesh_data_name(new_mesh_data_name)
 {}
 

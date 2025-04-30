@@ -1,7 +1,8 @@
 #include "t_interpreter.hpp"
 #include "graphx_interpreter_lookups.hpp"
 #include "r_rendering.hpp"
-#include "sanity.hpp"
+#include "sanity_printouts.hpp"
+#include "sanity_executable_locator.hpp"
 #include <images.h>
 #include <models.hpp>
 #include <theatres.hpp>
@@ -470,13 +471,13 @@ void GraphXTheatreInterpreter::interpretSandwich(graphx::gSettings& current_obje
 
 	if(gClasses::isActor(sandwich_bun_setting.first))
 	{
-		Actor* sandwich_bun = new_theatre.addInterpretedActor(valid_actors.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
+		std::shared_ptr<Actor> sandwich_bun = new_theatre.addInterpretedActor(valid_actors.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
 	else if(gClasses::isDevice(sandwich_bun_setting.first))
 	{
-		Device* sandwich_bun = new_theatre.addInterpretedDevice(valid_devices.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
+		std::shared_ptr<Device> sandwich_bun = new_theatre.addInterpretedDevice(valid_devices.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
@@ -488,13 +489,12 @@ void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_
 	if(!embedded_theatres.count(theatre_uid))
 	{
 		PRINTERR("Tried to load a Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " but no Theatre with that UID exists!")
-		if(new_theatre.getUID() == -1) // Probably not needed but eh, whatever
-			new_theatre = Theatre("DEFAULT ERROR RETURN THEATRE RETURNED BY \"loadTheatre\"");
+		return;
 	}
 
 	gStringSettings theatre_settings = theatreParser(embedded_theatres.at(theatre_uid));
 
-	new_theatre.~Theatre(); // Probably unnecessary
+	// new_theatre.~Theatre(); // Probably unnecessary
 	new_theatre = Theatre(theatre_uid, theatre_settings[0][0].second.second);
 	// new_theatre.graphx_theatre_settings = theatre_settings;
 	// new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);

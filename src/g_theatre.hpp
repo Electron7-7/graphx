@@ -1,3 +1,4 @@
+#include <memory>
 #ifndef GRAPHX_THEATRE
 #include <glfw_fwd.hpp>
 #include <vector>
@@ -11,24 +12,6 @@ class Actor;
 struct Device;
 class GraphXTheatreInterpreter;
 #endif
-
-// A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
-struct ActorPointerWrapper
-{
-    Actor* pointer = nullptr;
-    bool owned_by_me = false;
-
-    ActorPointerWrapper(Actor* = nullptr, const bool = false);
-};
-
-// A very shit way of accounting for the fact that I'm a dumbass and decided to not use smart pointers
-struct DevicePointerWrapper
-{
-    Device* pointer = nullptr;
-    bool owned_by_me = false;
-
-    DevicePointerWrapper(Device* = nullptr, const bool = false);
-};
 
 // Note about Theatres:
 // I abstracted getting Actor and Device pointers to functions, because directly grabbing them from their maps
@@ -67,7 +50,6 @@ struct Theatre
 
     // The constructor that the interpreter uses when creating Theatres
     Theatre(const int, const std::string&);
-    ~Theatre();
 
     int getUID() const;
     void probeRenderCommands();
@@ -75,36 +57,36 @@ struct Theatre
     void delegateMouseInput(GLFWwindow*, const double, const double) const;
     const LightsCount getLightsCount() const;
 
-    void addActor(Actor* Actor);
-    void addDevice(Device* Device);
+    void addActor(std::shared_ptr<Actor> Actor);
+    void addDevice(std::shared_ptr<Device> Device);
 
-    std::vector<Actor*> getAllActors() const;
-    std::vector<Device*> getAllDevices() const;
+    std::vector<std::shared_ptr<Actor>> getAllActors() const;
+    std::vector<std::shared_ptr<Device>> getAllDevices() const;
 
     // Safe and reliable, since every Actor must have a unique UID
-    Actor* getActor(const int UniqueID) const;
+    std::shared_ptr<Actor> getActor(const int UniqueID) const;
     // Safe and reliable, since every Device must have a unique UID
-    Device* getDevice(const int UniqueID) const;
+    std::shared_ptr<Device> getDevice(const int UniqueID) const;
 
     // Safe, but unreliable; if multiple Actors share the same name, this returns the first Actor it encounters
-    Actor* getActor(const std::string& Name) const;
+    std::shared_ptr<Actor> getActor(const std::string& Name) const;
     // Safe, but unreliable; if multiple Devices share the same name, this returns the first Device it encounters
-    Device* getDevice(const std::string& Name) const;
+    std::shared_ptr<Device> getDevice(const std::string& Name) const;
 
     void removeActor(const int UniqueID);
     void removeDevice(const int UniqueID);
 
-    void checkAndSetCurrentVariables(Actor* = nullptr, Device* = nullptr);
+    void checkAndSetCurrentVariables(std::shared_ptr<Actor> = nullptr, std::shared_ptr<Device> = nullptr);
     //-------------------------------------
     // End of Actor/Device Helper Functions
     //-------------------------------------
 
 private:
     int UID = -1;
-    std::map<int, ActorPointerWrapper> wrapped_actors;
-    std::map<int, DevicePointerWrapper> wrapped_devices;
-    std::vector<Actor*> unwrapped_actors;
-    std::vector<Device*> unwrapped_devices;
+    std::map<int, std::shared_ptr<Actor>> actor_map;
+    std::map<int, std::shared_ptr<Device>> device_map;
+    std::vector<std::shared_ptr<Actor>> actor_vector;
+    std::vector<std::shared_ptr<Device>> device_vector;
 
     static std::random_device uid_random_device;
     static std::mt19937 uid_random_generator;
@@ -118,11 +100,11 @@ private:
     int changeActorUID(const int, const int);
     int changeDeviceUID(const int, const int);
 
-    Actor* addInterpretedActor(Actor*);
-    Device* addInterpretedDevice(Device*);
+    std::shared_ptr<Actor> addInterpretedActor(std::shared_ptr<Actor>);
+    std::shared_ptr<Device> addInterpretedDevice(std::shared_ptr<Device>);
 
-    void parallelAddActor(Actor*, const int, const bool);
-    void parallelAddDevice(Device*, const int, const bool);
+    void parallelAddActor(std::shared_ptr<Actor>, const int, const bool);
+    void parallelAddDevice(std::shared_ptr<Device>, const int, const bool);
 
     void parallelRemoveActor(const int);
     void parallelRemoveDevice(const int);

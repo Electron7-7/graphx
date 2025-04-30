@@ -27,7 +27,7 @@ struct Collider : public Device
 	using Device::Device;
 	~Collider() override;
 
-	JPH::BodyCreationSettings *getBodySettings();
+	JPH::BodyCreationSettings* getBodySettings();
 	const JPH::BodyID& getBodyID();
 
 	void reset_to_default_transformation_for_testing();
@@ -35,6 +35,7 @@ struct Collider : public Device
 
 protected:
 	JPH::BodyID body_id;
+	std::shared_ptr<JPH::Shape> body_shape = nullptr;
 	JPH::BodyCreationSettings body_settings;
 	JPH::Vec3 reset_position = JPH::Vec3(0.0f, 0.0f, 0.0f);
 	JPH::Quat reset_quaternion = JPH::Quat::sIdentity();
@@ -92,7 +93,7 @@ struct Model : public Device
 {
 	// int material_uid;
 	Material material_base = Material(glm::vec3(1.0f)); // This is a bad way to make sure material is never nullptr
-	Material* material = &material_base; // This is going to be replaced with material_id
+	std::shared_ptr<Material> material = std::make_shared<Material>(&material_base); // This is going to be replaced with material_id
 
 	unsigned int VBO = 0;
 	unsigned int IBO = 0;
@@ -103,7 +104,7 @@ struct Model : public Device
 	using Device::Device;
 	// Model(const int, const std::string& = ERROR_MODEL); // for when I replace Material* with int
 	Model(const Material&, const std::string& = ERROR_MODEL);
-	Model(Material*, const std::string& = ERROR_MODEL);
+	Model(std::shared_ptr<Material>, const std::string& = ERROR_MODEL);
 
 	void loadSettings() override;
 };
@@ -120,12 +121,11 @@ namespace graphx
 {
 	namespace current
 	{
-		extern Environment* environment;
+		extern std::shared_ptr<Environment> environment;
 	}
 
 	namespace safety
 	{
-		extern Device device;
 		extern Environment environment;
 	}
 }

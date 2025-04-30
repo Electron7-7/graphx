@@ -12,26 +12,9 @@
 using namespace JPH;
 using namespace JPH::literals;
 
-const JPH::Shape* J_CreateAShape(int shape, std::tuple<glm::vec3, float, float> shape_args)
-{
-	switch(shape)
-	{
-	case graphx::jolt::shapes::BOX:
-		return new JPH::BoxShape(gmath::convertMath<JPH::Vec3>(std::get<0>(shape_args)));
-	case graphx::jolt::shapes::SPHERE:
-		return new JPH::SphereShape(std::get<1>(shape_args));
-	case graphx::jolt::shapes::CAPSULE:
-		return new JPH::CapsuleShape(std::get<2>(shape_args), std::get<1>(shape_args));
-	case graphx::jolt::shapes::CYLINDER:
-		return new JPH::CylinderShape(std::get<2>(shape_args), std::get<1>(shape_args));
-	};
-
-	return new JPH::BoxShape;
-};
-
 PhysicsSystem jolt_physics_system;
 
-void J_RemoveAndDestroyBody(BodyID body_id)
+void J_RemoveAndDestroyBody(const BodyID& body_id)
 {
 	jolt_physics_system.GetBodyInterface().RemoveBody(body_id);
 	jolt_physics_system.GetBodyInterface().DestroyBody(body_id);

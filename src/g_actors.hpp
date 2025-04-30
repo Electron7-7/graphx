@@ -24,7 +24,7 @@ public:
 	RenderCommands getRenderCommands() override;
 
 protected:
-	Actor* parent = this;
+	std::shared_ptr<Actor> parent = std::shared_ptr<Actor>(this);
 	Sprite label_mesh = Sprite("Untitled Sprite");
 	TextRenderCmd text_render_command;
 };
@@ -49,7 +49,7 @@ class GraphXPlayer: public Actor //public CharacterController(?)
 public:
 	Model player_mesh = Model("Untitled Model");
 	Camera player_camera = Camera("Player Camera");
-	LightFlashlight* player_flashlight = nullptr;
+	std::shared_ptr<LightFlashlight> player_flashlight = nullptr;
 
 	bool do_gravity = true; // Debugging, mostly
 	float mouse_sensitivity = 0.05f;
@@ -59,7 +59,7 @@ public:
 	float mass = 100.0f;
 	float field_of_view = 45.0f; // Make sure to convert to radians when making the perspective matrix 
 
-	JPH::Ref<JPH::CharacterSettings> player_settings;
+	// JPH::Ref<JPH::CharacterSettings> player_settings;
 
 	using Actor::Actor;
 
@@ -75,7 +75,7 @@ public:
 
 private:
 	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
-	JPH::Ref<JPH::Character> jph_character = nullptr;
+	// JPH::Ref<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
 };
@@ -94,7 +94,7 @@ public:
 	float light_range = 100.0f;
 
 	// Other
-	// Texture *texture_projection = nullptr;
+	// std::shared_ptr<Texture> texture_projection = nullptr;
 
 	using Actor::Actor;
 
@@ -133,10 +133,10 @@ public:
 class LightFlashlight: public LightSpot
 {
 public:
-	Actor* parent = nullptr;
+	std::shared_ptr<Actor> parent = nullptr;
 
 	using LightSpot::LightSpot;
-	LightFlashlight(Actor* = nullptr);
+	LightFlashlight(std::shared_ptr<Actor> = nullptr);
 
 	void setLight(bool is_on);
 	void toggleLight(glm::vec3 toggle_color = glm::vec3(0.0f));
@@ -160,7 +160,7 @@ public:
 	float pivot_theta = 0.0f;
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
-	Model temporary_pivot_mesh = Model(&temporary_pivot_material);
+	Model temporary_pivot_mesh = Model(temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point");
 
 	using Light::Light;
@@ -194,7 +194,7 @@ namespace graphx
 {
 	namespace current
 	{
-		extern GraphXPlayer* player;
+		extern std::shared_ptr<GraphXPlayer> player;
 	}
 
 	namespace safety

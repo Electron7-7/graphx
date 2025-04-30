@@ -1,3 +1,4 @@
+#include <memory>
 #ifndef GRAPHX_RENDERING_COMMON
 #include <models.hpp>
 #include <glm/vec3.hpp>
@@ -51,7 +52,7 @@ public:
     std::string mesh_data_name = ERROR_MODEL;
     RenderState current_render_state = RenderState();
     RenderState previous_render_state = RenderState();
-    Material* mesh_material = nullptr; // REPLACE THIS WITH MATERIAL UID
+    std::shared_ptr<Material> mesh_material = nullptr; // REPLACE THIS WITH MATERIAL UID
 };
 
 struct LightRenderCmd
