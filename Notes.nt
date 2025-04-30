@@ -2545,3 +2545,8 @@ It's at Actor::loadSettings!!!! I FOUND IT!!
 Okay, it wasn't that function, IT'S THE ACTION OF ADDING THE POINTER TO EITHER THE MAP OR VECTOR CAUSES IT TO BE FREED?????
 
 I've decided to replace all raw pointers with smart pointers, and it's proving to be a life-saver. I hate memory management so fucking much. Anyways, I still have some work to do, mostly with the interpreter/settings and I think a few things in the renderer, but I'm actually finally so close to a working build (I hope).
+
+[04/30/25]
+Time to finish what I started.
+
+I think the settings need an overhaul. Hopefully nothing too big...
