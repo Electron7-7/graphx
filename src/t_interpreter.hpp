@@ -1,6 +1,6 @@
 #ifndef GRAPHX_THEATRE_INTERPRETER
 #include "t_common.hpp"
-#include "graphx_namespace.hpp"
+#include "t_settings.hpp"
 #define GRAPHX_THEATRE_INTERPRETER
 
 class GraphXTheatreInterpreter
@@ -22,11 +22,11 @@ public:
     std::string getTheatreStructure(gStringSettings theatre_storage);
 
     void loadTheatre(const long TheatreID, Theatre& OutputTheatre);
-    void interpretCppReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string cpp_reference);
-    void interpretRawData(graphx::gSettings &current_object_settings, std::string variable_name, std::string raw_data);
-    void interpretExternalReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string external_reference);
-    void interpretTheatreReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, gStringSettings &theatre_settings);
-    void interpretSandwich(graphx::gSettings& current_object_settings, gStringSettings& theatre_settings, std::string current_object_name, int& i, int& it, unsigned long settings_size, Theatre& new_theatre);
+    void interpretCppReference(gSettings& current_object_settings, std::string variable_name, std::string cpp_reference);
+    void interpretRawData(gSettings& current_object_settings, std::string variable_name, std::string raw_data);
+    void interpretExternalReference(gSettings& current_object_settings, std::string variable_name, std::string external_reference);
+    void interpretTheatreReference(gSettings& current_object_settings, std::string variable_name, std::string theatre_reference, Theatre& new_theatre, gStringSettings& theatre_settings);
+    void interpretSandwich(gSettings& current_object_settings, gStringSettings& theatre_settings, std::string current_object_name, int& i, int& it, unsigned long settings_size, Theatre& new_theatre);
 private:
 
     // This is just me making the error printout easier to find and add to

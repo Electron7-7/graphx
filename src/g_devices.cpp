@@ -5,6 +5,7 @@
 #include "Jolt/Physics/Collision/Shape/SphereShape.h"
 #include "t_settings.hpp"
 #include <gmath.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/component_wise.hpp>
 //---------
 // Collider

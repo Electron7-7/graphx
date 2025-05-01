@@ -1,18 +1,11 @@
 #ifndef GRAPHX_NAMESPACE
 #define GRAPHX_NAMESPACE
 #include <glm/vec3.hpp>
-#include <unordered_map>
-#include <any>
-#include <string>
-
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 #define UID_EMPTY -1 // Just to keep things consistent
 
 namespace graphx
 {
-	typedef std::pair<int, std::any> gSetting; // The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`
-	typedef std::unordered_map<std::string, gSetting> gSettings;
-
 	namespace orientation
 	{
 		extern glm::vec3 up;

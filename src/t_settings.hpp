@@ -1,13 +1,16 @@
 #ifndef GRAPHX_SETTINGS
-#define GRAPHX_SETTINGS
-#define GLM_ENABLE_EXPERIMENTAL
 #include "sanity_printouts.hpp"
-#include "graphx_namespace.hpp"
-#include "t_common.hpp"
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include <any>
+#include <type_traits>
+#include <memory>
+#include <vector>
+#include <unordered_map>
 #include <algorithm>
-#include <Jolt/Jolt.h>
+#include <filesystem>
+#include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+#define GRAPHX_SETTINGS
 
 #ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
 class Actor;
@@ -18,198 +21,74 @@ struct Device;
 
 #define GRAB_SETTING_ERR_DEVICE_POINTER     -4
 #define GRAB_SETTING_ERR_ACTOR_POINTER      -8
-#define GRAB_SETTING_ERR_RAW_DATA_SINGLE    -15
-#define GRAB_SETTING_ERR_RAW_DATA_TWO       -16
-#define GRAB_SETTING_ERR_RAW_DATA_THREE     -23
-#define GRAB_SETTING_ERR_RAW_DATA_FOUR      -42
-#define GRAB_SETTING_ERR_CPP_REFERENCE      -69
-#define GRAB_SETTING_ERR_SANDWICH_BUN       -420
-#define GRAB_SETTING_ERR_EXTERNAL_REFERENCE -808
+#define GRAB_SETTING_ERR_RAW_DATA           -15
+#define GRAB_SETTING_ERR_CPP_REFERENCE      -16
+#define GRAB_SETTING_ERR_SANDWICH_BUN       -23
+#define GRAB_SETTING_ERR_EXTERNAL_REFERENCE -42
 
 #define GRAB_SETTING_ERR_MSG_TEMPLATE std::string("getSetting called with non-matching variable and setting!")
 
-extern std::string empty_settings_identifier;
-extern graphx::gSettings empty_settings;
+typedef std::string                              gKey;
+typedef std::pair<int, std::string>              gValue;
+typedef std::pair<gKey, gValue>                  gStringSetting;
+typedef std::vector<std::vector<gStringSetting>> gStringSettings;
+typedef std::vector<std::string>                 gRawData;
 
-template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
+struct gSetting
 {
-	std::any set_value = setting.second;
-	int setting_type = setting.first;
-
-	if((setting_type == -1 || setting_type == 0) || (!set_value.has_value() || set_value.type() == typeid(void) || set_value.type() == typeid(nullptr)))
+	enum class Category
 	{
-		setting = graphx::gSetting(DEFAULT_VALUE_SETTING, variable);
-		return 0; // No setting to get
-	}
+		UNDEFINED          = 0,
+		RAW_DATA           = 1,
+		CPP_REFERENCE      = 2,
+		EXTERNAL_REFERENCE = 3,
+		THEATRE_REFERENCE  = 4,
+		SANDWICH           = 5
+	};
 
-	if(setting_type == DEFAULT_VALUE_SETTING)
-	{
-		variable = std::any_cast<T>(set_value);
-		return 0;
-	}
+	Category category = Category::UNDEFINED;
+	std::any setting;
 
-	if(setting_type == RAW_DATA)
-	{
-		gRawData raw_data = std::any_cast<gRawData>(set_value);
-		std::string raw_data_lower = raw_data[0];
-		std::transform(raw_data_lower.begin(), raw_data_lower.end(), raw_data_lower.begin(), [](unsigned char c)
-		{
-			return std::tolower(c);
-		});
+	gSetting();
+	gSetting(std::any CppReference, const bool SettingIsCppReference, const Category CategoryOverride = Category::CPP_REFERENCE);
+	gSetting(const gRawData& RawData, const Category CategoryOverride = Category::RAW_DATA);
+	gSetting(std::shared_ptr<Actor> TheatreReference, const Category TheatreReferenceOrSandwichBun);
+	gSetting(std::shared_ptr<Device> TheatreReference, const Category TheatreReferenceOrSandwichBun);
+	gSetting(const std::string& ExternalReference, const Category CategoryOverride = Category::EXTERNAL_REFERENCE);
+};
 
-		switch(raw_data.size())
-		{
-		case 1:
-			if constexpr(std::is_same_v<T, bool>)
-			{
-				variable = raw_data_lower.compare("false");
-				return 0;
-			}
+template<typename T> struct IsRawData : std::disjunction<std::is_arithmetic<T>, std::is_same<T, bool>, std::is_same<T, std::string>, std::is_same<T, glm::vec2>, std::is_same<T, glm::vec3>, std::is_same<T, glm::vec4>, std::is_same<T, glm::quat>> {};
+template<typename T> struct IsTheatreReference : std::false_type {};
+template<typename T> struct IsTheatreReference<std::shared_ptr<T>> : std::disjunction<std::is_base_of<Actor, T>, std::is_base_of<Device, T>> {};
 
-			else if constexpr(std::is_arithmetic_v<T>)
-			{ // Should only fire if T is number, since the previous if statmenet will fire when T is a bool
-				variable = std::stod(raw_data[0]);
-				return 0;
-			}
+double tryConvertStringToNumber(const std::string&, const bool);
 
-			else if constexpr(std::is_same_v<T, std::string> || std::is_same_v<T, char> || std::is_same_v<T, char *>)
-			{
-				variable = raw_data[0];
-				return 0;
-			}
+// Default specialization: arithmatic scalar or glm vector/quaternion
+template<typename T> int getRawData(T& variable, const gSetting& setting)
+{
+    if constexpr(IsRawData<T>::value)
+    {
+    	gRawData raw_data = std::any_cast<gRawData>(setting.setting);
 
-			else
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_RAW_DATA_SINGLE;
-			}
+        if constexpr(std::is_arithmetic_v<T>)
+        { variable = tryConvertStringToNumber(raw_data[0], true); return 0; } // Get double instead of float to avoid errors (that's the idea, at least)
 
-			break;
-		case 2:
-			if constexpr(std::is_same_v<T, glm::vec2>)
-			{
-				variable = glm::vec2(std::stof(raw_data[0]), std::stof(raw_data[1]));
-				return 0;
-			}
-			else
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_RAW_DATA_TWO;
-			}
-			break;
-		case 3:
-			if constexpr(std::is_same_v<T, glm::vec3>)
-			{
-				variable = glm::vec3(std::stof(raw_data[0]), std::stof(raw_data[1]), std::stof(raw_data[2]));
-				return 0;
-			}
-			else if constexpr(std::is_same_v<T, JPH::Vec3>)
-			{
-				variable = JPH::Vec3(std::stof(raw_data[0]), std::stof(raw_data[1]), std::stof(raw_data[2]));
-				return 0;
-			}
-			else
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_RAW_DATA_THREE;
-			}
-			break;
-		case 4:
-			if constexpr(std::is_same_v<T, glm::quat>)
-			{
-				variable = glm::quat(std::stof(raw_data[3]), std::stof(raw_data[0]), std::stof(raw_data[1]), std::stof(raw_data[2]));
-				return 0;
-			}
-			else if constexpr(std::is_same_v<T, JPH::Quat>)
-			{
-				variable = JPH::Quat(std::stof(raw_data[0]), std::stof(raw_data[1]), std::stof(raw_data[2]), std::stof(raw_data[3]));
-				return 0;
-			}
-			else
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (gRawData)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_RAW_DATA_FOUR;
-			}
-			break;
-		}
-	}
+        else if constexpr(std::is_same_v<T, glm::vec2>)
+        { getRawDataGLM(variable, 2); return 0; }
 
-	else if(setting_type == THEATRE_REFERENCE)
-	{
-		if constexpr(std::is_base_of_v<Device, T>)
-		{
-			if(set_value.type() != typeid(std::shared_ptr<Device>))
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (Theatre Reference or Sandwich)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_DEVICE_POINTER;
-			}
+        else if constexpr(std::is_same_v<T, glm::vec3>)
+        { getRawDataGLM(variable, 3); return 0; }
 
-			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Device>>(set_value));
-			return 0;
-		}
+        else if constexpr(std::is_same_v<T, glm::vec4> || std::is_same_v<T, glm::quat>)
+        { getRawDataGLM(variable, 4); return 0; }
 
-		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
-		{
-			if(set_value.type() != typeid(std::shared_ptr<Actor>))
-			{
-				PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (Theatre Reference or Sandwich)\n\tVariable type: " << typeid(variable).name())
-				return GRAB_SETTING_ERR_ACTOR_POINTER;
-			}
+        PRINTERR("in gSetting::getRawData: unknown error occured! (default specialization, end of if-else statements)")
+        return GRAB_SETTING_ERR_RAW_DATA;
+    }
 
-			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Actor>>(set_value));
-			return 0;
-		}
-	}
-
-	else if(setting_type == SANDWICH)
-	{
-		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
-		{
-			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Device>>(set_value));
-			return 0;
-		}
-		
-		else if constexpr(std::is_base_of_v<Actor, std::remove_pointer_t<T>>)
-		{
-			variable = dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Actor>>(set_value));
-			return 0;
-		}
-
-		PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (Sandwich Bun)\n\tVariable type: " << typeid(variable).name())
-		return GRAB_SETTING_ERR_SANDWICH_BUN;
-	}
-
-	else if(setting_type == CPP_REFERENCE)
-	{
-		if(set_value.type() != typeid(variable))
-		{
-			PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (C++ Reference)\n\tVariable type: " << typeid(variable).name())
-			return GRAB_SETTING_ERR_CPP_REFERENCE;
-		}
-
-		else
-		{
-			variable = std::any_cast<T>(set_value);
-			return 0;
-		}
-	}
-
-	else if(setting_type == EXTERNAL_REFERENCE)
-	{
-		if(set_value.type() != typeid(variable))
-		{
-			PRINTERR(GRAB_SETTING_ERR_MSG_TEMPLATE << "\n\tSetting type: " << set_value.type().name() << " (External Reference)\n\tVariable type: " << typeid(variable).name())
-			return GRAB_SETTING_ERR_EXTERNAL_REFERENCE;
-		}
-
-		else
-		{
-			variable = std::any_cast<T>(set_value);
-			return 0;
-		}
-	}
-
-	PRINTERR("grabSetting called but none of the if/else statements returned! This shouldn't be possible, so if you see this error message, the real problem is probably not related to grabSetting (or there's a return missing somewhere in here...)")
-	return 0;
+    PRINTERR("gSetting::getRawData(T& variable) - T is not a valid type!")
+    return GRAB_SETTING_ERR_RAW_DATA;
 }
+
+template<typename T> int getTheatreReference(T& variable, const gSetting& setting)
 #endif

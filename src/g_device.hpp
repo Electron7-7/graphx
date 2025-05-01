@@ -1,5 +1,5 @@
 #ifndef GRAPHX_DEVICE
-#include "graphx_namespace.hpp"
+#include "t_settings.hpp"
 #define GRAPHX_DEVICE
 
 #ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
@@ -15,20 +15,20 @@ public:
     Device(const std::string& Name);
 
     // The constructor that the Interpreter uses when creating Devices
-    Device(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
+    Device(Theatre* ParentTheatre, const int UID, const gSettings& Settings = gSettings());
 
     virtual ~Device();
 
     int getUID() const;
     void setUID(const int);
-    graphx::gSettings getSettings() const;
-    void setSettings(const graphx::gSettings&);
+    gSettings getSettings() const;
+    void setSettings(const gSettings&);
 
     virtual void loadSettings();
 
 protected:
     Theatre* parent_theatre = nullptr;
-    graphx::gSettings settings = graphx::gSettings();
+    gSettings settings = gSettings();
 
 private:
     int UID = -1;

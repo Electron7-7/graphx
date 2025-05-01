@@ -1,6 +1,7 @@
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include "t_settings.hpp"
+#include "sanity_printouts.hpp"
 #include <gmath.hpp>
 #include <models.hpp>
 #include <glm/glm.hpp>

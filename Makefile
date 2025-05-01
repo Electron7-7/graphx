@@ -66,6 +66,7 @@ GRAPHX_OBJS =                   \
 	$(O)/g_actors.opp      		\
 	$(O)/r_rendering.opp   		\
 	$(O)/g_imgui.opp       		\
+	$(O)/t_settings.opp 		\
 	$(O)/t_interpreter.opp 		\
 
 OBJS =             \

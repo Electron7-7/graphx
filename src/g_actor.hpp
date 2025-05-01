@@ -34,15 +34,15 @@ public: // Externally accessible members
 	Actor(const std::string& Name);
 
 	// The constructor that the Interpreter uses when creating Actors
-	Actor(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = graphx::gSettings());
+	Actor(Theatre* ParentTheatre, const int UID, const gSettings& Settings = gSettings());
 
 	virtual ~Actor();
 
 	void updateStates(std::mutex&);
 	int getUID() const;
 	void setUID(const int NewUID);
-	graphx::gSettings getSettings() const;
-	void setSettings(const graphx::gSettings& NewSettings);
+	gSettings getSettings() const;
+	void setSettings(const gSettings& NewSettings);
 
 	void addChildActor(std::shared_ptr<Actor> ChildActor);
 	void addChildDevice(std::shared_ptr<Device> ChildDevice);
@@ -94,7 +94,7 @@ public: // Externally accessible members
 
 protected: // Members that aren't externally accessible
 	Theatre* parent_theatre = nullptr;
-	graphx::gSettings settings = graphx::gSettings();
+	gSettings settings = gSettings();
 
 	std::vector<std::shared_ptr<Actor>> child_actors;
 	std::vector<std::shared_ptr<Device>> child_devices;
