@@ -20,19 +20,19 @@ void Collider::loadSettings()
 {
 	Device::loadSettings();
 
-	getSetting(overrides_actor_transform, settings["Rigidbody"]);
-	getSetting(overrides_actor_transform, settings["ControlActor"]);
-	getSetting(overrides_actor_transform, settings["OverrideActor"]);
-	getSetting(motion_type, settings["MotionType"]);
-	getSetting(object_layer, settings["ObjectLayer"]);
-	getSetting(activation, settings["Activation"]);
-	getSetting(shape, settings["Shape"]);
-	getSetting(forever_alone, settings["ForeverAlone"]);
-	getSetting(position, settings["Position"]);
-	getSetting(euler_angles, settings["Rotation"]);
-	getSetting(local_position, settings["LocalPosition"]);
-	getSetting(local_euler_angles, settings["LocalRotation"]);
-	getSetting(scale, settings["Scale"]);
+	settings.getSetting("Rigidbody", overrides_actor_transform);
+	settings.getSetting("ControlActor", overrides_actor_transform);
+	settings.getSetting("OverrideActor", overrides_actor_transform);
+	settings.getSetting("MotionType", motion_type);
+	settings.getSetting("ObjectLayer", object_layer);
+	settings.getSetting("Activation", activation);
+	settings.getSetting("Shape", shape);
+	settings.getSetting("ForeverAlone", forever_alone);
+	settings.getSetting("Position", position);
+	settings.getSetting("Rotation", euler_angles);
+	settings.getSetting("LocalPosition", local_position);
+	settings.getSetting("LocalRotation", local_euler_angles);
+	settings.getSetting("Scale", scale);
 
 	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
 	reset_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
@@ -73,9 +73,9 @@ void Environment::loadSettings()
 
 	bool ambient_light_enabled = (ambient_light_amount > 0.0f);
 
-	getSetting(ambient_light_amount, settings["AmbientLightAmount"]);
-	getSetting(ambient_light_color, settings["AmbientLightColor"]);
-	getSetting(ambient_light_enabled, settings["AmbientLightEnabled"]);
+	settings.getSetting("AmbientLightAmount", ambient_light_amount);
+	settings.getSetting("AmbientLightColor", ambient_light_color);
+	settings.getSetting("AmbientLightEnabled", ambient_light_enabled);
 
 	ambient_light_amount *= ambient_light_enabled;
 }
@@ -117,13 +117,13 @@ void Material::loadSettings()
 {
 	Device::loadSettings();
 
-	getSetting(diffuse_texture_name, settings["DiffuseTexture"]);
-	getSetting(specular_texture_name, settings["SpecularTexture"]);
-	getSetting(color, settings["Color"]);
-	getSetting(color_alpha, settings["Alpha"]);
-	getSetting(specular_sharpness, settings["SpecularSharpness"]);
-	getSetting(specular_strength, settings["SpecularStrength"]);
-	getSetting(mat_fullbright, settings["mat_fullbright"]);
+	settings.getSetting("DiffuseTexture", diffuse_texture_name);
+	settings.getSetting("SpecularTexture", specular_texture_name);
+	settings.getSetting("Color", color);
+	settings.getSetting("Alpha", color_alpha);
+	settings.getSetting("SpecularSharpness", specular_sharpness);
+	settings.getSetting("SpecularStrength", specular_strength);
+	settings.getSetting("mat_fullbright", mat_fullbright);
 
 	if(mat_fullbright && diffuse_texture_name == MISSING_TEXTURE)
 		diffuse_texture_name = NO_TEXTURE;
@@ -147,8 +147,8 @@ void Model::loadSettings()
 {
 	Device::loadSettings();
 
-	getSetting(material, settings["Material"]);
-	getSetting(mesh_data_name, settings["Mesh"]);
+	settings.getSetting("Material", material);
+	settings.getSetting("Mesh", mesh_data_name);
 }
 
 //

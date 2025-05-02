@@ -2555,3 +2555,5 @@ I think the settings need an overhaul. Hopefully nothing too big...
 Instead of function templates, why not just make `getSetting` a function in `gSetting` and make different derived versions of `gSetting` for each category of setting, each with their own overloaded versions of `getSetting` (which would be declared in `gSetting`, so the base `gSetting` class wouldn't be used directly).
 
 I've found a solution!! Make separate gSetting structs for each category, then have gSettings be a struct with maps for the diferent categories and functions for easily interfacing with each category.
+
+At work, finished up gSetting and gSettings, but while cleaning up the interpreter I realized that I needed to (and could easily) fix the overly complicated and messy typedef situation regarding "gStringSetting" and the like by just using a fucking struct.

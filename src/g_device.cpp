@@ -31,5 +31,5 @@ void Device::setSettings(const gSettings& new_settings)
 
 void Device::loadSettings()
 {
-    getSetting(name, settings["Name"]);
+    settings.getSetting("Name", name);
 }

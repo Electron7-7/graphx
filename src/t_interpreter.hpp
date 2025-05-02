@@ -17,24 +17,23 @@ public:
 
     std::string validExtensions() const;
 
-    gStringSettings theatreParser(std::string theatre_data);
-    std::string getVariableTypeName(int variable_type);
-    std::string getTheatreStructure(gStringSettings theatre_storage);
+    std::vector<StringSettings> theatreParser(std::string TheatreData);
+    std::string getCategoryString(int Category);
+    std::string getTheatreStructure(const std::vector<StringSettings>& AllSettings);
 
     void loadTheatre(const long TheatreID, Theatre& OutputTheatre);
-    void interpretCppReference(gSettings& current_object_settings, std::string variable_name, std::string cpp_reference);
-    void interpretRawData(gSettings& current_object_settings, std::string variable_name, std::string raw_data);
-    void interpretExternalReference(gSettings& current_object_settings, std::string variable_name, std::string external_reference);
-    void interpretTheatreReference(gSettings& current_object_settings, std::string variable_name, std::string theatre_reference, Theatre& new_theatre, gStringSettings& theatre_settings);
-    void interpretSandwich(gSettings& current_object_settings, gStringSettings& theatre_settings, std::string current_object_name, int& i, int& it, unsigned long settings_size, Theatre& new_theatre);
-private:
+    void interpretRawData(gSettings& Settings, const std::string& Name, const std::string& RawData);
+    void interpretCppReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
+    void interpretExternalReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
 
+    void interpretTheatreReference(gSettings& Settings, const std::string& Name, const std::string& ReferencedName, Theatre& CurrentTheatre, std::vector<StringSettings>& AllSettings);
+    void interpretSandwich(gSettings& Settings, std::vector<StringSettings>& AllSettings, const std::string& SandwichName, int& FirstIterator, int& SecondIterator, const unsigned long& NumberOfSettings, Theatre& CurrentTheatre);
+private:
     // This is just me making the error printout easier to find and add to
     std::string what_are_the_valid_extensions =              \
         "(GraphXTheatre)\n\t" + graphx_theatre_extensions  + \
         "(3D Model)\n\t"      + three_dee_model_extensions + \
         "(Image)\n\t"         + image_extensions;
-
 };
 
 namespace graphx

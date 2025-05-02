@@ -1,22 +1,51 @@
 #include "t_settings.hpp"
-#include "g_device.hpp"
-#include "g_actor.hpp"
+#include "graphx_interpreter_lookups.hpp"
+#include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+#include <algorithm>
+#include <memory>
+
+//---------------------------
+// gSetting & derived classes
+//---------------------------
 
 //-------------
 // Constructors
 //-------------
+
+// gSetting
 gSetting::gSetting(std::any my_setting)
 : setting(my_setting)
 {}
 
+// Raw Data
 gSettingRawData::gSettingRawData(const gRawData& my_setting)
 : gSetting(my_setting)
 {}
 
-gSettingCppReference::gSettingCppReference(const std::string& my_setting)
-: gSetting(my_setting)
+gSettingRawData::gSettingRawData()
+: gSetting()
 {}
 
+// Small function so I can keep shit in the initializer list for gSettingCppReference
+std::any safeSetCppReference(const std::string& key)
+{
+    if(!cpp_definitions.contains(key))
+        return std::any();
+    return cpp_definitions.at(key);
+}
+
+// C++ Reference
+gSettingCppReference::gSettingCppReference(const std::string& my_setting)
+: gSetting(safeSetCppReference(my_setting))
+{}
+
+gSettingCppReference::gSettingCppReference()
+: gSetting()
+{}
+
+// Theatre Reference
 gSettingTheatreReference::gSettingTheatreReference(std::shared_ptr<Actor> my_setting, const bool is_sandwich_bun)
 : gSetting(my_setting), is_sandwich(is_sandwich_bun)
 {}
@@ -25,56 +54,26 @@ gSettingTheatreReference::gSettingTheatreReference(std::shared_ptr<Device> my_se
 : gSetting(my_setting), is_sandwich(is_sandwich_bun)
 {}
 
+gSettingTheatreReference::gSettingTheatreReference()
+: gSetting()
+{}
+
+// External Reference
 gSettingExternalReference::gSettingExternalReference(const std::string& my_setting)
 : gSetting(my_setting)
 {}
 
 gSettingExternalReference::gSettingExternalReference(const std::filesystem::path& my_setting)
-: gSetting(my_setting)
+: gSetting(std::string(my_setting))
 {}
 
-template<typename T> T doStringToNumber(const std::string& str)
-{   // There's probably a better way to do this, but fuck it idc
-    const T test_if_whole;
+gSettingExternalReference::gSettingExternalReference()
+: gSetting()
+{}
 
-    if constexpr(static_cast<int>(test_if_whole) || static_cast<long>(test_if_whole))
-    {
-        long valid_number = 0;
-
-        try
-        {
-            valid_number = std::stol(str);
-        }
-
-        catch(std::invalid_argument const& exception)
-        {
-            PRINTERR("in gSetting::doStringToNumber at std::stol: std::invalid_argument " << exception.what())
-            valid_number = 0; // Just to be safe...
-        }
-
-        return valid_number;
-    }
-
-    else
-    {
-        double valid_number = 0.0f;
-
-        try
-        {
-            valid_number = std::stod(str);
-        }
-
-        catch(std::invalid_argument const& exception)
-        {
-            PRINTERR("in gSetting::doStringToNumber at std::stod: std::invalid_argument " << exception.what())
-            valid_number = 0.0f; // Just to be safe...
-        }
-
-        return valid_number;
-    }
-
-}
-
+//-------------------------------------------
+// Raw Data Template Function Specializations
+//-------------------------------------------
 template<typename T>
 int gSettingRawData::getSetting(T& variable) const
 {
@@ -92,12 +91,12 @@ int gSettingRawData::getSetting(T& variable) const
     {
         std::vector<std::string> raw_data_copy = std::any_cast<gRawData>(setting);
         for(int i = 0; i < raw_data_copy.size(); i++)
-            variable[i] = doStringToNumber<float>(raw_data_copy[i]);
+            variable[i] = stringToNumber<float>(raw_data_copy[i]);
     }
 
     else if constexpr(std::is_arithmetic_v<T>)
     {
-        variable = doStringToNumber<T>(std::any_cast<gRawData>(setting)[0]);
+        variable = stringToNumber<T>(std::any_cast<gRawData>(setting)[0]);
         return 0;
     }
 
@@ -117,6 +116,7 @@ int gSettingRawData::getSetting(bool& variable) const
     });
 
     variable = raw_data_lower.compare("false");
+    return 0;
 }
 
 template<>
@@ -130,63 +130,20 @@ int gSettingRawData::getSetting(std::string& variable) const
         string_out.append(setting_string);
 
     variable = string_out;
+    return 0;
 }
 
-template<typename T>
-int gSettingCppReference::getSetting(T& variable) const
-{
-    if(!setting.has_value()) return 0;
+//-----------------------------
+// gSettings Function Overloads
+//-----------------------------
+void gSettings::addSetting(const std::string& new_setting_name, const gSettingRawData& new_setting)
+{ raw_data[new_setting_name] = new_setting; }
 
-    if constexpr(typeid(T) == setting.type())
-    {
-        variable = std::any_cast<T>(setting);
-        return 0;
-    }
+void gSettings::addSetting(const std::string& new_setting_name, const gSettingCppReference& new_setting)
+{ cpp_references[new_setting_name] = new_setting; }
 
-    PRINTERR("in gSettingCppReference::getSetting: type does not match setting type!")
-    return GRAB_SETTING_ERR_CPP_REFERENCE;
-}
+void gSettings::addSetting(const std::string& new_setting_name, const gSettingTheatreReference& new_setting)
+{ theatre_references[new_setting_name] = new_setting; }
 
-template<typename T> 
-int gSettingTheatreReference::getSetting(std::shared_ptr<T>& variable) const
-{
-    if(!setting.has_value()) return 0;
-
-    static_assert(std::is_base_of_v<Actor, T> || std::is_base_of_v<Device, T>);
-
-    if constexpr(std::is_base_of_v<Actor, T>)
-    {
-        variable = std::dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Actor>>(setting));
-        return 0;
-    }
-
-    else if constexpr(std::is_base_of_v<Device, T>)
-    {
-        variable = std::dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Device>>(setting));
-        return 0;
-    }
-
-    PRINTERR("in gSettingTheatreReference::getSetting: type is not derived from Actor or Device!")
-    return GRAB_SETTING_ERR_ACTOR_POINTER;
-}
-
-template<typename T>
-int gSettingExternalReference::getSetting(T& variable) const
-{
-    if(!setting.has_value()) return 0;
-
-    if(setting.type() == typeid(std::string))
-    {
-        variable = std::any_cast<std::string>(setting);
-        return 0;
-    }
-
-    else if(setting.type() == typeid(std::filesystem::path))
-    {
-        variable = std::any_cast<std::filesystem::path>(setting);
-        return 0;
-    }
-
-    PRINTERR("in gSettingExternalReference::getSetting: setting was not of type std::string or std::filesystem::path")
-    return GRAB_SETTING_ERR_EXTERNAL_REFERENCE;
-}
+void gSettings::addSetting(const std::string& new_setting_name, const gSettingExternalReference& new_setting)
+{ external_references[new_setting_name] = new_setting; }

@@ -157,17 +157,16 @@ void Actor::loadSettings()
 	glm::vec3 local_euler_degrees = getLocalEulerAngles(true);
 	glm::vec3 global_euler_degrees = getGlobalEulerAngles(true);
 
-	getSetting(name, settings["Name"]);
-	getSetting(mesh, settings["Model"]);
-	getSetting(position_global, settings["Position"]);
-	getSetting(position_local, settings["LocalPosition"]);
-	getSetting(global_euler_degrees, settings["Rotation"]);
-	getSetting(local_euler_degrees, settings["LocalRotation"]);
-	getSetting(scale_global, settings["Scale"]);
-	getSetting(scale_local, settings["LocalScale"]);
-	getSetting(visible, settings["Visible"]);
-
-	getSetting(collider, settings["Collider"]);
+	settings.getSetting("Name", name);
+	settings.getSetting("Model", mesh);
+	settings.getSetting("Position", position_global);
+	settings.getSetting("LocalPosition", position_local);
+	settings.getSetting("Rotation", global_euler_degrees);
+	settings.getSetting("LocalRotation", local_euler_degrees);
+	settings.getSetting("Scale", scale_global);
+	settings.getSetting("LocalScale", scale_local);
+	settings.getSetting("Visible", visible);
+	settings.getSetting("Collider", collider);
 
 	setLocalQuaternion(glm::quat(glm::radians(local_euler_degrees)));
 	setGlobalQuaternion(glm::quat(glm::radians(global_euler_degrees)));

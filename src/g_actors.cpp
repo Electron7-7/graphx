@@ -52,16 +52,16 @@ void Label::loadSettings()
 	 *   versions of the same setting be used, the one that wins is the one that looks more intentional, hopefully
 	 *   avoiding confusion.
 	*/
-	getSetting(label_alpha, settings["Transparency"]);
-	getSetting(label_alpha, settings["Alpha"]);
-	getSetting(font_name_catcher, settings["Font"]);
-	getSetting(font_name_catcher, settings["FontName"]);
-	getSetting(text_render_command.color, settings["Color"]);
-	getSetting(text_render_command.color, settings["TextColor"]);
-	getSetting(text_render_command.text, settings["Message"]);
-	getSetting(text_render_command.text, settings["Text"]);
-	getSetting(text_render_command.text, settings["Label"]);
-	getSetting(text_render_command.scale, settings["TextScale"]);
+	settings.getSetting("Transparency", label_alpha);
+	settings.getSetting("Alpha", label_alpha);
+	settings.getSetting("Font", font_name_catcher);
+	settings.getSetting("FontName", font_name_catcher);
+	settings.getSetting("Color", text_render_command.color);
+	settings.getSetting("TextColor", text_render_command.color);
+	settings.getSetting("Message", text_render_command.text);
+	settings.getSetting("Text", text_render_command.text);
+	settings.getSetting("Label", text_render_command.text);
+	settings.getSetting("TextScale", text_render_command.scale);
 
 	text_render_command.position_x = 0.0f;
 	text_render_command.position_y = 0.0f;
@@ -97,13 +97,13 @@ void GraphXPlayer::loadSettings()
 {
 	Actor::loadSettings();
 
-	getSetting(do_gravity, settings["DoGravity"]);
-	getSetting(mouse_sensitivity, settings["MouseSensitivity"]);
-	getSetting(movement_speed, settings["MovementSpeed"]);
-	getSetting(lerp_speed, settings["MovementAcceleration"]);
-	getSetting(friction, settings["Friction"]);
-	getSetting(mass, settings["Mass"]);
-	getSetting(field_of_view, settings["FOV"]);
+	settings.getSetting("DoGravity", do_gravity);
+	settings.getSetting("MouseSensitivity", mouse_sensitivity);
+	settings.getSetting("MovementSpeed", movement_speed);
+	settings.getSetting("MovementAcceleration", lerp_speed);
+	settings.getSetting("Friction", friction);
+	settings.getSetting("Mass", mass);
+	settings.getSetting("FOV", field_of_view);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
@@ -222,13 +222,13 @@ void Light::loadSettings()
 {
 	Actor::loadSettings();
 
-	getSetting(light_color, settings["Color"]);
-	getSetting(light_energy, settings["Energy"]);
-	getSetting(light_ambient_strength, settings["AmbientStrength"]);
-	getSetting(light_specular_strength, settings["SpecularStrength"]);
-	getSetting(light_attenuation, settings["FadeIntensity"]);
-	getSetting(light_attenuation, settings["Attenuation"]);
-	getSetting(light_range, settings["Range"]);
+	settings.getSetting("Color", light_color);
+	settings.getSetting("Energy", light_energy);
+	settings.getSetting("AmbientStrength", light_ambient_strength);
+	settings.getSetting("SpecularStrength", light_specular_strength);
+	settings.getSetting("FadeIntensity", light_attenuation);
+	settings.getSetting("Attenuation", light_attenuation);
+	settings.getSetting("Range", light_range);
 }
 
 RenderCommands Light::getRenderCommands()
@@ -261,7 +261,7 @@ void LightDirectional::loadSettings()
 {
 	Light::loadSettings();
 
-	getSetting(directional_direction, settings["Direction"]);
+	settings.getSetting("Direction", directional_direction);
 }
 
 RenderCommands LightDirectional::getRenderCommands()
@@ -281,9 +281,9 @@ void LightSpot::loadSettings()
 {
 	Light::loadSettings();
 
-	getSetting(spot_direction, settings["Direction"]);
-	getSetting(spot_angle, settings["Angle"]);
-	getSetting(spot_angle_fade, settings["AngleFadeIntensity"]);
+	settings.getSetting("Direction", spot_direction);
+	settings.getSetting("Angle", spot_angle);
+	settings.getSetting("AngleFadeIntensity", spot_angle_fade);
 }
 
 RenderCommands LightSpot::getRenderCommands()
@@ -308,11 +308,11 @@ void LightFlashlight::loadSettings()
 	glm::vec3 local_position = getLocalPosition();
 	glm::quat local_quaternion = getLocalQuaternion();
 
-	getSetting(parent, settings["Parent"]);
-	getSetting(start_enabled, settings["StartOn"]);
-	getSetting(start_enabled, settings["StartEnabled"]);
-	getSetting(local_position, settings["PositionOffset"]);
-	getSetting(local_quaternion, settings["RotationOffset"]);
+	settings.getSetting("Parent", parent);
+	settings.getSetting("StartOn", start_enabled);
+	settings.getSetting("StartEnabled", start_enabled);
+	settings.getSetting("PositionOffset", local_position);
+	settings.getSetting("RotationOffset", local_quaternion);
 
 	setLocalPosition(local_position);
 	setLocalQuaternion(local_quaternion);
@@ -370,9 +370,9 @@ void LightTesterMover::loadSettings()
 {
 	Light::loadSettings();
 
-	getSetting(pivot_position, settings["PivotPosition"]);
-	getSetting(pivot_radius, settings["PivotRadius"]);
-	getSetting(pivot_speed, settings["PivotSpeed"]);
+	settings.getSetting("PivotPosition", pivot_position);
+	settings.getSetting("PivotRadius", pivot_radius);
+	settings.getSetting("PivotSpeed", pivot_speed);
 
 	pivot_point.setGlobalPosition(pivot_position);
 	temporary_pivot_mesh.name = "Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
@@ -401,11 +401,11 @@ void Ramiel::loadSettings()
 {
 	Actor::loadSettings();
 
-	getSetting(movement_type, settings["MovementType"]);
-	getSetting(pivot_position, settings["PivotPosition"]);
-	getSetting(pivot_radius, settings["PivotRadius"]);
-	getSetting(pivot_speed, settings["PivotSpeed"]);
-	getSetting(movement_speed, settings["MovementSpeed"]);
+	settings.getSetting("MovementType", movement_type);
+	settings.getSetting("PivotPosition", pivot_position);
+	settings.getSetting("PivotRadius", pivot_radius);
+	settings.getSetting("PivotSpeed", pivot_speed);
+	settings.getSetting("MovementSpeed", movement_speed);
 }
 
 void Ramiel::tick(int current_tick)

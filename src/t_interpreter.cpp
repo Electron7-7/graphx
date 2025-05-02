@@ -1,17 +1,31 @@
 #include "t_interpreter.hpp"
 #include "graphx_interpreter_lookups.hpp"
-#include "r_rendering.hpp"
-#include "sanity_printouts.hpp"
 #include "sanity_executable_locator.hpp"
-#include <images.h>
-#include <models.hpp>
+#include "sanity_printouts.hpp"
+#include "r_rendering.hpp"
+#include "g_theatre.hpp"
 #include <theatres.hpp>
 #include <set>
-#include <filesystem> // Yes, the devil hath been invoked... I'm sorry
 #include <fstream>
-#include <sstream>
 
 using namespace graphx;
+
+//--------------
+// StringSetting
+//--------------
+StringSetting::StringSetting()
+: name(""), value(""), category(UNDEFINED)
+{}
+
+StringSetting::StringSetting(const std::string& new_name, const std::string& new_value, const unsigned int new_category)
+: name(new_name), value(new_value), category(new_category)
+{}
+
+void StringSetting::changeSetting(const std::string& new_value, const int new_category)
+{
+	value = new_value;
+	category = (new_category != LEAVE_UNCHANGED) ? new_category : category;
+}
 
 //------------
 // Interpreter
@@ -21,7 +35,7 @@ std::string GraphXTheatreInterpreter::validExtensions() const
 	return three_dee_model_extensions + graphx_theatre_extensions + image_extensions;
 }
 
-gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data)
+std::vector<StringSettings> GraphXTheatreInterpreter::theatreParser(std::string theatre_data)
 {
 	std::set<char> whitespace =
 	{
@@ -49,9 +63,8 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 
 	bool reading_settings = false;
 
-	std::vector<gStringSetting> object_settings;
-
-	gStringSettings all_settings; // Contains all object string settings
+	StringSettings object_settings;
+	std::vector<StringSettings> all_settings;
 
 	std::string buffer = "";
 	int current_setting_index = 1;
@@ -85,7 +98,7 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 					character = theatre_data[++i];
 				}
 
-				all_settings.insert(all_settings.end(), {gStringSetting(gKey("TheatreName"), gValue(gSetting::RAW_DATA, buffer))});
+				all_settings.insert(all_settings.end(), { StringSetting("TheatreName", buffer, StringSetting::RAW_DATA) });
 				buffer = "";
 				break;
 			case begin_raw_data:
@@ -98,7 +111,7 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 					character = theatre_data[++i];
 				}
 
-				object_settings.at(0).second = gValue(gSetting::RAW_DATA, buffer);
+				object_settings.at(0).changeSetting(buffer, StringSetting::RAW_DATA);
 				buffer = "";
 				break;
 			default:
@@ -117,7 +130,7 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 
 				if(buffer.size() > 0)
 				{
-					object_settings.insert(object_settings.end(), gStringSetting(buffer, gValue(gSetting::RAW_DATA, "")));
+					object_settings.insert(object_settings.end(), StringSetting(buffer, "", StringSetting::RAW_DATA));
 					buffer = "";
 					break;
 				}
@@ -143,16 +156,16 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 			switch(character)
 			{
 				case begin_raw_data:
-					setting_type_identifier = gSetting::RAW_DATA;
+					setting_type_identifier = StringSetting::RAW_DATA;
 					break;
 				case begin_cxx_reference:
-					setting_type_identifier = gSetting::CPP_REFERENCE;
+					setting_type_identifier = StringSetting::CPP_REFERENCE;
 					break;
 				case begin_external_reference:
-					setting_type_identifier = gSetting::EXTERNAL_REFERENCE;
+					setting_type_identifier = StringSetting::EXTERNAL_REFERENCE;
 					break;
 				case begin_theatre_reference:
-					setting_type_identifier = gSetting::THEATRE_REFERENCE;
+					setting_type_identifier = StringSetting::THEATRE_REFERENCE;
 					break;
 			}
 
@@ -171,8 +184,8 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 				break;
 			}
 
-			object_settings.at(current_setting_index).second.first += setting_type_identifier;
-			object_settings.at(current_setting_index).second.second = buffer;
+			object_settings.at(current_setting_index).category += setting_type_identifier;
+			object_settings.at(current_setting_index).value = buffer;
 			setting_type_padding = 0;
 			current_setting_index++;
 			buffer = "";
@@ -194,13 +207,13 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 
 				if(character == sandwich_delimiter)
 				{
-					object_settings.insert(object_settings.end(), gStringSetting(sandwich_bun + buffer, gValue(gSetting::SANDWICH, "")));
-					setting_type_padding = gSetting::SANDWICH;
+					object_settings.insert(object_settings.end(), StringSetting(sandwich_bun + buffer, "", StringSetting::SANDWICH));
+					setting_type_padding = StringSetting::SANDWICH;
 
 					if(sandwich_bun.empty())
 					{
 						sandwich_bun = buffer + ":";
-						object_settings.back().second.first -= gSetting::THEATRE_REFERENCE;
+						object_settings.back().category -= StringSetting::THEATRE_REFERENCE;
 					}
 
 					buffer = "";
@@ -213,7 +226,7 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 
 			if(buffer.size() > 0)
 			{
-				object_settings.insert(object_settings.end(), gStringSetting(sandwich_bun + buffer, gValue(setting_type_padding, "")));
+				object_settings.insert(object_settings.end(), StringSetting(sandwich_bun + buffer, "", setting_type_padding));
 				buffer = "";
 			}
 
@@ -224,56 +237,54 @@ gStringSettings GraphXTheatreInterpreter::theatreParser(std::string theatre_data
 	return all_settings;
 }
 
-std::string GraphXTheatreInterpreter::getVariableTypeName(int variable_type)
+std::string GraphXTheatreInterpreter::getCategoryString(int category)
 {
 	std::string type_return;
 
-	switch(variable_type)
+	switch(category)
 	{
-	case gSetting::CPP_REFERENCE:
+	case StringSetting::CPP_REFERENCE:
 		type_return = "CPP_REFERENCE";
 		break;
-	case gSetting::THEATRE_REFERENCE:
+	case StringSetting::THEATRE_REFERENCE:
 		type_return = "THEATRE_REFERENCE";
 		break;
-	case gSetting::RAW_DATA:
+	case StringSetting::RAW_DATA:
 		type_return = "RAW_DATA";
 		break;
-	case gSetting::EXTERNAL_REFERENCE:
+	case StringSetting::EXTERNAL_REFERENCE:
 		type_return = "EXTERNAL_REFERENCE";
 		break;
-	case gSetting::SANDWICH:
+	case StringSetting::SANDWICH:
 		type_return = "SANDWICH";
 		break;
 	default:
-		if(variable_type > gSetting::SANDWICH)
-			type_return = getVariableTypeName(variable_type - gSetting::SANDWICH);
+		if(category > StringSetting::SANDWICH)
+			type_return = getCategoryString(category - StringSetting::SANDWICH);
 		else
 			type_return = "UNKNOWN";
 		break;
 	}
 
-	return type_return + " (" + std::to_string(variable_type) + ")";
+	return type_return + " (" + std::to_string(category) + ")";
 }
 
-std::string GraphXTheatreInterpreter::getTheatreStructure(gStringSettings theatre_storage)
+// Debugging function
+std::string GraphXTheatreInterpreter::getTheatreStructure(const std::vector<StringSettings>& all_settings)
 {
-	std::string structure_out = "Theatre Structure\n\nTheatre \"" + theatre_storage[0][0].second.second + "\"\n";
+	std::string structure_out = "Theatre Structure\n\nTheatre \"" + all_settings[0][0].value + "\"\n";
 
-	for(int i = 1 ; i < theatre_storage.size() ; i++)
+	for(int i = 1 ; i < all_settings.size() ; i++)
 	{
-		structure_out += "\n\t" + theatre_storage[i][0].first + " \"" + theatre_storage[i][0].second.second + "\"\n";
-		for(int it = 1 ; it < theatre_storage[i].size() ; it++)
-		{
-			gStringSetting setting = theatre_storage[i][it];
-			structure_out += "\t\t" + setting.first + " = " + setting.second.second + " (type: " + getVariableTypeName(setting.second.first) + ")\n";
-		}
+		structure_out += "\n\t" + all_settings[i][0].name + " \"" + all_settings[i][0].value + "\"\n";
+		for(int it = 1 ; it < all_settings[i].size() ; it++)
+			structure_out += "\t\t" + all_settings[i][it].name + " = " + all_settings[i][it].value + " (type: " + getCategoryString(all_settings[i][it].category) + ")\n";
 	}
 
 	return structure_out;
 }
 
-void GraphXTheatreInterpreter::interpretCppReference(gSettings &current_object_settings, std::string variable_name, std::string cpp_reference)
+void GraphXTheatreInterpreter::interpretCppReference(gSettings& current_object_settings, const std::string& variable_name, const std::string& cpp_reference)
 {
 	if(!cpp_definitions.contains(cpp_reference))
 	{
@@ -281,10 +292,10 @@ void GraphXTheatreInterpreter::interpretCppReference(gSettings &current_object_s
 		return;
 	}
 
-	current_object_settings[variable_name] = gSetting(cpp_definitions.at(cpp_reference), gSetting::CPP_REFERENCE);
+	current_object_settings.addSetting(variable_name, gSettingCppReference(cpp_reference));
 }
 
-void GraphXTheatreInterpreter::interpretRawData(gSettings &current_object_settings, std::string variable_name, std::string raw_data)
+void GraphXTheatreInterpreter::interpretRawData(gSettings& current_object_settings, const std::string& variable_name, const std::string& raw_data)
 {
 	std::set<char> forgiveness =
 	{
@@ -305,7 +316,7 @@ void GraphXTheatreInterpreter::interpretRawData(gSettings &current_object_settin
 	gRawData vector_buffer;
 	bool is_number = true;
 
-	for(char &character : raw_data)
+	for(const char& character : raw_data)
 	{
 		if(!std::isdigit(character))
 		{
@@ -335,14 +346,14 @@ void GraphXTheatreInterpreter::interpretRawData(gSettings &current_object_settin
 	if(is_number)
 	{
 		vector_buffer.insert(vector_buffer.end(), buffer);
-		current_object_settings[variable_name] = gSetting(vector_buffer);
+		current_object_settings.addSetting(variable_name, gSettingRawData(vector_buffer));
 		return;
 	}
 
-	current_object_settings[variable_name] = gSetting(gRawData{raw_data});
+	current_object_settings.addSetting(variable_name, gSettingRawData(gRawData{raw_data}));
 }
 
-void GraphXTheatreInterpreter::interpretExternalReference(gSettings &current_object_settings, std::string variable_name, std::string external_reference)
+void GraphXTheatreInterpreter::interpretExternalReference(gSettings &current_object_settings, const std::string& variable_name, const std::string& external_reference)
 {
 	std::string file_extension = external_reference.substr(external_reference.find_last_of(".") + 1);
 
@@ -354,7 +365,7 @@ void GraphXTheatreInterpreter::interpretExternalReference(gSettings &current_obj
 
 	if(three_dee_model_extensions.find(file_extension) != std::string::npos)
 	{
-		current_object_settings[variable_name] = gSetting(M_LoadModelFile(external_reference, file_extension));
+		current_object_settings.addSetting(variable_name, gSettingExternalReference(M_LoadModelFile(external_reference, file_extension)));
 	}
 
 	else if(graphx_theatre_extensions.find(file_extension) != std::string::npos)
@@ -370,7 +381,7 @@ void GraphXTheatreInterpreter::interpretExternalReference(gSettings &current_obj
 	}
 }
 
-void GraphXTheatreInterpreter::interpretTheatreReference(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, gStringSettings &theatre_settings)
+void GraphXTheatreInterpreter::interpretTheatreReference(gSettings &current_object_settings, const std::string& variable_name, const std::string& theatre_reference, Theatre& new_theatre, std::vector<StringSettings>& theatre_settings)
 {
 	std::string class_name = variable_name;
 	if(variable_name.find(':') != std::string::npos)
@@ -378,7 +389,7 @@ void GraphXTheatreInterpreter::interpretTheatreReference(gSettings &current_obje
 
 	if(!gClasses::isDefined(class_name)) // If true, this is a reference to a variable of the same name in another Actor/Device
 	{
-		gStringSetting referenced_setting(variable_name, gValue(-1, "EMPTY"));
+		StringSetting referenced_setting(variable_name, "EMPTY", StringSetting::UNDEFINED);
 
 		// BEHOLD!!!
 		// the most disgusting for-if-for-if nest you have EVER SEEN!!!
@@ -386,34 +397,34 @@ void GraphXTheatreInterpreter::interpretTheatreReference(gSettings &current_obje
 		// for now. I'll probably get around to changing this later on down the line...
 		// ...probably...
 		// ...maybe...
-		for(std::vector<gStringSetting> object_settings : theatre_settings)
+
+		for(const StringSettings& object_settings : theatre_settings) // Potential fuck ups here, lmfao
 		{
-			if(!object_settings[0].second.second.compare(theatre_reference))
+			if(object_settings.at(0).value.compare(theatre_reference))
+				continue;
+
+			for(const StringSetting& setting : object_settings)
 			{
-				for(gStringSetting string_setting : object_settings)
-				{
-					if(!string_setting.first.compare(variable_name))
-					{
-						referenced_setting.second = string_setting.second;
-						break;
-					}
-				}
+				if(setting.name.compare(variable_name))
+					continue;
+				referenced_setting.value = setting.value;
+				break;
 			}
 		}
 
-		switch(referenced_setting.second.first)
+		switch(referenced_setting.category)
 		{
-		case gSetting::CPP_REFERENCE:
-			interpretCppReference(current_object_settings, referenced_setting.first, referenced_setting.second.second);
+		case StringSetting::CPP_REFERENCE:
+			interpretCppReference(current_object_settings, referenced_setting.name, referenced_setting.value);
 			return;
-		case gSetting::RAW_DATA:
-			interpretRawData(current_object_settings, referenced_setting.first, referenced_setting.second.second);
+		case StringSetting::RAW_DATA:
+			interpretRawData(current_object_settings, referenced_setting.name, referenced_setting.value);
 			return;
-		case gSetting::THEATRE_REFERENCE:
-			interpretTheatreReference(current_object_settings, referenced_setting.first, referenced_setting.second.second, new_theatre, theatre_settings);
+		case StringSetting::THEATRE_REFERENCE:
+			interpretTheatreReference(current_object_settings, referenced_setting.name, referenced_setting.value, new_theatre, theatre_settings);
 			return;
-		case gSetting::EXTERNAL_REFERENCE:
-			interpretExternalReference(current_object_settings, referenced_setting.first, referenced_setting.second.second);
+		case StringSetting::EXTERNAL_REFERENCE:
+			interpretExternalReference(current_object_settings, referenced_setting.name, referenced_setting.value);
 			return;
 		default:
 			PRINTERR("A Theatre reference variable either referenced a nonexisting Actor/Device, or referenced one that didn't define the variable it wanted! (or my code fucked up)\n\tVariable Name: " << variable_name << "\n\tReference Name: " << theatre_reference)
@@ -423,43 +434,43 @@ void GraphXTheatreInterpreter::interpretTheatreReference(gSettings &current_obje
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
 	if(gClasses::isActor(class_name))
-		current_object_settings[variable_name] = gSetting(new_theatre.getActor(theatre_reference), gSetting::THEATRE_REFERENCE);
+		current_object_settings.addSetting(variable_name, gSettingTheatreReference(new_theatre.getActor(theatre_reference)));
 
 	else if(gClasses::isDevice(class_name))
-		current_object_settings[variable_name] = gSetting(new_theatre.getDevice(theatre_reference), gSetting::THEATRE_REFERENCE);
+		current_object_settings.addSetting(variable_name, gSettingTheatreReference(new_theatre.getDevice(theatre_reference)));
 }
 
-void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_settings, gStringSettings& theatre_settings, std::string current_object_name, int& i, int& it, unsigned long settings_size, Theatre& new_theatre)
+void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_settings, std::vector<StringSettings>& theatre_settings, const std::string& current_object_name, int& i, int& it, const unsigned long& settings_size, Theatre& new_theatre)
 {
 	gSettings sandwich_settings;
-	gStringSetting sandwich_bun_setting = theatre_settings.at(i).at(it);
+	StringSetting sandwich_bun_setting = theatre_settings.at(i).at(it);
 
-	if(gClasses::isActor(sandwich_bun_setting.first))
-		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->getSettings();
+	if(gClasses::isActor(sandwich_bun_setting.name))
+		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.value)->getSettings();
 	else
-		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->getSettings();
+		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.value)->getSettings();
 
-	sandwich_settings["Name"] = gSetting(gRawData{sandwich_bun_setting.second.second + "_" + current_object_name});
+	sandwich_settings.addSetting("Name", gSettingRawData(gRawData{sandwich_bun_setting.value + "_" + current_object_name}));
 
 	it++;
-	while(theatre_settings[i][it].second.first > gSetting::SANDWICH && it < settings_size)
-	{
-		std::string sandwich_variable = theatre_settings[i][it].first.substr(theatre_settings[i][it].first.find_last_of(':') + 1);
-		std::string sandwich_value = theatre_settings[i][it].second.second;
-		int sandwich_value_type = theatre_settings[i][it].second.first - gSetting::SANDWICH;
 
-		switch(sandwich_value_type)
+	while(theatre_settings[i][it].category > StringSetting::SANDWICH && it < settings_size)
+	{
+		std::string sandwich_variable = theatre_settings[i][it].name.substr(theatre_settings[i][it].name.find_last_of(':') + 1);
+		std::string sandwich_value = theatre_settings[i][it].value;
+
+		switch(theatre_settings[i][it].category - StringSetting::SANDWICH)
 		{
-		case gSetting::CPP_REFERENCE:
+		case StringSetting::CPP_REFERENCE:
 			interpretCppReference(sandwich_settings, sandwich_variable, sandwich_value);
 			break;
-		case gSetting::RAW_DATA:
+		case StringSetting::RAW_DATA:
 			interpretRawData(sandwich_settings, sandwich_variable, sandwich_value);
 			break;
-		case gSetting::THEATRE_REFERENCE:
+		case StringSetting::THEATRE_REFERENCE:
 			interpretTheatreReference(sandwich_settings, sandwich_variable, sandwich_value, new_theatre, theatre_settings);
 			break;
-		case gSetting::EXTERNAL_REFERENCE:
+		case StringSetting::EXTERNAL_REFERENCE:
 			interpretExternalReference(sandwich_settings, sandwich_variable, sandwich_value);
 			break;
 		default:
@@ -470,16 +481,16 @@ void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_setti
 		it++;
 	}
 
-	if(gClasses::isActor(sandwich_bun_setting.first))
+	if(gClasses::isActor(sandwich_bun_setting.name))
 	{
-		std::shared_ptr<Actor> sandwich_bun = new_theatre.addInterpretedActor(valid_actors.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
-		current_object_settings[sandwich_bun_setting.first] = gSetting(sandwich_bun, gSetting::SANDWICH);
+		std::shared_ptr<Actor> sandwich_bun = new_theatre.addInterpretedActor(valid_actors.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings));
+		current_object_settings.addSetting(sandwich_bun_setting.name, gSettingTheatreReference(sandwich_bun, true));
 	}
 
-	else if(gClasses::isDevice(sandwich_bun_setting.first))
+	else if(gClasses::isDevice(sandwich_bun_setting.name))
 	{
-		std::shared_ptr<Device> sandwich_bun = new_theatre.addInterpretedDevice(valid_devices.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings));
-		current_object_settings[sandwich_bun_setting.first] = gSetting(sandwich_bun, gSetting::SANDWICH);
+		std::shared_ptr<Device> sandwich_bun = new_theatre.addInterpretedDevice(valid_devices.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings));
+		current_object_settings.addSetting(sandwich_bun_setting.name, gSettingTheatreReference(sandwich_bun, true));
 	}
 
 	it--;
@@ -493,10 +504,10 @@ void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_
 		return;
 	}
 
-	gStringSettings theatre_settings = theatreParser(embedded_theatres.at(theatre_uid));
+	std::vector<StringSettings> theatre_settings = theatreParser(embedded_theatres.at(theatre_uid));
 
 	// new_theatre.~Theatre(); // Probably unnecessary
-	new_theatre = Theatre(theatre_uid, theatre_settings[0][0].second.second);
+	new_theatre = Theatre(theatre_uid, theatre_settings[0][0].value);
 	// new_theatre.graphx_theatre_settings = theatre_settings;
 	// new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
 
@@ -504,33 +515,34 @@ void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_
 
 	for(int i = 1 ; i < theatre_settings.size() ; i++)
 	{
-		gSettings current_object_settings = {{"Name", gSetting(gRawData{theatre_settings[i][0].second.second})}};
+		gSettings current_object_settings;
+		current_object_settings.addSetting("Name", gSettingRawData(gRawData{theatre_settings[i][0].value}));
 
 		for(int it = 1 ; it < theatre_settings[i].size() ; it++)
 		{
-			gStringSetting setting = theatre_settings[i][it];
+			const StringSetting& setting = theatre_settings[i][it];
 
-			switch(setting.second.first)
+			switch(setting.category)
 			{
-			case gSetting::CPP_REFERENCE:
-				interpretCppReference(current_object_settings, setting.first, setting.second.second);
+			case StringSetting::CPP_REFERENCE:
+				interpretCppReference(current_object_settings, setting.name, setting.value);
 				break;
-			case gSetting::RAW_DATA:
-				interpretRawData(current_object_settings, setting.first, setting.second.second);
+			case StringSetting::RAW_DATA:
+				interpretRawData(current_object_settings, setting.name, setting.value);
 				break;
-			case gSetting::THEATRE_REFERENCE:
-				interpretTheatreReference(current_object_settings, setting.first, setting.second.second, new_theatre, theatre_settings);
+			case StringSetting::THEATRE_REFERENCE:
+				interpretTheatreReference(current_object_settings, setting.name, setting.value, new_theatre, theatre_settings);
 				break;
-			case gSetting::EXTERNAL_REFERENCE:
-				interpretExternalReference(current_object_settings, setting.first, setting.second.second);
+			case StringSetting::EXTERNAL_REFERENCE:
+				interpretExternalReference(current_object_settings, setting.name, setting.value);
 				break;
-			case gSetting::SANDWICH:
-				interpretSandwich(current_object_settings, theatre_settings, theatre_settings[i][0].second.second, i, it, theatre_settings[i].size(), new_theatre);
+			case StringSetting::SANDWICH:
+				interpretSandwich(current_object_settings, theatre_settings, theatre_settings[i][0].value, i, it, theatre_settings[i].size(), new_theatre);
 				break;
 			}
 		}
 
-		if(!theatre_settings[i][0].first.compare("Stage"))
+		if(!theatre_settings[i][0].name.compare("Stage"))
 		{
 			// new_theatre.stage.youGotACallBack(current_object_settings);
 			// new_theatre.stage_mesh->loadSettings(current_object_settings);
@@ -540,14 +552,14 @@ void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_
 			continue;
 		}
 
-		std::string& type_name = theatre_settings[i][0].first; // For clarity
-		int uid = i; // To remind me that I want to change how UIDs are fuckin' made
+		// Right now, Actor/Device UIDs are just what the main iterator was when they were interpreted.
+		// Honestly, this isn't such a bad thing for debugging and readability purposes, but could be problematic when many Actors/Devices are in a Theatre.
 
-		if(gClasses::isActor(type_name))
-			new_theatre.addInterpretedActor(valid_actors.at(type_name)(&new_theatre, uid, current_object_settings));
+		if(gClasses::isActor(theatre_settings[i][0].name))
+			new_theatre.addInterpretedActor(valid_actors.at(theatre_settings[i][0].name)(&new_theatre, i, current_object_settings));
 
-		else if(gClasses::isDevice(type_name))
-			new_theatre.addInterpretedDevice(valid_devices.at(type_name)(&new_theatre, uid, current_object_settings));
+		else if(gClasses::isDevice(theatre_settings[i][0].name))
+			new_theatre.addInterpretedDevice(valid_devices.at(theatre_settings[i][0].name)(&new_theatre, i, current_object_settings));
 	}
 }
 

@@ -1,7 +1,7 @@
 #ifndef GRAPHX_INTERPRETER_LOOKUPS
 #include "g_actors.hpp"
 #include "g_devices.hpp"
-#include "g_theatre.hpp"
+// #include "g_theatre.hpp"
 #define GRAPHX_INTERPRETER_LOOKUPS
 /*
 	This is where all the variable names and lookups for GraphXTheatre files (and the Interpreter)
