@@ -375,19 +375,21 @@ void LightTesterMover::loadSettings()
 	settings.getSetting("PivotSpeed", pivot_speed);
 
 	pivot_point.setGlobalPosition(pivot_position);
-	temporary_pivot_mesh.name = "Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
+	temporary_pivot_mesh.getName() = "Pivot Model for " + getName() + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
 	temporary_pivot_mesh.mesh_data_name = GRAPHX_CUBE;
-	pivot_point.mesh = std::make_shared<Model>(&temporary_pivot_mesh);
+	pivot_point.TEMP_setModel(std::make_shared<Model>(&temporary_pivot_mesh));
 	parent_theatre->addActor(std::make_shared<Actor>(pivot_point));
 }
 
 void LightTesterMover::tick(int current_tick)
 {
 	pivot_point.setGlobalPosition(pivot_position);
+	glm::vec3 new_position;
+	new_position[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
+	new_position[1] = pivot_position[1];
+	new_position[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
 
-	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
-	position_global[1] = pivot_position[1];
-	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+	setGlobalPosition(new_position);
 
 	pivot_theta += pivot_speed;
 	if(pivot_theta >= 360.0f)
@@ -412,13 +414,17 @@ void Ramiel::tick(int current_tick)
 {
 	if(movement_type == RAMIEL_APPROACH)
 	{
-		position_global += movement_speed * orientation_front;
+		setGlobalPosition(getGlobalPosition() + (movement_speed * orientation_front));
 		return;
 	}
 
-	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
-	position_global[1] = pivot_position[1];
-	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+	glm::vec3 new_position;
+
+	new_position[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
+	new_position[1] = pivot_position[1];
+	new_position[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+
+	setGlobalPosition(new_position);
 
 	pivot_theta += pivot_speed;
 	if(pivot_theta >= 360.0f)

@@ -1,3 +1,4 @@
+#include <algorithm>
 #ifndef GRAPHX_SETTINGS
 #include "sanity_printouts.hpp"
 #include <any>
@@ -30,6 +31,8 @@ typedef std::vector<std::string> gRawData;
 template<typename T> struct is_raw_data:
 std::disjunction
 <
+	std::is_same<T, std::string>,
+	std::is_same<T, bool>,
 	std::is_arithmetic<T>,
 	std::is_same<T, glm::vec2>,
 	std::is_same<T, glm::vec3>,
@@ -73,19 +76,70 @@ struct gSettingRawData: public gSetting
 	gSettingRawData();
 	gSettingRawData(const gRawData&);
 
-	template<typename T> int getSetting(T& variable) const;
-	template<> int getSetting(bool& variable) const;
-	template<> int getSetting(std::string& variable) const;
+	template<typename T> int getSetting(T& variable) const
+	{
+	    if(!setting.has_value()) return 0;
+
+	    static_assert(
+	        std::is_arithmetic_v<T> ||
+	        std::is_same_v<T, glm::vec2> ||
+	        std::is_same_v<T, glm::vec3> ||
+	        std::is_same_v<T, glm::vec4> ||
+	        std::is_same_v<T, glm::quat>
+	    );
+
+	    if constexpr(!std::is_arithmetic_v<T>) // Assumes the vector is the same size (or lower) as the variable!
+	    {
+	        std::vector<std::string> raw_data_copy = std::any_cast<gRawData>(setting);
+	        for(int i = 0; i < raw_data_copy.size(); i++)
+	            variable[i] = stringToNumber<float>(raw_data_copy[i]);
+	        return 0;
+	    }
+
+	    else if constexpr(std::is_arithmetic_v<T>)
+	    {
+	        variable = stringToNumber<T>(std::any_cast<gRawData>(setting)[0]);
+	        return 0;
+	    }
+
+	    PRINTERR("in gSettingRawData::getSetting: type is expected to be arithmetic or GLM vector/quaternion!")
+	    return GRAB_SETTING_ERR_RAW_DATA;
+	}
+
+	template<> int getSetting(std::string& variable) const
+	{
+	    if(!setting.has_value()) return 0;
+
+	    std::string string_out = "";
+
+	    for(std::string setting_string : std::any_cast<gRawData>(setting))
+	        string_out.append(setting_string);
+
+	    variable = string_out;
+	    return 0;
+	}
+
+	template<> int getSetting(bool& variable) const
+	{
+	    if(!setting.has_value()) return 0;
+
+	    std::string raw_data_lower = std::any_cast<gRawData>(setting)[0];
+	    std::transform(raw_data_lower.begin(), raw_data_lower.end(), raw_data_lower.begin(), [](unsigned char c)
+	    {
+	        return std::tolower(c);
+	    });
+
+	    variable = raw_data_lower.compare("false");
+	    return 0;
+	}
 
 private:
 	template<typename T> T stringToNumber(const std::string& str) const
 	{   // There's probably a better way to do this, but fuck it idc
-	    const T test_if_whole;
+        T valid_number = 0;
 
-	    if constexpr(static_cast<int>(test_if_whole) || static_cast<long>(test_if_whole))
+	    if constexpr(std::is_integral_v<T>)
 	    {
-	        long valid_number = 0;
-
 	        try
 	        {
 	            valid_number = std::stol(str);
@@ -102,8 +156,6 @@ private:
 
 	    else
 	    {
-	        double valid_number = 0.0f;
-
 	        try
 	        {
 	            valid_number = std::stod(str);
@@ -112,7 +164,7 @@ private:
 	        catch(std::invalid_argument const& exception)
 	        {
 	            PRINTERR("in gSetting::stringToNumber at std::stod: std::invalid_argument " << exception.what())
-	            valid_number = 0.0f; // Just to be safe...
+	            valid_number = 0; // Just to be safe...
 	        }
 
 	        return valid_number;
@@ -148,21 +200,42 @@ struct gSettingTheatreReference: public gSetting
 	const bool isSandwich() const
 	{ return is_sandwich; }
 
-	template<typename T> int getSetting(std::shared_ptr<T>& variable) const
+	template<typename T> int getSetting(T& variable) const
 	{
 	    if(!setting.has_value()) return 0;
 
-	    static_assert(std::is_base_of_v<Actor, T> || std::is_base_of_v<Device, T>);
+	    std::shared_ptr<Actor> actor_reference = nullptr;
+	    std::shared_ptr<Device> device_reference = nullptr;
 
-	    if constexpr(std::is_base_of_v<Actor, T>)
+	    try
 	    {
-	        variable = std::dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Actor>>(setting));
+	    	actor_reference = std::any_cast<std::shared_ptr<Actor>>(setting);
+	    }
+
+	    catch(std::bad_any_cast const& exception)
+	    {
+	    	actor_reference = nullptr;
+	    }
+
+	    try
+	    {
+	    	device_reference = std::any_cast<std::shared_ptr<Device>>(setting);
+	    }
+
+	    catch(std::bad_any_cast const& exception)
+	    {
+	    	device_reference = nullptr;
+	    }
+
+	    if(actor_reference != nullptr)
+	    {
+	        variable = std::dynamic_pointer_cast<T>(actor_reference);
 	        return 0;
 	    }
 
-	    else if constexpr(std::is_base_of_v<Device, T>)
+	    if(device_reference != nullptr)
 	    {
-	        variable = std::dynamic_pointer_cast<T>(std::any_cast<std::shared_ptr<Device>>(setting));
+	        variable = std::any_cast<std::shared_ptr<Device>>(setting);
 	        return 0;
 	    }
 
@@ -213,9 +286,6 @@ struct gSettings
 		if constexpr(is_raw_data<V>::value)
 		{ raw_data[SettingName].getSetting(Variable); return; }
 
-		else if constexpr(is_theatre_reference<V>::value)
-		{ theatre_references[SettingName].getSetting(Variable); return; }
-
 		else
 		{
 			if(external_references.contains(SettingName))
@@ -224,10 +294,14 @@ struct gSettings
 				{ external_references[SettingName].getSetting(Variable); return; }
 			}
 
+			if(theatre_references.contains(SettingName))
+			{ theatre_references[SettingName].getSetting(Variable); return; }
+
 			else
 			{ cpp_references[SettingName].getSetting(Variable); return; }
 		}
 	}
+
 
 private:
 	std::map<std::string, gSettingRawData>           raw_data;

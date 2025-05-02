@@ -19,16 +19,7 @@ struct Theatre;
 class Actor
 {
 public: // Externally accessible members
-	std::shared_ptr<Collider> collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
-
-	std::shared_ptr<Model> mesh = nullptr; // THIS IS GOING
-	long mesh_uid = -1;   // THIS IS REPLACING IT
-
-	bool visible = true;
-
 	bool debug_highlight_enabled = false;
-
-	std::string name = "Untitled Actor";
 
 	// The constructor that should be used 99% of the time
 	Actor(const std::string& Name);
@@ -38,9 +29,18 @@ public: // Externally accessible members
 
 	virtual ~Actor();
 
+	void TEMP_setModel(const Model&);
+	void TEMP_setModel(std::shared_ptr<Model>);
+	std::shared_ptr<Model> TEMP_getModel() const;
+
 	void updateStates(std::mutex&);
 	int getUID() const;
 	void setUID(const int NewUID);
+	std::string getName() const;
+	void setName(const std::string& NewName);
+	void setVisibility(bool IsVisible);
+	void toggleVisibility();
+	bool getVisibility() const;
 	gSettings getSettings() const;
 	void setSettings(const gSettings& NewSettings);
 
@@ -103,13 +103,6 @@ protected: // Members that aren't externally accessible
 	glm::vec3 orientation_front = graphx::orientation::front;
 	glm::vec3 orientation_right = graphx::orientation::right;
 
-	glm::vec3 position_global = glm::vec3(0.0f);
-	glm::vec3 position_local = glm::vec3(0.0f);
-	glm::quat quaternion_global = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-	glm::quat quaternion_local = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-	glm::vec3 scale_global  = glm::vec3(1.0f);
-	glm::vec3 scale_local = glm::vec3(1.0f);
-
 	// Consider changing vector to array
 	std::vector<RenderState> current_state_buffer  = { RenderState(), RenderState() };
 	std::vector<RenderState> previous_state_buffer = { RenderState(), RenderState() };
@@ -126,6 +119,19 @@ protected: // Members that aren't externally accessible
 
 private:
 	int UID = -1;
+	std::string name = "Untitled Actor";
+
+	glm::vec3 position_global = glm::vec3(0.0f);
+	glm::vec3 position_local = glm::vec3(0.0f);
+	glm::quat quaternion_global = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	glm::quat quaternion_local = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec3 scale_global  = glm::vec3(1.0f);
+	glm::vec3 scale_local = glm::vec3(1.0f);
+
+	std::shared_ptr<Collider> collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
+	std::shared_ptr<Model> mesh = nullptr; // THIS IS GOING
+	long mesh_uid = -1;   // THIS IS REPLACING IT
+	bool visible = true;
 };
 
 namespace graphx

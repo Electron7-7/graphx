@@ -7,16 +7,26 @@
 
 using namespace graphx;
 
+void Actor::TEMP_setModel(const Model& new_mesh)
+{ mesh = std::make_shared<Model>(new_mesh); }
+
+void Actor::TEMP_setModel(std::shared_ptr<Model> new_model)
+{ mesh = new_model; }
+
+std::shared_ptr<Model> Actor::TEMP_getModel() const
+{ return mesh; }
+
+
 //------
 // Actor
 //------
 Actor::Actor(const std::string& my_name)
-: name(my_name), parent_theatre(nullptr), settings(gSettings()), UID(-1)
+: parent_theatre(nullptr), settings(gSettings()), UID(-1), name(my_name)
 {}
 
 Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
-: name("Untitled Actor"), parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
-{}
+: parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid), name("Untitled Actor")
+{ loadSettings(); }
 
 Actor::~Actor() = default;
 
@@ -41,6 +51,21 @@ int Actor::getUID() const
 
 void Actor::setUID(const int new_uid)
 { UID = (parent_theatre != nullptr) ? parent_theatre->changeActorUID(UID, new_uid) : new_uid; }
+
+std::string Actor::getName() const
+{ return name; }
+
+void Actor::setName(const std::string& new_name)
+{ name = new_name; }
+
+void Actor::setVisibility(bool is_visible)
+{ visible = is_visible; }
+
+void Actor::toggleVisibility()
+{ visible = !visible; }
+
+bool Actor::getVisibility() const
+{ return visible; }
 
 gSettings Actor::getSettings() const
 { return settings; }

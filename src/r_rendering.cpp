@@ -1149,7 +1149,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		shaders[graphx::rendering::current_shader].setUniform("debug_highlight", rendercmd_iterator->debug_highlight_color);
 
-		Mesh &mesh_data = mesh_data_storage.at(rendercmd_iterator->mesh_data_name);
+		Mesh& mesh_data = mesh_data_storage.at(rendercmd_iterator->mesh_data_name);
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 
 		rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);

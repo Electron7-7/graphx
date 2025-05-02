@@ -156,7 +156,7 @@ std::shared_ptr<Device> Theatre::getDevice(const int UID) const
 std::shared_ptr<Actor> Theatre::getActor(const std::string& actor_name) const
 {
     for(std::shared_ptr<Actor> actor : actor_vector)
-        if(!actor_name.compare(actor->name))
+        if(!actor_name.compare(actor->getName()))
             return actor;
     PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", actor_name))
     return std::shared_ptr<Actor>(&graphx::safety::actor);
@@ -168,8 +168,8 @@ std::shared_ptr<Device> Theatre::getDevice(const std::string& device_name) const
     PRINTDEBUG("Candidates:")
     for(std::shared_ptr<Device> device : device_vector)
     {
-        PRINTDEBUG(device->name)
-        if(!device_name.compare(device->name))
+        PRINTDEBUG(device->getName())
+        if(!device_name.compare(device->getName()))
         {
             return device;
         }
