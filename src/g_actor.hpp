@@ -128,6 +128,7 @@ private:
 	glm::vec3 scale_global  = glm::vec3(1.0f);
 	glm::vec3 scale_local = glm::vec3(1.0f);
 
+	// THESE WILL GO IN THE MAPS/VECTORS LATER
 	std::shared_ptr<Collider> collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
 	std::shared_ptr<Model> mesh = nullptr; // THIS IS GOING
 	long mesh_uid = -1;   // THIS IS REPLACING IT

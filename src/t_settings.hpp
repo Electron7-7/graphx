@@ -200,44 +200,21 @@ struct gSettingTheatreReference: public gSetting
 	const bool isSandwich() const
 	{ return is_sandwich; }
 
-	template<typename T> int getSetting(T& variable) const
+	template<typename T> int getSetting(std::shared_ptr<T>& variable) const
 	{
 	    if(!setting.has_value()) return 0;
 
-	    std::shared_ptr<Actor> actor_reference = nullptr;
-	    std::shared_ptr<Device> device_reference = nullptr;
+		if constexpr(std::is_same_v<T, Actor>)
+	    { variable = std::static_pointer_cast<Actor>(std::any_cast<std::shared_ptr<Actor>>(setting)); return 0; }
 
-	    try
-	    {
-	    	actor_reference = std::any_cast<std::shared_ptr<Actor>>(setting);
-	    }
+		else if constexpr(std::derived_from<T, Actor>)
+		{ variable = std::static_pointer_cast<T>(std::any_cast<std::shared_ptr<Actor>>(setting)); return 0; }
 
-	    catch(std::bad_any_cast const& exception)
-	    {
-	    	actor_reference = nullptr;
-	    }
+		if constexpr(std::is_same_v<T, Device>)
+		{ variable = std::static_pointer_cast<Device>(std::any_cast<std::shared_ptr<Device>>(setting)); return 0; }
 
-	    try
-	    {
-	    	device_reference = std::any_cast<std::shared_ptr<Device>>(setting);
-	    }
-
-	    catch(std::bad_any_cast const& exception)
-	    {
-	    	device_reference = nullptr;
-	    }
-
-	    if(actor_reference != nullptr)
-	    {
-	        variable = std::dynamic_pointer_cast<T>(actor_reference);
-	        return 0;
-	    }
-
-	    if(device_reference != nullptr)
-	    {
-	        variable = std::any_cast<std::shared_ptr<Device>>(setting);
-	        return 0;
-	    }
+		else if constexpr(std::derived_from<T, Device>)
+		{ variable = std::static_pointer_cast<T>(std::any_cast<std::shared_ptr<Device>>(setting)); return 0; }
 
 	    PRINTERR("in gSettingTheatreReference::getSetting: type is not derived from Actor or Device!")
 	    return GRAB_SETTING_ERR_ACTOR_POINTER;
@@ -294,12 +271,15 @@ struct gSettings
 				{ external_references[SettingName].getSetting(Variable); return; }
 			}
 
-			if(theatre_references.contains(SettingName))
-			{ theatre_references[SettingName].getSetting(Variable); return; }
-
 			else
 			{ cpp_references[SettingName].getSetting(Variable); return; }
 		}
+	}
+
+	template<typename V> void getSetting(const std::string& SettingName, std::shared_ptr<V>& Variable)
+	{
+		if(theatre_references.contains(SettingName))
+		{ theatre_references[SettingName].getSetting(Variable); return; }
 	}
 
 

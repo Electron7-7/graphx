@@ -1,10 +1,5 @@
 #include "t_settings.hpp"
 #include "graphx_interpreter_lookups.hpp"
-#include <glm/glm.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
-#include <algorithm>
-#include <memory>
 
 //---------------------------
 // gSetting & derived classes

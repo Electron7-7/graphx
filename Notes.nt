@@ -2567,3 +2567,5 @@ Example:
 Because `name` is set by Actor and all derived actors call Actor::loadSettings(), access to `name` has to be done through a non-virtual `getName()` function; that is, unless I want to force each derived actor to be required to set all of their settings manually instead of calling Base::loadSettings().
 
 TODO: fix theatre reference setting getter.
+
+Okay, I'm at work and it seems to work fine, just the only problem is that Actors are returning empty RenderCmds.

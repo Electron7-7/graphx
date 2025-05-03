@@ -140,42 +140,39 @@ std::vector<std::shared_ptr<Device>> Theatre::getAllDevices() const
 std::shared_ptr<Actor> Theatre::getActor(const int UID) const
 {
     if(actor_map.contains(UID))
-        return actor_map.at(UID);
+        return std::make_shared<Actor>(actor_map.at(UID));
+
     PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", UID))
-    return std::shared_ptr<Actor>(&graphx::safety::actor);
+    return std::make_shared<Actor>(&graphx::safety::actor);
 }
 
 std::shared_ptr<Device> Theatre::getDevice(const int UID) const
 {
     if(device_map.contains(UID))
-        return device_map.at(UID);
+        return std::make_shared<Device>(device_map.at(UID));
+
     PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", UID))
-    return std::shared_ptr<Device>(&graphx::safety::device);
+    return std::make_shared<Device>(&graphx::safety::device);
 }
 
 std::shared_ptr<Actor> Theatre::getActor(const std::string& actor_name) const
 {
     for(std::shared_ptr<Actor> actor : actor_vector)
         if(!actor_name.compare(actor->getName()))
-            return actor;
+            return std::make_shared<Actor>(actor);
+
     PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", actor_name))
-    return std::shared_ptr<Actor>(&graphx::safety::actor);
+    return std::make_shared<Actor>(&graphx::safety::actor);
 }
 
 std::shared_ptr<Device> Theatre::getDevice(const std::string& device_name) const
 {
-    PRINTDEBUG("getDevice(\""<< device_name <<"\")")
-    PRINTDEBUG("Candidates:")
     for(std::shared_ptr<Device> device : device_vector)
-    {
-        PRINTDEBUG(device->getName())
         if(!device_name.compare(device->getName()))
-        {
-            return device;
-        }
-    }
+            return std::make_shared<Device>(device);
+
     PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getDevice", "Device", device_name))
-    return std::shared_ptr<Device>(&graphx::safety::device);
+    return std::make_shared<Device>(&graphx::safety::device);
 }
 
 // Private functions
