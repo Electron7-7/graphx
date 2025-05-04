@@ -20,19 +20,19 @@ void Collider::loadSettings()
 {
 	configureBaseVariables(this);
 
-	settings.getVariable("Rigidbody", overrides_actor_transform);
-	settings.getVariable("ControlActor", overrides_actor_transform);
-	settings.getVariable("OverrideActor", overrides_actor_transform);
+	settings.getBoolean("Rigidbody", overrides_actor_transform);
+	settings.getBoolean("ControlActor", overrides_actor_transform);
+	settings.getBoolean("OverrideActor", overrides_actor_transform);
 	settings.getVariable("MotionType", motion_type);
 	settings.getVariable("ObjectLayer", object_layer);
 	settings.getVariable("Activation", activation);
 	settings.getVariable("Shape", shape);
-	settings.getRawData("ForeverAlone", forever_alone);
-	settings.getRawData("Position", position);
-	settings.getRawData("Rotation", euler_angles);
-	settings.getRawData("LocalPosition", local_position);
-	settings.getRawData("LocalRotation", local_euler_angles);
-	settings.getRawData("Scale", scale);
+	settings.getBoolean("ForeverAlone", forever_alone);
+	settings.getNumber("Position", position);
+	settings.getNumber("Rotation", euler_angles);
+	settings.getNumber("LocalPosition", local_position);
+	settings.getNumber("LocalRotation", local_euler_angles);
+	settings.getNumber("Scale", scale);
 
 	shape_arguments = std::make_tuple(scale, glm::max(glm::max(scale[0], scale[1]), scale[2]), scale[1]);
 	reset_position = gmath::convertMath<JPH::Vec3>(position) + gmath::convertMath<JPH::Vec3>(local_position);
@@ -73,9 +73,9 @@ void Environment::loadSettings()
 
 	bool ambient_light_enabled = (ambient_light_amount > 0.0f);
 
-	settings.getRawData("AmbientLightAmount", ambient_light_amount);
-	settings.getRawData("AmbientLightColor", ambient_light_color);
-	settings.getRawData("AmbientLightEnabled", ambient_light_enabled);
+	settings.getNumber("AmbientLightAmount", ambient_light_amount);
+	settings.getNumber("AmbientLightColor", ambient_light_color);
+	settings.getBoolean("AmbientLightEnabled", ambient_light_enabled);
 
 	ambient_light_amount *= ambient_light_enabled;
 }
@@ -119,11 +119,11 @@ void Material::loadSettings()
 
 	settings.getVariable("DiffuseTexture", diffuse_texture_name);
 	settings.getVariable("SpecularTexture", specular_texture_name);
-	settings.getRawData("Color", color);
-	settings.getRawData("Alpha", color_alpha);
-	settings.getRawData("SpecularSharpness", specular_sharpness);
-	settings.getRawData("SpecularStrength", specular_strength);
-	settings.getRawData("mat_fullbright", mat_fullbright);
+	settings.getNumber("Color", color);
+	settings.getNumber("Alpha", color_alpha);
+	settings.getNumber("SpecularSharpness", specular_sharpness);
+	settings.getNumber("SpecularStrength", specular_strength);
+	settings.getBoolean("mat_fullbright", mat_fullbright);
 
 	if(mat_fullbright && diffuse_texture_name == MISSING_TEXTURE)
 		diffuse_texture_name = NO_TEXTURE;
@@ -147,7 +147,7 @@ void Model::loadSettings()
 {
 	configureBaseVariables(this);
 
-	settings.getVariable("Material", material);
+	// settings.getVariable("Material", material);
 	settings.getVariable("Mesh", mesh_data_name);
 	settings.getVariable("MeshData", mesh_data_name);
 }
@@ -161,7 +161,7 @@ void Sprite::loadSettings()
 	configureBaseVariables(this);
 
 	// Todo: expand configureBaseVariables to include other types (like Model)
-	settings.getVariable("Material", material);
+	// settings.getVariable("Material", material);
 	settings.getVariable("Mesh", mesh_data_name);
 	settings.getVariable("MeshData", mesh_data_name);
 

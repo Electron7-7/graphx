@@ -1,7 +1,10 @@
 #ifndef GRAPHX_THEATRE_INTERPRETER
 #include "t_common.hpp"
-#include "t_settings.hpp"
 #define GRAPHX_THEATRE_INTERPRETER
+
+#ifdef COMPILER_FORWARD_DECLARATIONS
+struct gSettings;
+#endif
 
 class GraphXTheatreInterpreter
 {
@@ -25,7 +28,6 @@ public:
     void interpretRawData(gSettings& Settings, const std::string& Name, const std::string& RawData);
     void interpretCppReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
     void interpretExternalReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
-
     void interpretTheatreReference(gSettings& Settings, const std::string& Name, const std::string& ReferencedName, Theatre& CurrentTheatre, std::vector<StringSettings>& AllSettings);
     void interpretSandwich(gSettings& Settings, std::vector<StringSettings>& AllSettings, const std::string& SandwichName, int& FirstIterator, int& SecondIterator, const unsigned long& NumberOfSettings, Theatre& CurrentTheatre);
 private:

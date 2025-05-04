@@ -6,8 +6,69 @@
 #include <glm/gtx/quaternion.hpp>
 #include <algorithm>
 
-template<>
-void gSettings::getRawData<bool>(const std::string& setting, bool& variable) const
+template<typename V>
+void gSettings::getNumber(const std::string& setting, V& variable) const
+{
+    if(!raw_data.contains(setting) || raw_data.at(setting).size() == 0)
+        return;
+
+    // Sorry, John Carmack, but I felt the need to write some overly descriptive comments
+    if constexpr(std::is_same_v<V, glm::vec2> || std::is_same_v<V, glm::vec3> || std::is_same_v<V, glm::vec4> || std::is_same_v<V, glm::quat>)
+    {
+        // We already know the gRawData vector exists and isn't empty,
+        // so we can take advantage of glm swizzling if the vector only
+        // has one number, and do an early return
+        if(raw_data.at(setting).size() == 1)
+        {
+            // Unfortunately, quaternions can't be swizzled exactly the same, so I assume this is user error and use the default constructor instead
+            if constexpr(std::is_same_v<V, glm::quat>)
+            {
+                variable = V();
+                return;
+            }
+            else
+            {
+                variable = V(std::stof(raw_data.at(setting).at(0)));
+                return;
+            }
+        }
+
+        // Make the rest of the code easier to read
+        const gRawData& raw_data_copy = raw_data.at(setting);
+        variable = V();
+
+        // Fill the rest of the glm variable
+        for(int i = 0; i < raw_data_copy.size(); i++)
+            variable[i] = std::stof(raw_data_copy.at(i));
+    }
+
+    // Get the gRawData vector if it's not empty and create a new one with a single "0" if it is
+    const gRawData& raw_data_copy = (raw_data.at(setting).size() > 0) ? raw_data.at(setting) : gRawData{"0"};
+
+    if constexpr(std::is_same_v<V, int>)    { variable = std::stoi(raw_data_copy.at(0)); return; }
+    if constexpr(std::is_same_v<V, long>)   { variable = std::stol(raw_data_copy.at(0)); return; }
+    if constexpr(std::is_same_v<V, float>)  { variable = std::stof(raw_data_copy.at(0)); return; }
+    if constexpr(std::is_same_v<V, double>) { variable = std::stod(raw_data_copy.at(0)); return; }
+
+    // Defaults for anything else:
+    if constexpr(std::is_integral_v<V>)       { variable = std::stol(raw_data_copy.at(0)); return; }
+    if constexpr(std::is_floating_point_v<V>) { variable = std::stod(raw_data_copy.at(0)); return; }
+
+    PRINTERR("in gSettings::getNumeric - unexpected input type!")
+}
+
+template void gSettings::getNumber<glm::vec2>(const std::string&, glm::vec2&) const;
+template void gSettings::getNumber<glm::vec3>(const std::string&, glm::vec3&) const;
+template void gSettings::getNumber<glm::vec4>(const std::string&, glm::vec4&) const;
+template void gSettings::getNumber<glm::quat>(const std::string&, glm::quat&) const;
+template void gSettings::getNumber<int>(const std::string&, int&) const;
+template void gSettings::getNumber<long>(const std::string&, long&) const;
+template void gSettings::getNumber<unsigned int>(const std::string&, unsigned int&) const;
+template void gSettings::getNumber<unsigned long>(const std::string&, unsigned long&) const;
+template void gSettings::getNumber<float>(const std::string&, float&) const;
+template void gSettings::getNumber<double>(const std::string&, double&) const;
+
+void gSettings::getBoolean(const std::string& setting, bool& variable) const
 {
     if(!raw_data.contains(setting) || raw_data.at(setting).size() == 0) return;
 
@@ -17,8 +78,7 @@ void gSettings::getRawData<bool>(const std::string& setting, bool& variable) con
     variable = raw_data_lower_case.compare("false");
 }
 
-template<>
-void gSettings::getRawData<std::string>(const std::string& setting, std::string& variable) const
+void gSettings::getString(const std::string& setting, std::string& variable) const
 {
     if(!raw_data.contains(setting) || raw_data.at(setting).size() == 0) return;
     variable = "";
@@ -26,52 +86,16 @@ void gSettings::getRawData<std::string>(const std::string& setting, std::string&
         variable += raw_data.at(setting).at(i);
 }
 
-void gSettings::getActor(const std::string& setting, int& variable) const
+void gSettings::getActorUID(const std::string& setting, int& variable) const
 {
     if(!actor_reference.contains(setting)) return;
     variable = actor_reference.at(setting);
 }
 
-void gSettings::getDevice(const std::string& setting, int& variable) const
+void gSettings::getDeviceUID(const std::string& setting, int& variable) const
 {
     if(!device_reference.contains(setting)) return;
     variable = device_reference.at(setting);
-}
-
-void gSettings::getExternal(const std::string& setting, std::string& variable) const
-{
-    if(!external_reference.contains(setting)) return;
-    variable = external_reference.at(setting);
-}
-
-void gSettings::addRawData(const std::string& setting_name, const gRawData& setting)
-{
-    if(raw_data.contains(setting_name)) return;
-    raw_data[setting_name] = setting;
-}
-
-void gSettings::addVariable(const std::string& setting_name, std::any setting)
-{
-    if(cpp_reference.contains(setting_name)) return;
-    cpp_reference[setting_name] = setting;
-}
-
-void gSettings::addActor(const std::string& setting_name, int setting)
-{
-    if(actor_reference.contains(setting_name)) return;
-    actor_reference[setting_name] = setting;
-}
-
-void gSettings::addDevice(const std::string& setting_name, int setting)
-{
-    if(device_reference.contains(setting_name)) return;
-    device_reference[setting_name] = setting;
-}
-
-void gSettings::addExternal(const std::string& setting_name, const std::string& setting)
-{
-    if(external_reference.contains(setting_name)) return;
-    external_reference[setting_name] = setting;
 }
 
 void configureBaseVariables(Actor* actor)
@@ -84,16 +108,16 @@ void configureBaseVariables(Actor* actor)
     glm::vec3 scale_global = actor->getGlobalScale();
     glm::vec3 scale_local = actor->getLocalScale();
 
-    settings.getRawData("Name", actor->name);
-    settings.getRawData("Visible", actor->visible);
-    settings.getDevice("Model", actor->model_uid);
-    settings.getDevice("Collider", actor->collider_uid);
-    settings.getRawData("Position", position_global);
-    settings.getRawData("LocalPosition", position_local);
-    settings.getRawData("Rotation", global_euler_degrees);
-    settings.getRawData("LocalRotation", local_euler_degrees);
-    settings.getRawData("Scale", scale_global);
-    settings.getRawData("LocalScale", scale_local);
+    settings.getString("Name", actor->name);
+    settings.getBoolean("Visible", actor->visible);
+    settings.getDeviceUID("Model", actor->model_uid);
+    settings.getDeviceUID("Collider", actor->collider_uid);
+    settings.getNumber("Position", position_global);
+    settings.getNumber("LocalPosition", position_local);
+    settings.getNumber("Rotation", global_euler_degrees);
+    settings.getNumber("LocalRotation", local_euler_degrees);
+    settings.getNumber("Scale", scale_global);
+    settings.getNumber("LocalScale", scale_local);
 
     actor->setGlobalPosition(position_global);
     actor->setLocalPosition(position_local);
@@ -107,5 +131,5 @@ void configureBaseVariables(Device* device)
 {
     const gSettings& settings = device->getSettings();
 
-    settings.getRawData("Name", device->name);
+    settings.getString("Name", device->name);
 }

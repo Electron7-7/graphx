@@ -8,6 +8,9 @@
 #include <set>
 #include <fstream>
 
+std::vector<gSettings> debug_all_settings;
+std::vector<gSettings> debug_all_sandwich_settings;
+
 using namespace graphx;
 
 //--------------
@@ -292,7 +295,7 @@ void GraphXTheatreInterpreter::interpretCppReference(gSettings& current_object_s
 		return;
 	}
 
-	current_object_settings.addVariable(variable_name, cpp_definitions.at(cpp_reference));
+	current_object_settings.cpp_reference[variable_name] = cpp_definitions.at(cpp_reference);
 }
 
 void GraphXTheatreInterpreter::interpretRawData(gSettings& current_object_settings, const std::string& variable_name, const std::string& raw_data)
@@ -346,11 +349,11 @@ void GraphXTheatreInterpreter::interpretRawData(gSettings& current_object_settin
 	if(is_number)
 	{
 		vector_buffer.insert(vector_buffer.end(), buffer);
-		current_object_settings.addRawData(variable_name, vector_buffer);
+		current_object_settings.raw_data[variable_name] = vector_buffer;
 		return;
 	}
 
-	current_object_settings.addRawData(variable_name, gRawData{raw_data});
+	current_object_settings.raw_data[variable_name] = gRawData{raw_data};
 }
 
 void GraphXTheatreInterpreter::interpretExternalReference(gSettings &current_object_settings, const std::string& variable_name, const std::string& external_reference)
@@ -365,7 +368,7 @@ void GraphXTheatreInterpreter::interpretExternalReference(gSettings &current_obj
 
 	if(three_dee_model_extensions.find(file_extension) != std::string::npos)
 	{
-		current_object_settings.addExternal(variable_name, M_LoadModelFile(external_reference, file_extension));
+		current_object_settings.external_reference[variable_name] = M_LoadModelFile(external_reference, file_extension);
 	}
 
 	else if(graphx_theatre_extensions.find(file_extension) != std::string::npos)
@@ -435,10 +438,10 @@ void GraphXTheatreInterpreter::interpretTheatreReference(gSettings &current_obje
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
 	// Todo: give Theatre a function for finding the UID of an Actor/Device given its name
 	if(gClasses::isActor(class_name))
-		current_object_settings.addActor(variable_name, new_theatre.getActorUID(theatre_reference));
+		current_object_settings.actor_reference[variable_name] = new_theatre.getActorUID(theatre_reference);
 
 	else if(gClasses::isDevice(class_name))
-		current_object_settings.addDevice(variable_name, new_theatre.getDeviceUID(theatre_reference));
+		current_object_settings.device_reference[variable_name] = new_theatre.getDeviceUID(theatre_reference);
 }
 
 void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_settings, std::vector<StringSettings>& theatre_settings, const std::string& current_object_name, int& i, int& it, const unsigned long& settings_size, Theatre& new_theatre)
@@ -451,7 +454,7 @@ void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_setti
 	else
 		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.value)->getSettings();
 
-	sandwich_settings.addRawData("Name", gRawData{sandwich_bun_setting.value + "_" + current_object_name});
+	sandwich_settings.raw_data["Name"] = gRawData{sandwich_bun_setting.value + "_" + current_object_name};
 
 	it++;
 
@@ -486,17 +489,19 @@ void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_setti
 	{
 		int uid = new_theatre.generateUID(true);
 		new_theatre.addInterpretedActor(valid_actors.at(sandwich_bun_setting.name)(&new_theatre, uid, sandwich_settings));
-		current_object_settings.addActor(sandwich_bun_setting.name, uid);
+		current_object_settings.actor_reference[sandwich_bun_setting.name] = uid;
 	}
 
 	else if(gClasses::isDevice(sandwich_bun_setting.name))
 	{
 		int uid = new_theatre.generateUID(false);
 		new_theatre.addInterpretedDevice(valid_devices.at(sandwich_bun_setting.name)(&new_theatre, uid, sandwich_settings));
-		current_object_settings.addDevice(sandwich_bun_setting.name, uid);
+		current_object_settings.device_reference[sandwich_bun_setting.name] = uid;
 	}
 
 	it--;
+
+	debug_all_sandwich_settings.insert(debug_all_sandwich_settings.end(), sandwich_settings);
 }
 
 void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_theatre)
@@ -519,7 +524,7 @@ void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_
 	for(int i = 1 ; i < theatre_settings.size() ; i++)
 	{
 		gSettings current_object_settings;
-		current_object_settings.addRawData("Name", gRawData{theatre_settings[i][0].value});
+		current_object_settings.raw_data["Name"] = gRawData{theatre_settings[i][0].value};
 
 		for(int it = 1 ; it < theatre_settings[i].size() ; it++)
 		{
@@ -563,6 +568,8 @@ void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_
 
 		else if(gClasses::isDevice(theatre_settings[i][0].name))
 			new_theatre.addInterpretedDevice(valid_devices.at(theatre_settings[i][0].name)(&new_theatre, i, current_object_settings));
+
+		debug_all_settings.insert(debug_all_settings.end(), current_object_settings);
 	}
 }
 

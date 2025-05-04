@@ -2574,3 +2574,5 @@ Okay, I'm at work and it seems to work fine, just the only problem is that Actor
 Today I am going to plan, prototype, and hopefully begin implementing a total rework of the GraphXTheatre file format and "settings" in GraphX.
 
 Prototype finished. It works like a charm.
+
+I wanna make one last major change to gSettings: no more over-engineered abstracted functions and shit; just pure data.
