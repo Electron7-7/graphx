@@ -2569,3 +2569,8 @@ Because `name` is set by Actor and all derived actors call Actor::loadSettings()
 TODO: fix theatre reference setting getter.
 
 Okay, I'm at work and it seems to work fine, just the only problem is that Actors are returning empty RenderCmds.
+
+[05/03/25]
+Today I am going to plan, prototype, and hopefully begin implementing a total rework of the GraphXTheatre file format and "settings" in GraphX.
+
+Prototype finished. It works like a charm.

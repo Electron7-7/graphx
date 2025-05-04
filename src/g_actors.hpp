@@ -43,43 +43,6 @@ private:
 	glm::vec2 mouse_last = glm::vec2(0.0f);
 };
 
-
-class GraphXPlayer: public Actor //public CharacterController(?)
-{
-public:
-	Model player_mesh = Model("Untitled Model");
-	Camera player_camera = Camera("Player Camera");
-	std::shared_ptr<LightFlashlight> player_flashlight = nullptr;
-
-	bool do_gravity = true; // Debugging, mostly
-	float mouse_sensitivity = 0.05f;
-	float movement_speed = 13.0f;
-	double lerp_speed = 1.3f;
-	float friction = 0.85f;
-	float mass = 100.0f;
-	float field_of_view = 45.0f; // Make sure to convert to radians when making the perspective matrix 
-
-	// JPH::Ref<JPH::CharacterSettings> player_settings;
-
-	using Actor::Actor;
-
-	glm::mat4 getViewMatrix();
-	glm::vec3 getViewPosition();
-	void processMouse(GLFWwindow* window, double x_position_in, double y_position_in) override;
-	void checkForInput(GLFWwindow* window) override;
-	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) override;
-	void doMouseMovement(glm::vec2 mouse_offset);
-	void doMovement(int direction[2]);
-	void tick(const int) override;
-	void loadSettings() override;
-
-private:
-	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
-	// JPH::Ref<JPH::Character> jph_character = nullptr;
-	double movement_lerp = 0.0f;
-	int last_direction[2] = {0, 0};
-};
-
 class Light : public Actor
 {
 public:
@@ -151,6 +114,42 @@ private:
 	glm::vec3 _color = light_color;
 };
 
+class GraphXPlayer: public Actor //public CharacterController(?)
+{
+public:
+	Model player_mesh = Model("Untitled Model");
+	Camera player_camera = Camera("Player Camera");
+	LightFlashlight* player_flashlight;
+
+	bool do_gravity = true; // Debugging, mostly
+	float mouse_sensitivity = 0.05f;
+	float movement_speed = 13.0f;
+	double lerp_speed = 1.3f;
+	float friction = 0.85f;
+	float mass = 100.0f;
+	float field_of_view = 45.0f; // Make sure to convert to radians when making the perspective matrix 
+
+	// JPH::Ref<JPH::CharacterSettings> player_settings;
+
+	using Actor::Actor;
+
+	glm::mat4 getViewMatrix();
+	glm::vec3 getViewPosition();
+	void processMouse(GLFWwindow* window, double x_position_in, double y_position_in) override;
+	void checkForInput(GLFWwindow* window) override;
+	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) override;
+	void doMouseMovement(glm::vec2 mouse_offset);
+	void doMovement(int direction[2]);
+	void tick(const int) override;
+	void loadSettings() override;
+
+private:
+	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
+	// JPH::Ref<JPH::Character> jph_character = nullptr;
+	double movement_lerp = 0.0f;
+	int last_direction[2] = {0, 0};
+};
+
 class LightTesterMover : public Light
 {
 public:
@@ -189,17 +188,4 @@ public:
 	void tick(const int) override;
 	void loadSettings() override;
 };
-
-namespace graphx
-{
-	namespace current
-	{
-		extern std::shared_ptr<GraphXPlayer> player;
-	}
-
-	namespace safety
-	{
-		extern GraphXPlayer player;
-	}
-}
 #endif

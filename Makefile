@@ -97,9 +97,31 @@ MODELS_H = $(SRC)/include/models.hpp
 MDLS = $(wildcard $(M)/*.obj)
 MTLS = $(wildcard $(M)/*.mtl)
 
-PHONY = obj_testing all clean dirty_clean clean_resources embed_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models compile_commands debug release linux windows test build
+
+TEST_OUT := $(O)/testing
+TEST_OBJS = \
+	$(TEST_OUT)/config_test.opp
+
+
+PHONY = testing all clean dirty_clean clean_resources embed_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models compile_commands debug release linux windows test build
 
 all: release linux windows
+
+
+$(TEST_OUT):
+	-mkdir $(TEST_OUT)
+
+$(TEST_OUT)/%.opp: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+
+testing: GRAPHXFLAGS += -D GRAPHX_DEBUG
+testing: $(TEST_OUT) $(TEST_OBJS)
+	$(info Building test program...)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) -o $(TEST_OUT)/test $(LIBS)
+	$(info Running test program...)
+	$(TEST_OUT)/test
+
 
 embed_resources:
 	-make -s $(IMAGES_C) $(SHADERS_C) $(THEATRES_C) $(MODELS_C)

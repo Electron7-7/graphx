@@ -137,13 +137,13 @@ void GraphXConsole::showActorEditor(std::shared_ptr<Actor> actor, int index)
 	//
 	IMGUI::TextColored(glm::vec4(0.7f, 0.8f, 1.0f, 0.8f), "Actor");
 	IMGUI::SameLine();
-	IMGUI::Text(std::string(actor->getTypeName() + " \"" + actor->getName() + "\" (UID: " + std::to_string(actor->getUID()) + ")").c_str(), "%s");
+	IMGUI::Text(std::string(actor->getTypeName() + " \"" + actor->name + "\" (UID: " + std::to_string(actor->getUID()) + ")").c_str(), "%s");
 	IMGUI::Separator();
 	//
 	//  Actor visibility
 	//
 	if(IMGUI::Button(indexMe("Toggle Visibility", index).c_str()))
-		actor->toggleVisibility();
+		actor->visible = !actor->visible;
 	IMGUI::SameLine();
 	//
 	//  Reset Actor

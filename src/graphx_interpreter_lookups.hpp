@@ -1,7 +1,7 @@
 #ifndef GRAPHX_INTERPRETER_LOOKUPS
 #include "g_actors.hpp"
 #include "g_devices.hpp"
-// #include "g_theatre.hpp"
+#include <any>
 #define GRAPHX_INTERPRETER_LOOKUPS
 /*
 	This is where all the variable names and lookups for GraphXTheatre files (and the Interpreter)
@@ -10,8 +10,8 @@
 	C++ variable to be referencable in a GraphXTheatre file, this is where you make it happen!
 */
 
-template<typename T> std::shared_ptr<Actor>  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<Actor>(parent_theatre, new_uid, new_settings);  }
-template<typename T> std::shared_ptr<Device> createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<Device>(parent_theatre, new_uid, new_settings); }
+template<typename T> std::shared_ptr<Actor>  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
+template<typename T> std::shared_ptr<Device> createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
 
 inline const std::map<std::string, std::shared_ptr<Actor>(*)(Theatre*, const int, const gSettings&)>
 valid_actors =

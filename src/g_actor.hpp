@@ -1,8 +1,8 @@
 #ifndef GRAPHX_ACTOR
 #define GRAPHX_ACTOR
 #include "graphx_namespace.hpp"
-#include "g_devices.hpp" // TODO: CHANGE HOW CHILD DEVICES WORK SO I DON'T NEED THIS
 #include "r_common.hpp"
+#include "t_settings.hpp"
 #include <glm/vec3.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -19,7 +19,18 @@ struct Theatre;
 class Actor
 {
 public: // Externally accessible members
+	std::string name = "Untitled Actor";
 	bool debug_highlight_enabled = false;
+
+	bool visible = true;
+
+
+	// THESE WILL GO IN THE MAPS/VECTORS LATER
+	// std::shared_ptr<Collider> collider = nullptr; // THIS IS GOING
+	int collider_uid = -1;   // THIS IS REPLACING IT
+	// std::shared_ptr<Model> mesh = nullptr; // THIS IS GOING
+	int model_uid = -1;   // THIS IS REPLACING IT
+
 
 	// The constructor that should be used 99% of the time
 	Actor(const std::string& Name);
@@ -29,18 +40,13 @@ public: // Externally accessible members
 
 	virtual ~Actor();
 
-	void TEMP_setModel(const Model&);
-	void TEMP_setModel(std::shared_ptr<Model>);
-	std::shared_ptr<Model> TEMP_getModel() const;
+	// void TEMP_setModel(const Model&);
+	// void TEMP_setModel(std::shared_ptr<Model>);
+	// std::shared_ptr<Model> TEMP_getModel() const;
 
 	void updateStates(std::mutex&);
 	int getUID() const;
 	void setUID(const int NewUID);
-	std::string getName() const;
-	void setName(const std::string& NewName);
-	void setVisibility(bool IsVisible);
-	void toggleVisibility();
-	bool getVisibility() const;
 	gSettings getSettings() const;
 	void setSettings(const gSettings& NewSettings);
 
@@ -119,7 +125,6 @@ protected: // Members that aren't externally accessible
 
 private:
 	int UID = -1;
-	std::string name = "Untitled Actor";
 
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);
@@ -127,19 +132,5 @@ private:
 	glm::quat quaternion_local = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::vec3 scale_global  = glm::vec3(1.0f);
 	glm::vec3 scale_local = glm::vec3(1.0f);
-
-	// THESE WILL GO IN THE MAPS/VECTORS LATER
-	std::shared_ptr<Collider> collider = nullptr; // I SHOULD USE THE UID IDEA THAT I'M USING FOR MESH FOR COLLIDER
-	std::shared_ptr<Model> mesh = nullptr; // THIS IS GOING
-	long mesh_uid = -1;   // THIS IS REPLACING IT
-	bool visible = true;
 };
-
-namespace graphx
-{
-	namespace safety
-	{
-		extern Actor actor;
-	}
-}
 #endif

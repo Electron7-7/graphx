@@ -2,31 +2,31 @@
 #include "g_device.hpp"
 #include "g_theatre.hpp"
 #include "r_common.hpp"
-#include "t_settings.hpp"
+#include "g_devices.hpp"
 #include <gmath.hpp>
 
 using namespace graphx;
 
-void Actor::TEMP_setModel(const Model& new_mesh)
+/*void Actor::TEMP_setModel(const Model& new_mesh)
 { mesh = std::make_shared<Model>(new_mesh); }
 
 void Actor::TEMP_setModel(std::shared_ptr<Model> new_model)
 { mesh = new_model; }
 
 std::shared_ptr<Model> Actor::TEMP_getModel() const
-{ return mesh; }
+{ return mesh; }*/
 
 
 //------
 // Actor
 //------
 Actor::Actor(const std::string& my_name)
-: parent_theatre(nullptr), settings(gSettings()), UID(-1), name(my_name)
+: name(my_name), parent_theatre(nullptr), settings(gSettings()), UID(-1)
 {}
 
 Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
-: parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid), name("Untitled Actor")
-{ loadSettings(); }
+: name("Untitled Actor"), parent_theatre(my_parent_theatre), settings(my_settings), UID(my_uid)
+{}
 
 Actor::~Actor() = default;
 
@@ -51,21 +51,6 @@ int Actor::getUID() const
 
 void Actor::setUID(const int new_uid)
 { UID = (parent_theatre != nullptr) ? parent_theatre->changeActorUID(UID, new_uid) : new_uid; }
-
-std::string Actor::getName() const
-{ return name; }
-
-void Actor::setName(const std::string& new_name)
-{ name = new_name; }
-
-void Actor::setVisibility(bool is_visible)
-{ visible = is_visible; }
-
-void Actor::toggleVisibility()
-{ visible = !visible; }
-
-bool Actor::getVisibility() const
-{ return visible; }
 
 gSettings Actor::getSettings() const
 { return settings; }
@@ -167,38 +152,18 @@ void Actor::setLocalScale(const glm::vec3& new_scale)
 void Actor::tick(int current_tick)
 {
 	// Opted to not use an early return here, since that could be nasty for any derived Actor that overrides this function but still calls Actor::tick
-	if(givesAFuckAboutPhysics() && !collider->overrides_actor_transform)
+	/*if(givesAFuckAboutPhysics() && !collider->overrides_actor_transform)
 	{
 		JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
 		JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
 		JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
 		setGlobalPosition(gmath::convertMath<glm::vec3>(body_position));
 		setGlobalQuaternion(gmath::convertMath<glm::quat>(body_quaternion));
-	}
+	}*/
 }
 
 void Actor::loadSettings()
-{
-	glm::vec3 local_euler_degrees = getLocalEulerAngles(true);
-	glm::vec3 global_euler_degrees = getGlobalEulerAngles(true);
-
-	settings.getSetting("Name", name);
-	settings.getSetting("Model", mesh);
-	settings.getSetting("Position", position_global);
-	settings.getSetting("LocalPosition", position_local);
-	settings.getSetting("Rotation", global_euler_degrees);
-	settings.getSetting("LocalRotation", local_euler_degrees);
-	settings.getSetting("Scale", scale_global);
-	settings.getSetting("LocalScale", scale_local);
-	settings.getSetting("Visible", visible);
-	settings.getSetting("Collider", collider);
-
-	setLocalQuaternion(glm::quat(glm::radians(local_euler_degrees)));
-	setGlobalQuaternion(glm::quat(glm::radians(global_euler_degrees)));
-
-	if(collider != nullptr)
-		collider->loadSettings();
-}
+{ configureBaseVariables(this); }
 
 RenderCommands Actor::getRenderCommands()
 {
@@ -207,7 +172,9 @@ RenderCommands Actor::getRenderCommands()
 	render_commands.render_command.current_render_state = current_state_buffer[state_index];
 	render_commands.render_command.previous_render_state = previous_state_buffer[state_index];
 
-	if(mesh != nullptr && visible) // Todo: when changing mesh to mesh_uid, change this
+	std::shared_ptr<Model> mesh = (model_uid != -1) ? std::dynamic_pointer_cast<Model>(current::theatre.getDevice(model_uid)) : nullptr;
+
+	if(mesh != nullptr) // Todo: when changing mesh to mesh_uid, change this
 	{
 		render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
 		render_commands.render_command.mesh_material = mesh->material;
@@ -244,7 +211,8 @@ RenderCommands Actor::getRenderCommands()
 
 const bool Actor::givesAFuckAboutPhysics() const
 {   // Eventually, change implementation
-	return !(collider == nullptr || collider->getBodyID().IsInvalid());
+	// return !(collider == nullptr || collider->getBodyID().IsInvalid());
+	return false;
 }
 
 void Actor::checkForInput(GLFWwindow* window) {}
@@ -264,12 +232,12 @@ void Actor::selfOverrideColliderTransform(const bool ignore_scale)
 	JPH::BodyInterface& body_interface = jolt_physics_system.GetBodyInterface();
 	JPH::Vec3 position = gmath::convertMath<JPH::Vec3>(getGlobalPosition() * getLocalPosition());
 	JPH::Quat quaternion = gmath::convertMath<JPH::Quat>(getGlobalQuaternion() * getLocalQuaternion());
-	body_interface.SetPositionAndRotation(collider->getBodyID(), position, quaternion, JPH::EActivation::Activate);
+	// body_interface.SetPositionAndRotation(collider->getBodyID(), position, quaternion, JPH::EActivation::Activate);
 
 	if(ignore_scale) return; // The default, because changing a collider's scale is costly-ish
 	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
 	JPH::Vec3 scale = gmath::convertMath<JPH::Vec3>(getGlobalScale() * getLocalScale());
-	body_interface.GetShape(collider->getBodyID())->ScaleShape(scale); // I think this is correct...
+	// body_interface.GetShape(collider->getBodyID())->ScaleShape(scale); // I think this is correct...
 }
 
 void Actor::colliderOverrideSelfTransform(const bool ignore_scale)
@@ -277,12 +245,12 @@ void Actor::colliderOverrideSelfTransform(const bool ignore_scale)
 	if(!givesAFuckAboutPhysics()) return;
 
 	JPH::BodyInterface& body_interface = jolt_physics_system.GetBodyInterface();
-	setGlobalPosition(gmath::convertMath<glm::vec3>(body_interface.GetPosition(collider->getBodyID())));
-	setGlobalQuaternion(gmath::convertMath<glm::quat>(body_interface.GetRotation(collider->getBodyID())));
+	// setGlobalPosition(gmath::convertMath<glm::vec3>(body_interface.GetPosition(collider->getBodyID())));
+	// setGlobalQuaternion(gmath::convertMath<glm::quat>(body_interface.GetRotation(collider->getBodyID())));
 	if(ignore_scale) return;
 	// I don't know a nice way of getting the scale from the collider and I don't wanna find it right now
 	// A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
 }
 
 const bool Actor::canBeRendered() const
-{ return (visible && mesh != nullptr); } // Todo: when replacing mesh, remove this check
+{ return (visible && model_uid != -1); } // Todo: when replacing mesh, remove this check

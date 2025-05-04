@@ -40,7 +40,7 @@ void Label::tick(int current_tick)
 
 void Label::loadSettings()
 {
-	Actor::loadSettings();
+	configureBaseVariables(this);
 
 	std::string font_name_catcher = text_render_command.getFontName();
 
@@ -52,16 +52,16 @@ void Label::loadSettings()
 	 *   versions of the same setting be used, the one that wins is the one that looks more intentional, hopefully
 	 *   avoiding confusion.
 	*/
-	settings.getSetting("Transparency", label_alpha);
-	settings.getSetting("Alpha", label_alpha);
-	settings.getSetting("Font", font_name_catcher);
-	settings.getSetting("FontName", font_name_catcher);
-	settings.getSetting("Color", text_render_command.color);
-	settings.getSetting("TextColor", text_render_command.color);
-	settings.getSetting("Message", text_render_command.text);
-	settings.getSetting("Text", text_render_command.text);
-	settings.getSetting("Label", text_render_command.text);
-	settings.getSetting("TextScale", text_render_command.scale);
+	settings.getRawData("Transparency", label_alpha);
+	settings.getRawData("Alpha", label_alpha);
+	settings.getRawData("Font", font_name_catcher);
+	settings.getRawData("FontName", font_name_catcher);
+	settings.getRawData("Color", text_render_command.color);
+	settings.getRawData("TextColor", text_render_command.color);
+	settings.getRawData("Message", text_render_command.text);
+	settings.getRawData("Text", text_render_command.text);
+	settings.getRawData("Label", text_render_command.text);
+	settings.getRawData("TextScale", text_render_command.scale);
 
 	text_render_command.position_x = 0.0f;
 	text_render_command.position_y = 0.0f;
@@ -88,22 +88,22 @@ void Camera::processMouse(GLFWwindow* window, double x_position_in, double y_pos
 }
 
 void Camera::loadSettings()
-{ Actor::loadSettings(); } // Eventually, I will have Camera settings
+{ configureBaseVariables(this); } // Eventually, I will have Camera settings
 
 //
 // GraphXPlayer
 //
 void GraphXPlayer::loadSettings()
 {
-	Actor::loadSettings();
+	configureBaseVariables(this);
 
-	settings.getSetting("DoGravity", do_gravity);
-	settings.getSetting("MouseSensitivity", mouse_sensitivity);
-	settings.getSetting("MovementSpeed", movement_speed);
-	settings.getSetting("MovementAcceleration", lerp_speed);
-	settings.getSetting("Friction", friction);
-	settings.getSetting("Mass", mass);
-	settings.getSetting("FOV", field_of_view);
+	settings.getRawData("DoGravity", do_gravity);
+	settings.getRawData("MouseSensitivity", mouse_sensitivity);
+	settings.getRawData("MovementSpeed", movement_speed);
+	settings.getRawData("MovementAcceleration", lerp_speed);
+	settings.getRawData("Friction", friction);
+	settings.getRawData("Mass", mass);
+	settings.getRawData("FOV", field_of_view);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 }
@@ -220,15 +220,15 @@ glm::vec3 GraphXPlayer::getViewPosition()
 //
 void Light::loadSettings()
 {
-	Actor::loadSettings();
+	configureBaseVariables(this);
 
-	settings.getSetting("Color", light_color);
-	settings.getSetting("Energy", light_energy);
-	settings.getSetting("AmbientStrength", light_ambient_strength);
-	settings.getSetting("SpecularStrength", light_specular_strength);
-	settings.getSetting("FadeIntensity", light_attenuation);
-	settings.getSetting("Attenuation", light_attenuation);
-	settings.getSetting("Range", light_range);
+	settings.getRawData("Color", light_color);
+	settings.getRawData("Energy", light_energy);
+	settings.getRawData("AmbientStrength", light_ambient_strength);
+	settings.getRawData("SpecularStrength", light_specular_strength);
+	settings.getRawData("FadeIntensity", light_attenuation);
+	settings.getRawData("Attenuation", light_attenuation);
+	settings.getRawData("Range", light_range);
 }
 
 RenderCommands Light::getRenderCommands()
@@ -259,9 +259,17 @@ RenderCommands Light::getRenderCommands()
 //
 void LightDirectional::loadSettings()
 {
-	Light::loadSettings();
+	configureBaseVariables(this);
 
-	settings.getSetting("Direction", directional_direction);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getRawData("Color", light_color);
+	settings.getRawData("Energy", light_energy);
+	settings.getRawData("AmbientStrength", light_ambient_strength);
+	settings.getRawData("SpecularStrength", light_specular_strength);
+	settings.getRawData("FadeIntensity", light_attenuation);
+	settings.getRawData("Attenuation", light_attenuation);
+	settings.getRawData("Range", light_range);
+	settings.getRawData("Direction", directional_direction);
 }
 
 RenderCommands LightDirectional::getRenderCommands()
@@ -279,11 +287,18 @@ RenderCommands LightDirectional::getRenderCommands()
 //
 void LightSpot::loadSettings()
 {
-	Light::loadSettings();
-
-	settings.getSetting("Direction", spot_direction);
-	settings.getSetting("Angle", spot_angle);
-	settings.getSetting("AngleFadeIntensity", spot_angle_fade);
+	configureBaseVariables(this);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getRawData("Color", light_color);
+	settings.getRawData("Energy", light_energy);
+	settings.getRawData("AmbientStrength", light_ambient_strength);
+	settings.getRawData("SpecularStrength", light_specular_strength);
+	settings.getRawData("FadeIntensity", light_attenuation);
+	settings.getRawData("Attenuation", light_attenuation);
+	settings.getRawData("Range", light_range);
+	settings.getRawData("Direction", spot_direction);
+	settings.getRawData("Angle", spot_angle);
+	settings.getRawData("AngleFadeIntensity", spot_angle_fade);
 }
 
 RenderCommands LightSpot::getRenderCommands()
@@ -303,16 +318,24 @@ RenderCommands LightSpot::getRenderCommands()
 //
 void LightFlashlight::loadSettings()
 {
-	Light::loadSettings();
+	configureBaseVariables(this);
 
 	glm::vec3 local_position = getLocalPosition();
 	glm::quat local_quaternion = getLocalQuaternion();
 
-	settings.getSetting("Parent", parent);
-	settings.getSetting("StartOn", start_enabled);
-	settings.getSetting("StartEnabled", start_enabled);
-	settings.getSetting("PositionOffset", local_position);
-	settings.getSetting("RotationOffset", local_quaternion);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getRawData("Color", light_color);
+	settings.getRawData("Energy", light_energy);
+	settings.getRawData("AmbientStrength", light_ambient_strength);
+	settings.getRawData("SpecularStrength", light_specular_strength);
+	settings.getRawData("FadeIntensity", light_attenuation);
+	settings.getRawData("Attenuation", light_attenuation);
+	settings.getRawData("Range", light_range);
+	// settings.getSetting("Parent", parent);
+	settings.getRawData("StartOn", start_enabled);
+	settings.getRawData("StartEnabled", start_enabled);
+	settings.getRawData("PositionOffset", local_position);
+	settings.getRawData("RotationOffset", local_quaternion);
 
 	setLocalPosition(local_position);
 	setLocalQuaternion(local_quaternion);
@@ -324,11 +347,11 @@ void LightFlashlight::loadSettings()
 void LightFlashlight::tick(int current_tick)
 {
 	// Hardcoding LightFlashlight to only be applicable to the player for now
-	if(graphx::current::player == nullptr)
+	if(graphx::current::player() == nullptr)
 		return;
 
-	setGlobalPosition(dynamic_pointer_cast<GraphXPlayer>(graphx::current::player)->player_camera.getGlobalPosition() + getLocalPosition());
-	setGlobalQuaternion(dynamic_pointer_cast<GraphXPlayer>(graphx::current::player)->player_camera.getGlobalQuaternion() * getLocalQuaternion());
+	setGlobalPosition(graphx::current::player()->player_camera.getGlobalPosition() + getLocalPosition());
+	setGlobalQuaternion(graphx::current::player()->player_camera.getGlobalQuaternion() * getLocalQuaternion());
 }
 
 void LightFlashlight::toggleLight(glm::vec3 toggle_color)
@@ -368,17 +391,25 @@ void LightFlashlight::setLightColor(bool color_toggle)
 //
 void LightTesterMover::loadSettings()
 {
-	Light::loadSettings();
+	configureBaseVariables(this);
 
-	settings.getSetting("PivotPosition", pivot_position);
-	settings.getSetting("PivotRadius", pivot_radius);
-	settings.getSetting("PivotSpeed", pivot_speed);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getRawData("Color", light_color);
+	settings.getRawData("Energy", light_energy);
+	settings.getRawData("AmbientStrength", light_ambient_strength);
+	settings.getRawData("SpecularStrength", light_specular_strength);
+	settings.getRawData("FadeIntensity", light_attenuation);
+	settings.getRawData("Attenuation", light_attenuation);
+	settings.getRawData("Range", light_range);
+	settings.getRawData("PivotPosition", pivot_position);
+	settings.getRawData("PivotRadius", pivot_radius);
+	settings.getRawData("PivotSpeed", pivot_speed);
 
-	pivot_point.setGlobalPosition(pivot_position);
-	temporary_pivot_mesh.getName() = "Pivot Model for " + getName() + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
-	temporary_pivot_mesh.mesh_data_name = GRAPHX_CUBE;
-	pivot_point.TEMP_setModel(std::make_shared<Model>(&temporary_pivot_mesh));
-	parent_theatre->addActor(std::make_shared<Actor>(pivot_point));
+	// pivot_point.setGlobalPosition(pivot_position);
+	// temporary_pivot_mesh.name = "Pivot Model for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
+	// temporary_pivot_mesh.mesh_data_name = GRAPHX_CUBE;
+	// pivot_point.model_uid = parent_theatre->addDevice(std::make_shared<Model>(temporary_pivot_mesh));
+	// parent_theatre->addActor(std::make_shared<Actor>(pivot_point));
 }
 
 void LightTesterMover::tick(int current_tick)
@@ -401,13 +432,13 @@ void LightTesterMover::tick(int current_tick)
 //
 void Ramiel::loadSettings()
 {
-	Actor::loadSettings();
+	configureBaseVariables(this);
 
-	settings.getSetting("MovementType", movement_type);
-	settings.getSetting("PivotPosition", pivot_position);
-	settings.getSetting("PivotRadius", pivot_radius);
-	settings.getSetting("PivotSpeed", pivot_speed);
-	settings.getSetting("MovementSpeed", movement_speed);
+	settings.getRawData("MovementType", movement_type);
+	settings.getRawData("PivotPosition", pivot_position);
+	settings.getRawData("PivotRadius", pivot_radius);
+	settings.getRawData("PivotSpeed", pivot_speed);
+	settings.getRawData("MovementSpeed", movement_speed);
 }
 
 void Ramiel::tick(int current_tick)

@@ -28,6 +28,16 @@ bool time_to_store_buffers = false;
 // Todo: Make this better or get rid of it
 int debug_render_switches = 0;
 
+std::vector<RenderCmd> render_commands_buffer;
+std::vector<LightRenderCmd> light_render_commands_buffer;
+std::vector<TextRenderCmd> text_render_commands_buffer;
+
+FT_Library freetype;
+std::map<std::string, Font> font_storage;
+
+unsigned int VBO;
+unsigned int IBO;
+
 //---------
 // GLShader
 //---------
@@ -334,6 +344,12 @@ Font::Font(std::string init_font_name)
 {}
 
 //
+// RenderCmd
+//
+const bool RenderCmd::isValid() const
+{ return (!mesh_data_name.empty()); } // NEED TO REMOVE THE NEED FOR THIS
+
+//
 // LightRenderCmd
 //
 LightRenderCmd::LightRenderCmd(const unsigned int my_light_type)
@@ -635,9 +651,6 @@ void R_GL_BufferTextures()
 	}
 }
 
-unsigned int VBO;
-unsigned int IBO;
-
 void R_GL_BufferMeshes()
 {
 	std::set<std::string> used_mesh_data_names = graphx::current::theatre.getMeshDataNames();
@@ -686,15 +699,8 @@ void R_GL_BufferMeshes()
 
 glm::mat4 R_GL_GetProjectionMatrix()
 {
-	return glm::perspective(glm::radians(graphx::current::player->field_of_view), graphx::rendering::main_window_width / graphx::rendering::main_window_height, graphx::rendering::camera_near, graphx::rendering::camera_far);
+	return glm::perspective(glm::radians(graphx::current::player()->field_of_view), graphx::rendering::main_window_width / graphx::rendering::main_window_height, graphx::rendering::camera_near, graphx::rendering::camera_far);
 }
-
-std::vector<RenderCmd> render_commands_buffer;
-std::vector<LightRenderCmd> light_render_commands_buffer;
-std::vector<TextRenderCmd> text_render_commands_buffer;
-
-FT_Library freetype;
-std::map<std::string, Font> font_storage;
 
 void F_InitializeFreeType()
 {
@@ -777,7 +783,8 @@ void R_BufferRenderCommands(RenderCommands render_commands)
 
 void R_BufferRenderCmd(RenderCmd render_command)
 {
-	render_commands_buffer.insert(render_commands_buffer.end(), render_command);
+	if(render_command.isValid())
+		render_commands_buffer.insert(render_commands_buffer.end(), render_command);
 }
 
 void R_BufferRenderCmd(LightRenderCmd light_render_command)
@@ -903,7 +910,7 @@ void R_GL_RenderSkybox()
 
 	glDepthFunc(GL_LEQUAL);
 	glUseProgram(shaders[graphx::rendering::SHADER_SKYBOX].id);
-	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_view_matrix", glm::mat4(glm::mat3(graphx::current::player->getViewMatrix())));
+	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_view_matrix", glm::mat4(glm::mat3(graphx::current::player()->getViewMatrix())));
 	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_projection_matrix", R_GL_GetProjectionMatrix());
 	glBindVertexArray(VAOs[graphx::rendering::VAO_SKYBOX]);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
@@ -971,7 +978,7 @@ void R_GL_RenderFonts()
 	// Todo: find out if it's worth it to take these out of the for loop
 	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
 	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("ortho_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
-	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", graphx::current::player->getViewMatrix());
+	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", graphx::current::player()->getViewMatrix());
 	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("ortho_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
 
 	for(auto rendercmd_iterator = text_render_commands_buffer.begin() ; rendercmd_iterator != text_render_commands_buffer.end() ;)
@@ -1140,12 +1147,12 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 			shaders[graphx::rendering::current_shader].setUniform("current_material.specular_strength", rendercmd_iterator->mesh_material->specular_strength);
 		}
 		shaders[graphx::rendering::current_shader].setUniform("model_matrix", model_matrix);
-		shaders[graphx::rendering::current_shader].setUniform("view_matrix", graphx::current::player->getViewMatrix());
+		shaders[graphx::rendering::current_shader].setUniform("view_matrix", graphx::current::player()->getViewMatrix());
 		shaders[graphx::rendering::current_shader].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
 		shaders[graphx::rendering::current_shader].setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
-		shaders[graphx::rendering::current_shader].setUniform("view_position", graphx::current::player->getViewPosition());
-		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_contribution", graphx::current::environment->ambient_light_amount);
-		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_color", graphx::current::environment->ambient_light_color);
+		shaders[graphx::rendering::current_shader].setUniform("view_position", graphx::current::player()->getViewPosition());
+		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_contribution", graphx::current::environment()->ambient_light_amount);
+		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_color", graphx::current::environment()->ambient_light_color);
 
 		shaders[graphx::rendering::current_shader].setUniform("debug_highlight", rendercmd_iterator->debug_highlight_color);
 

@@ -9,6 +9,8 @@ struct Theatre;
 struct Device
 {
 public:
+    std::string name = "Untitled Device";
+
     // The constructor that should be used 99% of the time
     Device(const std::string& Name);
 
@@ -19,8 +21,6 @@ public:
 
     int getUID() const;
     void setUID(const int NewUID);
-    std::string getName() const;
-    void setName(const std::string& NewName);
     gSettings getSettings() const;
     void setSettings(const gSettings&);
 
@@ -32,14 +32,5 @@ protected:
 
 private:
     int UID = -1;
-    std::string name = "Untitled Device";
 };
-
-namespace graphx
-{
-    namespace safety
-    {
-        extern Device device;
-    }
-}
 #endif

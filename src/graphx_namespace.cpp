@@ -11,8 +11,23 @@ GraphXTheatreInterpreter graphx::Interpreter = GraphXTheatreInterpreter();
 
 // Current
 Theatre graphx::current::theatre = Theatre("current_theatre Not Yet Set!");
-std::shared_ptr<GraphXPlayer> graphx::current::player = std::shared_ptr<GraphXPlayer>(&graphx::safety::player);
-std::shared_ptr<Environment> graphx::current::environment = std::shared_ptr<Environment>(&graphx::safety::environment);
+std::shared_ptr<GraphXPlayer> graphx::current::player()
+{
+	if(std::shared_ptr<Actor> player = graphx::current::theatre.getActor(graphx::current::uids::player))
+		return std::dynamic_pointer_cast<GraphXPlayer>(player);
+
+	return std::make_shared<GraphXPlayer>("Empty Player");
+}
+std::shared_ptr<Environment> graphx::current::environment()
+{
+	if(std::shared_ptr<Device> environment = graphx::current::theatre.getDevice(graphx::current::uids::environment))
+		return std::dynamic_pointer_cast<Environment>(environment);
+
+	return std::make_shared<Environment>("Empty Environment");
+}
+
+int graphx::current::uids::player = -1;
+int graphx::current::uids::environment = -1;
 
 // Orientation
 glm::vec3 graphx::orientation::up(0.0f, 1.0f, 0.0f);
@@ -21,12 +36,6 @@ glm::vec3 graphx::orientation::right(1.0f, 0.0f, 0.0f);
 
 // State
 bool graphx::state::loading_new_main_theatre = true; // Definitely wanna replace this with something a little more sophisticated.
-
-// Safety
-Actor graphx::safety::actor  = Actor("Safety Actor (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
-Device graphx::safety::device = Device("Safety Device (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
-GraphXPlayer graphx::safety::player = GraphXPlayer("Safety Player (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
-Environment graphx::safety::environment = Environment("Safety Environment (if you see this, this is the engine trying its very best not to return a nullptr while also not leaking memory!");
 
 // Debug
 bool  graphx::debug::actor_debug_menu_open       = false;

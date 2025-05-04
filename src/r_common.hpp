@@ -53,6 +53,11 @@ public:
     RenderState current_render_state = RenderState();
     RenderState previous_render_state = RenderState();
     std::shared_ptr<Material> mesh_material = nullptr; // REPLACE THIS WITH MATERIAL UID
+    // int mesh_material = -1;
+
+    RenderCmd() = default;
+
+    const bool isValid() const;
 };
 
 struct LightRenderCmd

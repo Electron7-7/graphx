@@ -91,7 +91,7 @@ struct Material final : public Device
 
 struct Model : public Device
 {
-	// int material_uid;
+	int material_uid = -1;
 	Material material_base = Material(glm::vec3(1.0f)); // This is a bad way to make sure material is never nullptr
 	std::shared_ptr<Material> material = std::make_shared<Material>(&material_base); // This is going to be replaced with material_id
 
@@ -116,17 +116,4 @@ struct Sprite : public Model
 
 	void loadSettings() override;
 };
-
-namespace graphx
-{
-	namespace current
-	{
-		extern std::shared_ptr<Environment> environment;
-	}
-
-	namespace safety
-	{
-		extern Environment environment;
-	}
-}
 #endif

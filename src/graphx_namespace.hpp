@@ -1,11 +1,30 @@
 #ifndef GRAPHX_NAMESPACE
 #define GRAPHX_NAMESPACE
 #include <glm/vec3.hpp>
+#include <memory>
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 #define UID_EMPTY -1 // Just to keep things consistent
 
+#ifdef COMPILER_FORWARD_DECLARATIONS // Forward Declarations
+struct Theatre;
+class GraphXPlayer;
+struct Environment;
+#endif
+
 namespace graphx
 {
+	namespace current
+	{
+		extern Theatre theatre;
+		extern std::shared_ptr<GraphXPlayer> player();
+		extern std::shared_ptr<Environment> environment();
+		namespace uids
+		{
+			extern int player;
+			extern int environment;
+		}
+	}
+
 	namespace orientation
 	{
 		extern glm::vec3 up;

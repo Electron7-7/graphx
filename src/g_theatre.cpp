@@ -32,8 +32,11 @@ std::set<std::string> Theatre::getMeshDataNames()
     std::set<std::string> mesh_data_names = {ERROR_MODEL};
 
     for(int i = 0; i < device_vector.size(); i++)
-        if(std::shared_ptr<Model> model = dynamic_pointer_cast<Model>(device_vector[i]))
-            mesh_data_names.insert(model->mesh_data_name);
+        if(dynamic_pointer_cast<Model>(device_vector[i]))
+        {
+            std::shared_ptr<Model> test = dynamic_pointer_cast<Model>(device_vector[i]);
+            mesh_data_names.insert(dynamic_pointer_cast<Model>(device_vector[i])->mesh_data_name);
+        }
 
     return mesh_data_names;
 }
@@ -66,29 +69,24 @@ void Theatre::probeRenderCommands()
     spot_lights_count = 0;
     directional_lights_count = 0;
 
-    for(std::shared_ptr<Actor> actor : actor_vector)
+    for(int i = 0; i < actor_vector.size(); i++)
     {
         if(graphx::state::loading_new_main_theatre)
             return;
 
-        if(dynamic_pointer_cast<Light>(actor))
+        if(dynamic_pointer_cast<Light>(actor_vector.at(i)))
         {
-            if(dynamic_pointer_cast<LightSpot>(actor))
-            {
+            if(dynamic_pointer_cast<LightSpot>(actor_vector.at(i)))
                 spot_lights_count++;
-                return;
-            }
 
-            else if(dynamic_pointer_cast<LightDirectional>(actor))
-            {
+            else if(dynamic_pointer_cast<LightDirectional>(actor_vector.at(i)))
                 directional_lights_count++;
-                return;
-            }
 
-            point_lights_count++;
+            else
+                point_lights_count++;
         }
 
-        R_BufferRenderCommands(actor->getRenderCommands());
+        R_BufferRenderCommands(actor_vector.at(i)->getRenderCommands());
     }
 }
 
@@ -107,28 +105,32 @@ void Theatre::delegateMouseInput(GLFWwindow* window, const double x_position_in,
 const LightsCount Theatre::getLightsCount() const
 { return LightsCount(point_lights_count, spot_lights_count, directional_lights_count); }
 
-void Theatre::addActor(std::shared_ptr<Actor> new_actor)
+int Theatre::addActor(std::shared_ptr<Actor> new_actor)
 {
-    if(actor_map.contains(new_actor->getUID()))
+    int uid = new_actor->getUID();
+    if(actor_map.contains(uid) || uid == -1)
     {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addActor", "an Actor", new_actor->getUID()))
         PRINTNOTE("Changing Actor's UID before adding")
-        new_actor->setUID(generateUID(true));
+        uid = generateUID(true);
     }
 
-    parallelAddActor(new_actor, new_actor->getUID(), false);
+    parallelAddActor(new_actor, uid, false);
+    return uid;
 }
 
-void Theatre::addDevice(std::shared_ptr<Device> new_device)
+int Theatre::addDevice(std::shared_ptr<Device> new_device)
 {
-    if(device_map.contains(new_device->getUID()))
+    int uid = new_device->getUID();
+    if(device_map.contains(uid) || uid == -1)
     {
         PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addDevice", "a Device", new_device->getUID()))
         PRINTNOTE("Changing Device's UID before adding")
-        new_device->setUID(generateUID(true));
+        uid = generateUID(true);
     }
 
-    parallelAddDevice(new_device, new_device->getUID(), false);
+    parallelAddDevice(new_device, uid, false);
+    return uid;
 }
 
 std::vector<std::shared_ptr<Actor>> Theatre::getAllActors() const
@@ -140,39 +142,59 @@ std::vector<std::shared_ptr<Device>> Theatre::getAllDevices() const
 std::shared_ptr<Actor> Theatre::getActor(const int UID) const
 {
     if(actor_map.contains(UID))
-        return std::make_shared<Actor>(actor_map.at(UID));
+        return actor_map.at(UID);
 
     PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", UID))
-    return std::make_shared<Actor>(&graphx::safety::actor);
+    // return std::make_shared<Actor>(graphx::safety::actor);
+    return nullptr;
 }
 
 std::shared_ptr<Device> Theatre::getDevice(const int UID) const
 {
     if(device_map.contains(UID))
-        return std::make_shared<Device>(device_map.at(UID));
+        return device_map.at(UID);
 
     PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", UID))
-    return std::make_shared<Device>(&graphx::safety::device);
+    // return std::make_shared<Device>(graphx::safety::device);
+    return nullptr;
 }
 
 std::shared_ptr<Actor> Theatre::getActor(const std::string& actor_name) const
 {
-    for(std::shared_ptr<Actor> actor : actor_vector)
-        if(!actor_name.compare(actor->getName()))
-            return std::make_shared<Actor>(actor);
+    for(int i = 0; i < actor_vector.size(); i++)
+        if(!actor_vector.at(i)->name.compare(actor_name))
+            return actor_vector.at(i);
 
     PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", actor_name))
-    return std::make_shared<Actor>(&graphx::safety::actor);
+    // return std::make_shared<Actor>(graphx::safety::actor);
+    return nullptr;
 }
 
 std::shared_ptr<Device> Theatre::getDevice(const std::string& device_name) const
 {
-    for(std::shared_ptr<Device> device : device_vector)
-        if(!device_name.compare(device->getName()))
-            return std::make_shared<Device>(device);
+    for(int i = 0; i < device_vector.size(); i++)
+        if(!device_vector.at(i)->name.compare(device_name))
+            return device_vector.at(i);
 
     PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getDevice", "Device", device_name))
-    return std::make_shared<Device>(&graphx::safety::device);
+    return nullptr;
+    // return std::make_shared<Device>(graphx::safety::device);
+}
+
+int Theatre::getActorUID(const std::string& actor_name) const
+{
+    for(int i = 0; i < actor_vector.size(); i++)
+        if(!actor_vector.at(i)->name.compare(actor_name))
+            return actor_vector.at(i)->getUID();
+    return -1;
+}
+
+int Theatre::getDeviceUID(const std::string& device_name) const
+{
+    for(int i = 0; i < device_vector.size(); i++)
+        if(!device_vector.at(i)->name.compare(device_name))
+            return device_vector.at(i)->getUID();
+    return -1;
 }
 
 // Private functions
@@ -219,24 +241,36 @@ int Theatre::changeDeviceUID(const int old_uid, const int new_uid)
     return new_uid;
 }
 
-std::shared_ptr<Actor> Theatre::addInterpretedActor(std::shared_ptr<Actor> new_actor)
+void Theatre::addInterpretedActor(std::shared_ptr<Actor> new_actor)
 {
-    if(actor_map.contains(new_actor->getUID()))
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedActor", "an Actor", new_actor->getUID()))
-    else
-        parallelAddActor(new_actor, new_actor->getUID(), true);
+    int uid = new_actor->getUID();
 
-    return actor_map.at(new_actor->getUID());
+    if(actor_map.contains(uid) && uid != -1)
+    {
+        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedActor", "an Actor", new_actor->getUID()))
+        return;
+    }
+
+    else if(uid == -1)
+        uid = generateUID(true);
+
+    parallelAddActor(new_actor, new_actor->getUID(), true);
 }
 
-std::shared_ptr<Device> Theatre::addInterpretedDevice(std::shared_ptr<Device> new_device)
+void Theatre::addInterpretedDevice(std::shared_ptr<Device> new_device)
 {
-    if(device_map.contains(new_device->getUID()))
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedDevice", "a Device", new_device->getUID()))
-    else
-        parallelAddDevice(new_device, new_device->getUID(), true);
+    int uid = new_device->getUID();
 
-    return device_map.at(new_device->getUID());
+    if(device_map.contains(uid) && uid != -1)
+    {
+        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedDevice", "a Device", new_device->getUID()))
+        return;
+    }
+
+    else if(uid == -1)
+        uid = generateUID(false);
+
+    parallelAddDevice(new_device, uid, true);
 }
 
 // These functions make sure that the maps and vectors are kept parallel; since these are private
@@ -366,15 +400,15 @@ void Theatre::checkAndSetCurrentVariables(std::shared_ptr<Actor> new_actor, std:
 {
     if(new_actor)
     {
-        if(std::dynamic_pointer_cast<GraphXPlayer>(new_actor))
-            graphx::current::player = std::dynamic_pointer_cast<GraphXPlayer>(new_actor);
+        if(auto player = std::dynamic_pointer_cast<GraphXPlayer>(new_actor))
+            graphx::current::uids::player = new_actor->getUID();
         // else if...
     }
 
     if(new_device)
     {
-        if(dynamic_pointer_cast<Environment>(new_device))
-            graphx::current::environment = dynamic_pointer_cast<Environment>(new_device);
+        if(auto environment = dynamic_pointer_cast<Environment>(new_device))
+            graphx::current::uids::environment = new_device->getUID();
         // else if...
     }
 }
