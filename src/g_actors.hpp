@@ -66,7 +66,6 @@ public:
 
 protected:
 	bool debug_visible = false;
-	Material debug_light_mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_color * light_energy);
 };
 
 class LightDirectional : public Light
@@ -119,7 +118,7 @@ class GraphXPlayer: public Actor //public CharacterController(?)
 public:
 	Model player_mesh = Model("Untitled Model");
 	Camera player_camera = Camera("Player Camera");
-	LightFlashlight* player_flashlight;
+	int flashlight_uid = -1;
 
 	bool do_gravity = true; // Debugging, mostly
 	float mouse_sensitivity = 0.05f;
@@ -129,7 +128,7 @@ public:
 	float mass = 100.0f;
 	float field_of_view = 45.0f; // Make sure to convert to radians when making the perspective matrix 
 
-	// JPH::Ref<JPH::CharacterSettings> player_settings;
+	JPH::CharacterSettings player_settings;
 
 	using Actor::Actor;
 
@@ -145,9 +144,10 @@ public:
 
 private:
 	glm::vec3 flashlight_debug_toggle_color_god_damn_this_variable_name_is_long = glm::vec3(1.0f, 0.0f, 0.0f);
-	// JPH::Ref<JPH::Character> jph_character = nullptr;
+	std::unique_ptr<JPH::Character> jph_character = nullptr;
 	double movement_lerp = 0.0f;
 	int last_direction[2] = {0, 0};
+	std::shared_ptr<LightFlashlight> flashlight = nullptr; // Todo: use Actor::child_actors instead of this (maybe, bc this is kind of a unique use-case)
 };
 
 class LightTesterMover : public Light
@@ -159,7 +159,7 @@ public:
 	float pivot_theta = 0.0f;
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
-	Model temporary_pivot_mesh = Model(temporary_pivot_material);
+	Model temporary_pivot_mesh;
 	Actor pivot_point = Actor("pivot point");
 
 	using Light::Light;

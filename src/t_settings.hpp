@@ -22,18 +22,8 @@ struct gSettings
 public:
 	gSettings() = default;
 
-	template<typename V>
-	void getVariable(const std::string& setting, V& variable) const
+	template<typename V> void getVariable(const std::string& setting, V& variable) const
 	{
-	    if constexpr(std::is_same_v<V, std::string>)
-	    {
-	        if(external_reference.contains(setting))
-	        {
-	            variable = external_reference.at(setting);
-	            return;
-	        }
-	    }
-
 	    if(cpp_reference.contains(setting))
 	    {
 	        if(typeid(V) == cpp_reference.at(setting).type())
@@ -41,15 +31,19 @@ public:
 	            variable = std::any_cast<V>(cpp_reference.at(setting));
 	            return;
 	        }
+
+	        PRINTERR("in gSettings::getVariable - setting and variable are not the same type! Setting: " << setting)
+	        return;
 	    }
 
-	    PRINTERR("in gSettings::getVariable")
+	    PRINTERR("in gSettings::getVariable - cpp_reference does not contain setting: " << setting)
 	}
 
 	template<typename V> void getNumber(const std::string& Setting, V& Variable) const;
 
 	void getBoolean(const std::string& Setting, bool& Variable) const;
 	void getString(const std::string& Setting, std::string& Variable) const;
+	void getResource(const std::string& setting, std::string& variable) const;
 
 	void getActorUID(const std::string& Setting, int& Variable) const;
 	void getDeviceUID(const std::string& Setting, int& Variable) const;

@@ -40,6 +40,8 @@ void gSettings::getNumber(const std::string& setting, V& variable) const
         // Fill the rest of the glm variable
         for(int i = 0; i < raw_data_copy.size(); i++)
             variable[i] = std::stof(raw_data_copy.at(i));
+
+        return;
     }
 
     // Get the gRawData vector if it's not empty and create a new one with a single "0" if it is
@@ -57,16 +59,16 @@ void gSettings::getNumber(const std::string& setting, V& variable) const
     PRINTERR("in gSettings::getNumeric - unexpected input type!")
 }
 
-template void gSettings::getNumber<glm::vec2>(const std::string&, glm::vec2&) const;
-template void gSettings::getNumber<glm::vec3>(const std::string&, glm::vec3&) const;
-template void gSettings::getNumber<glm::vec4>(const std::string&, glm::vec4&) const;
-template void gSettings::getNumber<glm::quat>(const std::string&, glm::quat&) const;
-template void gSettings::getNumber<int>(const std::string&, int&) const;
-template void gSettings::getNumber<long>(const std::string&, long&) const;
-template void gSettings::getNumber<unsigned int>(const std::string&, unsigned int&) const;
-template void gSettings::getNumber<unsigned long>(const std::string&, unsigned long&) const;
-template void gSettings::getNumber<float>(const std::string&, float&) const;
-template void gSettings::getNumber<double>(const std::string&, double&) const;
+template void gSettings::getNumber(const std::string&, glm::vec2&) const;
+template void gSettings::getNumber(const std::string&, glm::vec3&) const;
+template void gSettings::getNumber(const std::string&, glm::vec4&) const;
+template void gSettings::getNumber(const std::string&, glm::quat&) const;
+template void gSettings::getNumber(const std::string&, int&) const;
+template void gSettings::getNumber(const std::string&, long&) const;
+template void gSettings::getNumber(const std::string&, unsigned int&) const;
+template void gSettings::getNumber(const std::string&, unsigned long&) const;
+template void gSettings::getNumber(const std::string&, float&) const;
+template void gSettings::getNumber(const std::string&, double&) const;
 
 void gSettings::getBoolean(const std::string& setting, bool& variable) const
 {
@@ -84,6 +86,21 @@ void gSettings::getString(const std::string& setting, std::string& variable) con
     variable = "";
     for(int i = 0; i < raw_data.at(setting).size(); i++)
         variable += raw_data.at(setting).at(i);
+}
+
+void gSettings::getResource(const std::string& setting, std::string& variable) const
+{
+    if(external_reference.contains(setting))
+    {
+        variable = external_reference.at(setting);
+        return;
+    }
+
+    if(cpp_reference.contains(setting) && cpp_reference.at(setting).type() == typeid(std::string))
+    {
+        variable = std::any_cast<std::string>(cpp_reference.at(setting));
+        return;
+    }
 }
 
 void gSettings::getActorUID(const std::string& setting, int& variable) const

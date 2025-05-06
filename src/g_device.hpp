@@ -31,6 +31,6 @@ protected:
     gSettings settings = gSettings();
 
 private:
-    int UID = -1;
+    int device_uid = -1;
 };
 #endif

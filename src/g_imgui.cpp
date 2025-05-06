@@ -72,11 +72,11 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	if(IMGUI::Button("Get Actor!##1"))
 	{
 		actor_selection_made = true;
-		actor_selection_valid = !(actor_name_selection.empty() || graphx::current::theatre.getActor(actor_name_selection) == nullptr);
+		actor_selection_valid = !(actor_name_selection.empty() || graphx::current::theatre.getActor<Actor>(actor_name_selection) == nullptr);
 		if(!actor_selection_valid)
 			error_string = "Invalid Actor Name!";
 		else
-			single_actor = graphx::current::theatre.getActor(actor_name_selection);
+			single_actor = graphx::current::theatre.getActor<Actor>(actor_name_selection);
 	}
 	IMGUI::Text("Select Actor by UID:");
 	IMGUI::PushItemWidth(100.0f);
@@ -97,8 +97,8 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 			actor_selection_valid = false;
 		}
 
-		if(actor_selection_valid && graphx::current::theatre.getActor(std::stod(actor_uid_selection)) != nullptr)
-			single_actor = graphx::current::theatre.getActor(std::stod(actor_uid_selection));
+		if(actor_selection_valid && graphx::current::theatre.getActor<Actor>(std::stod(actor_uid_selection)) != nullptr)
+			single_actor = graphx::current::theatre.getActor<Actor>(std::stod(actor_uid_selection));
 		else
 		{
 			actor_selection_valid = false;
@@ -159,7 +159,7 @@ void GraphXConsole::showActorEditor(std::shared_ptr<Actor> actor, int index)
 	if(IMGUI::DragFloat3(indexMe("Position", index).c_str(), position_vectors.data(), -0.1f, -100.0f, 100.0f))
 		actor->setGlobalPosition(glm::vec3(position_vectors[0], position_vectors[1], position_vectors[2]));
 	if(IMGUI::DragFloat3(indexMe("Rotation", index).c_str(), rotation_vectors.data(), -0.1f, -100.0f, 100.0f))
-		actor->setGlobalEulerAngles(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2]));
+		actor->setGlobalEulerAngles(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2]), true);
 	if(IMGUI::DragFloat3(indexMe("Scale", index).c_str(), scale_vectors.data(), -0.1f, -100.0f, 100.0f))
 		actor->setGlobalScale({scale_vectors[0], scale_vectors[1], scale_vectors[2]});
 	IMGUI::EndGroup();

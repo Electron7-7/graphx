@@ -1,7 +1,5 @@
 #include "g_theatre.hpp"
-#include "sanity_printouts.hpp"
 #include "g_actors.hpp"
-#include "g_device.hpp"
 #include "r_rendering.hpp"
 #include <set>
 
@@ -19,7 +17,7 @@ std::mt19937 Theatre::uid_random_generator(uid_random_device());
 // Theatre
 //--------
 Theatre::Theatre(const int new_uid, const std::string& new_name)
-: name(new_name), UID(new_uid)
+: name(new_name), theatre_uid(new_uid)
 {}
 
 Theatre::Theatre(const std::string& new_name)
@@ -61,7 +59,10 @@ std::set<std::string> Theatre::getTextureNames()
 // Terrible, no good, very bad functions
 
 int Theatre::getUID() const
-{ return UID; }
+{ return theatre_uid; }
+
+void Theatre::setUID(int new_uid)
+{ theatre_uid = new_uid; }
 
 void Theatre::probeRenderCommands()
 {
@@ -110,8 +111,7 @@ int Theatre::addActor(std::shared_ptr<Actor> new_actor)
     int uid = new_actor->getUID();
     if(actor_map.contains(uid) || uid == -1)
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addActor", "an Actor", new_actor->getUID()))
-        PRINTNOTE("Changing Actor's UID before adding")
+        PRINTNOTE("In Theatre::addActor - Actor UID is either -1 or already in the Theatre. Changing this Actor's UID before adding it")
         uid = generateUID(true);
     }
 
@@ -124,8 +124,7 @@ int Theatre::addDevice(std::shared_ptr<Device> new_device)
     int uid = new_device->getUID();
     if(device_map.contains(uid) || uid == -1)
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addDevice", "a Device", new_device->getUID()))
-        PRINTNOTE("Changing Device's UID before adding")
+        PRINTNOTE("In Theatre::addDevice - Device UID is either -1 or already in the Theatre. Changing this Device's UID before adding it")
         uid = generateUID(true);
     }
 
@@ -138,48 +137,6 @@ std::vector<std::shared_ptr<Actor>> Theatre::getAllActors() const
 
 std::vector<std::shared_ptr<Device>> Theatre::getAllDevices() const
 { return device_vector; }
-
-std::shared_ptr<Actor> Theatre::getActor(const int UID) const
-{
-    if(actor_map.contains(UID))
-        return actor_map.at(UID);
-
-    PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", UID))
-    // return std::make_shared<Actor>(graphx::safety::actor);
-    return nullptr;
-}
-
-std::shared_ptr<Device> Theatre::getDevice(const int UID) const
-{
-    if(device_map.contains(UID))
-        return device_map.at(UID);
-
-    PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", UID))
-    // return std::make_shared<Device>(graphx::safety::device);
-    return nullptr;
-}
-
-std::shared_ptr<Actor> Theatre::getActor(const std::string& actor_name) const
-{
-    for(int i = 0; i < actor_vector.size(); i++)
-        if(!actor_vector.at(i)->name.compare(actor_name))
-            return actor_vector.at(i);
-
-    PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", actor_name))
-    // return std::make_shared<Actor>(graphx::safety::actor);
-    return nullptr;
-}
-
-std::shared_ptr<Device> Theatre::getDevice(const std::string& device_name) const
-{
-    for(int i = 0; i < device_vector.size(); i++)
-        if(!device_vector.at(i)->name.compare(device_name))
-            return device_vector.at(i);
-
-    PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getDevice", "Device", device_name))
-    return nullptr;
-    // return std::make_shared<Device>(graphx::safety::device);
-}
 
 int Theatre::getActorUID(const std::string& actor_name) const
 {
@@ -201,7 +158,7 @@ int Theatre::getDeviceUID(const std::string& device_name) const
 int Theatre::generateUID(const bool for_actor)
 {
     std::uniform_int_distribution<> uid_distribution(0);
-    int new_uid = 0;
+    unsigned int new_uid = 0;
 
     if(for_actor)
         while(actor_map.contains(new_uid))

@@ -1,7 +1,10 @@
-#include <memory>
 #ifndef GRAPHX_THEATRE
+#include "sanity_printouts.hpp"
+#include "g_device.hpp"
+#include "g_actor.hpp"
 #include <glfw_fwd.hpp>
 #include <vector>
+#include <memory>
 #include <random>
 #include <map>
 #include <set>
@@ -22,8 +25,8 @@ class GraphXTheatreInterpreter;
 
 // Error message macros
 #define THEATRE_ERR_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + std::to_string(uid) +  " already exists!"
-#define THEATRE_ERR_INVALID_UID(function, type, uid) std::string(function) + " - no " + std::string(type) + " with the UID " + std::to_string(uid) + " was found! Returning nullptr!"
-#define THEATRE_ERR_INVALID_NAME(function, type, name) std::string(function) + " - no " + std::string(type) + " with the Name " + std::string(name) + " was found! Returning nullptr!"
+#define THEATRE_ERR_INVALID_UID(function, type, uid) std::string(function) + " - no " + std::string(type) + " with the UID " + std::to_string(uid) + " was found! Returning empty " + std::string(type)
+#define THEATRE_ERR_INVALID_NAME(function, type, name) std::string(function) + " - no " + std::string(type) + " with the Name " + std::string(name) + " was found! Returning empty " + std::string(type)
 #define THEATRE_ERR_PARALLEL_DESYNC(function, type) std::string(function) + " - a desync between the " << std::string(type) << " map and vector has been detected! To maintain synchronization, both the map and the vector will be compared to locate and remove the extra " << std::string(type)
 #define THEATRE_ERR_DESYNC_DETECTION(type, location, uid) "Extraneous " << std::string(type) << " detected in " << std::string(location) << " with UID: " << std::to_string(uid) << " will be deleted"
 
@@ -52,6 +55,7 @@ struct Theatre
     Theatre(const int, const std::string&);
 
     int getUID() const;
+    void setUID(int NewUID);
     void probeRenderCommands();
     void delegateKeyInput(GLFWwindow*, const int, const int, const int, const int) const;
     void delegateMouseInput(GLFWwindow*, const double, const double) const;
@@ -63,15 +67,45 @@ struct Theatre
     std::vector<std::shared_ptr<Actor>> getAllActors() const;
     std::vector<std::shared_ptr<Device>> getAllDevices() const;
 
-    // Safe and reliable, since every Actor must have a unique UID
-    std::shared_ptr<Actor> getActor(const int UniqueID) const;
-    // Safe and reliable, since every Device must have a unique UID
-    std::shared_ptr<Device> getDevice(const int UniqueID) const;
+    // Safe and reliable, since every Actor/Device must have a unique UID
+    template<typename T> std::shared_ptr<T> getActor(const int UniqueID) const
+    {
+        if(actor_map.contains(UniqueID))
+            return std::dynamic_pointer_cast<T>(actor_map.at(UniqueID));
 
-    // Safe, but unreliable; if multiple Actors share the same name, this returns the first Actor it encounters
-    std::shared_ptr<Actor> getActor(const std::string& Name) const;
-    // Safe, but unreliable; if multiple Devices share the same name, this returns the first Device it encounters
-    std::shared_ptr<Device> getDevice(const std::string& Name) const;
+        PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", UniqueID))
+        return std::make_shared<T>("Safety Actor");
+    }
+
+    template<typename T> std::shared_ptr<T> getDevice(const int UniqueID) const
+    {
+        if(device_map.contains(UniqueID))
+            return std::dynamic_pointer_cast<T>(device_map.at(UniqueID));
+
+        PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", UniqueID))
+        return std::make_shared<T>("Safety Device");
+    }
+
+    // Safe, but unreliable; if multiple Actors/Devices share the same name, this returns the first one it sees
+    template<typename T> std::shared_ptr<T> getActor(const std::string& Name) const
+    {
+        for(int i = 0; i < actor_vector.size(); i++)
+            if(!actor_vector.at(i)->name.compare(Name))
+                return std::dynamic_pointer_cast<T>(actor_vector.at(i));
+
+        PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", Name))
+        return std::make_shared<T>("Safety Actor");
+    }
+
+    template<typename T> std::shared_ptr<T> getDevice(const std::string& Name) const
+    {
+        for(int i = 0; i < device_vector.size(); i++)
+            if(!device_vector.at(i)->name.compare(Name))
+                return std::dynamic_pointer_cast<T>(device_vector.at(i));
+
+        PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getDevice", "Device", Name))
+        return std::make_shared<T>("Safety Device");
+    }
 
     int getActorUID(const std::string& Name) const;
     int getDeviceUID(const std::string& Name) const;
@@ -85,9 +119,9 @@ struct Theatre
     //-------------------------------------
 
 private:
-    int UID = -1;
-    std::map<int, std::shared_ptr<Actor>> actor_map;
-    std::map<int, std::shared_ptr<Device>> device_map;
+    int theatre_uid = -1;
+    std::map<unsigned int, std::shared_ptr<Actor>> actor_map;
+    std::map<unsigned int, std::shared_ptr<Device>> device_map;
     std::vector<std::shared_ptr<Actor>> actor_vector;
     std::vector<std::shared_ptr<Device>> device_vector;
 

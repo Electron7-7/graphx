@@ -17,7 +17,7 @@ using namespace graphx;
 RenderCommands Label::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
-	render_commands.render_command.mesh_material->color_alpha = label_alpha;
+	parent_theatre->getDevice<Material>(parent_theatre->getDevice<Model>(render_commands.render_command.model_uid)->material_uid)->color_alpha = label_alpha;
 	text_render_command.render_state = &current_state_buffer[state_index];
 	text_render_command.position_x = (getGlobalPosition() + getLocalPosition()).x;
 	text_render_command.position_y = (getGlobalPosition() + getLocalPosition()).y;
@@ -54,7 +54,7 @@ void Label::loadSettings()
 	*/
 	settings.getNumber("Transparency", label_alpha);
 	settings.getNumber("Alpha", label_alpha);
-	settings.getVariable("Font", font_name_catcher);
+	settings.getResource("Font", font_name_catcher);
 	settings.getString("FontName", font_name_catcher);
 	settings.getNumber("Color", text_render_command.color);
 	settings.getNumber("TextColor", text_render_command.color);
@@ -104,27 +104,24 @@ void GraphXPlayer::loadSettings()
 	settings.getNumber("Friction", friction);
 	settings.getNumber("Mass", mass);
 	settings.getNumber("FOV", field_of_view);
+	settings.getActorUID("Flashlight", flashlight_uid);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
-}
 
-/*void GraphXPlayer::callToStage(Theatre *parent_theatre)
-{
-	Actor::callToStage(parent_theatre);
+	flashlight = parent_theatre->getDevice<LightFlashlight>(flashlight_uid);
 
-	player_flashlight = static_cast<LightFlashlight *>(getCurrentTheatre()->unsafeGetFirstActorOfType(graphx::classes::LIGHTFLASHLIGHT));
-
-	player_settings = new JPH::CharacterSettings;
-	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
-	player_settings->mLayer = Layers::MOVING;
-	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CylinderShape(scale[1], scale[0])).Create().Get();
-	player_settings->mFriction = friction;
-	player_settings->mMass = mass;
-	player_settings->mGravityFactor *= do_gravity;
-	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
-	jph_character = new JPH::Character(player_settings, getPosition<JPH::Vec3>(), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
+	player_settings = JPH::CharacterSettings();
+	player_settings.mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
+	player_settings.mLayer = Layers::MOVING;
+	player_settings.mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CylinderShape(getGlobalScale()[1], getGlobalScale()[0])).Create().Get();
+	player_settings.mFriction = friction;
+	player_settings.mMass = mass;
+	player_settings.mGravityFactor *= do_gravity;
+	player_settings.mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), getGlobalScale()[0]);
+	JPH::Vec3 body_position = gmath::convertMath<JPH::Vec3>(getGlobalPosition());
+	jph_character = std::make_unique<JPH::Character>(&player_settings, body_position, JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
-}*/
+}
 
 void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double y_position_in)
 {
@@ -148,25 +145,29 @@ void GraphXPlayer::checkForInput(GLFWwindow* window)
 
 void GraphXPlayer::tick(const int current_tick)
 {
-	// setGlobalPosition(gmath::convertMath<glm::vec3>(jph_character->GetPosition()));
+	setGlobalPosition(gmath::convertMath<glm::vec3>(jph_character->GetPosition()));
 	player_camera.setGlobalPosition(getGlobalPosition());
 }
 
 void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+	// Early return if flashlight is nullptr, so do any non-flashlight related things before this if statement!!
+	if(flashlight == nullptr)
+		return;
+
 	if(key == GLFW_KEY_F && action == GLFW_PRESS)
 	{
-		player_flashlight->toggleLight();
-		if(player_flashlight->light_color == glm::vec3(0.0f))
+		flashlight->toggleLight();
+		if(flashlight->light_color == glm::vec3(0.0f))
 			PRINTNOTE("Flashlight Off")
 		else
 			PRINTNOTE("Flashlight On")
 	}
 
-	if(key == GLFW_KEY_Q && action == GLFW_PRESS && player_flashlight != nullptr)
+	if(key == GLFW_KEY_Q && action == GLFW_PRESS && flashlight != nullptr)
 	{
-		player_flashlight->setLightColor(flashlight_debug_toggle_color_god_damn_this_variable_name_is_long);
-		if(player_flashlight->light_color == flashlight_debug_toggle_color_god_damn_this_variable_name_is_long)
+		flashlight->setLightColor(flashlight_debug_toggle_color_god_damn_this_variable_name_is_long);
+		if(flashlight->light_color == flashlight_debug_toggle_color_god_damn_this_variable_name_is_long)
 			PRINTNOTE("Flashlight Red")
 		else
 			PRINTNOTE("Flashlight Not Red Anymore")
@@ -175,9 +176,9 @@ void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int act
 
 void GraphXPlayer::doMovement(int direction[2])
 {
-	// if(jph_character == nullptr)
-		// return;
-	// JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
+	if(jph_character == nullptr)
+		return;
+	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
 	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientationFront()[0], 0.0f, getOrientationFront()[2])) * static_cast<float>(direction[0] * movement_speed);
 	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientationRight()) * static_cast<float>(direction[1] * movement_speed);
@@ -198,11 +199,11 @@ void GraphXPlayer::doMovement(int direction[2])
 	last_direction[0] = direction[0];
 	last_direction[1] = direction[1];
 
-	// JPH::Vec3 new_velocity = gmath::linearInterpolate(current_velocity, wish_velocity, movement_lerp);
-	// new_velocity.SetY(current_velocity.GetY());
-	// if(new_velocity == current_velocity)
-		// return;
-	// jph_character->SetLinearVelocity(new_velocity);
+	JPH::Vec3 new_velocity = gmath::linearInterpolate(current_velocity, wish_velocity, movement_lerp);
+	new_velocity.SetY(current_velocity.GetY());
+	if(new_velocity == current_velocity)
+		return;
+	jph_character->SetLinearVelocity(new_velocity);
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()
@@ -243,13 +244,7 @@ RenderCommands Light::getRenderCommands()
 	render_commands.light_render_command.position = getGlobalPosition();
 	render_commands.light_render_command.attenuation = light_attenuation;
 	render_commands.light_render_command.range = light_range;
-
-	if(debug_visible)
-	{
-		render_commands.render_command.is_light_debug_mesh = true;
-		render_commands.render_command.mesh_data_name = GRAPHX_CUBE;
-		render_commands.render_command.mesh_material = std::make_shared<Material>(debug_light_mesh_material);
-	}
+	render_commands.render_command.is_light_debug_mesh = debug_visible;
 
 	return(render_commands);
 }

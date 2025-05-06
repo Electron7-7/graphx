@@ -117,8 +117,8 @@ void Material::loadSettings()
 {
 	configureBaseVariables(this);
 
-	settings.getVariable("DiffuseTexture", diffuse_texture_name);
-	settings.getVariable("SpecularTexture", specular_texture_name);
+	settings.getResource("DiffuseTexture", diffuse_texture_name);
+	settings.getResource("SpecularTexture", specular_texture_name);
 	settings.getNumber("Color", color);
 	settings.getNumber("Alpha", color_alpha);
 	settings.getNumber("SpecularSharpness", specular_sharpness);
@@ -135,21 +135,18 @@ void Material::loadSettings()
 //
 // Model
 //
-Model::Model(const Material& new_material, const std::string& new_mesh_data_name)
-: Device("Untitled Model"), material_base(new_material), material(&material_base), mesh_data_name(new_mesh_data_name)
-{}
-
-Model::Model(std::shared_ptr<Material> new_material, const std::string& new_mesh_data_name)
-: Device("Untitled Model"), material(new_material), mesh_data_name(new_mesh_data_name)
+Model::Model(const std::string& my_mesh_data_name, const int my_material_uid)
+: Device("Untitled Model"), material_uid(my_material_uid), mesh_data_name(my_mesh_data_name)
 {}
 
 void Model::loadSettings()
 {
 	configureBaseVariables(this);
 
-	// settings.getVariable("Material", material);
-	settings.getVariable("Mesh", mesh_data_name);
-	settings.getVariable("MeshData", mesh_data_name);
+	settings.getActorUID("Material", material_uid);
+	settings.getActorUID("MaterialUID", material_uid);
+	settings.getResource("Mesh", mesh_data_name);
+	settings.getResource("MeshData", mesh_data_name);
 }
 
 //
@@ -157,13 +154,13 @@ void Model::loadSettings()
 //
 void Sprite::loadSettings()
 {
-	// Model::loadSettings();
 	configureBaseVariables(this);
 
 	// Todo: expand configureBaseVariables to include other types (like Model)
-	// settings.getVariable("Material", material);
-	settings.getVariable("Mesh", mesh_data_name);
-	settings.getVariable("MeshData", mesh_data_name);
+	settings.getActorUID("Material", material_uid);
+	settings.getActorUID("MaterialUID", material_uid);
+	settings.getResource("Mesh", mesh_data_name);
+	settings.getResource("MeshData", mesh_data_name);
 
 	mesh_data_name = GRAPHX_QUAD; // Override
 }

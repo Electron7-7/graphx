@@ -1,5 +1,5 @@
-#include <memory>
 #ifndef GRAPHX_RENDERING_COMMON
+#include "g_devices.hpp"
 #include <models.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -7,10 +7,6 @@
 #include <glm/gtx/quaternion.hpp>
 #include <map>
 #define GRAPHX_RENDERING_COMMON
-
-#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
-struct Material; // REMOVE THIS LATER
-#endif
 
 struct Character
 {
@@ -42,28 +38,27 @@ struct RenderState
     glm::vec3 render_position = glm::vec3(0.0f);
     glm::quat render_quaternion = glm::quat();
     glm::vec3 render_scale = glm::vec3(1.0f);
+
+    const bool operator==(const RenderState&) const;
+    const bool operator!=(const RenderState&) const;
 };
 
 struct RenderCmd
 {
 public:
-    glm::vec4 debug_highlight_color = glm::vec4(0.0f);
-    bool is_light_debug_mesh = false;
-    std::string mesh_data_name = ERROR_MODEL;
+    int model_uid = -1;
     RenderState current_render_state = RenderState();
     RenderState previous_render_state = RenderState();
-    std::shared_ptr<Material> mesh_material = nullptr; // REPLACE THIS WITH MATERIAL UID
-    // int mesh_material = -1;
+    glm::vec4 debug_highlight_color = glm::vec4(0.0f);
+    bool is_light_debug_mesh = false;
 
-    RenderCmd() = default;
-
-    const bool isValid() const;
+    RenderCmd(const int ModelUID = -1, const RenderState& CurrentRenderState = RenderState(), const RenderState& PreviousRenderState = RenderState(), const glm::vec4& DebugColor = glm::vec4(1.0f), const bool IsModelLightDebugModel = false);
 };
 
 struct LightRenderCmd
 {
 public:
-    unsigned int light_type = POINT_LIGHT;
+    unsigned int light_type = EMPTY;
 
     glm::vec3 color = glm::vec3(0.0f);
     float specular_strength = 0.0f;
@@ -79,8 +74,9 @@ public:
     float spot_cutoff = 0.0f;
     float spot_cutoff_fade = 0.0f;
 
-    LightRenderCmd(const unsigned int = POINT_LIGHT);
-    
+    LightRenderCmd(const unsigned int = EMPTY);
+
+    static const unsigned int EMPTY             = 0;
     static const unsigned int POINT_LIGHT       = 1;
     static const unsigned int SPOT_LIGHT        = 2;
     static const unsigned int DIRECTIONAL_LIGHT = 3;

@@ -92,19 +92,10 @@ struct Material final : public Device
 struct Model : public Device
 {
 	int material_uid = -1;
-	Material material_base = Material(glm::vec3(1.0f)); // This is a bad way to make sure material is never nullptr
-	std::shared_ptr<Material> material = std::make_shared<Material>(&material_base); // This is going to be replaced with material_id
-
-	unsigned int VBO = 0;
-	unsigned int IBO = 0;
-	bool is_buffered = false;
-	glm::vec3 mesh_scale = glm::vec3(1.0f);
 	std::string mesh_data_name = ERROR_MODEL;
 
 	using Device::Device;
-	// Model(const int, const std::string& = ERROR_MODEL); // for when I replace Material* with int
-	Model(const Material&, const std::string& = ERROR_MODEL);
-	Model(std::shared_ptr<Material>, const std::string& = ERROR_MODEL);
+	Model(const std::string& MeshDataName = ERROR_MODEL, const int MaterialUID = -1);
 
 	void loadSettings() override;
 };

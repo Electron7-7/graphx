@@ -1,10 +1,10 @@
 #include "graphx_namespace.hpp"
-#include "g_actors.hpp"
-#include "g_device.hpp"
-#include "g_theatre.hpp"
-#include "t_interpreter.hpp"
 #include "g_device.hpp"
 #include "g_actor.hpp"
+#include "g_devices.hpp"
+#include "g_actors.hpp"
+#include "g_theatre.hpp"
+#include "t_interpreter.hpp"
 
 // GraphX
 GraphXTheatreInterpreter graphx::Interpreter = GraphXTheatreInterpreter();
@@ -13,14 +13,14 @@ GraphXTheatreInterpreter graphx::Interpreter = GraphXTheatreInterpreter();
 Theatre graphx::current::theatre = Theatre("current_theatre Not Yet Set!");
 std::shared_ptr<GraphXPlayer> graphx::current::player()
 {
-	if(std::shared_ptr<Actor> player = graphx::current::theatre.getActor(graphx::current::uids::player))
+	if(std::shared_ptr<Actor> player = graphx::current::theatre.getActor<Actor>(graphx::current::uids::player))
 		return std::dynamic_pointer_cast<GraphXPlayer>(player);
 
 	return std::make_shared<GraphXPlayer>("Empty Player");
 }
 std::shared_ptr<Environment> graphx::current::environment()
 {
-	if(std::shared_ptr<Device> environment = graphx::current::theatre.getDevice(graphx::current::uids::environment))
+	if(std::shared_ptr<Device> environment = graphx::current::theatre.getDevice<Device>(graphx::current::uids::environment))
 		return std::dynamic_pointer_cast<Environment>(environment);
 
 	return std::make_shared<Environment>("Empty Environment");

@@ -450,9 +450,9 @@ void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_setti
 	StringSetting sandwich_bun_setting = theatre_settings.at(i).at(it);
 
 	if(gClasses::isActor(sandwich_bun_setting.name))
-		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.value)->getSettings();
+		sandwich_settings = new_theatre.getActor<Actor>(sandwich_bun_setting.value)->getSettings();
 	else
-		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.value)->getSettings();
+		sandwich_settings = new_theatre.getDevice<Device>(sandwich_bun_setting.value)->getSettings();
 
 	sandwich_settings.raw_data["Name"] = gRawData{sandwich_bun_setting.value + "_" + current_object_name};
 

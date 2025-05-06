@@ -1,7 +1,7 @@
 #include "r_rendering.hpp"
+#include "g_actors.hpp"
 #include "g_devices.hpp"
 #include "g_theatre.hpp"
-#include "g_actors.hpp"
 #include "sanity.hpp"
 #include "sanity_printouts.hpp"
 #include "sanity_executable_locator.hpp"
@@ -344,10 +344,32 @@ Font::Font(std::string init_font_name)
 {}
 
 //
+// RenderState
+//
+const bool RenderState::operator==(const RenderState& compare) const
+{
+	return
+	(
+		compare.render_position == render_position &&
+		compare.render_quaternion == render_quaternion &&
+		compare.render_scale == render_scale
+	);
+}
+
+const bool RenderState::operator!=(const RenderState& compare) const
+{ return !(compare == *this); }
+
+//
 // RenderCmd
 //
-const bool RenderCmd::isValid() const
-{ return (!mesh_data_name.empty()); } // NEED TO REMOVE THE NEED FOR THIS
+/*RenderCmd::RenderCmd(const std::string& MeshDataName, std::shared_ptr<Material> new_material, const RenderState& CurrentRenderState, const RenderState& PreviousRenderState, const glm::vec4& DebugColor, const bool IsModelLightDebugModel)
+: mesh_data_name(MeshDataName), current_render_state(CurrentRenderState), previous_render_state(PreviousRenderState), debug_highlight_color(DebugColor), is_light_debug_mesh(IsModelLightDebugModel)
+{
+	mesh_material = (new_material != nullptr) ? new_material : std::make_shared<Material>("Empty Material");
+}*/
+RenderCmd::RenderCmd(const int ModelUID, const RenderState& CurrentRenderState, const RenderState& PreviousRenderState, const glm::vec4& DebugColor, const bool IsModelLightDebugModel)
+: model_uid(ModelUID), current_render_state(CurrentRenderState), previous_render_state(PreviousRenderState), debug_highlight_color(DebugColor), is_light_debug_mesh(IsModelLightDebugModel)
+{}
 
 //
 // LightRenderCmd
@@ -783,18 +805,20 @@ void R_BufferRenderCommands(RenderCommands render_commands)
 
 void R_BufferRenderCmd(RenderCmd render_command)
 {
-	if(render_command.isValid())
+	if(render_command.model_uid > -1)
 		render_commands_buffer.insert(render_commands_buffer.end(), render_command);
 }
 
 void R_BufferRenderCmd(LightRenderCmd light_render_command)
 {
-	light_render_commands_buffer.insert(light_render_commands_buffer.end(), light_render_command);
+	if(light_render_command.light_type != LightRenderCmd::EMPTY)
+		light_render_commands_buffer.insert(light_render_commands_buffer.end(), light_render_command);
 }
 
 void R_BufferRenderCmd(TextRenderCmd text_render_command)
 {
-	text_render_commands_buffer.insert(text_render_commands_buffer.end(), text_render_command);
+	if(!text_render_command.text.empty())
+		text_render_commands_buffer.insert(text_render_commands_buffer.end(), text_render_command);
 }
 
 bool enable_default_shader = true; // Todo: delete this, lmfao
@@ -1100,8 +1124,19 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 			break;
 		}
 
-		// When I change RenderCmd::mesh_material to be an id instead of a pointer, I can remove this shitty nullptr check
-		if(rendercmd_iterator->is_light_debug_mesh || (rendercmd_iterator->mesh_material != nullptr && rendercmd_iterator->mesh_material->mat_fullbright))
+		std::shared_ptr<Model> model = graphx::current::theatre.getDevice<Model>(rendercmd_iterator->model_uid);
+		std::shared_ptr<Material> material = graphx::current::theatre.getDevice<Material>(model->material_uid);
+
+		if(rendercmd_iterator->is_light_debug_mesh)
+		{
+			material->diffuse_texture_name = LIGHT_DEBUGGING;
+			material->color = glm::vec3(1.0f);
+			material->color_alpha = 1.0f;
+			material->name = "Light Debug Material";
+			material->mat_fullbright = true; // To double make sure that the next if statement works properly
+		}
+
+		if(material->mat_fullbright)
 			graphx::rendering::current_shader = graphx::rendering::SHADER_DEBUG_FULLBRIGHT;
 
 		glUseProgram(shaders[graphx::rendering::current_shader].id);
@@ -1133,19 +1168,15 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		model_matrix *= glm::toMat4(interpolated_quat);
 		model_matrix = glm::scale(model_matrix, interpolated_scale);
 
+		glBindTextureUnit(0, texture_storage.at(material->diffuse_texture_name).texture_id);
+		glBindTextureUnit(1, texture_storage.at(material->specular_texture_name).texture_id);
+		shaders[graphx::rendering::current_shader].setUniform("current_material.texture_diffuse", 0);
+		shaders[graphx::rendering::current_shader].setUniform("current_material.texture_specular", 1);
+		shaders[graphx::rendering::current_shader].setUniform("current_material.diffuse_color", material->color);
+		shaders[graphx::rendering::current_shader].setUniform("current_material.alpha", material->color_alpha);
+		shaders[graphx::rendering::current_shader].setUniform("current_material.specular_sharpness", material->specular_sharpness);
+		shaders[graphx::rendering::current_shader].setUniform("current_material.specular_strength", material->specular_strength);
 
-		// When I change RenderCmd::mesh_material to be an id instead of a pointer, I can remove this shitty nullptr check
-		if(rendercmd_iterator->mesh_material != nullptr)
-		{
-			glBindTextureUnit(0, texture_storage.at(rendercmd_iterator->mesh_material->diffuse_texture_name).texture_id);
-			glBindTextureUnit(1, texture_storage.at(rendercmd_iterator->mesh_material->specular_texture_name).texture_id);
-			shaders[graphx::rendering::current_shader].setUniform("current_material.texture_diffuse", 0);
-			shaders[graphx::rendering::current_shader].setUniform("current_material.texture_specular", 1);
-			shaders[graphx::rendering::current_shader].setUniform("current_material.diffuse_color", rendercmd_iterator->mesh_material->color);
-			shaders[graphx::rendering::current_shader].setUniform("current_material.alpha", rendercmd_iterator->mesh_material->color_alpha);
-			shaders[graphx::rendering::current_shader].setUniform("current_material.specular_sharpness", rendercmd_iterator->mesh_material->specular_sharpness);
-			shaders[graphx::rendering::current_shader].setUniform("current_material.specular_strength", rendercmd_iterator->mesh_material->specular_strength);
-		}
 		shaders[graphx::rendering::current_shader].setUniform("model_matrix", model_matrix);
 		shaders[graphx::rendering::current_shader].setUniform("view_matrix", graphx::current::player()->getViewMatrix());
 		shaders[graphx::rendering::current_shader].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
@@ -1156,7 +1187,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 		shaders[graphx::rendering::current_shader].setUniform("debug_highlight", rendercmd_iterator->debug_highlight_color);
 
-		Mesh& mesh_data = mesh_data_storage.at(rendercmd_iterator->mesh_data_name);
+		Mesh& mesh_data = mesh_data_storage.at(model->mesh_data_name);
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh_data.indices_count(), GL_UNSIGNED_INT, (void *)(sizeof(unsigned int) * mesh_data.base_index), mesh_data.base_vertex);
 
 		rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);

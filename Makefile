@@ -58,12 +58,12 @@ EMBED_OBJS =          \
 GRAPHX_OBJS =                   \
 	$(O)/g_math.opp        		\
 	$(O)/graphx_namespace.opp   \
-	$(O)/g_theatre.opp			\
 	$(O)/g_jolt.opp        		\
 	$(O)/g_device.opp			\
 	$(O)/g_actor.opp      		\
 	$(O)/g_devices.opp      	\
 	$(O)/g_actors.opp      		\
+	$(O)/g_theatre.opp			\
 	$(O)/r_rendering.opp   		\
 	$(O)/g_imgui.opp       		\
 	$(O)/t_settings.opp 		\

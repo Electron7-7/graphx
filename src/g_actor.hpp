@@ -24,13 +24,8 @@ public: // Externally accessible members
 
 	bool visible = true;
 
-
-	// THESE WILL GO IN THE MAPS/VECTORS LATER
-	// std::shared_ptr<Collider> collider = nullptr; // THIS IS GOING
-	int collider_uid = -1;   // THIS IS REPLACING IT
-	// std::shared_ptr<Model> mesh = nullptr; // THIS IS GOING
-	int model_uid = -1;   // THIS IS REPLACING IT
-
+	int collider_uid = -1;
+	int model_uid = -1;
 
 	// The constructor that should be used 99% of the time
 	Actor(const std::string& Name);
@@ -39,10 +34,6 @@ public: // Externally accessible members
 	Actor(Theatre* ParentTheatre, const int UID, const gSettings& Settings = gSettings());
 
 	virtual ~Actor();
-
-	// void TEMP_setModel(const Model&);
-	// void TEMP_setModel(std::shared_ptr<Model>);
-	// std::shared_ptr<Model> TEMP_getModel() const;
 
 	void updateStates(std::mutex&);
 	int getUID() const;
@@ -124,7 +115,7 @@ protected: // Members that aren't externally accessible
 	virtual const bool canBeRendered() const; // Todo: remove the need to use this (its only use is in Actor::getRenderCommands())
 
 private:
-	int UID = -1;
+	int actor_uid = -1;
 
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);
