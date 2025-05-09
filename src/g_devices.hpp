@@ -1,5 +1,4 @@
 #ifndef GRAPHX_DEVICES
-#include "graphx_namespace.hpp"
 #include "g_jolt.hpp"
 #include "g_device.hpp"
 #include <images.h>
@@ -71,8 +70,8 @@ public:
 
 struct Material final : public Device
 {
-	std::string diffuse_texture_name = MISSING_TEXTURE;
-	std::string specular_texture_name = MISSING_TEXTURE;
+	std::string diffuse_texture_name = NO_TEXTURE;
+	std::string specular_texture_name = NO_TEXTURE;
 
 	glm::vec3 color = glm::vec3(1.0f);
 	float color_alpha = 1.0f;
@@ -80,13 +79,16 @@ struct Material final : public Device
 	float specular_strength = 1.0f;
 	bool mat_fullbright = false;
 	bool use_texture = true;
-	
+
 	using Device::Device;
-	Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
-	Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
-	Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
+	Material(const bool USE_MISSING_INSTEAD_OF_EMPTY = false);
+	Material(glm::vec3 Color, bool Fullbright = false);
+	Material(std::string MaterialName, std::string DiffuseTextureName, const bool Fullbright, glm::vec3 Color = glm::vec3(1.0f), std::string SpecularTextureName = NO_TEXTURE, float SpecularStrength = 0.0f, int SpecularSharpness = 16);
 
 	void loadSettings() override;
+	// Todo: implement these if deemed fit
+	// std::shared_ptr<Texture> getDiffuse() const;
+	// std::shared_ptr<Texture> getSpecular() const;
 };
 
 struct Model : public Device
@@ -98,6 +100,7 @@ struct Model : public Device
 	Model(const std::string& MeshDataName = ERROR_MODEL, const int MaterialUID = -1);
 
 	void loadSettings() override;
+	std::shared_ptr<Material> getMaterial(const bool IsDebugLightMaterial = false) const;
 };
 
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)

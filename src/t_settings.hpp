@@ -4,9 +4,6 @@
 #include <map>
 #include <any>
 #include <vector>
-#include <glm/glm.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
 #define GRAPHX_SETTINGS
 
 #ifdef COMPILER_FORWARD_DECLARATIONS // Forward declarations
@@ -20,6 +17,8 @@ typedef std::vector<std::string> gRawData;
 struct gSettings
 {
 public:
+	std::map<std::string, std::string> debug_all_settings_printout = {};
+
 	gSettings() = default;
 
 	template<typename V> void getVariable(const std::string& setting, V& variable) const

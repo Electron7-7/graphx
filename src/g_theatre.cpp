@@ -56,7 +56,7 @@ std::set<std::string> Theatre::getTextureNames()
 // #endif
     return texture_names;
 }
-// Terrible, no good, very bad functions
+// End of Terrible, no good, very bad functions
 
 int Theatre::getUID() const
 { return theatre_uid; }
@@ -174,7 +174,7 @@ int Theatre::changeActorUID(const int old_uid, const int new_uid)
 {
     if(actor_map.contains(new_uid))
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::changeActorUID", "Actor", old_uid))
+        PRINTWARN(THEATRE_WARN_DUPLICATE_UID("Theatre::changeActorUID", "Actor", old_uid))
         return old_uid;
     }
 
@@ -188,7 +188,7 @@ int Theatre::changeDeviceUID(const int old_uid, const int new_uid)
 {
     if(device_map.contains(new_uid))
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::changeDeviceUID", "Device", old_uid))
+        PRINTWARN(THEATRE_WARN_DUPLICATE_UID("Theatre::changeDeviceUID", "Device", old_uid))
         return old_uid;
     }
 
@@ -204,7 +204,7 @@ void Theatre::addInterpretedActor(std::shared_ptr<Actor> new_actor)
 
     if(actor_map.contains(uid) && uid != -1)
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedActor", "an Actor", new_actor->getUID()))
+        PRINTWARN(THEATRE_WARN_DUPLICATE_UID("Theatre::addInterpretedActor", "an Actor", new_actor->getUID()))
         return;
     }
 
@@ -220,7 +220,7 @@ void Theatre::addInterpretedDevice(std::shared_ptr<Device> new_device)
 
     if(device_map.contains(uid) && uid != -1)
     {
-        PRINTERR(THEATRE_ERR_DUPLICATE_UID("Theatre::addInterpretedDevice", "a Device", new_device->getUID()))
+        PRINTWARN(THEATRE_WARN_DUPLICATE_UID("Theatre::addInterpretedDevice", "a Device", new_device->getUID()))
         return;
     }
 
@@ -240,6 +240,9 @@ void Theatre::parallelAddActor(std::shared_ptr<Actor> pointer, const int UID, co
     actor_map[UID] = pointer;
     actor_vector.insert(actor_vector.end(), pointer);
     pointer->loadSettings();
+    // DEBUG SETTINGS PRINTOUT
+    PRINTDEBUG("New Actor with UID: " << std::to_string(UID))
+    pointer->debug_GetSettingsPrintout();
     checkAndManageParallelActorDesync();
     checkAndSetCurrentVariables(pointer, nullptr);
 }
@@ -249,6 +252,9 @@ void Theatre::parallelAddDevice(std::shared_ptr<Device> pointer, const int UID, 
     device_map[UID] = pointer;
     device_vector.insert(device_vector.end(), pointer);
     pointer->loadSettings();
+    // DEBUG SETTINGS PRINTOUT
+    PRINTDEBUG("New Device with UID: " << std::to_string(UID))
+    pointer->debug_GetSettingsPrintout();
     checkAndManageParallelActorDesync();
     checkAndSetCurrentVariables(nullptr, pointer);
 }
@@ -276,7 +282,7 @@ void Theatre::checkAndManageParallelActorDesync()
     if(actor_map.size() == actor_vector.size())
         return;
 
-    PRINTERR(THEATRE_ERR_PARALLEL_DESYNC("Theatre::parallelAddActor(std::shared_ptr<Actor>, const bool)", "Actor"))
+    PRINTWARN(THEATRE_WARN_PARALLEL_DESYNC("Theatre::parallelAddActor(std::shared_ptr<Actor>, const bool)", "Actor"))
 
     std::set<int> synced_uids;
 
@@ -289,7 +295,7 @@ void Theatre::checkAndManageParallelActorDesync()
         {
             if(!synced_uids.contains(pair.first))
             {
-                PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Actor", "std::map<int, ActorPointerWrapper> Theatre::actor_map", pair.first))
+                PRINTWARN(THEATRE_WARN_DESYNC_DETECTION("Actor", "std::map<int, ActorPointerWrapper> Theatre::actor_map", pair.first))
                 actor_map.erase(pair.first);
                 return;
             }
@@ -303,7 +309,7 @@ void Theatre::checkAndManageParallelActorDesync()
     {
         if(!synced_uids.contains(actor_vector[i]->getUID()))
         {
-            PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Actor", "std::vector<std::shared_ptr<Actor>> Theatre::actor_vector", actor_vector[i]->getUID()))
+            PRINTWARN(THEATRE_WARN_DESYNC_DETECTION("Actor", "std::vector<std::shared_ptr<Actor>> Theatre::actor_vector", actor_vector[i]->getUID()))
             actor_vector.erase(actor_vector.begin() + i);
             return;
         }
@@ -317,7 +323,7 @@ void Theatre::checkAndManageParallelDeviceDesync()
     if(device_map.size() == device_vector.size())
         return;
 
-    PRINTERR(THEATRE_ERR_PARALLEL_DESYNC("Theatre::parallelAddDevice(std::shared_ptr<Device>, const bool)", "Device"))
+    PRINTWARN(THEATRE_WARN_PARALLEL_DESYNC("Theatre::parallelAddDevice(std::shared_ptr<Device>, const bool)", "Device"))
 
     std::set<int> synced_uids;
 
@@ -330,7 +336,7 @@ void Theatre::checkAndManageParallelDeviceDesync()
         {
             if(!synced_uids.contains(pair.first))
             {
-                PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Device", "std::map<int, DevicePointerWrapper> Theatre::device_map", pair.first))
+                PRINTWARN(THEATRE_WARN_DESYNC_DETECTION("Device", "std::map<int, DevicePointerWrapper> Theatre::device_map", pair.first))
                 device_map.erase(pair.first);
                 return;
             }
@@ -344,7 +350,7 @@ void Theatre::checkAndManageParallelDeviceDesync()
     {
         if(!synced_uids.contains(device_vector[i]->getUID()))
         {
-            PRINTERR(THEATRE_ERR_DESYNC_DETECTION("Device", "std::vector<std::shared_ptr<Device>> Theatre::device_vector", device_vector[i]->getUID()))
+            PRINTWARN(THEATRE_WARN_DESYNC_DETECTION("Device", "std::vector<std::shared_ptr<Device>> Theatre::device_vector", device_vector[i]->getUID()))
             device_vector.erase(device_vector.begin() + i);
             return;
         }

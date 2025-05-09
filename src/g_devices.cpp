@@ -1,9 +1,11 @@
 #include "g_devices.hpp"
+#include "graphx_namespace.hpp"
+#include "t_settings.hpp"
+#include "g_theatre.hpp"
 #include "Jolt/Physics/Collision/Shape/BoxShape.h"
 #include "Jolt/Physics/Collision/Shape/CapsuleShape.h"
 #include "Jolt/Physics/Collision/Shape/CylinderShape.h"
 #include "Jolt/Physics/Collision/Shape/SphereShape.h"
-#include "t_settings.hpp"
 #include <gmath.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/component_wise.hpp>
@@ -101,16 +103,22 @@ void Texture::loadSettings()
 //
 // Material
 //
-Material::Material(bool is_fullbright, glm::vec3 init_color)
+Material::Material(const bool use_missing)
+: Device("Missing Material"), specular_strength(0.0f)
+{
+	if(use_missing)
+	{
+		mat_fullbright = true;
+		diffuse_texture_name = MISSING_TEXTURE;
+	}
+}
+
+Material::Material(glm::vec3 init_color, bool is_fullbright)
 : Device("Untitled Material"), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
-Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: Device("Untitled Material"), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
-{}
-
-Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: Device("Untitled Material"), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+Material::Material(std::string init_name, std::string init_diffuse_texture_name, const bool is_fullbright, glm::vec3 init_color, std::string init_specular_texture_name, float init_specular_strength, int init_specular_sharpness)
+: Device(init_name), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 void Material::loadSettings()
@@ -125,11 +133,8 @@ void Material::loadSettings()
 	settings.getNumber("SpecularStrength", specular_strength);
 	settings.getBoolean("mat_fullbright", mat_fullbright);
 
-	if(mat_fullbright && diffuse_texture_name == MISSING_TEXTURE)
-		diffuse_texture_name = NO_TEXTURE;
-
 	if(specular_texture_name == NO_TEXTURE)
-		specular_strength = 0.0f;
+		specular_strength = 0.0f; // Probably unnecessary
 }
 
 //
@@ -143,10 +148,19 @@ void Model::loadSettings()
 {
 	configureBaseVariables(this);
 
-	settings.getActorUID("Material", material_uid);
-	settings.getActorUID("MaterialUID", material_uid);
+	settings.getDeviceUID("Material", material_uid);
+	settings.getDeviceUID("MaterialUID", material_uid);
 	settings.getResource("Mesh", mesh_data_name);
 	settings.getResource("MeshData", mesh_data_name);
+}
+
+std::shared_ptr<Material> Model::getMaterial(const bool is_debug_light_material) const
+{
+	if(is_debug_light_material)
+		return std::make_shared<Material>("Light Debug Material", LIGHT_DEBUGGING, true);
+	if(material_uid < 0)
+		return std::make_shared<Material>();
+	return graphx::current::theatre.getDevice<Material>(material_uid);
 }
 
 //
@@ -157,10 +171,8 @@ void Sprite::loadSettings()
 	configureBaseVariables(this);
 
 	// Todo: expand configureBaseVariables to include other types (like Model)
-	settings.getActorUID("Material", material_uid);
-	settings.getActorUID("MaterialUID", material_uid);
-	settings.getResource("Mesh", mesh_data_name);
-	settings.getResource("MeshData", mesh_data_name);
+	settings.getDeviceUID("Material", material_uid);
+	settings.getDeviceUID("MaterialUID", material_uid);
 
 	mesh_data_name = GRAPHX_QUAD; // Override
 }

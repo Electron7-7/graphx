@@ -26,6 +26,7 @@ public:
 
 	GraphXConsole();
 
+	void toggleCursor(GLFWwindow* window);
 	void updateFrame(GLFWwindow* window);
 	void showActorEditor(std::shared_ptr<Actor>, int = -1);
 	void displayTheatrePrintout();
@@ -46,5 +47,7 @@ private:
 
 extern bool show_imgui_window;
 
-void toggleCursor(GLFWwindow *window, bool show_cursor);
+// Todo: get these out of here
+extern double cursor_last_x;
+extern double cursor_last_y;
 #endif

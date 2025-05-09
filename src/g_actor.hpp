@@ -3,9 +3,6 @@
 #include "graphx_namespace.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
-#include <glm/vec3.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
 #include <glfw_fwd.hpp>
 #include <mutex>
 #include <vector>
@@ -19,6 +16,8 @@ struct Theatre;
 class Actor
 {
 public: // Externally accessible members
+	void debug_GetSettingsPrintout() const;
+
 	std::string name = "Untitled Actor";
 	bool debug_highlight_enabled = false;
 
@@ -76,7 +75,6 @@ public: // Externally accessible members
 	glm::quat getLocalQuaternion() const;
 	glm::vec3 getLocalEulerAngles(const bool AsDegrees = false) const;
 	glm::vec3 getLocalScale() const;
-
 
 	virtual void tick(const int current_tick);
 	virtual void loadSettings();

@@ -24,11 +24,11 @@ class GraphXTheatreInterpreter;
 // Actor or Device pointers won't (directly) crash the engine, but will print a warning if it returns a nullptr.
 
 // Error message macros
-#define THEATRE_ERR_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + std::to_string(uid) +  " already exists!"
-#define THEATRE_ERR_INVALID_UID(function, type, uid) std::string(function) + " - no " + std::string(type) + " with the UID " + std::to_string(uid) + " was found! Returning empty " + std::string(type)
-#define THEATRE_ERR_INVALID_NAME(function, type, name) std::string(function) + " - no " + std::string(type) + " with the Name " + std::string(name) + " was found! Returning empty " + std::string(type)
-#define THEATRE_ERR_PARALLEL_DESYNC(function, type) std::string(function) + " - a desync between the " << std::string(type) << " map and vector has been detected! To maintain synchronization, both the map and the vector will be compared to locate and remove the extra " << std::string(type)
-#define THEATRE_ERR_DESYNC_DETECTION(type, location, uid) "Extraneous " << std::string(type) << " detected in " << std::string(location) << " with UID: " << std::to_string(uid) << " will be deleted"
+#define THEATRE_WARN_DUPLICATE_UID(function, type, uid) std::string(function) + " - " + std::string(type) + " with the UID " + std::to_string(uid) +  " already exists!"
+#define THEATRE_WARN_INVALID_UID(function, type, uid) std::string(function) + " - no " + std::string(type) + " with the UID " + std::to_string(uid) + " was found! Returning empty " + std::string(type)
+#define THEATRE_WARN_INVALID_NAME(function, type, name) std::string(function) + " - no " + std::string(type) + " with the Name " + std::string(name) + " was found! Returning empty " + std::string(type)
+#define THEATRE_WARN_PARALLEL_DESYNC(function, type) std::string(function) + " - a desync between the " << std::string(type) << " map and vector has been detected! To maintain synchronization, both the map and the vector will be compared to locate and remove the extra " << std::string(type)
+#define THEATRE_WARN_DESYNC_DETECTION(type, location, uid) "Extraneous " << std::string(type) << " detected in " << std::string(location) << " with UID: " << std::to_string(uid) << " will be deleted"
 
 struct LightsCount
 {
@@ -72,8 +72,14 @@ struct Theatre
     {
         if(actor_map.contains(UniqueID))
             return std::dynamic_pointer_cast<T>(actor_map.at(UniqueID));
-
-        PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getActor", "Actor", UniqueID))
+        if(UniqueID == -1)
+        {
+            // Because -1 as a UID usually means "use the default actor", this printout would be fucking annoying
+            // so only uncomment it for debugging purposes
+            PRINTDEBUG(THEATRE_WARN_INVALID_UID("Theatre::getActor", "Actor", UniqueID))
+        }
+        else
+           PRINTERR(THEATRE_WARN_INVALID_UID("Theatre::getActor", "Actor", UniqueID))
         return std::make_shared<T>("Safety Actor");
     }
 
@@ -82,7 +88,14 @@ struct Theatre
         if(device_map.contains(UniqueID))
             return std::dynamic_pointer_cast<T>(device_map.at(UniqueID));
 
-        PRINTERR(THEATRE_ERR_INVALID_UID("Theatre::getDevice", "Device", UniqueID))
+        if(UniqueID == -1)
+        {
+            // Because -1 as a UID usually means "use the default device", this printout would be fucking annoying
+            // so only uncomment it for debugging purposes
+            PRINTDEBUG(THEATRE_WARN_INVALID_UID("Theatre::getDevice", "Device", UniqueID))
+        }
+        else
+            PRINTWARN(THEATRE_WARN_INVALID_UID("Theatre::getDevice", "Device", UniqueID))
         return std::make_shared<T>("Safety Device");
     }
 
@@ -93,7 +106,7 @@ struct Theatre
             if(!actor_vector.at(i)->name.compare(Name))
                 return std::dynamic_pointer_cast<T>(actor_vector.at(i));
 
-        PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getActor", "Actor", Name))
+        PRINTERR(THEATRE_WARN_INVALID_NAME("Theatre::getActor", "Actor", Name))
         return std::make_shared<T>("Safety Actor");
     }
 
@@ -103,7 +116,7 @@ struct Theatre
             if(!device_vector.at(i)->name.compare(Name))
                 return std::dynamic_pointer_cast<T>(device_vector.at(i));
 
-        PRINTERR(THEATRE_ERR_INVALID_NAME("Theatre::getDevice", "Device", Name))
+        PRINTERR(THEATRE_WARN_INVALID_NAME("Theatre::getDevice", "Device", Name))
         return std::make_shared<T>("Safety Device");
     }
 

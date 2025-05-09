@@ -1,5 +1,4 @@
 #ifndef GRAPHX_RENDERING_COMMON
-#include "g_devices.hpp"
 #include <models.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -49,10 +48,10 @@ public:
     int model_uid = -1;
     RenderState current_render_state = RenderState();
     RenderState previous_render_state = RenderState();
-    glm::vec4 debug_highlight_color = glm::vec4(0.0f);
+    glm::vec4 debug_highlight_color = glm::vec4(1.0f);
     bool is_light_debug_mesh = false;
 
-    RenderCmd(const int ModelUID = -1, const RenderState& CurrentRenderState = RenderState(), const RenderState& PreviousRenderState = RenderState(), const glm::vec4& DebugColor = glm::vec4(1.0f), const bool IsModelLightDebugModel = false);
+    RenderCmd() = default;
 };
 
 struct LightRenderCmd

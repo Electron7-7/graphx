@@ -116,7 +116,6 @@ private:
 class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:
-	Model player_mesh = Model("Untitled Model");
 	Camera player_camera = Camera("Player Camera");
 	int flashlight_uid = -1;
 
@@ -131,6 +130,7 @@ public:
 	JPH::CharacterSettings player_settings;
 
 	using Actor::Actor;
+	~GraphXPlayer() override;
 
 	glm::mat4 getViewMatrix();
 	glm::vec3 getViewPosition();
@@ -158,7 +158,7 @@ public:
 	float pivot_speed = 1.0f;
 	float pivot_theta = 0.0f;
 
-	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
+	Material temporary_pivot_material = Material(glm::vec3(1.0f, 0.0f, 0.0f), true);
 	Model temporary_pivot_mesh;
 	Actor pivot_point = Actor("pivot point");
 

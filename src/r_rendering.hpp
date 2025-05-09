@@ -1,6 +1,5 @@
 #ifndef GRAPHX_RENDERING
 #include "r_common.hpp"
-#include "g_devices.hpp"
 #include "graphx_namespace.hpp"
 #include <images.h>
 #include <models.hpp>
@@ -10,6 +9,10 @@
 #include <string>
 #include <mutex>
 #define GRAPHX_RENDERING
+
+#ifdef COMPILER_FORWARD_DECLARATIONS // Forward Declarations
+struct Texture;
+#endif
 
 #define GLSHADER_TYPE_VERTEX   0
 #define GLSHADER_TYPE_FRAGMENT 1
@@ -65,22 +68,20 @@ struct Mesh
     const std::vector<float> vertices();
     const std::vector<unsigned int> indices();
     // Simple functions to abstract simple math that I always fuck up (I still end up using the wrong function, anyways)
-    size_t vertices_count();
-    size_t vertices_size();
-    size_t indices_count();
-    size_t indices_size();
+    size_t vertices_count() const;
+    size_t vertices_size() const;
+    size_t indices_count() const;
+    size_t indices_size() const;
 };
 
 extern std::array<unsigned int, graphx::rendering::VAOS_AMOUNT> VAOs; // Todo: change to std::vector or move to graphx::rendering (would make the forward declarations nicer)
 extern std::array<GLShader, graphx::rendering::SHADERS_AMOUNT> shaders;
-extern std::map<std::string, Mesh> mesh_data_storage;
+extern std::map<std::string, Mesh> mesh_storage;
 extern std::map<std::string, Texture> texture_storage;
 extern std::map<std::string, Font> font_storage;
 extern bool time_to_render;
 extern bool time_to_store_buffers;
 extern FT_Library freetype;
-extern bool enable_default_shader;
-// Todo: make this better or remove it
 #define USE_DEFAULT       0
 #define USE_FULLBRIGHT    1
 #define USE_NORMALS       2

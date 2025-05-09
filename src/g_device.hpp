@@ -9,6 +9,8 @@ struct Theatre;
 struct Device
 {
 public:
+    void debug_GetSettingsPrintout() const;
+
     std::string name = "Untitled Device";
 
     // The constructor that should be used 99% of the time

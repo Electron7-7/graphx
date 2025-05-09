@@ -5,7 +5,7 @@
 #include "sanity_printouts.hpp"
 #include "graphx_namespace.hpp"
 #include "g_actor.hpp"
-#include "g_device.hpp"
+#include "g_devices.hpp"
 #include "g_theatre.hpp"
 #include "g_imgui.hpp"
 #include "r_rendering.hpp"
@@ -22,6 +22,9 @@
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <thread>
 #include <mutex>
+
+// Todo: get rid of this?
+GraphXConsole* graphx_debug_console_pointer;
 
 std::mutex actor_state_mutex;
 
@@ -72,10 +75,9 @@ int main()
 	glfwSetCursorPosCallback(main_window, mouseCallback);
 	glfwSetFramebufferSizeCallback(main_window, frameBufferSizeCallback);
 	glfwSetKeyCallback(main_window, keyCallback);
-	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	glDebugMessageCallback(openGLDebugMessageCallback, nullptr);
+	// glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	// glDebugMessageCallback(openGLDebugMessageCallback, nullptr);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
 	PRINTDEBUG("GL_VERSION: " << glGetString(GL_VERSION))
@@ -98,6 +100,7 @@ int main()
 	// ImGui Setup
 	//------------
 	GraphXConsole graphx_debug_console;
+	graphx_debug_console_pointer = &graphx_debug_console;
 
 	graphx_debug_console.active = (glfwGetInputMode(main_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL);
 
@@ -127,17 +130,13 @@ int main()
 
 		graphx_debug_console.updateFrame(main_window);
 
+		// Todo: move this into g_imgui and make it less bad (i.e: not every frame)
 		if(graphx_debug_console.justClosed())
-			toggleCursor(main_window, false);
+			graphx_debug_console.toggleCursor(main_window);
 
-		if(time_to_store_buffers)
-			R_BufferMeshesAndTextures();
-
-		if(time_to_render)
-		{
-			float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
-			R_Render(actor_state_mutex, interpolation_time);
-		}
+		// Todo: find a way to move interpolation_time into R_Render (or at least out of the main loop)
+		float interpolation_time = ((glfwGetTime() - last_tick_timestamp) / TICKLENGTH);
+		R_Render(actor_state_mutex, interpolation_time);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -347,11 +346,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	if(key == GLFW_KEY_ENTER && action == GLFW_PRESS)
-	{
-		enable_default_shader = !enable_default_shader;
-	}
-
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
 	{
 		if(graphx::state::loading_new_main_theatre)
@@ -404,10 +398,17 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			if(std::shared_ptr<Collider> collider = dynamic_pointer_cast<Collider>(device)) collider->reset_to_default_transformation_for_testing();
 	}
 
-	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))
+	if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
 	{
-		toggleCursor(window, true);
+		graphx_debug_console_pointer->toggleCursor(window);
 	}
+	/*if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
+	{
+		if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}*/
 
 	if(key == GLFW_KEY_J && action == GLFW_PRESS)
 	{
@@ -417,24 +418,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		else
 			PRINTDEBUG("Jolt assert printouts disabled")
 	}
-}
-
-//----------------------------
-// Cursor/ImGui Focus Toggling
-//----------------------------
-void toggleCursor(GLFWwindow *window, bool show_cursor)
-{
-	if(!show_cursor)
-	{
-		PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		glfwSetCursorPos(window, cursor_last_x, cursor_last_y);
-		return;
-	}
-
-	PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
-	glfwGetCursorPos(window, &cursor_last_x, &cursor_last_y);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 //----------------------------------

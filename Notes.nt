@@ -2576,3 +2576,64 @@ Today I am going to plan, prototype, and hopefully begin implementing a total re
 Prototype finished. It works like a charm.
 
 I wanna make one last major change to gSettings: no more over-engineered abstracted functions and shit; just pure data.
+
+[05/08/25]
+Okay, I'm focused now. I know deep down that a full and total rewrite of the engine is the best thing to do in terms of improving it, but the worst thing to do in terms of my sanity and moving this project forwards. I want to get the next update out so I can move on to the other engine idea. I'm almost there, I just need to get it running like it used to again and then I can wrap up all the little loose ends. I'm starting with checking that my replacement of pointers with UIDs (e.g: an Actor's mesh) is working.
+
+Man, all these header files are giving me headaches. Specifically knowing where and when certain ones get included first. I think I'm going to make a small .cpp file that just includes every header file and make that the first file that gets compiled. That way, if I make changes to any header files, I know which .cpp file to recompile!
+
+For later: try this example from DeepSeek:
+----- BEGIN DEEPSEEK OUTPUT -----
+CXX := g++
+CXXFLAGS := -MMD -MP -std=c++17 -Wall
+
+SRC := $(wildcard *.cpp)
+OBJ := $(SRC:.cpp=.o)
+DEP := $(OBJ:.o=.d)
+
+EXEC := my_program
+
+.PHONY: all clean
+
+all: $(EXEC)
+
+$(EXEC): main.o $(OBJ)
+    $(CXX) $(CXXFLAGS) $^ -o $@
+
+%.o: %.cpp
+    $(CXX) $(CXXFLAGS) -c $< -o $@
+
+-include $(DEP)
+
+clean:
+    rm -f $(OBJ) $(DEP) $(EXEC)
+----- END DEEPSEEK OUTPUT -----
+
+[05/09/25]
+I need to think about how the engine currently works, step by step, and then how I want it to work, step by step, and execute that idea.
+
+I've already talked out some of this by myself, specifically RenderCmd and the rendering function. I want the rendering function to be a top-to-bottom function with as few branches/conditionals as possible. This requires a choice between two main directions that RenderCmds can take; I've made the choice that RenderCmds will do their own simple check for "validity" and if they aren't valid (e.g: nullptrs, malformed data, empty data, etc), they will simply not be added to the list. The rendering function will have at least one conditional at the top that does a more anal check on each RenderCmd and if it finds any invalid data, it will correct it or fill it in with a usable default value.
+
+I currently store Mesh and Texture data separately from all Devices, and I think that I need to further differentiate resources from Devices.
+
+I also want to go through the interpreter and look at specifically Theatre/Sandwich references.
+
+I'm going to start by digging into Model (previously called "Mesh") and how it interacts with Mesh (previously called "MeshData").
+
+Hmm, actually I'm going to start with specifically Model and how it stores/interacts with its Material and Mesh (currently a UID). The main reason I want to use UIDs is to avoid nullptrs (and including those big header files everywhere). I think that a good solution to this problem while also avoiding the annoyance of using Theatre::getDevice every single time I want to access a Model's Material would be to give Model a function for interacting with its Material. That way it could also return a default "missing" Material if its UID is -1. As a note about that, UIDs need a default value for when they are unassigned. I was considering using -1 and then ultimately storing them as unsigned ints so that way I would know a value of -1 could never be a valid value, but that's kinda nasty and I don't like mixing those types (especially with the different max values) so I'm instead going to use integers and make sure UIDs are only ever positive numbers. That way, any negative number can be treated as "undefined".
+
+Okay, I added that function to Model and it'll return a default empty Material if the UID is negative.
+
+As a note: Materials shouldn't really bother with missing textures and their default should just be no textures. The missing texture should be what Texture defaults to if it's not valid/existant (which, yes, would be Material's job to return but ykwim).
+
+I'm going to move to RenderCmd next, and implement the simple and complex "validation".
+
+The simple validation check is already there: if the model UID is less than 0, the RenderCmd isn't buffered. Simple as. The more complex check will be made by the rendering function before it starts processing the RenderCmd and will fill in any missing holes before running through the function with (hopefully) no conditionals (or at most 1 check if its a debug light mesh).
+
+I actually found out that I (currently) don't need to validate the RenderCmds, since as long as the model_uid is valid (which the previous validation check made sure of) the rest of the data can be safely assumed to exist.
+
+I'm going to remove the conditional for when a RenderCmd is a debug light mesh and give that funcionality to Model::getMaterial().
+
+Okay, it compiles and runs; still glitching and bugging out the same as before, but my changes work and have made rendering a bit more solid. Now, time to actually go step by step from the process of loading a Theatre to rendering things to the screen. Hoo boy.
+
+I think I'm going to just go back to the last working commit, and try all of this shit over again. Yippeeeeeeeeee.

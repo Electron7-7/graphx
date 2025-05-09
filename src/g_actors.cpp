@@ -1,5 +1,6 @@
 #include "g_actors.hpp"
 #include "g_theatre.hpp"
+#include "sanity.hpp"
 #include "t_settings.hpp"
 #include "sanity_printouts.hpp"
 #include <gmath.hpp>
@@ -93,6 +94,11 @@ void Camera::loadSettings()
 //
 // GraphXPlayer
 //
+GraphXPlayer::~GraphXPlayer()
+{
+	// Todo: collect garbage and shit
+}
+
 void GraphXPlayer::loadSettings()
 {
 	configureBaseVariables(this);
@@ -123,7 +129,7 @@ void GraphXPlayer::loadSettings()
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
 }
 
-void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double y_position_in)
+void GraphXPlayer::processMouse(GLFWwindow* window, double x_position_in, double y_position_in)
 {
 	glm::vec2 mouse_position(static_cast<float>(x_position_in), static_cast<float>(y_position_in));
 	glm::vec2 mouse_offset = mouse_position - mouse_last;

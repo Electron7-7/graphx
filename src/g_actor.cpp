@@ -7,6 +7,15 @@
 
 using namespace graphx;
 
+// DEBUG
+void Actor::debug_GetSettingsPrintout() const
+{
+	PRINT("Actor \"" << name << "\" Settings:")
+	for(auto pair : settings.debug_all_settings_printout)
+		PRINT("Setting Name: " << pair.first << " | Setting Value Representation: " << pair.second)
+}
+
+
 //------
 // Actor
 //------

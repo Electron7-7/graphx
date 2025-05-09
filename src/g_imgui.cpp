@@ -4,6 +4,7 @@
 #include "g_theatre.hpp"
 #include "graphx_namespace.hpp"
 #include "imgui_stdlib.h"
+#include "sanity.hpp"
 #include "sanity_printouts.hpp"
 #include <models.hpp>
 
@@ -25,6 +26,21 @@ bool GraphXConsole::justClosed()
 	}
 
 	return false;
+}
+
+void GraphXConsole::toggleCursor(GLFWwindow* window)
+{
+	if(active)
+	{
+		PRINTDEBUG("Cursor Mode: Disabled (hidden + locked at center)")
+		glfwSetCursorPos(window, cursor_last_x, cursor_last_y);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		return;
+	}
+
+	PRINTDEBUG("Cursor Mode: Normal (cursor visible & camera ignoring movement)")
+	glfwGetCursorPos(window, &cursor_last_x, &cursor_last_y);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 void GraphXConsole::updateFrame(GLFWwindow *window)
