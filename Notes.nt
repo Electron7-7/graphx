@@ -2308,3 +2308,335 @@ The plan is to use Dear ImGui for all of this and to keep things as functional a
 Just found out I don't need to create the interface class (at least not now). The debug menu can just include `g_common.hpp` and `r_common.hpp` and be compiled after their respective source files.
 
 Finished up with the bare bones Actor editor; you can change the position, rotation, and scale of any Actor either by selecting one via name/uid, or by opening the "editor" which shows all Actors in the Theatre. Hovering over the settings of an Actor will highlight it and you can reset Actors to default; the button just calls `Actor::youGotACallback()` so I should either reset everything in that function or make a new one (e.g: visible doesn't reset).
+
+[04/23/25]
+I want to keep working on the new update. I'm going to start with the Actor interfacer because, quoting my Milanote notes: "I want to be able to interface with all Actor types without needing to check and re-cast the Actor pointer (to avoid a hard crash). I'm thinking a simple "wrapper" class with various abstract functions that have no undefined behavior".
+
+After lots of testing, I've got a much better understanding of pointer memory allocation. To avoid memory leaks, if I use a raw pointer and `new` at any point, then I need to define a destructor for that class that explicitly deletes that pointer. To avoid having to do any of this, I could also just make a private, static, constant Actor variable that the pointer gets set to if an invalid/null reference is given to the constructor.
+
+Putting this on pause while I dig in and fix all the nasty undefined behaviour I've inadvertantly created in Theatre (and Actor).
+
+[04/24/25]
+Today, I want to hopefully finish the changes I'm making to Theatre and the implementation of `graphx::gUID`.
+
+All right... in order to move forward with what I'm doing, I need to move the uid assignment out of the constructor body and into the initializer list. This means that I need to find out how to make sure that an Actor/Device will always return the correct uid values, even if it's being accessed via base class pointer.
+
+I asked DeepSeek to explain the whole "accessing Base class variables from a Base class pointer to a Derived class" finnickyness, and I got this very helpful and very detailed response:
+
+-------- BEGIN DEEPSEEK OUTPUT --------
+
+In C++, the behavior you're describing occurs due to how **member variables** are initialized and accessed in inheritance hierarchies. Here's a breakdown of the scenarios and why they happen:
+
+---
+
+### **Key Concept: Member Variables Are Not Polymorphic**
+- **Member variables** are **statically bound** (resolved at compile-time based on the pointer/reference type).
+- Unlike virtual functions, accessing a member variable through a `Base*` **always** refers to the `Base` class's variable, even if the object is of a `Derived` type.
+
+---
+
+### **Scenario 1: Correct Behavior (Derived Class Modifies Base Variable)**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base() : uid(0) {} // Base initializes uid to 0
+};
+
+class Derived : public Base {
+public:
+    Derived() {
+        uid = 20; // Modifies Base::uid in the constructor body
+    }
+};
+
+int main() {
+    Derived d;
+    Base* b = &d;
+    std::cout << b->uid; // Output: 20
+}
+```
+#### **Why This Works**:
+- The `Derived` constructor **modifies the `Base::uid`** after the `Base` constructor initializes it to 0.
+- Since `uid` is a member of `Base`, the change is visible through the `Base*`.
+
+---
+
+### **Scenario 2: Incorrect Behavior (Derived Class "Shadows" the Variable)**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base() : uid(0) {}
+};
+
+class Derived : public Base {
+public:
+    int uid; // Shadows Base::uid (same name, different variable)
+    Derived() : uid(20) {} // Initializes Derived::uid, NOT Base::uid
+};
+
+int main() {
+    Derived d;
+    Base* b = &d;
+    std::cout << b->uid; // Output: 0 (Base::uid is unchanged)
+    std::cout << d.uid;  // Output: 20 (Derived::uid)
+}
+```
+#### **Why This Fails**:
+- The `Derived` class declares its own `uid`, **shadowing** the `Base::uid`.
+- The `Base*` still accesses `Base::uid`, which remains 0, while `Derived::uid` is a separate variable.
+
+---
+
+### **Scenario 3: Initialization Order Matters**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base(int id) : uid(id) {} // uid initialized via parameter
+};
+
+class Derived : public Base {
+public:
+    Derived() : Base(20) {} // Correct: Initializes Base::uid to 20
+};
+
+int main() {
+    Derived d;
+    Base* b = &d;
+    std::cout << b->uid; // Output: 20
+}
+```
+#### **Why This Works**:
+- The `Derived` constructor explicitly initializes `Base::uid` via the `Base` constructor's initializer list.
+- The `Base` class has no default constructor, forcing derived classes to initialize `uid`.
+
+---
+
+### **Scenario 4: Base Constructor Overrides Derived Intent**
+#### **Code Example**:
+```cpp
+class Base {
+public:
+    int uid;
+    Base() : uid(0) {} // Base initializes uid to 0
+};
+
+class Derived : public Base {
+public:
+    Derived() {
+        // Base::uid is already initialized to 0 here
+        uid = 20; // Modifies Base::uid to 20
+    }
+};
+
+class AnotherDerived : public Base {
+public:
+    AnotherDerived() : Base() {} // Explicitly calls Base constructor
+    // Base::uid remains 0 (no modification)
+};
+
+int main() {
+    Derived d;
+    Base* b1 = &d;
+    std::cout << b1->uid; // Output: 20
+
+    AnotherDerived ad;
+    Base* b2 = &ad;
+    std::cout << b2->uid; // Output: 0
+}
+```
+#### **Why Behavior Varies**:
+- `Derived` modifies `Base::uid` after initialization (works).
+- `AnotherDerived` does not modify `Base::uid`, so it retains the `Base` constructor’s value.
+
+---
+
+### **Common Pitfalls & Fixes**
+1. **Shadowing Variables**:
+   - **Fix**: Avoid re-declaring the same variable name in derived classes. Use `Base::uid` to access the base member explicitly.
+
+2. **Forgetting to Initialize in Constructor**:
+   - **Fix**: Always initialize `Base` members via the `Base` constructor’s initializer list:
+     ```cpp
+     Derived() : Base(20) { ... }
+     ```
+
+3. **Assuming Variables Are Virtual**:
+   - **Fix**: Use virtual **getter/setter functions** if dynamic behavior is needed:
+     ```cpp
+     class Base {
+     public:
+         virtual int getUid() const { return uid; }
+     protected:
+         int uid;
+     };
+
+     class Derived : public Base {
+     public:
+         int getUid() const override { return 20; }
+     };
+     ```
+
+---
+
+### **Summary**
+- **Accessing `uid` via `Base*` always refers to `Base::uid`** (no polymorphism for variables).
+- **Shadowing** (re-declaring `uid` in `Derived`) creates a separate variable, leading to unexpected results.
+- To ensure consistency:
+  - Initialize `Base` members via the `Base` constructor’s initializer list.
+  - Avoid variable shadowing.
+  - Use virtual functions for polymorphic behavior.
+
+-------- END DEEPSEEK OUTPUT --------
+
+While refactoring Actor, I had the idea to create a function template for automatically getting a derived class pointer from the base Actor pointer, based on that Actor's "type" variable.
+
+But that would be useless, because the only way to safely do anything with that pointer, I'd have to know what type it is already... which kinda defeats the purpose of the function template.
+
+I need to put all the namespace definitions in a source file.
+
+[04/25/25]
+I did a lot of refactoring today; I'm falling prey to "feature creep" but it's more like "refactor creep". As an example: while I was refactoring the Actors and Devices, I ended up randomly deciding to change the Material pointer in Mesh to a graphx::gID. This means that I can't test my code until I've accounted for that. I need to be more focused on smaller changes, even when doing big changes. Basically: DONT DO EVERYTHING AT ONCE!!! Even if I'm doing a big change (like a major refactor/overhaul of a core implementation), don't do anything other than that one change before testing. Anyways, you can check the fuckin' commit for this and see for yourself just how much I've written. I'm very close to finishing, now. Just need to iron out the rest of the Actors and Devices, make sure I plug everything back in, and hope to god I don't get a shit ton of linker errors.
+
+[04/26/25]
+Okay, finishing up my refactoring. I'm keeping some old things for now, like the Material and Collider pointers in Model (previously, Mesh) and Actor respectively. However, I'm laying the groundwork for their replacements.
+
+I've discovered that the gID class... is causing way more issues than its solving. The only issue it really solved was how to get an Actor/Device by its name... which wasn't a reliable operation in the first place.
+
+I'm about to rewrite a lot of gClass as well... here we fucking go.
+
+Why does gClass exist? For the interpreter... to determine if a string represents a valid class type or not... if I need to know whether or not an Actor pointer is actually a Light or Light-derived class, I can use C++ and don't need a special fucking class. gClass doesn't need a numeric id, it doesn't need to be constexpr, it just needs... oh my god... it just needs to be a string and a function pointer and that's it.
+
+DeepSeek helped me learn how to solve this problem, and it's a solution I already knew of...
+
+:::C++
+Base* base_ptr = new Derived3();
+
+// Check if base_ptr points to a Derived3 object
+if (Derived3* derived3_ptr = dynamic_cast<Derived3*>(base_ptr)) {
+    // Success: base_ptr is a Derived3 (or a subclass of Derived3)
+    derived3_ptr->do_code(); // Access Derived3-specific members
+} else {
+    // Handle other cases
+}
+:::
+
+Yeah, it's that fucking simple.
+
+Okay, Actors & Devices should have a unique identifier number, but changing that number should be a Theatre function if I'm going to store them in a map as opposed to a vector (which I do want to).
+
+[04/28/25]
+I've gotten the code compiling and linking, but now I'm running into a weird crash due to "malloc_consolidate(): unaligned fastbin chunk detected". I'm pretty sure that this is a stack overflow, but whatever it is I'll figure it out tomorrow. I'm just happy that it compiles and links.
+
+[04/29/25]
+Today I want to compare this build of GraphX to the previously working build and see if I can't figure out what's up with this thing.
+
+I think I found the problem: Theatre's destructor deletes the same pointer multiple times! OH MY GOD WAIT I DON'T NEED TO DELETE ANY POINTERS BECAUSE THE WRAPPER CAN DO IT FOR ME!
+
+Okay, it's not that simple; it looks like it might actually be Theatre's copy(?) constructor (Theatre::operator=(Theatre const&)).
+
+It's at Actor::loadSettings!!!! I FOUND IT!!
+
+Okay, it wasn't that function, IT'S THE ACTION OF ADDING THE POINTER TO EITHER THE MAP OR VECTOR CAUSES IT TO BE FREED?????
+
+I've decided to replace all raw pointers with smart pointers, and it's proving to be a life-saver. I hate memory management so fucking much. Anyways, I still have some work to do, mostly with the interpreter/settings and I think a few things in the renderer, but I'm actually finally so close to a working build (I hope).
+
+[04/30/25]
+Time to finish what I started.
+
+I think the settings need an overhaul. Hopefully nothing too big...
+
+[05/01/25]
+Instead of function templates, why not just make `getSetting` a function in `gSetting` and make different derived versions of `gSetting` for each category of setting, each with their own overloaded versions of `getSetting` (which would be declared in `gSetting`, so the base `gSetting` class wouldn't be used directly).
+
+I've found a solution!! Make separate gSetting structs for each category, then have gSettings be a struct with maps for the diferent categories and functions for easily interfacing with each category.
+
+At work, finished up gSetting and gSettings, but while cleaning up the interpreter I realized that I needed to (and could easily) fix the overly complicated and messy typedef situation regarding "gStringSetting" and the like by just using a fucking struct.
+
+[05/02/25]
+It works!! It runs!! Now, to fix a crash: when Theatre checks names for getActor/Device by name, it's not getting the right names.
+
+BIG FUCKING THING:::::::
+BECAUSE ALL DERIVED CLASSES CALL `Base::loadSettings()`, ANY SETTINGS THAT THE BASE CLASS USES ON VARIABLES ARE STUCK AT THE BASE CLASS AND NEED TO BE SET/GET VIA A NON-VIRTUAL FUNCTION!!
+Example:
+Because `name` is set by Actor and all derived actors call Actor::loadSettings(), access to `name` has to be done through a non-virtual `getName()` function; that is, unless I want to force each derived actor to be required to set all of their settings manually instead of calling Base::loadSettings().
+
+TODO: fix theatre reference setting getter.
+
+Okay, I'm at work and it seems to work fine, just the only problem is that Actors are returning empty RenderCmds.
+
+[05/03/25]
+Today I am going to plan, prototype, and hopefully begin implementing a total rework of the GraphXTheatre file format and "settings" in GraphX.
+
+Prototype finished. It works like a charm.
+
+I wanna make one last major change to gSettings: no more over-engineered abstracted functions and shit; just pure data.
+
+[05/08/25]
+Okay, I'm focused now. I know deep down that a full and total rewrite of the engine is the best thing to do in terms of improving it, but the worst thing to do in terms of my sanity and moving this project forwards. I want to get the next update out so I can move on to the other engine idea. I'm almost there, I just need to get it running like it used to again and then I can wrap up all the little loose ends. I'm starting with checking that my replacement of pointers with UIDs (e.g: an Actor's mesh) is working.
+
+Man, all these header files are giving me headaches. Specifically knowing where and when certain ones get included first. I think I'm going to make a small .cpp file that just includes every header file and make that the first file that gets compiled. That way, if I make changes to any header files, I know which .cpp file to recompile!
+
+For later: try this example from DeepSeek:
+----- BEGIN DEEPSEEK OUTPUT -----
+CXX := g++
+CXXFLAGS := -MMD -MP -std=c++17 -Wall
+
+SRC := $(wildcard *.cpp)
+OBJ := $(SRC:.cpp=.o)
+DEP := $(OBJ:.o=.d)
+
+EXEC := my_program
+
+.PHONY: all clean
+
+all: $(EXEC)
+
+$(EXEC): main.o $(OBJ)
+    $(CXX) $(CXXFLAGS) $^ -o $@
+
+%.o: %.cpp
+    $(CXX) $(CXXFLAGS) -c $< -o $@
+
+-include $(DEP)
+
+clean:
+    rm -f $(OBJ) $(DEP) $(EXEC)
+----- END DEEPSEEK OUTPUT -----
+
+[05/09/25]
+I need to think about how the engine currently works, step by step, and then how I want it to work, step by step, and execute that idea.
+
+I've already talked out some of this by myself, specifically RenderCmd and the rendering function. I want the rendering function to be a top-to-bottom function with as few branches/conditionals as possible. This requires a choice between two main directions that RenderCmds can take; I've made the choice that RenderCmds will do their own simple check for "validity" and if they aren't valid (e.g: nullptrs, malformed data, empty data, etc), they will simply not be added to the list. The rendering function will have at least one conditional at the top that does a more anal check on each RenderCmd and if it finds any invalid data, it will correct it or fill it in with a usable default value.
+
+I currently store Mesh and Texture data separately from all Devices, and I think that I need to further differentiate resources from Devices.
+
+I also want to go through the interpreter and look at specifically Theatre/Sandwich references.
+
+I'm going to start by digging into Model (previously called "Mesh") and how it interacts with Mesh (previously called "MeshData").
+
+Hmm, actually I'm going to start with specifically Model and how it stores/interacts with its Material and Mesh (currently a UID). The main reason I want to use UIDs is to avoid nullptrs (and including those big header files everywhere). I think that a good solution to this problem while also avoiding the annoyance of using Theatre::getDevice every single time I want to access a Model's Material would be to give Model a function for interacting with its Material. That way it could also return a default "missing" Material if its UID is -1. As a note about that, UIDs need a default value for when they are unassigned. I was considering using -1 and then ultimately storing them as unsigned ints so that way I would know a value of -1 could never be a valid value, but that's kinda nasty and I don't like mixing those types (especially with the different max values) so I'm instead going to use integers and make sure UIDs are only ever positive numbers. That way, any negative number can be treated as "undefined".
+
+Okay, I added that function to Model and it'll return a default empty Material if the UID is negative.
+
+As a note: Materials shouldn't really bother with missing textures and their default should just be no textures. The missing texture should be what Texture defaults to if it's not valid/existant (which, yes, would be Material's job to return but ykwim).
+
+I'm going to move to RenderCmd next, and implement the simple and complex "validation".
+
+The simple validation check is already there: if the model UID is less than 0, the RenderCmd isn't buffered. Simple as. The more complex check will be made by the rendering function before it starts processing the RenderCmd and will fill in any missing holes before running through the function with (hopefully) no conditionals (or at most 1 check if its a debug light mesh).
+
+I actually found out that I (currently) don't need to validate the RenderCmds, since as long as the model_uid is valid (which the previous validation check made sure of) the rest of the data can be safely assumed to exist.
+
+I'm going to remove the conditional for when a RenderCmd is a debug light mesh and give that funcionality to Model::getMaterial().
+
+Okay, it compiles and runs; still glitching and bugging out the same as before, but my changes work and have made rendering a bit more solid. Now, time to actually go step by step from the process of loading a Theatre to rendering things to the screen. Hoo boy.
+
+I think I'm going to just go back to the last working commit, and try all of this shit over again. Yippeeeeeeeeee.
+
+[05/12/25]
+Today I'm going to go back to the last working commit before all the changes I made and I'm going to re-implement all those changes slowly, one by one and I'll be testing them every step of the way so I can make sure I avoid huge changes that break half the engine. This will take a while, but it'll be well worth it and potentially take less time than trying to fix all the random broken pieces of the engine that all broke when I implemented all these changes all at once.
