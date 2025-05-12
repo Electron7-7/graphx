@@ -5,6 +5,7 @@
 #include "r_common_fwd.hpp"
 #include "g_common_fwd.hpp"
 #include <glm/fwd.hpp>
+#include <memory>
 #include <mutex>
 #include <set>
 
@@ -22,7 +23,7 @@ class Actor
 public:
 	bool visible = true;
 
-	Mesh *mesh = nullptr; // replace with std::vector<Mesh *> meshes later(?)
+	Mesh* mesh = nullptr; // replace with std::vector<Mesh *> meshes later(?)
 
 	glm::vec3 scale = glm::vec3(1.0f);
 
@@ -103,8 +104,8 @@ protected:
 
 struct Theatre
 {
-	Mesh *stage_mesh = nullptr;
-	Material *stage_material = nullptr;
+	Mesh* stage_mesh = nullptr;
+	Material* stage_material = nullptr;
 	Actor stage;
 	glm::vec3 stage_scale = glm::vec3(0.0f);
 	glm::vec3 stage_position = glm::vec3(0.0f);
@@ -133,14 +134,14 @@ struct Theatre
 	void dropCurtains();
 	long getUID();
 	void setUID(long new_uid);
-	void delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods);
-	void delegateMouseInput(GLFWwindow *window, double x_position_in, double y_position_in);
-	void troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe);
-	void actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings = empty_settings);
-	void actorLeave(Actor *old_actor);
+	void delegateKeyInput(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void delegateMouseInput(GLFWwindow* window, double x_position_in, double y_position_in);
+	void troupeEnter(std::vector<std::pair<Actor*, long>> new_troupe);
+	void actorEnter(Actor* new_actor, long uid, graphx::gSettings new_settings = empty_settings);
+	void actorLeave(Actor* old_actor);
 	void actorLeave(long uid);
-	void placeDevice(Device *new_device, long uid, graphx::gSettings new_settings = empty_settings);
-	void removeDevice(Device *old_device);
+	void placeDevice(Device* new_device, long uid, graphx::gSettings new_settings = empty_settings);
+	void removeDevice(Device* old_device);
 	void removeDevice(long uid);
 
 	void createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings = empty_settings);
@@ -149,24 +150,26 @@ struct Theatre
 	std::vector<Actor *> getAllActorsOfType(graphx::gClass type_name);
 	std::vector<Device *> getAllDevicesOfType(graphx::gClass type_name);
 
-	Actor *getFirstActorOfType(graphx::gClass type_name);
-	Device *getFirstDeviceOfType(graphx::gClass type_name);
+	Actor* getFirstActorOfType(graphx::gClass type_name);
+	Device* getFirstDeviceOfType(graphx::gClass type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
-	Actor *unsafeGetFirstActorOfType(graphx::gClass type_name);
+	Actor* unsafeGetFirstActorOfType(graphx::gClass type_name);
 	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO DEVICE MATCHING type_name IS FOUND!!
-	Device *unsafeGetFirstDeviceOfType(graphx::gClass type_name);
+	Device* unsafeGetFirstDeviceOfType(graphx::gClass type_name);
 
-	Actor *getActor(long uid);
-	Actor *getActor(std::string actor_name);
-	Device *getDevice(long uid);
-	Device *getDevice(std::string device_name);
+	Actor* getActor(long uid);
+	Actor* getActor(std::string actor_name);
+	Device* getDevice(long uid);
+	Device* getDevice(std::string device_name);
 
 	GraphXPlayer *getPlayer();
 	Environment *getEnvironment();
 
 private:
-	std::unordered_map<long, Actor *> objects = {};
-	std::unordered_map<long, Device *> devices = {};
+	std::unordered_map<long, Actor*> objects = {};
+	std::unordered_map<long, Device*> devices = {};
+	std::map<int, std::shared_ptr<Actor>> actor_map = {};   // NEW CODE
+	std::map<int, std::shared_ptr<Device>> device_map = {}; // NEW CODE
 	long UID = -1;
 	long environment_uid = -1;
 	long player_uid = -1;

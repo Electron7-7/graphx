@@ -1,6 +1,7 @@
 #include "t_common.hpp"
 #include "sanity.hpp"
 #include "graphx_classes_namespace.hpp"
+#include "graphx_interpreter_lookups.hpp"
 #include "g_jolt.hpp"
 #include "g_common.hpp"
 #include "r_common.hpp"
@@ -16,8 +17,8 @@ bool loading_new_main_theatre = true; // Definitely wanna replace this with some
 std::string empty_settings_identifier = "FUCKYOU";
 graphx::gSettings empty_settings = {{empty_settings_identifier, graphx::gSetting(-1, {})}};
 
-/// This map is where valid `CPP_DEFINITION` variable names are stored.
-std::map<std::string, std::any> cpp_definitions =
+// Already in "graphx_interpreter_lookups.hpp"
+/*std::map<std::string, std::any> cpp_definitions =
 {
 	{"DOOM_TEXTURE_DIFF", COMP04_5},
 	{"DOOM_TEXTURE_SPEC", COMP04_5_SPECULAR},
@@ -46,7 +47,7 @@ std::map<std::string, std::any> cpp_definitions =
 	{"SphereShape", graphx::jolt::shapes::SPHERE},
 	{"CapsuleShape", graphx::jolt::shapes::CAPSULE},
 	{"CylinderShape", graphx::jolt::shapes::CYLINDER},
-};
+};*/
 
 graphx::interpreter::gStringSettings theatreParser(std::string theatre_data)
 {
@@ -437,7 +438,7 @@ void interpretTheatreReference(graphx::gSettings &current_object_settings, std::
 	if(variable_name.find(':') != std::string::npos)
 		class_name = variable_name.substr(variable_name.find_last_of(':') + 1);
 
-	if(!graphx::gClass::isValidClass(class_name)) // If true, this is a reference to a variable of the same name in another Actor/Device
+	if(!gClasses::isDefined(class_name)) // If true, this is a reference to a variable of the same name in another Actor/Device
 	{
 		graphx::interpreter::gStringSetting referenced_setting(variable_name, graphx::interpreter::gValue(-1, "EMPTY"));
 
@@ -483,10 +484,12 @@ void interpretTheatreReference(graphx::gSettings &current_object_settings, std::
 	}
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
-	if(graphx::classes::getBaseType(class_name) == graphx::classes::ACTOR)
+	// if(graphx::classes::getBaseType(class_name) == graphx::classes::ACTOR)
+	if(gClasses::isActor(class_name))
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
 
-	else if(graphx::classes::getBaseType(class_name) == graphx::classes::DEVICE)
+	// else if(graphx::classes::getBaseType(class_name) == graphx::classes::DEVICE)
+	else if(gClasses::isDevice(class_name))
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
 
@@ -531,14 +534,16 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 		it++;
 	}
 
-	if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
+	// if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
+	if(gClasses::isActor(sandwich_bun_setting.first))
 	{
 		Actor *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_actor();
 		sandwich_bun->youGotACallBack(sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
-	else if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::DEVICE)
+	// else if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::DEVICE)
+	else if(gClasses::isDevice(sandwich_bun_setting.first))
 	{
 		Device *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_device();
 		sandwich_bun->loadSettings(sandwich_settings);

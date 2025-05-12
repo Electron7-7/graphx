@@ -2640,3 +2640,21 @@ I think I'm going to just go back to the last working commit, and try all of thi
 
 [05/12/25]
 Today I'm going to go back to the last working commit before all the changes I made and I'm going to re-implement all those changes slowly, one by one and I'll be testing them every step of the way so I can make sure I avoid huge changes that break half the engine. This will take a while, but it'll be well worth it and potentially take less time than trying to fix all the random broken pieces of the engine that all broke when I implemented all these changes all at once.
+
+All right, I've set up the branches and I'm ready to start. I want to begin with something small that'll be easy to practice limiting myself from huge sweeping changes. Maybe the replacement of the gUID system or the replacement of the gClass system. That's kinda where everything started last time, lol, so it'll be good practice? I hope so...
+
+Oh, sweet! This build is before I added gUID! That's actually really nice, because I ended up removing it after spending so much time creating it LMFAO! I'll start with replacing/removing gClass, then, and replacing `graphx_classes_namespace.hpp` with `graphx_interpreter_lookups.hpp`.
+
+Oh, shit, I forgot about the biggest change: replacing raw pointers with smart pointers. That shouldn't be too difficult, but it might be the thing I want to do first...
+
+Yeah, it is. I'm going to start replacing raw pointers with smart pointers.
+
+Ack! Everything is so interwoven! If I want to start changing raw pointers to smart pointers I'll need to start using the new Actor/Device creator functions, but if I want to do that, I need to use the new gSettings, but if I want to do that... and so on and so forth. I think I might be able to get away with using the new Actor/Device creator functions without the new gSettings, since there shouldn't be any code that explicitly relies on gSettings being the new struct vs the old unordered_map. Hopefully...
+
+Okay, I think this'll work, actually, but in order for it to work properly I'll need to give Actor and Device their default constructors and then give every Actor & Device their `using Base::Base` constructors. Hopefully this all works; I'll first just implement Theatre updating a map of Actor/Device smart pointers along with the original raw pointer maps and then see if it compiles and runs properly (which it should bc those maps won't actually be doing anything).
+
+Okay, I have the maps working, along with the creator functions (edited to pass nothing to the Actor/Device constructors). Now, I have at least three things I can start changing: gClass, gSettings, or Actor/Device constructors. gSettings and the constructors are gonna be pretty big in terms of changing each Actor/Device, but gClass shouldn't be too bad. I'll start by checking where and how gClass is used.
+
+Okay, Actors and Devices obviously use gClass but only as a variable that they can return via a function. Theatre only uses gClass for creating and getting Actors/Devices, and the interpreter functions only use gClass for sandwiches & theatre references. The rest is the actual declaration/definition of gClass and its helper functions. The real issue here is that gClass is something that is difficult to replace/remove piece by piece, since it performs a very simple and basic function across a lot of code. However, since that function *is* very simple (literally just storing a string and a number) it should, theoretically, be simple to remove gClass; especially since the only real use for it was so the interpreter could determine if a string was a representation of a valid class name or not (i.e: "Light", "Collider", etc). I'll start in the interpreter functions and if I can remove gClass from them and have the engine run properly after, the rest should be a breeze.
+
+Done!!! Fuck yeah!!!

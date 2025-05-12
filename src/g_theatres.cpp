@@ -1,4 +1,5 @@
 #include "graphx_classes_namespace.hpp"
+#include "graphx_interpreter_lookups.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
@@ -180,7 +181,7 @@ void Theatre::dropCurtains()
     objects.clear();
 }
 
-std::vector<Actor *> Theatre::getAllActorsOfType(graphx::gClass type_name)
+std::vector<Actor*> Theatre::getAllActorsOfType(graphx::gClass type_name)
 {
     std::vector<Actor *> found_actors;
 
@@ -191,7 +192,7 @@ std::vector<Actor *> Theatre::getAllActorsOfType(graphx::gClass type_name)
     return found_actors;
 }
 
-std::vector<Device *> Theatre::getAllDevicesOfType(graphx::gClass type_name)
+std::vector<Device*> Theatre::getAllDevicesOfType(graphx::gClass type_name)
 {
     std::vector<Device *> found_devices;
 
@@ -281,7 +282,7 @@ void Theatre::setUID(long new_uid)
     UID = new_uid;
 }
 
-Actor *Theatre::getFirstActorOfType(graphx::gClass type_name)
+Actor* Theatre::getFirstActorOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::ACTOR)
     {
@@ -297,7 +298,7 @@ Actor *Theatre::getFirstActorOfType(graphx::gClass type_name)
     return nullptr;
 }
 
-Device *Theatre::getFirstDeviceOfType(graphx::gClass type_name)
+Device* Theatre::getFirstDeviceOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::DEVICE)
     {
@@ -313,7 +314,7 @@ Device *Theatre::getFirstDeviceOfType(graphx::gClass type_name)
     return nullptr;
 }
 
-Actor *Theatre::unsafeGetFirstActorOfType(graphx::gClass type_name)
+Actor* Theatre::unsafeGetFirstActorOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::ACTOR)
     {
@@ -327,7 +328,7 @@ Actor *Theatre::unsafeGetFirstActorOfType(graphx::gClass type_name)
     return nullptr;
 }
 
-Device *Theatre::unsafeGetFirstDeviceOfType(graphx::gClass type_name)
+Device* Theatre::unsafeGetFirstDeviceOfType(graphx::gClass type_name)
 {
     if(graphx::classes::getBaseType(type_name) != graphx::classes::DEVICE)
     {
@@ -357,11 +358,20 @@ void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings
     objects.at(uid)->youGotACallBack(new_settings);
 
     if(time_to_render)
-    {
         objects.at(uid)->callToStage(this);
-    }
 
     time_to_store_buffers = time_to_render;
+
+    //---------
+    // NEW CODE
+    //---------
+    if(actor_map.contains(uid))
+    {
+        // PRINTERR(...)
+        return;
+    }
+
+    actor_map[uid] = valid_actors.at(actor_type.name)(this, uid, new_settings);
 }
 
 void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings)
@@ -378,6 +388,17 @@ void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettin
     devices[uid] = graphx::gClass::getClassType(device_type).create_new_device();
     devices.at(uid)->setUID(uid);
     devices.at(uid)->loadSettings(new_settings);
+
+    //---------
+    // NEW CODE
+    //---------
+    if(device_map.contains(uid))
+    {
+        // PRINTERR(...)
+        return;
+    }
+
+    device_map[uid] = valid_devices.at(device_type.name)(this, uid, new_settings);
 }
 
 void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
@@ -407,7 +428,7 @@ void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
     time_to_store_buffers = time_to_render;
 }
 
-void Theatre::actorEnter(Actor *new_actor, long uid, graphx::gSettings new_settings)
+void Theatre::actorEnter(Actor* new_actor, long uid, graphx::gSettings new_settings)
 {
     if(objects.contains(uid))
     {
@@ -441,7 +462,7 @@ void Theatre::actorEnter(Actor *new_actor, long uid, graphx::gSettings new_setti
     time_to_store_buffers = time_to_render;
 }
 
-void Theatre::actorLeave(Actor *old_actor)
+void Theatre::actorLeave(Actor* old_actor)
 {
     if(old_actor->getType() == graphx::classes::GRAPHXPLAYER)
         player_uid = -1;
@@ -479,7 +500,7 @@ void Theatre::actorLeave(long uid)
     PRINTERR("Request to remove an Actor with UID " << std::to_string(uid) << " failed!")
 }
 
-void Theatre::placeDevice(Device *new_device, long uid, graphx::gSettings new_settings)
+void Theatre::placeDevice(Device* new_device, long uid, graphx::gSettings new_settings)
 {
     if(devices.contains(uid))
     {
@@ -499,7 +520,7 @@ void Theatre::placeDevice(Device *new_device, long uid, graphx::gSettings new_se
         new_device->initialize();
 }
 
-void Theatre::removeDevice(Device *old_device)
+void Theatre::removeDevice(Device* old_device)
 {
     if(auto it = devices.find(old_device->getUID()) ; it != devices.end())
     {
@@ -535,7 +556,7 @@ void Theatre::removeDevice(long uid)
     PRINTERR("Request to remove a Device with UID " << std::to_string(uid) << " failed!")
 }
 
-Actor *Theatre::getActor(long actor_uid)
+Actor* Theatre::getActor(long actor_uid)
 {
     if(objects.contains(actor_uid))
         return objects.at(actor_uid);
@@ -544,7 +565,7 @@ Actor *Theatre::getActor(long actor_uid)
     return nullptr;
 }
 
-Actor *Theatre::getActor(std::string actor_name)
+Actor* Theatre::getActor(std::string actor_name)
 {
     for(auto &pair : objects)
     {
@@ -556,7 +577,7 @@ Actor *Theatre::getActor(std::string actor_name)
     return nullptr;
 }
 
-Device *Theatre::getDevice(long device_uid)
+Device* Theatre::getDevice(long device_uid)
 {
     if(devices.contains(device_uid))
         return devices.at(device_uid);
@@ -565,7 +586,7 @@ Device *Theatre::getDevice(long device_uid)
     return nullptr;
 }
 
-Device *Theatre::getDevice(std::string device_name)
+Device* Theatre::getDevice(std::string device_name)
 {
     for(auto &pair : devices)
         if(!pair.second->getName().compare(device_name))
@@ -575,7 +596,7 @@ Device *Theatre::getDevice(std::string device_name)
     return nullptr;
 }
 
-GraphXPlayer *Theatre::getPlayer()
+GraphXPlayer* Theatre::getPlayer()
 {
     if(player_uid == -1)
     {
@@ -595,7 +616,7 @@ GraphXPlayer *Theatre::getPlayer()
     return nullptr;
 }
 
-Environment *Theatre::getEnvironment()
+Environment* Theatre::getEnvironment()
 {
     if(environment_uid == -1)
     {
