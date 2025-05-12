@@ -1,6 +1,5 @@
 #include "t_common.hpp"
 #include "sanity.hpp"
-#include "graphx_classes_namespace.hpp"
 #include "graphx_interpreter_lookups.hpp"
 #include "g_jolt.hpp"
 #include "g_common.hpp"
@@ -16,38 +15,6 @@
 bool loading_new_main_theatre = true; // Definitely wanna replace this with something a little more sophisticated.
 std::string empty_settings_identifier = "FUCKYOU";
 graphx::gSettings empty_settings = {{empty_settings_identifier, graphx::gSetting(-1, {})}};
-
-// Already in "graphx_interpreter_lookups.hpp"
-/*std::map<std::string, std::any> cpp_definitions =
-{
-	{"DOOM_TEXTURE_DIFF", COMP04_5},
-	{"DOOM_TEXTURE_SPEC", COMP04_5_SPECULAR},
-	{"MISSING_TEXTURE_DIFF", MISSING_TEXTURE},
-	{"NO_TEXTURE", NO_TEXTURE},
-	{"FLAT_SPEC", FLAT_SPEC},
-	{"SOURCE_ORANGE", SOURCE_ORANGE},
-	{"SOURCE_LIGHT_GREY", SOURCE_LIGHT_GREY},
-	{"LIGHT_DEBUGGING", LIGHT_DEBUGGING},
-	{"DEBUG", debug_checkers},
-	{"GRAPHX_CUBE", GRAPHX_CUBE},
-	{"GRAPHX_PYRAMID", GRAPHX_PYRAMID},
-	{"GRAPHX_QUAD", GRAPHX_QUAD},
-	{"OBJ_ERROR", ERROR_MODEL},
-	{"OBJ_SUZANNE", suzanne_MODEL},
-	{"Ramiel", ramiel_MODEL},
-	{"notapenis", purely_for_testing_MODEL},
-	{"Dynamic", JPH::EMotionType::Dynamic},
-	{"Static", JPH::EMotionType::Static},
-	{"Kinematic", JPH::EMotionType::Kinematic},
-	{"Moving", Layers::MOVING},
-	{"NonMoving", Layers::NON_MOVING},
-	{"Activate", JPH::EActivation::Activate},
-	{"DontActivate", JPH::EActivation::DontActivate},
-	{"BoxShape", graphx::jolt::shapes::BOX},
-	{"SphereShape", graphx::jolt::shapes::SPHERE},
-	{"CapsuleShape", graphx::jolt::shapes::CAPSULE},
-	{"CylinderShape", graphx::jolt::shapes::CYLINDER},
-};*/
 
 graphx::interpreter::gStringSettings theatreParser(std::string theatre_data)
 {
@@ -484,11 +451,9 @@ void interpretTheatreReference(graphx::gSettings &current_object_settings, std::
 	}
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
-	// if(graphx::classes::getBaseType(class_name) == graphx::classes::ACTOR)
 	if(gClasses::isActor(class_name))
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getActor(theatre_reference));
 
-	// else if(graphx::classes::getBaseType(class_name) == graphx::classes::DEVICE)
 	else if(gClasses::isDevice(class_name))
 		current_object_settings[variable_name] = graphx::gSetting(THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
@@ -498,7 +463,7 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 	graphx::gSettings sandwich_settings;
 	graphx::interpreter::gStringSetting sandwich_bun_setting = theatre_settings[i][it];
 
-	if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
+	if(gClasses::isActor(sandwich_bun_setting.first))
 		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->settings;
 	else
 		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->settings;
@@ -534,7 +499,6 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 		it++;
 	}
 
-	// if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::ACTOR)
 	if(gClasses::isActor(sandwich_bun_setting.first))
 	{
 		Actor *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_actor();
@@ -542,7 +506,6 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
-	// else if(graphx::classes::getBaseType(sandwich_bun_setting.first) == graphx::classes::DEVICE)
 	else if(gClasses::isDevice(sandwich_bun_setting.first))
 	{
 		Device *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_device();
@@ -598,7 +561,7 @@ Theatre loadTheatre(long theatre_uid)
 			}
 		}
 
-		if(graphx::classes::getBaseType(theatre_settings[i][0].first) == graphx::classes::ACTOR)
+		if(gClasses::isActor(theatre_settings.at(i).at(0).first))
 		{
 			new_theatre.createActor(theatre_settings[i][0].first, i, current_object_settings);
 			continue;

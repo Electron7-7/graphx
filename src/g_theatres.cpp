@@ -371,7 +371,7 @@ void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings
         return;
     }
 
-    actor_map[uid] = valid_actors.at(actor_type.name)(this, uid, new_settings);
+    // actor_map[uid] = valid_actors.at(actor_type.name)(this, uid, new_settings);
 }
 
 void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings)
@@ -398,7 +398,7 @@ void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettin
         return;
     }
 
-    device_map[uid] = valid_devices.at(device_type.name)(this, uid, new_settings);
+    // device_map[uid] = valid_devices.at(device_type.name)(this, uid, new_settings);
 }
 
 void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
