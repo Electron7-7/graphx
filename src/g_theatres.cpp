@@ -1,4 +1,3 @@
-#include "graphx_classes_namespace.hpp"
 #include "graphx_interpreter_lookups.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
@@ -60,8 +59,8 @@ std::set<std::string> Theatre::getMeshDataNames()
     std::set<std::string> mesh_data_names = {ERROR_MODEL};
 
     for(auto &device_pair : devices)
-        if(device_pair.second->getType() == graphx::classes::MESH)
-            mesh_data_names.insert(static_cast<Mesh *>(device_pair.second)->mesh_data_name);
+        if(dynamic_cast<Mesh*>(device_pair.second))
+            mesh_data_names.insert(dynamic_cast<Mesh*>(device_pair.second)->mesh_data_name);
 
     return mesh_data_names;
 }
@@ -72,10 +71,10 @@ std::set<std::string> Theatre::getTextureNames()
 
     for(auto &device_pair : devices)
     {
-        if(device_pair.second->getType() == graphx::classes::MATERIAL)
+        if(dynamic_cast<Material*>(device_pair.second))
         {
-            texture_names.insert(static_cast<Material *>(device_pair.second)->diffuse_texture_name);
-            texture_names.insert(static_cast<Material *>(device_pair.second)->specular_texture_name);
+            texture_names.insert(dynamic_cast<Material*>(device_pair.second)->diffuse_texture_name);
+            texture_names.insert(dynamic_cast<Material*>(device_pair.second)->specular_texture_name);
         }
     }
 
@@ -97,20 +96,14 @@ void Theatre::probeActorsForRenderCommands()
         if(loading_new_main_theatre)
             return;
 
-        if(graphx::classes::isLight(*pair.second->getType()))
+        if(dynamic_cast<Light*>(pair.second))
         {
-            switch(*static_cast<Light*>(pair.second)->getLightType())
-            {
-            case graphx::classes::LIGHT:
-                point_lights_count++;
-                break;
-            case graphx::classes::LIGHTSPOT:
+            if(dynamic_cast<LightSpot*>(pair.second))
                 spot_lights_count++;
-                break;
-            case graphx::classes::LIGHTDIRECTIONAL:
+            else if(dynamic_cast<LightDirectional*>(pair.second))
                 directional_lights_count++;
-                break;
-            }
+            else
+                point_lights_count++;
         }
 
         R_BufferRenderCommands(pair.second->getRenderCommands());
@@ -124,16 +117,16 @@ void Theatre::raiseCurtains()
 
     for(auto &pair : devices)
     {
-        if(pair.second->getType() == graphx::classes::ENVIRONMENT)
+        if(dynamic_cast<Environment*>(pair.second))
             environment_uid = pair.first;
         pair.second->initialize();
     }
 
     for(auto &pair : objects)
     {
-        if(pair.second->getType() == graphx::classes::GRAPHXPLAYER)
+        if(dynamic_cast<GraphXPlayer*>(pair.second))
             player_uid = pair.first;
-        else if(pair.second->getType() == graphx::classes::LIGHTDIRECTIONAL)
+        else if(dynamic_cast<LightDirectional*>(pair.second))
             has_directional_light = true;
         pair.second->callToStage(this);
         
@@ -142,7 +135,7 @@ void Theatre::raiseCurtains()
     if(!has_directional_light)
     {
         PRINTERR("Theatre \"" << name << "\" doesn't have a directional light, which is pretty much a representation of the sun! I'm gonna assume you did this on purpose, so in order for the lighting to render \"properly\", I'm adding a LightDirectional light to this Theatre but making its light output pitch black.")
-        createActor(graphx::classes::LIGHTDIRECTIONAL, 55252525);
+        createActor("LightDirectional", 55252525);
         objects.at(55252525)->setName("THE FUCKING SUN HAS GONE OUT!!!!!");
         static_cast<LightDirectional *>(objects.at(55252525))->light_color = glm::vec3(0.0f);
         static_cast<LightDirectional *>(objects.at(55252525))->light_energy = 0.0f;
@@ -293,7 +286,7 @@ void Theatre::actorEnter(Actor* new_actor, long uid, graphx::gSettings new_setti
 
     new_actor->setUID(uid);
 
-    if(new_actor->getType() == graphx::classes::GRAPHXPLAYER)
+    if(dynamic_cast<GraphXPlayer*>(new_actor))
         player_uid = uid;
 
     new_actor->youGotACallBack(new_settings);
@@ -359,20 +352,20 @@ GraphXPlayer* Theatre::getPlayer()
 {
     if(player_uid == -1)
     {
-        for(auto &pair : objects)
+        for(auto& pair : objects)
         {
-            if(pair.second->getType() == graphx::classes::GRAPHXPLAYER)
+            if(dynamic_cast<GraphXPlayer*>(pair.second))
             {
                 player_uid = pair.first;
-                return static_cast<GraphXPlayer *>(pair.second);
+                return static_cast<GraphXPlayer*>(pair.second);
             }
         }
     }
 
     if(objects.contains(player_uid))
-        return static_cast<GraphXPlayer *>(objects.at(player_uid));
+        return static_cast<GraphXPlayer*>(objects.at(player_uid));
 
-    return nullptr;
+    return new GraphXPlayer(); // TEMPORARY: AVOIDS CRASHING
 }
 
 Environment* Theatre::getEnvironment()
@@ -381,7 +374,7 @@ Environment* Theatre::getEnvironment()
     {
         for(auto &pair : devices)
         {
-            if(pair.second->getType() == graphx::classes::ENVIRONMENT)
+            if(dynamic_cast<Environment*>(pair.second))
             {
                 environment_uid = pair.first;
                 return static_cast<Environment *>(pair.second);

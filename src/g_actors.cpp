@@ -1,5 +1,4 @@
 #include "g_actors.hpp"
-#include "graphx_classes_namespace.hpp"
 #include <gmath.hpp>
 #include <models.hpp>
 #include <glm/glm.hpp>
@@ -17,7 +16,6 @@ glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : mesh(init_mesh), scale(init_scale), position_global(init_position)
 {
-	my_type = &graphx::classes::ACTOR;
 	name = init_name;
 	quaternion = glm::quat(glm::radians(init_euler_degrees));
 	RenderState render_state = RenderState(init_position, quaternion, init_scale);
@@ -52,14 +50,9 @@ long Actor::getUID() const
 	return UID;
 }
 
-const graphx::gClass* Actor::getType() const
-{
-	return my_type;
-}
-
 void Actor::highlightMe()
 {
-	debug_highlight_color = glm::vec4(my_type->debugging_color, 0.5f);
+	debug_highlight_color = glm::vec4(1.0f, 1.0f, 1.0f, 0.25f);
 }
 
 void Actor::unHighlightMe()
@@ -180,7 +173,7 @@ RenderCommands Actor::getRenderCommands()
 
 	render_commands.render_command.current_render_state = &current_state_buffer[state_index];
 	render_commands.render_command.previous_render_state = &previous_state_buffer[state_index];
-	if(mesh != nullptr && visible && (my_type != graphx::classes::GRAPHXPLAYER))
+	if(mesh != nullptr && visible)
 	{
 		render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
 		render_commands.render_command.mesh_material = *mesh->material;
@@ -194,12 +187,12 @@ RenderCommands Actor::getRenderCommands()
 	// Debug shit!
 	if(graphx::debug::actor_debug_menu_open)
 	{
-		if(my_type != graphx::classes::LABEL && visible) // Labels shouldn't have debug labels imho
+		if(visible)
 		{   // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
 			TextRenderCmd text_command;
 			text_command.font_name = "Verdana";
-			text_command.text = std::string("Name: " + name + "\nType: " + std::string(my_type->name) + "\nUID: " + std::to_string(UID));
-			text_command.color = my_type->debugging_color;
+			text_command.text = std::string("Name: " + name + "\nType: " + std::string(name) + "\nUID: " + std::to_string(UID));
+			text_command.color = glm::vec3(1.0f);
 			text_command.scale = graphx::debug::actor_debug_menu_text_scale;
 			text_command.render_state = &current_state_buffer[state_index];
 			text_command.position_y = -25.0f;
@@ -297,7 +290,6 @@ void Actor::takeABow()
 Label::Label(std::string init_name, Actor *init_parent)
 : Actor(init_name, &label_mesh), parent(init_parent), text_render_command(TextRenderCmd("Verdana", init_name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
 {
-	my_type = &graphx::classes::LABEL;
 }
 
 RenderCommands Label::getRenderCommands()
@@ -356,7 +348,6 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
 {
-	my_type = &graphx::classes::PHYSICSACTOR;
 }
 
 void PhysicsActor::setGlobalPosition(glm::vec3 new_value)
@@ -434,7 +425,6 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 RigidBodyActor::RigidBodyActor()
 : PhysicsActor()
 {
-	my_type = &graphx::classes::RIGIDBODYACTOR;
 }
 
 void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
@@ -445,7 +435,6 @@ void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
-	my_type = &graphx::classes::RIGIDBODYACTOR;
 
 	if(collider == nullptr)
 		return;
@@ -487,7 +476,6 @@ void RigidBodyActor::takeABow()
 StaticBodyActor::StaticBodyActor()
 : PhysicsActor()
 {
-	my_type = &graphx::classes::STATICBODYACTOR;
 }
 
 void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
@@ -498,7 +486,6 @@ void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 void StaticBodyActor::callToStage(Theatre *parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
-	my_type = &graphx::classes::STATICBODYACTOR;
 	if(collider == nullptr)
 		return;
 	collider->prepForDestruction();
@@ -526,7 +513,6 @@ void StaticBodyActor::takeABow()
 //
 Camera::Camera()
 {
-	my_type = &graphx::classes::CAMERA;
 }
 
 void Camera::tick(int current_tick)
@@ -559,7 +545,6 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::vec3 init_rotation_euler)
 : Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f, 2.0f, 1.0f))
 {
-	my_type = &graphx::classes::GRAPHXPLAYER;
 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
 	player_camera.setGlobalRotation(init_position);
 	visible = false;
@@ -687,7 +672,11 @@ void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
 
 glm::mat4 GraphXPlayer::getViewMatrix()
 {
-	return glm::lookAt(player_camera.getPosition<glm::vec3>(), player_camera.getPosition<glm::vec3>() + player_camera.orientation_front, player_camera.orientation_up);
+	glm::vec3 camera_pos = player_camera.getPosition<glm::vec3>();
+	glm::vec3 camera_orientation_front = player_camera.orientation_front;
+	glm::vec3 camera_orientation_up = player_camera.orientation_up;
+
+	return glm::lookAt(camera_pos, camera_pos + camera_orientation_front, camera_orientation_up);
 }
 
 glm::vec3 GraphXPlayer::getViewPosition()
@@ -707,25 +696,8 @@ void GraphXPlayer::takeABow()
 Light::Light(std::string init_name)
 : Actor(init_name)
 {
-	my_type = &graphx::classes::LIGHT;
-	my_light_type = &graphx::classes::LIGHT;
 	debug_visible = true;
 	scale = glm::vec3(0.25f);
-}
-
-const bool Light::isLightType(const graphx::gClass* light_type) const
-{
-	return light_type == my_light_type;
-}
-
-const bool Light::isLightType(const graphx::gClass& light_type) const
-{
-	return light_type == my_light_type;
-}
-
-const graphx::gClass* Light::getLightType() const
-{
-	return my_light_type;
 }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
@@ -753,7 +725,7 @@ RenderCommands Light::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
 
-	render_commands.light_render_command.light_type = my_light_type;
+	render_commands.light_render_command.light_type = LightRenderCmd::POINT_LIGHT;
 	render_commands.light_render_command.light_data.energy = light_energy;
 	render_commands.light_render_command.light_data.ambient_strength = light_ambient_strength;
 	render_commands.light_render_command.light_data.specular_strength = light_specular_strength;
@@ -778,8 +750,6 @@ RenderCommands Light::getRenderCommands()
 LightDirectional::LightDirectional(std::string init_name)
 : Light(init_name)
 {
-	my_type = &graphx::classes::LIGHTDIRECTIONAL;
-	my_light_type = &graphx::classes::LIGHTDIRECTIONAL;
 	debug_visible = false;
 }
 
@@ -800,6 +770,7 @@ RenderCommands LightDirectional::getRenderCommands()
 {
 	RenderCommands render_commands = Light::getRenderCommands();
 
+	render_commands.light_render_command.light_type = LightRenderCmd::DIRECTIONAL_LIGHT;
 	render_commands.light_render_command.light_data.direction = directional_direction;
 
 	return(render_commands);
@@ -811,8 +782,6 @@ RenderCommands LightDirectional::getRenderCommands()
 LightSpot::LightSpot(std::string init_name)
 : Light(init_name)
 {
-	my_type = &graphx::classes::LIGHTSPOT;
-	my_light_type = &graphx::classes::LIGHTSPOT;
 	debug_visible = true;
 	scale = glm::vec3(0.25f);
 }
@@ -830,6 +799,7 @@ RenderCommands LightSpot::getRenderCommands()
 {
 	RenderCommands render_commands = Light::getRenderCommands();
 
+	render_commands.light_render_command.light_type = LightRenderCmd::SPOT_LIGHT;
 	render_commands.light_render_command.light_data.direction = spot_direction;
 	render_commands.light_render_command.light_data.spot_cutoff = glm::cos(glm::radians(spot_angle));
 	render_commands.light_render_command.light_data.spot_cutoff_fade = glm::cos(glm::radians(spot_angle - spot_angle_fade));
@@ -843,8 +813,6 @@ RenderCommands LightSpot::getRenderCommands()
 LightFlashlight::LightFlashlight(std::string init_name)
 : LightSpot(init_name)
 {
-	my_type = &graphx::classes::LIGHTFLASHLIGHT;
-	my_light_type = &graphx::classes::LIGHTSPOT;
 	debug_visible = false;
 	light_ambient_strength = 0.0f;
 	light_range = 120.f;
@@ -919,8 +887,6 @@ void LightFlashlight::setLightColor(bool color_toggle)
 LightTesterMover::LightTesterMover(std::string init_name)
 : Light(init_name)
 {
-	my_type = &graphx::classes::LIGHTTESTERMOVER;
-	my_light_type = &graphx::classes::LIGHT;
 	debug_visible = true;
 }
 

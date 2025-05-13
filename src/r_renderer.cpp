@@ -698,13 +698,13 @@ void R_GL_RenderLights(std::mutex &state_mutex, float interpolation_time)
 		LightRenderCmd render_command = *rendercmd_iterator.base();
 		std::string which_light;
 
-		if(render_command.light_type == graphx::classes::LIGHT)
+		if(render_command.light_type == LightRenderCmd::POINT_LIGHT)
 			which_light = "point_lights[" + std::to_string(point_light_index++) + "].";
 
-		else if(render_command.light_type == graphx::classes::LIGHTDIRECTIONAL)
+		else if(render_command.light_type == LightRenderCmd::DIRECTIONAL_LIGHT)
 			which_light = "directional_lights[" + std::to_string(directional_light_index++) + "].";
 
-		else if(render_command.light_type == graphx::classes::LIGHTSPOT)
+		else if(render_command.light_type == LightRenderCmd::SPOT_LIGHT)
 			which_light = "spot_lights[" + std::to_string(spot_light_index++) + "].";
 
 		shaders[graphx::rendering::SHADER_DEFAULT].setUniform(which_light + "color", render_command.light_data.color);

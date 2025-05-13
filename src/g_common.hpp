@@ -66,7 +66,6 @@ public:
 	std::string getName() const;
 	void setName(const std::string);
 	void setName(const char*);
-	const graphx::gClass* getType() const;
 
 	void highlightMe();
 	void unHighlightMe();
@@ -89,7 +88,6 @@ protected:
 	glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	long UID = -1;
 	std::string name = "Untitled Actor";
-	const graphx::gClass* my_type = nullptr;
 	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
 
 	virtual void updateVectors();

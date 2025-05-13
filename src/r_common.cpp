@@ -1,6 +1,5 @@
 #include "r_common.hpp"
 #include "sanity.hpp"
-#include "graphx_classes_namespace.hpp"
 #include <gmath.hpp>
 #include <glm/gtx/component_wise.hpp>
 
@@ -106,14 +105,7 @@ template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::ma
 // Device
 //
 Device::Device()
-{
-	my_type = &graphx::classes::DEVICE;
-}
-
-const graphx::gClass* Device::getType() const
-{
-	return my_type;
-}
+{}
 
 void Device::setName(std::string new_name)
 {
@@ -166,7 +158,6 @@ long Device::getUID()
 //
 Collider::Collider()
 {
-	my_type = &graphx::classes::COLLIDER;
 	name = "Untitled Collider";
 }
 
@@ -239,7 +230,6 @@ Environment::Environment(float init_ambient_light_amount, glm::vec3 init_ambient
 : ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount)
 {
 	name = "Untitled Environment";
-	my_type = &graphx::classes::ENVIRONMENT;
 }
 
 void Environment::loadSettings(graphx::gSettings new_settings)
@@ -260,13 +250,11 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 //
 Texture::Texture()
 {
-	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 }
 
 Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
 {
-	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_data = init_texture_data;
 	texture_size = init_texture_size;
@@ -274,7 +262,6 @@ Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<uns
 
 Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size)
 {
-	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = init_texture_size;
 	texture_data.clear();
@@ -284,7 +271,6 @@ Texture::Texture(std::vector<const char *> init_texture_data, std::vector<unsign
 
 Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size)
 {
-	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = init_texture_size;
 	texture_data.clear();
@@ -294,7 +280,6 @@ Texture::Texture(std::vector<std::string > init_texture_data, std::vector<unsign
 
 Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_size)
 {
-	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_data = {init_texture_data};
 	texture_size = {init_texture_size};
@@ -302,7 +287,6 @@ Texture::Texture(unsigned char *init_texture_data, unsigned int init_texture_siz
 
 Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
 {
-	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data))};
@@ -310,7 +294,6 @@ Texture::Texture(const char *init_texture_data, unsigned int init_texture_size)
 
 Texture::Texture(std::string init_texture_data, unsigned int init_texture_size)
 {
-	my_type = &graphx::classes::TEXTURE;
 	name = "Untitled Texture";
 	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
@@ -326,7 +309,6 @@ void Texture::loadSettings(graphx::gSettings new_settings)
 //
 Material::Material()
 {
-	my_type = &graphx::classes::MATERIAL;
 	name = "Untitled Material";
 }
 
@@ -559,20 +541,17 @@ size_t MeshData::indices_size()
 //
 Mesh::Mesh()
 {
-	my_type = &graphx::classes::MESH;
 	name = "Untitled Mesh";
 }
 
 Mesh::Mesh(Material *new_material, std::string init_mesh_data_name)
 {
-	my_type = &graphx::classes::MESH;
 	name = "Untitled Mesh";
 	material = new_material;
 }
 
 Mesh::Mesh(std::string init_mesh_data_name)
 {
-	my_type = &graphx::classes::MESH;
 	name = "Untitled Mesh";
 	mesh_data_name = init_mesh_data_name;
 }
@@ -602,7 +581,6 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 Sprite::Sprite(std::string init_name)
 : Mesh(init_name)
 {
-	my_type = &graphx::classes::SPRITE;
 	mesh_data_name = GRAPHX_QUAD;
 	name = init_name;
 }
@@ -642,7 +620,7 @@ Font::Font(std::string init_font_name)
 //
 bool LightRenderCmd::isValid() const
 {
-	return (light_type != graphx::gClass::INVALID_TYPE);
+	return (light_type != LightRenderCmd::EMPTY);
 }
 
 //

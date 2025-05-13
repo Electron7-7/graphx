@@ -164,15 +164,10 @@ public:
 
 	Light(std::string init_name = "UNTITLED_LIGHT");
 
-	const graphx::gClass* getLightType() const;
-	const bool isLightType(const graphx::gClass* light_type) const;
-	const bool isLightType(const graphx::gClass& light_type) const;
-
 	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 
 protected:
-	const graphx::gClass* my_light_type = nullptr;
 	bool debug_visible = false;
 };
 

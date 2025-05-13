@@ -503,14 +503,14 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 
 	if(gClasses::isActor(sandwich_bun_setting.first))
 	{
-		Actor *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_actor();
+		Actor* sandwich_bun = valid_actors.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings);
 		sandwich_bun->youGotACallBack(sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}
 
 	else if(gClasses::isDevice(sandwich_bun_setting.first))
 	{
-		Device *sandwich_bun = graphx::gClass::getClassType(sandwich_bun_setting.first).create_new_device();
+		Device* sandwich_bun = valid_devices.at(sandwich_bun_setting.first)(&new_theatre, -1, sandwich_settings);
 		sandwich_bun->loadSettings(sandwich_settings);
 		current_object_settings[sandwich_bun_setting.first] = graphx::gSetting(SANDWICH, sandwich_bun);
 	}

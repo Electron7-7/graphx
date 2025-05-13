@@ -40,7 +40,6 @@ struct Device
 	const std::string getName() const;
 	void setName(std::string new_name);
 	void setName(char *new_name);
-	const graphx::gClass* getType() const;
 
 	virtual void initialize();
 	virtual void loadSettings(graphx::gSettings new_settings = empty_settings);
@@ -49,7 +48,6 @@ struct Device
 	virtual void setUID(long manual_uid);
 
 protected:
-	const graphx::gClass* my_type = nullptr;
 	long UID = -1; // A UID of -1 means it's not been set yet
 	bool ready_to_destroy = false;
 };
@@ -259,7 +257,13 @@ struct LightRenderCmd
 {
 public:
 	LightData light_data;
-	const graphx::gClass* light_type = &graphx::gClass::INVALID_TYPE;
+	// const graphx::gClass* light_type = &graphx::gClass::INVALID_TYPE;
+	unsigned int light_type = EMPTY;
+
+	static const unsigned int EMPTY             = 0;
+    static const unsigned int POINT_LIGHT       = 1;
+    static const unsigned int SPOT_LIGHT        = 2;
+    static const unsigned int DIRECTIONAL_LIGHT = 3;
 
 	bool isValid() const;
 };

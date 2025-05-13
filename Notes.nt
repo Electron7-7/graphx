@@ -2668,3 +2668,22 @@ Yeah, `Theatre::getAll[Actors/Devices]OfType` isn't even used ONCE LMFAO! I can 
 I got pretty sidetracked, so I was only able to finish getting rid of the "getAll" functions in Theatre.
 
 Ending here with a potential crash when quickly swapping.
+
+[05/13/25]
+Alright, let's finish removing gClass.
+
+Ugh, first gotta fix a crash.
+
+Oh, I think it's because there's no code to make a default player if none exists in the Theatre. I'll add that later, but for now let's focus on getting rid of gClass.
+
+Okay, I've fully removed gClass from g_theatres.cpp; let's test it.
+
+It works! On to the next bit: LightRenderCmd. Yeah, LightRenderCmd uses gClass to store what kind of light it is; this should be an easy fix, though, maybe even a copy-paste.
+
+Yeah, I'm gonna just replace it with the `static unsigned const int` variables that I used.
+
+It works! I've removed gClass from LightRenderCmd! Now for the largest part: removing it from Actors and Devices.
+
+Okay, that was a lot easier than expected. Let's see if it compiles and runs!
+
+After some fixes, I have fully removed gClass and GraphX compiles and runs!
