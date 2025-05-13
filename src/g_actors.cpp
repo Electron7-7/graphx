@@ -584,7 +584,7 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
 
-	player_flashlight = static_cast<LightFlashlight *>(getCurrentTheatre()->unsafeGetFirstActorOfType(graphx::classes::LIGHTFLASHLIGHT));
+	player_flashlight = static_cast<LightFlashlight *>(getCurrentTheatre()->getFlashlight()); // TEMPORARY
 
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);

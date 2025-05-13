@@ -2660,3 +2660,11 @@ Okay, Actors and Devices obviously use gClass but only as a variable that they c
 Done!!! Fuck yeah!!!
 
 I did notice, however, that sometimes Jolt will crash now; my suspicion is that this is from the new maps in Theatre, specifically because I don't call the functions for loading settings and initializing the Actors/Devices, which does Jolt things if certain Actors/Devices use Jolt things. Keep this in mind. Just tested it and yeah, I'm almost 100% confident that's the issue. Again, just something to keep in mind for when I get around to it.
+
+All right, I think that next up should be removing gClass from Theatre now. Honestly, a lot of these uses are just either avoiding overloads or pre-emptive functions (never used or only used once). I can probably just do a big sweeping change here, but I'm going to check first.
+
+Yeah, `Theatre::getAll[Actors/Devices]OfType` isn't even used ONCE LMFAO! I can also remove the "getFirst[Actor/Device]OfType" functions pretty safely/easily, too. The only other use of the function is the player getting the flashlight; I could either remove the flashlight for now or replace the function call with a more direct and temporary "getFlashlight" call. I'll probably do that.
+
+I got pretty sidetracked, so I was only able to finish getting rid of the "getAll" functions in Theatre.
+
+Ending here with a potential crash when quickly swapping.

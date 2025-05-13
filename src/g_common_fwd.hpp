@@ -29,9 +29,9 @@ struct RenderState;
 extern bool loading_new_main_theatre;
 
 // Functions
-template<typename T> T iKnowWhatActorIWant(auto identifier);
-template<typename T> T iKnowWhatDeviceIWant(auto identifier);
+// template<typename T> T iKnowWhatActorIWant(auto identifier);
+// template<typename T> T iKnowWhatDeviceIWant(auto identifier);
 Theatre *getCurrentTheatre(bool print_note);
-Environment *getCurrentEnvironment();
-GraphXPlayer *getCurrentPlayer();
+// Environment *getCurrentEnvironment();
+// GraphXPlayer *getCurrentPlayer();
 #endif

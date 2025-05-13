@@ -353,7 +353,7 @@ void R_GL_BufferMeshes()
 
 glm::mat4 R_GL_GetProjectionMatrix()
 {
-	return glm::perspective(glm::radians(getCurrentPlayer()->field_of_view), graphx::rendering::main_window_width / graphx::rendering::main_window_height, graphx::rendering::camera_near, graphx::rendering::camera_far);
+	return glm::perspective(glm::radians(graphx::current::theatre.getPlayer()->field_of_view), graphx::rendering::main_window_width / graphx::rendering::main_window_height, graphx::rendering::camera_near, graphx::rendering::camera_far);
 }
 
 std::vector<RenderCmd> render_commands_buffer;
@@ -573,7 +573,7 @@ void R_GL_RenderSkybox()
 
 	glDepthFunc(GL_LEQUAL);
 	glUseProgram(shaders[graphx::rendering::SHADER_SKYBOX].id);
-	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_view_matrix", glm::mat4(glm::mat3(getCurrentPlayer()->getViewMatrix())));
+	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_view_matrix", glm::mat4(glm::mat3(getCurrentTheatre()->getPlayer()->getViewMatrix())));
 	shaders[graphx::rendering::SHADER_SKYBOX].setUniform("skybox_projection_matrix", R_GL_GetProjectionMatrix());
 	glBindVertexArray(VAOs[graphx::rendering::VAO_SKYBOX]);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture.texture_id);
@@ -641,7 +641,7 @@ void R_GL_RenderFonts()
 	// Todo: find out if it's worth it to take these out of the for loop
 	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
 	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("ortho_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
-	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+	shaders[graphx::rendering::SHADER_FONTS_3D].setUniform("view_matrix", getCurrentTheatre()->getPlayer()->getViewMatrix());
 	shaders[graphx::rendering::SHADER_FONTS_2D].setUniform("ortho_matrix", glm::ortho(0.0f, graphx::rendering::main_window_height, 0.0f, graphx::rendering::main_window_width));
 
 	for(auto rendercmd_iterator = text_render_commands_buffer.begin() ; rendercmd_iterator != text_render_commands_buffer.end() ;)
@@ -801,18 +801,18 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		glBindTextureUnit(1, texture_storage.at(rendercmd_iterator->mesh_material.specular_texture_name).texture_id);
 
 		shaders[graphx::rendering::current_shader].setUniform("model_matrix", model_matrix);
-		shaders[graphx::rendering::current_shader].setUniform("view_matrix", getCurrentPlayer()->getViewMatrix());
+		shaders[graphx::rendering::current_shader].setUniform("view_matrix", getCurrentTheatre()->getPlayer()->getViewMatrix());
 		shaders[graphx::rendering::current_shader].setUniform("projection_matrix", R_GL_GetProjectionMatrix());
 		shaders[graphx::rendering::current_shader].setUniform("normal_matrix", glm::mat3(glm::transpose(glm::inverse(model_matrix))));
-		shaders[graphx::rendering::current_shader].setUniform("view_position", getCurrentPlayer()->getViewPosition());
+		shaders[graphx::rendering::current_shader].setUniform("view_position", getCurrentTheatre()->getPlayer()->getViewPosition());
 		shaders[graphx::rendering::current_shader].setUniform("current_material.texture_diffuse", 0);
 		shaders[graphx::rendering::current_shader].setUniform("current_material.texture_specular", 1);
 		shaders[graphx::rendering::current_shader].setUniform("current_material.diffuse_color", rendercmd_iterator->mesh_material.color);
 		shaders[graphx::rendering::current_shader].setUniform("current_material.alpha", rendercmd_iterator->mesh_material.color_alpha);
 		shaders[graphx::rendering::current_shader].setUniform("current_material.specular_sharpness", rendercmd_iterator->mesh_material.specular_sharpness);
 		shaders[graphx::rendering::current_shader].setUniform("current_material.specular_strength", rendercmd_iterator->mesh_material.specular_strength);
-		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_contribution", getCurrentEnvironment()->ambient_light_amount);
-		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_color", getCurrentEnvironment()->ambient_light_color);
+		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_contribution", graphx::current::theatre.getEnvironment()->ambient_light_amount);
+		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_color", graphx::current::theatre.getEnvironment()->ambient_light_color);
 
 		shaders[graphx::rendering::current_shader].setUniform("debug_highlight", rendercmd_iterator->debug_highlight_color);
 

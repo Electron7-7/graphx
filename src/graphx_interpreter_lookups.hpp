@@ -20,11 +20,11 @@ using namespace graphx; // Since gSettings is still `graphx::gSettings` for now
 
 // template<typename T> std::shared_ptr<Actor>  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
 // template<typename T> std::shared_ptr<Device> createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
-template<typename T> std::shared_ptr<Actor>  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(); }
-template<typename T> std::shared_ptr<Device> createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(); }
+template<typename T> Actor*  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return new T; }
+template<typename T> Device* createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return new T; }
 
 
-inline const std::map<std::string, std::shared_ptr<Actor>(*)(Theatre*, const int, const gSettings&)>
+inline const std::map<std::string, Actor*(*)(Theatre*, const int, const gSettings&)>
 valid_actors =
 {
     { "PhysicsActor",     &createNewActor<PhysicsActor>     }, // WILL BE REMOVED
@@ -43,7 +43,7 @@ valid_actors =
     { "LightTesterMover", &createNewActor<LightTesterMover> },
 };
 
-inline const std::map<std::string, std::shared_ptr<Device>(*)(Theatre*, const int, const gSettings&)>
+inline const std::map<std::string, Device*(*)(Theatre*, const int, const gSettings&)>
 valid_devices =
 {
     { "Device",           &createNewDevice<Device>      },

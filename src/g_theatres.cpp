@@ -5,41 +5,24 @@
 #include "t_settings.hpp"
 #include <set>
 
+// TEMPORARY
+Actor* Theatre::getFlashlight() const
+{
+    for(auto& actor_pair : objects)
+        if(actor_pair.second->getName().find("flashlight") != std::string::npos)
+            return actor_pair.second;
+    return nullptr;
+}
+// TEMPORARY
+
+
 Theatre graphx::current::theatre;
 
-Theatre *getCurrentTheatre(bool print_note)
+Theatre* getCurrentTheatre(bool print_note)
 {
     if(graphx::current::theatre.getUID() == -1 && print_note)
         PRINTDEBUG("getCurrentTheatre() called, but graphx::current::theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
     return &graphx::current::theatre;
-}
-
-Environment *getCurrentEnvironment()
-{
-    if(loading_new_main_theatre)
-        return new Environment();
-
-    if(graphx::current::theatre.unsafeGetFirstDeviceOfType(graphx::classes::ENVIRONMENT) == nullptr)
-    {
-        PRINTERR("getCurrentEnvironment called, but no Environment Device found in graphx::current::theatre! Every Theatre needs an Environment! A new Environment will be created and given a UID of 177013 (in Theatre \"" << graphx::current::theatre.name << "\")")
-        graphx::current::theatre.createDevice(graphx::classes::ENVIRONMENT, 177013);
-    }
-
-    return static_cast<Environment *>(graphx::current::theatre.getFirstDeviceOfType(graphx::classes::ENVIRONMENT));
-}
-
-GraphXPlayer *getCurrentPlayer()
-{
-    if(loading_new_main_theatre)
-        return new GraphXPlayer();
-
-    if(graphx::current::theatre.unsafeGetFirstActorOfType(graphx::classes::GRAPHXPLAYER) == nullptr)
-    {
-        PRINTERR("getCurrentPlayer called, but no GraphXPlayer Actor found in graphx::current::theatre! Every Theatre needs a GraphXPlayer! A new GraphXPlayer will be created and given a UID of 42069 (in Theatre \"" << graphx::current::theatre.name << "\")")
-        graphx::current::theatre.createActor(graphx::classes::GRAPHXPLAYER, 42069);
-    }
-
-    return static_cast<GraphXPlayer *>(graphx::current::theatre.getFirstActorOfType(graphx::classes::GRAPHXPLAYER));
 }
 
 //
@@ -181,28 +164,6 @@ void Theatre::dropCurtains()
     objects.clear();
 }
 
-std::vector<Actor*> Theatre::getAllActorsOfType(graphx::gClass type_name)
-{
-    std::vector<Actor *> found_actors;
-
-    for(auto &pair : objects)
-        if(pair.second->getType() == type_name)
-            found_actors.insert(found_actors.end(), pair.second);
-
-    return found_actors;
-}
-
-std::vector<Device*> Theatre::getAllDevicesOfType(graphx::gClass type_name)
-{
-    std::vector<Device *> found_devices;
-
-    for(auto &pair : devices)
-        if(pair.second->getType() == type_name)
-            found_devices.insert(found_devices.end(), pair.second);
-
-    return found_devices;
-}
-
 void Theatre::loadStageSettings(graphx::gSettings stage_settings)
 {
     glm::vec3 stage_euler_degrees = glm::vec3(0.0f);
@@ -282,67 +243,7 @@ void Theatre::setUID(long new_uid)
     UID = new_uid;
 }
 
-Actor* Theatre::getFirstActorOfType(graphx::gClass type_name)
-{
-    if(graphx::classes::getBaseType(type_name) != graphx::classes::ACTOR)
-    {
-        PRINTERR("Theatre::getFirstActorOfType - Supplied type is not derived from Actor! Returning nullptr!")
-        return nullptr;
-    }
-
-    for(auto &pair : objects)
-        if(pair.second->getType() == type_name)
-            return pair.second;
-
-    PRINTERR("Theatre::getFirstActorOfType could not find an Actor of type: " << type_name.name << "! This function will return a nullptr!")
-    return nullptr;
-}
-
-Device* Theatre::getFirstDeviceOfType(graphx::gClass type_name)
-{
-    if(graphx::classes::getBaseType(type_name) != graphx::classes::DEVICE)
-    {
-        PRINTERR("Theatre::getFirstDeviceOfType - Supplied type is not derived from Device! Returning nullptr!")
-        return nullptr;
-    }
-
-    for(auto &pair : devices)
-        if(pair.second->getType() == type_name)
-            return pair.second;
-
-    PRINTERR("Theatre::getFirstDeviceOfType could not find a Device of type: " << type_name.name << "! This function will return a nullptr!")
-    return nullptr;
-}
-
-Actor* Theatre::unsafeGetFirstActorOfType(graphx::gClass type_name)
-{
-    if(graphx::classes::getBaseType(type_name) != graphx::classes::ACTOR)
-    {
-        PRINTDEBUG("Theatre::getFirstActorOfType - Supplied type is not derived from Actor! Returning nullptr!")
-        return nullptr;
-    }
-
-    for(auto &pair : objects)
-        if(pair.second->getType() == type_name)
-            return pair.second;
-    return nullptr;
-}
-
-Device* Theatre::unsafeGetFirstDeviceOfType(graphx::gClass type_name)
-{
-    if(graphx::classes::getBaseType(type_name) != graphx::classes::DEVICE)
-    {
-        PRINTDEBUG("Theatre::getFirstDeviceOfType - Supplied type is not derived from Device! Returning nullptr!")
-        return nullptr;
-    }
-
-    for(auto &pair : devices)
-        if(pair.second->getType() == type_name)
-            return pair.second;
-    return nullptr;
-}
-
-void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings)
+void Theatre::createActor(const std::string& actor_type, long uid, graphx::gSettings new_settings)
 {
     if(objects.contains(uid))
     {
@@ -350,10 +251,10 @@ void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings
         return;
     }
 
-    if(actor_type == graphx::classes::GRAPHXPLAYER)
+    if(!actor_type.compare("GraphXPlayer")) // TEMPORARY
         player_uid = uid;
 
-    objects[uid] = graphx::gClass::getClassType(actor_type).create_new_actor();
+    objects[uid] = valid_actors.at(actor_type)(this, uid, new_settings); // VERY BAD, WILL BE REPLACED WITH SMART POINTERS WHEN FULLY IMPLEMENTED
     objects.at(uid)->setUID(uid);
     objects.at(uid)->youGotACallBack(new_settings);
 
@@ -361,20 +262,9 @@ void Theatre::createActor(graphx::gClass actor_type, long uid, graphx::gSettings
         objects.at(uid)->callToStage(this);
 
     time_to_store_buffers = time_to_render;
-
-    //---------
-    // NEW CODE
-    //---------
-    if(actor_map.contains(uid))
-    {
-        // PRINTERR(...)
-        return;
-    }
-
-    // actor_map[uid] = valid_actors.at(actor_type.name)(this, uid, new_settings);
 }
 
-void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings)
+void Theatre::createDevice(const std::string& device_type, long uid, graphx::gSettings new_settings)
 {
     if(devices.contains(uid))
     {
@@ -382,52 +272,15 @@ void Theatre::createDevice(graphx::gClass device_type, long uid, graphx::gSettin
         return;
     }
 
-    if(device_type == graphx::classes::ENVIRONMENT)
+    if(!device_type.compare("Environment")) // TEMPORARY
         environment_uid = uid;
 
-    devices[uid] = graphx::gClass::getClassType(device_type).create_new_device();
+    devices[uid] = valid_devices.at(device_type)(this, uid, new_settings); // VERY BAD, WILL BE REPLACED WITH SMART POINTERS WHEN FULLY IMPLEMENTED
     devices.at(uid)->setUID(uid);
     devices.at(uid)->loadSettings(new_settings);
-
-    //---------
-    // NEW CODE
-    //---------
-    if(device_map.contains(uid))
-    {
-        // PRINTERR(...)
-        return;
-    }
-
-    // device_map[uid] = valid_devices.at(device_type.name)(this, uid, new_settings);
 }
 
-void Theatre::troupeEnter(std::vector<std::pair<Actor *, long>> new_troupe)
-{
-    for(auto &pair : new_troupe)
-    {
-        if(objects.contains(pair.second))
-        {
-            PRINTERR("Tried adding a new Actor with UID " << std::to_string(pair.second) << " to Theatre " << name << " but an Actor with that UID already exists! Aborting addition of this Actor! If there are problems or crashes, this may be the cause!")
-            return;
-        }
-
-        objects[pair.second] = pair.first;
-        pair.first->setUID(pair.second);
-        
-
-        if(pair.first->getType() == graphx::classes::GRAPHXPLAYER)
-            player_uid = pair.second;
-
-        if(time_to_render)
-        {
-            pair.first->youGotACallBack();
-            pair.first->callToStage(this);
-        }
-    }
-    
-    time_to_store_buffers = time_to_render;
-}
-
+// TEMPORARY: USED BY THE ROTATING LIGHT ACTOR FOR ITS PIVOT POINT VISUALIZER ACTOR
 void Theatre::actorEnter(Actor* new_actor, long uid, graphx::gSettings new_settings)
 {
     if(objects.contains(uid))
@@ -460,100 +313,6 @@ void Theatre::actorEnter(Actor* new_actor, long uid, graphx::gSettings new_setti
         new_actor->callToStage(this);
 
     time_to_store_buffers = time_to_render;
-}
-
-void Theatre::actorLeave(Actor* old_actor)
-{
-    if(old_actor->getType() == graphx::classes::GRAPHXPLAYER)
-        player_uid = -1;
-
-    if(auto it = objects.find(old_actor->getUID()) ; it != objects.end())
-    {
-        it->second = nullptr;
-        objects.erase(it);
-        time_to_store_buffers = time_to_render;
-        return;
-    }
-
-    PRINTERR("Request to remove an Actor by pointer failed!\n\tUID of Actor given to function: " << std::to_string(old_actor->getUID()))
-}
-
-void Theatre::actorLeave(long uid)
-{
-    if(!objects.contains(uid))
-    {
-        PRINTERR("Theatre was requested to delete the Actor with UID " << std::to_string(uid) << " but that UID does not exist!")
-        return;
-    }
-
-    if(objects.at(uid)->getType() == graphx::classes::GRAPHXPLAYER)
-        player_uid = -1;
-
-    if(auto it = objects.find(uid) ; it != objects.end())
-    {
-        it->second = nullptr;
-        objects.erase(it);
-        time_to_store_buffers = time_to_render;
-        return;
-    }
-
-    PRINTERR("Request to remove an Actor with UID " << std::to_string(uid) << " failed!")
-}
-
-void Theatre::placeDevice(Device* new_device, long uid, graphx::gSettings new_settings)
-{
-    if(devices.contains(uid))
-    {
-        PRINTERR("Tried adding a new Device with UID " << std::to_string(uid) << " to Theatre " << name << " but a Device with that UID already exists! Aborting addition of this Device! If there are problems or crashes, this may be the cause!")
-        return;
-    }
-
-    devices[uid] = new_device;
-    devices.at(uid)->setUID(uid);
-
-    if(devices.at(uid)->getType() == graphx::classes::ENVIRONMENT)
-        environment_uid = uid;
-
-    new_device->loadSettings(new_settings);
-
-    if(time_to_render)
-        new_device->initialize();
-}
-
-void Theatre::removeDevice(Device* old_device)
-{
-    if(auto it = devices.find(old_device->getUID()) ; it != devices.end())
-    {
-        if(it->second->getType() == graphx::classes::ENVIRONMENT)
-            environment_uid = -1;
-
-        it->second = NULL;
-        devices.erase(it);
-        return;
-    }
-
-    PRINTERR("Request to remove a Device by pointer failed!\n\tUID of Device given to function: " << std::to_string(old_device->getUID()))
-}
-
-void Theatre::removeDevice(long uid)
-{
-    if(!devices.contains(uid))
-    {
-        PRINTERR("Theatre was requested to delete the Device with UID " << std::to_string(uid) << " but that UID does not exist!")
-        return;
-    }
-
-    if(auto it = devices.find(uid) ; it != devices.end())
-    {
-        if(it->second->getType() == graphx::classes::ENVIRONMENT)
-            environment_uid = -1;
-
-        it->second = NULL;
-        devices.erase(it);
-        return;
-    }
-
-    PRINTERR("Request to remove a Device with UID " << std::to_string(uid) << " failed!")
 }
 
 Actor* Theatre::getActor(long actor_uid)

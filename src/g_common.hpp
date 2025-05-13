@@ -104,6 +104,10 @@ protected:
 
 struct Theatre
 {
+	// TEMPORARY
+	Actor* getFlashlight() const;
+	// TEMPORARY
+
 	Mesh* stage_mesh = nullptr;
 	Material* stage_material = nullptr;
 	Actor stage;
@@ -136,38 +140,27 @@ struct Theatre
 	void setUID(long new_uid);
 	void delegateKeyInput(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void delegateMouseInput(GLFWwindow* window, double x_position_in, double y_position_in);
-	void troupeEnter(std::vector<std::pair<Actor*, long>> new_troupe);
 	void actorEnter(Actor* new_actor, long uid, graphx::gSettings new_settings = empty_settings);
-	void actorLeave(Actor* old_actor);
-	void actorLeave(long uid);
-	void placeDevice(Device* new_device, long uid, graphx::gSettings new_settings = empty_settings);
-	void removeDevice(Device* old_device);
-	void removeDevice(long uid);
+	// void actorLeave(Actor* old_actor);
+	// void actorLeave(long uid);
+	// void placeDevice(Device* new_device, long uid, graphx::gSettings new_settings = empty_settings);
+	// void removeDevice(Device* old_device);
+	// void removeDevice(long uid);
 
-	void createActor(graphx::gClass actor_type, long uid, graphx::gSettings new_settings = empty_settings);
-	void createDevice(graphx::gClass device_type, long uid, graphx::gSettings new_settings  = empty_settings);
-
-	std::vector<Actor *> getAllActorsOfType(graphx::gClass type_name);
-	std::vector<Device *> getAllDevicesOfType(graphx::gClass type_name);
-
-	Actor* getFirstActorOfType(graphx::gClass type_name);
-	Device* getFirstDeviceOfType(graphx::gClass type_name);
-	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO ACTOR MATCHING type_name IS FOUND!!
-	Actor* unsafeGetFirstActorOfType(graphx::gClass type_name);
-	// WARNING!! THIS FUNCTION WILL RETURN A nullptr IF NO DEVICE MATCHING type_name IS FOUND!!
-	Device* unsafeGetFirstDeviceOfType(graphx::gClass type_name);
+	void createActor(const std::string& actor_type, long uid, graphx::gSettings new_settings = empty_settings);
+	void createDevice(const std::string& device_type, long uid, graphx::gSettings new_settings  = empty_settings);
 
 	Actor* getActor(long uid);
 	Actor* getActor(std::string actor_name);
 	Device* getDevice(long uid);
 	Device* getDevice(std::string device_name);
 
-	GraphXPlayer *getPlayer();
-	Environment *getEnvironment();
+	GraphXPlayer* getPlayer();
+	Environment* getEnvironment();
 
 private:
-	std::unordered_map<long, Actor*> objects = {};
-	std::unordered_map<long, Device*> devices = {};
+	std::map<long, Actor*> objects = {};
+	std::map<long, Device*> devices = {};
 	std::map<int, std::shared_ptr<Actor>> actor_map = {};   // NEW CODE
 	std::map<int, std::shared_ptr<Device>> device_map = {}; // NEW CODE
 	long UID = -1;
@@ -181,27 +174,27 @@ private:
 // Use with CAUTION!!
 // Wants to return static_cast<T>(graphx::current::theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
 // Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-template<typename T> T iKnowWhatActorIWant(auto identifier)
+/*template<typename T> T iKnowWhatActorIWant(auto identifier)
 {
 	if(graphx::current::theatre.getUID() == -1 || graphx::current::theatre.getActor(identifier) == nullptr)
 		return new std::remove_pointer_t<T>;
 
 	return static_cast<T>(graphx::current::theatre.getActor(identifier));
-}
+}*/
 
 // Use with CAUTION!!
 // Wants to return static_cast<T>(graphx::current::theatre.getDevice(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
 // Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-template<typename T> T iKnowWhatDeviceIWant(auto identifier)
+/*template<typename T> T iKnowWhatDeviceIWant(auto identifier)
 {
 	if(graphx::current::theatre.getUID() == -1 || graphx::current::theatre.getDevice(identifier) == nullptr)
 		return new std::remove_pointer_t<T>;
 	return static_cast<T>(graphx::current::theatre.getDevice(identifier));
-}
+}*/
 
 // template<typename T> Actor *createNewActor() { return new T; }
 
 Theatre *getCurrentTheatre(bool print_note = true);
-Environment *getCurrentEnvironment();
-GraphXPlayer *getCurrentPlayer();
+// Environment *getCurrentEnvironment();
+// GraphXPlayer *getCurrentPlayer();
 #endif
