@@ -2695,3 +2695,16 @@ Hmm, I think I'm going to go ahead and use the function templates for `Theatre::
 Ah, fuck, I forgot that I'll have to re-write gSettings because of Theatre references... unless I make a quick fix by slapping `dynamic_pointer_cast` on all the applicable `getSetting` calls. Yeah, I'll do that.
 
 Ugh, I'm running into weird crashes and now the FOV is fucked and then Jolt crashes the engine and I'm so fucking annoyed lmfao. I'm gonna eat and maybe tackle this later.
+
+[05/14/25]
+Okay, I'm gonna try that again. I need to find a good way to convert raw pointers to smart pointers in smaller pieces. Hmm... how about starting with Actors/Devices and the places where they use pointers? Also, what about changing `Theatre::getTroupe` first before using the maps of smart pointers? Yeah, I think I'll start there.
+
+Okay, I changed `Theatre::getTroupe` to use smart pointers and made sure to update `main.cpp` and the `g_imgui` files to match.
+
+Hmm, running into some issues but it looks like they can be mitigated if I add in the parallel vector of smart pointers. Although, I might be able to get away with just converting the raw pointers to smart pointers in the code (i.e: after making a `new` pointer, make a smart pointer that takes ownership of it). Oh, wait, I think that's my problem, lol, is the `getTroupe` function keeps making new smart pointers for the raw pointers and that might be fucking up ownership. I'll try adding in the parallel vectors.
+
+Hmm, I have another idea of what could help keep things simpler and neater: move the game logic code into a Theatre function and just call that function from the gametick loop.
+
+Grr, I don't think I can mix and match these. I just gotta try again with replacing all raw pointers with smart pointers.
+
+OH HOLY SHIT! I can keep raw pointers and also use smart pointers!! -> (https://cplusplus.com/forum/general/276322/)
