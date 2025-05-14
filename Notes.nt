@@ -2687,3 +2687,11 @@ It works! I've removed gClass from LightRenderCmd! Now for the largest part: rem
 Okay, that was a lot easier than expected. Let's see if it compiles and runs!
 
 After some fixes, I have fully removed gClass and GraphX compiles and runs!
+
+Okay, I think the next thing I want to do is convert raw Actor/Device pointers to smart pointers. I'm going to go out on a limb and say that Theatre is probably going to be affected the most, while the interpreter functions are going to potentially affect the program the most. Since the two are pretty close to eachother (especially concerning pointers), I'm going to start with Theatre and keep tabs on the interpreter functions as I go. I know I said I want to do these changes piece-by-piece, but this change is so sweeping and so impossible to test step-by-step that step 1 really does just have to be "convert raw pointers to smart pointers". However, I'm going to keep old code and just comment it out, so I can go back if needed, plus, I committed the gClass changes so I can always roll back! This is the true benefits of doing things step-by-step: when you can't do something in smaller steps, you don't have to go too far back if you fuck everything up.
+
+Hmm, I think I'm going to go ahead and use the function templates for `Theatre::getActor` and `Theatre::getDevice`. This should keep things nice and simple.
+
+Ah, fuck, I forgot that I'll have to re-write gSettings because of Theatre references... unless I make a quick fix by slapping `dynamic_pointer_cast` on all the applicable `getSetting` calls. Yeah, I'll do that.
+
+Ugh, I'm running into weird crashes and now the FOV is fucked and then Jolt crashes the engine and I'm so fucking annoyed lmfao. I'm gonna eat and maybe tackle this later.
