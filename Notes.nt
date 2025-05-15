@@ -2712,3 +2712,12 @@ OH HOLY SHIT! I can keep raw pointers and also use smart pointers!! -> (https://
 Okay, I've replaced the map with unique pointers, added vectors of raw pointers from those unique pointers that are updated in parallel with the maps, and this should mean that I can continue to use raw pointers everywhere else and not worry about memory leaks!! Time to test!
 
 Got a crash, but hopefully it's easy to solve...
+
+[05/15/25]
+It was not. Round 3! I'm going to re-try unqiue smart pointers, but this time I'm going to move even more slowly. I'm also going to change the sandwich bun code to do what my remake does, which is have the Theatre make the bun instead of just fucking making a random pointer lmfao.
+
+Hmm, maybe before changing pointers I want to instead change how Actors and Devices store references to eachother (instead of pointers, use UIDs). I'll see if this little change works and then move onto that.
+
+Okay, all I've changed is that I've made the Theatre maps store unique pointers instead of raw pointers, and everything else is the same. Let's see if it works or not!
+
+Aaaaaand it crashed because of an attempted free on address that was not malloc()-ed. Basically, something tried to free memory that wasn't needing it (i.e: deleting a pointer). Man, this fucking REEKS! Alright, I concede, I'll put the pointers to the side and focus on what I said.
