@@ -2,14 +2,13 @@
 #define GRAPHX_ACTOR
 #include "graphx_namespace.hpp"
 #include "r_common.hpp"
+#include "g_devices.hpp"
 #include "t_settings.hpp"
 #include <glfw_fwd.hpp>
 #include <mutex>
 #include <vector>
 
 #ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
-struct ActorPointerWrapper;
-struct DevicePointerWrapper;
 struct Theatre;
 #endif
 
@@ -78,6 +77,9 @@ public:
     virtual void tick(int);
 
 protected:
+    Theatre* parent_theatre;
+    graphx::gSettings settings = empty_settings;
+
     std::vector<RenderState> current_state_buffer =  { RenderState(), RenderState() };
     std::vector<RenderState> previous_state_buffer = { RenderState(), RenderState() };
     int state_index = 0;
@@ -86,7 +88,6 @@ protected:
     glm::vec3 position_local = glm::vec3(0.0f);
     glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-    graphx::gSettings settings = empty_settings;
     glm::vec4 debug_highlight_color = glm::vec4(0.0f);
 
     virtual void updateVectors();

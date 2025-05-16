@@ -467,7 +467,7 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 	if(gClasses::isActor(sandwich_bun_setting.first))
 		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->getSettings();
 	else
-		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->settings;
+		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->getSettings();
 
 	sandwich_settings["Name"] = graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{sandwich_bun_setting.second.second + "_" + current_object_name});
 

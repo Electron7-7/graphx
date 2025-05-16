@@ -1,6 +1,6 @@
 #include "g_actor.hpp"
 #include "g_device.hpp"
-// #include "g_theatre.hpp"
+#include "g_theatre.hpp"
 #include "r_common.hpp"
 #include "g_devices.hpp"
 #include <gmath.hpp>
@@ -15,11 +15,11 @@ glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 // Actor
 //
 Actor::Actor(const std::string& my_name)
-: name(my_name)/*, parent_theatre(nullptr)*/, settings(empty_settings), actor_uid(-1)
+: name(my_name), parent_theatre(nullptr), settings(empty_settings), actor_uid(-1)
 {}
 
 Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
-: name("Untitled Actor")/*, parent_theatre(my_parent_theatre)*/, settings(my_settings), actor_uid(my_uid)
+: name("Untitled Actor"), parent_theatre(my_parent_theatre), settings(my_settings), actor_uid(my_uid)
 {}
 
 Actor::~Actor() = default;
