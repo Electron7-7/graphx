@@ -464,7 +464,7 @@ void interpretSandwich(graphx::gSettings &current_object_settings, graphx::inter
 	graphx::interpreter::gStringSetting sandwich_bun_setting = theatre_settings[i][it];
 
 	if(gClasses::isActor(sandwich_bun_setting.first))
-		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->settings;
+		sandwich_settings = new_theatre.getActor(sandwich_bun_setting.second.second)->getSettings();
 	else
 		sandwich_settings = new_theatre.getDevice(sandwich_bun_setting.second.second)->settings;
 
@@ -572,7 +572,7 @@ Theatre loadTheatre(long theatre_uid)
 			new_theatre.stage.youGotACallBack(current_object_settings);
 			new_theatre.stage_mesh->loadSettings(current_object_settings);
 			new_theatre.loadStageSettings(current_object_settings);
-			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.getName() << "\" given custom settings")
+			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.name << "\" given custom settings")
 			continue;
 		}
 

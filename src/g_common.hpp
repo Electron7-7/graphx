@@ -21,6 +21,7 @@ struct RenderState
 class Actor
 {
 public:
+	std::string name = "Untitled Actor";
 	bool visible = true;
 
 	Mesh* mesh = nullptr; // replace with std::vector<Mesh *> meshes later(?)
@@ -33,15 +34,21 @@ public:
 	glm::vec3 orientation_right;
 	glm::vec3 world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	std::vector<RenderState> current_state_buffer;
-	std::vector<RenderState> previous_state_buffer;
+	// Actor(std::string = "Untitled Actor", Mesh* = nullptr, glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(1.0f));
+	Actor(const std::string& Name);
+	Actor(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = empty_settings); // Note: ParentTheatre is unused for now
 
-	int state_index = 0;
+	virtual ~Actor();
 
-	graphx::gSettings settings = empty_settings;
+	long getUID() const;
+	void setUID(const int NewUID);
+	// Note: gSettings are still the old gSettings
+	graphx::gSettings getSettings() const;
+	void setSettings(const graphx::gSettings& NewSettings);
+	void updateStates(std::mutex&);
 
-	Actor(std::string = "Untitled Actor", Mesh* = nullptr, glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(1.0f));
-	virtual ~Actor() = default;
+	void highlightMe();
+	void unHighlightMe();
 
 	template<typename T> T getPosition();
 	template<typename T> T getRotation();
@@ -61,15 +68,6 @@ public:
 	virtual void setLocalRotation(JPH::Vec3);
 	virtual void setLocalRotation(JPH::Quat);
 
-	long getUID() const;
-	void setUID(const long);
-	std::string getName() const;
-	void setName(const std::string);
-	void setName(const char*);
-
-	void highlightMe();
-	void unHighlightMe();
-
 	virtual RenderCommands getRenderCommands();
 	virtual bool isPhysicsActor();
 	virtual void youGotACallBack(graphx::gSettings = empty_settings); // Loads settings
@@ -79,18 +77,23 @@ public:
 	virtual void processInput(GLFWwindow*);
 	virtual void processKey(GLFWwindow*, int, int, int, int);
 	virtual void tick(int);
-	virtual void updateStates(std::mutex&);
 
 protected:
+	std::vector<RenderState> current_state_buffer =  { RenderState(), RenderState() };
+	std::vector<RenderState> previous_state_buffer = { RenderState(), RenderState() };
+	int state_index = 0;
+
 	glm::vec3 position_global = glm::vec3(0.0f);
 	glm::vec3 position_local = glm::vec3(0.0f);
 	glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-	long UID = -1;
-	std::string name = "Untitled Actor";
+	graphx::gSettings settings = empty_settings;
 	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
 
 	virtual void updateVectors();
+
+private:
+	int actor_uid = -1;
 };
 
 // Note about Theatres:
@@ -108,7 +111,7 @@ struct Theatre
 
 	Mesh* stage_mesh = nullptr;
 	Material* stage_material = nullptr;
-	Actor stage;
+	Actor stage = Actor("stage");
 	glm::vec3 stage_scale = glm::vec3(0.0f);
 	glm::vec3 stage_position = glm::vec3(0.0f);
 	glm::quat stage_quaternion = glm::quat();
@@ -139,11 +142,6 @@ struct Theatre
 	void delegateKeyInput(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void delegateMouseInput(GLFWwindow* window, double x_position_in, double y_position_in);
 	void actorEnter(Actor* new_actor, long uid, graphx::gSettings new_settings = empty_settings);
-	// void actorLeave(Actor* old_actor);
-	// void actorLeave(long uid);
-	// void placeDevice(Device* new_device, long uid, graphx::gSettings new_settings = empty_settings);
-	// void removeDevice(Device* old_device);
-	// void removeDevice(long uid);
 
 	void createActor(const std::string& actor_type, long uid, graphx::gSettings new_settings = empty_settings);
 	void createDevice(const std::string& device_type, long uid, graphx::gSettings new_settings  = empty_settings);
@@ -166,33 +164,5 @@ private:
 	long player_uid = -1;
 };
 
-// extern Theatre graphx::current::theatre;
-// extern std::map<int, Actor*(*)()> actor_map;
-
-// Use with CAUTION!!
-// Wants to return static_cast<T>(graphx::current::theatre.getActor(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
-// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-/*template<typename T> T iKnowWhatActorIWant(auto identifier)
-{
-	if(graphx::current::theatre.getUID() == -1 || graphx::current::theatre.getActor(identifier) == nullptr)
-		return new std::remove_pointer_t<T>;
-
-	return static_cast<T>(graphx::current::theatre.getActor(identifier));
-}*/
-
-// Use with CAUTION!!
-// Wants to return static_cast<T>(graphx::current::theatre.getDevice(identifier)) but if that fails, returns new std::remove_pointer_t<T>.
-// Useful for getting a down-casted pointer to a known object. Performs NO safety checks, so only use this if you know both the UID/Name AND the specific sub-class of the object you're getting.
-/*template<typename T> T iKnowWhatDeviceIWant(auto identifier)
-{
-	if(graphx::current::theatre.getUID() == -1 || graphx::current::theatre.getDevice(identifier) == nullptr)
-		return new std::remove_pointer_t<T>;
-	return static_cast<T>(graphx::current::theatre.getDevice(identifier));
-}*/
-
-// template<typename T> Actor *createNewActor() { return new T; }
-
 Theatre *getCurrentTheatre(bool print_note = true);
-// Environment *getCurrentEnvironment();
-// GraphXPlayer *getCurrentPlayer();
 #endif

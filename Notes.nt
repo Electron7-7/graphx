@@ -2721,3 +2721,19 @@ Hmm, maybe before changing pointers I want to instead change how Actors and Devi
 Okay, all I've changed is that I've made the Theatre maps store unique pointers instead of raw pointers, and everything else is the same. Let's see if it works or not!
 
 Aaaaaand it crashed because of an attempted free on address that was not malloc()-ed. Basically, something tried to free memory that wasn't needing it (i.e: deleting a pointer). Man, this fucking REEKS! Alright, I concede, I'll put the pointers to the side and focus on what I said.
+
+Okay, where to start? Let me look at the other code. Hmm, maybe I could actually start with the Actor & Device constructors... yeah, that sounds nice and simple.
+
+Hmm, or do I maybe want to start with gSettings? No, no, that's too much; I'm sticking with the constructors (and a few things related to them like removing set/get name and shit).
+
+Okay, I've changed the constructor for Actor and spammed "using Actor::Actor" and the like in `g_actors.hpp`. Time to see if it works.
+
+Okay, got a segfault from something trying to read a nullptr (I assume).
+
+Oh, weird, it's the RenderState vector being empty in Actor::updateStates. Huh...
+
+Oh, yeah, I forgot to give it default values LMFAO.
+
+AYO IT WORKS!! LETS FUCKING GOOOOO!! On to Devices, next!
+
+I had a brain blast!! I'm not going to switch to UIDs instead of raw pointers for things like an Actor's Mesh, because raw pointers make sense and are nicer to use. They can be nullptr by default, giving a nice default value that isn't an entire object, and if a default value other than nullptr is needed, I should just have default objects that I can reference to (instead of making a new default object every single time). As long as I avoid using "new", I won't have to worry about memory leaks, and as long as I'm getting these raw pointers in a safe manner from Theatre, they shouldn't be a problem! Okay, so, the next step is to finish up with constructor changing by doing all the Devices, then maybe moving on to gSettings.

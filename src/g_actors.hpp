@@ -22,7 +22,8 @@ public:
 	Actor *parent = nullptr;
 	float label_alpha = 0.0f;
 
-	Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
+	// Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
+	using Actor::Actor;
 
 	RenderCommands getRenderCommands() override;
 	void tick(int current_tick) override;
@@ -40,7 +41,8 @@ public:
 
 	float mass = 1.0f; // in kg
 
-	PhysicsActor(std::string init_name = "Untitled Physics Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	// PhysicsActor(std::string init_name = "Untitled Physics Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
+	using Actor::Actor;
 
 	void setGlobalPosition(glm::vec3 new_value) override final;
 	void setGlobalRotation(glm::vec3 new_value) override final;
@@ -69,7 +71,8 @@ protected:
 class RigidBodyActor : public PhysicsActor
 {
 public:
-	RigidBodyActor();
+	// RigidBodyActor();
+	using PhysicsActor::PhysicsActor;
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
@@ -82,7 +85,8 @@ public:
 class StaticBodyActor : public PhysicsActor
 {
 public:
-	StaticBodyActor();
+	// StaticBodyActor();
+	using PhysicsActor::PhysicsActor;
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
 	void callToStage(Theatre *parent_theatre) override;
@@ -96,7 +100,8 @@ public:
 	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
 	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
 
-	Camera();
+	// Camera();
+	using Actor::Actor;
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
@@ -111,7 +116,7 @@ class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:
 	Mesh player_mesh = Mesh();
-	Camera player_camera;
+	Camera player_camera = Camera("Camera");
 	LightFlashlight *player_flashlight = nullptr;
 
 	bool do_gravity = true; // Debugging, mostly
@@ -124,7 +129,8 @@ public:
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
 
-	GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f));
+	// GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f));
+	using Actor::Actor;
 
 	glm::mat4 getViewMatrix();
 	glm::vec3 getViewPosition();
@@ -162,7 +168,8 @@ public:
 	// Other
 	// Texture *texture_projection = nullptr;
 
-	Light(std::string init_name = "UNTITLED_LIGHT");
+	// Light(std::string init_name = "UNTITLED_LIGHT");
+	using Actor::Actor;
 
 	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
@@ -176,7 +183,8 @@ class LightDirectional : public Light
 public:
 	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
 
-	LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
+	// LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
+	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
@@ -189,7 +197,8 @@ public:
 	float spot_angle = 17.5f;
 	float spot_angle_fade = 5.0f;
 
-	LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
+	// LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
+	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
@@ -203,7 +212,8 @@ public:
 	glm::vec3 rotation_offset = glm::vec3(0.0f);
 	bool start_enabled = true;
 
-	LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
+	// LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
+	using LightSpot::LightSpot;
 
 	void setLight(bool is_on);
 	void toggleLight(glm::vec3 toggle_color = glm::vec3(0.0f));
@@ -227,9 +237,11 @@ public:
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
 	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
-	Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
+	// Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
+	Actor pivot_point = Actor("pivot point");
 
-	LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
+	// LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
+	using Light::Light;
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
@@ -252,7 +264,8 @@ public:
 
 	float movement_speed = 1.0f;
 
-	Ramiel();
+	// Ramiel();
+	using Actor::Actor;
 
 	void tick(int current_tick) override;
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;

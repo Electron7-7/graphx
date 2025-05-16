@@ -6,6 +6,8 @@
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
+using namespace graphx;
+
 glm::vec3 vector3_up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 vector3_front = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -13,7 +15,7 @@ glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 //
 // Actor
 //
-Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+/*Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
 : mesh(init_mesh), scale(init_scale), position_global(init_position)
 {
 	name = init_name;
@@ -22,32 +24,36 @@ Actor::Actor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, gl
 	current_state_buffer = { render_state, render_state };
 	previous_state_buffer = { render_state, render_state };
 	updateVectors();
-}
+}*/
 
-void Actor::setName(const std::string new_name)
-{
-	name = new_name;
-}
+Actor::Actor(const std::string& my_name)
+: name(my_name)/*, parent_theatre(nullptr)*/, settings(empty_settings), actor_uid(-1)
+{}
 
-void Actor::setName(const char* new_name)
-{
-	name = new_name;
-}
+Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
+: name("Untitled Actor")/*, parent_theatre(my_parent_theatre)*/, settings(my_settings), actor_uid(my_uid)
+{}
 
-std::string Actor::getName() const
-{
-	return name;
-}
+Actor::~Actor() = default;
 
-void Actor::setUID(const long manual_uid)
+void Actor::setUID(const int new_uid)
 {
-	if(manual_uid != -1)
-		UID = manual_uid;
+	actor_uid = new_uid; // Note: this is dead simple right now, but more changes in the future will bring this back to not being redundant
 }
 
 long Actor::getUID() const
 {
-	return UID;
+	return actor_uid;
+}
+
+graphx::gSettings Actor::getSettings() const
+{
+	return settings;
+}
+
+void Actor::setSettings(const graphx::gSettings& new_settings)
+{
+	settings = new_settings;
 }
 
 void Actor::highlightMe()
@@ -191,7 +197,7 @@ RenderCommands Actor::getRenderCommands()
 		{   // Todo: idk I just don't like how Actor interfaces directly with R_BufferRenderCmd, but this *is* a debug function, so... idk
 			TextRenderCmd text_command;
 			text_command.font_name = "Verdana";
-			text_command.text = std::string("Name: " + name + "\nType: " + std::string(name) + "\nUID: " + std::to_string(UID));
+			text_command.text = std::string("Name: " + name + "\nType: " + std::string(name) + "\nUID: " + std::to_string(actor_uid));
 			text_command.color = glm::vec3(1.0f);
 			text_command.scale = graphx::debug::actor_debug_menu_text_scale;
 			text_command.render_state = &current_state_buffer[state_index];
@@ -287,10 +293,10 @@ void Actor::takeABow()
 //
 // Label
 //
-Label::Label(std::string init_name, Actor *init_parent)
-: Actor(init_name, &label_mesh), parent(init_parent), text_render_command(TextRenderCmd("Verdana", init_name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
-{
-}
+// Label::Label(std::string init_name, Actor *init_parent)
+// : Actor(init_name, &label_mesh), parent(init_parent), text_render_command(TextRenderCmd("Verdana", init_name, 0.0f, 0.0f, 1.0f, glm::vec3(0.15f, 0.6f, 0.9f)))
+// {
+// }
 
 RenderCommands Label::getRenderCommands()
 {
@@ -345,10 +351,10 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 //
 // PhysicsActor
 //
-PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-: Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
-{
-}
+// PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
+// : Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
+// {
+// }
 
 void PhysicsActor::setGlobalPosition(glm::vec3 new_value)
 {
@@ -422,10 +428,10 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 //
 // RigidBodyActor
 //
-RigidBodyActor::RigidBodyActor()
-: PhysicsActor()
-{
-}
+// RigidBodyActor::RigidBodyActor()
+// : PhysicsActor()
+// {
+// }
 
 void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -473,10 +479,10 @@ void RigidBodyActor::takeABow()
 //
 // StaticBodyActor
 //
-StaticBodyActor::StaticBodyActor()
-: PhysicsActor()
-{
-}
+// StaticBodyActor::StaticBodyActor()
+// : PhysicsActor()
+// {
+// }
 
 void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -511,9 +517,9 @@ void StaticBodyActor::takeABow()
 //
 // Camera
 //
-Camera::Camera()
-{
-}
+// Camera::Camera()
+// {
+// }
 
 void Camera::tick(int current_tick)
 {}
@@ -542,13 +548,13 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 //
 // GraphXPlayer
 //
-GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::vec3 init_rotation_euler)
-: Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f, 2.0f, 1.0f))
-{
-	player_camera.euler_rotation = glm::radians(init_rotation_euler);
-	player_camera.setGlobalRotation(init_position);
-	visible = false;
-}
+// GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::vec3 init_rotation_euler)
+// : Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f, 2.0f, 1.0f))
+// {
+// 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
+// 	player_camera.setGlobalRotation(init_position);
+// 	visible = false;
+// }
 
 void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -693,12 +699,12 @@ void GraphXPlayer::takeABow()
 //
 // Light
 //
-Light::Light(std::string init_name)
-: Actor(init_name)
-{
-	debug_visible = true;
-	scale = glm::vec3(0.25f);
-}
+// Light::Light(std::string init_name)
+// : Actor(init_name)
+// {
+// 	debug_visible = true;
+// 	scale = glm::vec3(0.25f);
+// }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -747,11 +753,11 @@ RenderCommands Light::getRenderCommands()
 //
 // LightDirectional
 //
-LightDirectional::LightDirectional(std::string init_name)
-: Light(init_name)
-{
-	debug_visible = false;
-}
+// LightDirectional::LightDirectional(std::string init_name)
+// : Light(init_name)
+// {
+// 	debug_visible = false;
+// }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -779,12 +785,12 @@ RenderCommands LightDirectional::getRenderCommands()
 //
 // LightSpot
 //
-LightSpot::LightSpot(std::string init_name)
-: Light(init_name)
-{
-	debug_visible = true;
-	scale = glm::vec3(0.25f);
-}
+// LightSpot::LightSpot(std::string init_name)
+// : Light(init_name)
+// {
+// 	debug_visible = true;
+// 	scale = glm::vec3(0.25f);
+// }
 
 void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -810,15 +816,15 @@ RenderCommands LightSpot::getRenderCommands()
 //
 // LightFlashlight
 //
-LightFlashlight::LightFlashlight(std::string init_name)
-: LightSpot(init_name)
-{
-	debug_visible = false;
-	light_ambient_strength = 0.0f;
-	light_range = 120.f;
-	light_attenuation = 0.5f;
-	light_energy = 2.0f;
-}
+// LightFlashlight::LightFlashlight(std::string init_name)
+// : LightSpot(init_name)
+// {
+// 	debug_visible = false;
+// 	light_ambient_strength = 0.0f;
+// 	light_range = 120.f;
+// 	light_attenuation = 0.5f;
+// 	light_energy = 2.0f;
+// }
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -884,11 +890,11 @@ void LightFlashlight::setLightColor(bool color_toggle)
 //
 // LightTesterMover
 //
-LightTesterMover::LightTesterMover(std::string init_name)
-: Light(init_name)
-{
-	debug_visible = true;
-}
+// LightTesterMover::LightTesterMover(std::string init_name)
+// : Light(init_name)
+// {
+// 	debug_visible = true;
+// }
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -899,15 +905,16 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(pivot_speed, settings["PivotSpeed"]);
 
 	pivot_point.setGlobalPosition(pivot_position);
-	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")");
+	pivot_point.mesh = &temporary_pivot_mesh;
+	pivot_point.mesh->setName("Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")");
 	pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
-	pivot_point.mesh->setUID(4815 + UID);
+	pivot_point.mesh->setUID(4815 + getUID());
 	graphx::gSettings pivot_settings
 	{
-		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(UID) + ")")})},
-		{"MeshData", settings["MeshData"]},
+		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")})},
+		// {"MeshData", settings["MeshData"]},
 	};
-	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + UID, pivot_settings);
+	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + getUID(), pivot_settings);
 }
 
 void LightTesterMover::tick(int current_tick)
@@ -932,9 +939,9 @@ void LightTesterMover::takeABow()
 //
 // Ramiel
 //
-Ramiel::Ramiel()
-: Actor("Ramiel")
-{}
+// Ramiel::Ramiel()
+// : Actor("Ramiel")
+// {}
 
 void Ramiel::youGotACallBack(graphx::gSettings new_settings)
 {

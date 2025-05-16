@@ -8,7 +8,7 @@
 Actor* Theatre::getFlashlight() const
 {
     for(auto& actor_pair : objects)
-        if(actor_pair.second->getName().find("flashlight") != std::string::npos)
+        if(actor_pair.second->name.find("flashlight") != std::string::npos)
             return actor_pair.second;
     return nullptr;
 }
@@ -136,7 +136,7 @@ void Theatre::raiseCurtains()
     {
         PRINTERR("Theatre \"" << name << "\" doesn't have a directional light, which is pretty much a representation of the sun! I'm gonna assume you did this on purpose, so in order for the lighting to render \"properly\", I'm adding a LightDirectional light to this Theatre but making its light output pitch black.")
         createActor("LightDirectional", 55252525);
-        objects.at(55252525)->setName("THE FUCKING SUN HAS GONE OUT!!!!!");
+        objects.at(55252525)->name = "THE FUCKING SUN HAS GONE OUT!!!!!";
         static_cast<LightDirectional *>(objects.at(55252525))->light_color = glm::vec3(0.0f);
         static_cast<LightDirectional *>(objects.at(55252525))->light_energy = 0.0f;
         static_cast<LightDirectional *>(objects.at(55252525))->light_ambient_strength = 0.0f;
@@ -185,7 +185,7 @@ std::string getSettingName(graphx::gSetting setting)
     {
     case THEATRE_REFERENCE:
         if(setting.second.type() == typeid(Actor*))
-            return(std::any_cast<Actor *>(setting.second)->getName());
+            return(std::any_cast<Actor *>(setting.second)->name);
 
         if(setting.second.type() == typeid(Device*))
             return(std::any_cast<Device *>(setting.second)->getName());
@@ -211,7 +211,7 @@ std::string getSettingName(graphx::gSetting setting)
         return "C++ Reference setting";
     case SANDWICH:
         if(setting.second.type() == typeid(Actor*))
-            return(std::any_cast<Actor *>(setting.second)->getName());
+            return(std::any_cast<Actor *>(setting.second)->name);
 
         if(setting.second.type() == typeid(Device*))
             return(std::any_cast<Device *>(setting.second)->getName());
@@ -321,7 +321,7 @@ Actor* Theatre::getActor(std::string actor_name)
 {
     for(auto &pair : objects)
     {
-        if(!pair.second->getName().compare(actor_name))
+        if(!pair.second->name.compare(actor_name))
             return pair.second;
     }
 
@@ -365,7 +365,7 @@ GraphXPlayer* Theatre::getPlayer()
     if(objects.contains(player_uid))
         return static_cast<GraphXPlayer*>(objects.at(player_uid));
 
-    return new GraphXPlayer(); // TEMPORARY: AVOIDS CRASHING
+    return new GraphXPlayer("temporary player"); // TEMPORARY: AVOIDS CRASHING
 }
 
 Environment* Theatre::getEnvironment()
