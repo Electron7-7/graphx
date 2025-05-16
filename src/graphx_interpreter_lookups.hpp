@@ -21,7 +21,7 @@ using namespace graphx; // Since gSettings is still `graphx::gSettings` for now
 // template<typename T> std::shared_ptr<Actor>  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
 // template<typename T> std::shared_ptr<Device> createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
 template<typename T> Actor*  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return new T(parent_theatre, new_uid, new_settings); }
-template<typename T> Device* createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return new T; }
+template<typename T> Device* createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return new T(parent_theatre, new_uid, new_settings); }
 
 
 inline const std::map<std::string, Actor*(*)(Theatre*, const int, const gSettings&)>

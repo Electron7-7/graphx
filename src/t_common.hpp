@@ -1,8 +1,11 @@
 #ifndef GRAPHX_THEATRE_FILE_FORMAT
 #define GRAPHX_THEATRE_FILE_FORMAT
-#include "g_common_fwd.hpp"
 #include <string>
 #include <vector>
+
+#ifdef COMPILER_FORWARD_DECLARATIONS // Forward declarations
+struct Theatre;
+#endif
 
 // Might move these into graphx::interpreter someday...
 static constexpr int RAW_DATA           = 1; //< Identifies a vector of strings, using the typedef `gRawData`.

@@ -2737,3 +2737,14 @@ Oh, yeah, I forgot to give it default values LMFAO.
 AYO IT WORKS!! LETS FUCKING GOOOOO!! On to Devices, next!
 
 I had a brain blast!! I'm not going to switch to UIDs instead of raw pointers for things like an Actor's Mesh, because raw pointers make sense and are nicer to use. They can be nullptr by default, giving a nice default value that isn't an entire object, and if a default value other than nullptr is needed, I should just have default objects that I can reference to (instead of making a new default object every single time). As long as I avoid using "new", I won't have to worry about memory leaks, and as long as I'm getting these raw pointers in a safe manner from Theatre, they shouldn't be a problem! Okay, so, the next step is to finish up with constructor changing by doing all the Devices, then maybe moving on to gSettings.
+
+[05/16/25]
+DJ Smokey just dropped his new EP today, fucking awesome. Anyways, time to wrap up what I was doing last night and then go ahead and tackle probably gSettings, or I could start separating code into different files like I did in the last overhaul attempt.
+
+Aight, getting some errors from Texture because it's the one with the most annoying constructors lmfao.
+
+IT FUCKING WORKS!!! Time to change the file structure now.
+
+I'm also going to remove the forward-declaration files and use my new method.
+
+It works!! Time to commit!

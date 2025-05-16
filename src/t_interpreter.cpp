@@ -2,7 +2,8 @@
 #include "sanity.hpp"
 #include "graphx_interpreter_lookups.hpp"
 #include "g_jolt.hpp"
-#include "g_common.hpp"
+#include "g_actor.hpp"
+#include "g_theatre.hpp"
 #include "r_common.hpp"
 #include <images.h>
 #include <models.hpp>

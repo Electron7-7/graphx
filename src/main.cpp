@@ -4,6 +4,7 @@
 #include "sanity.hpp"
 #include "graphx_namespace.hpp"
 #include "g_actors.hpp"
+#include "g_theatre.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
 #include "sanity_printouts.hpp"

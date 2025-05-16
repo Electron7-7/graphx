@@ -1,4 +1,5 @@
 #include "graphx_interpreter_lookups.hpp"
+#include "g_theatre.hpp"
 #include "g_actors.hpp"
 #include "r_common.hpp"
 #include "t_settings.hpp"
@@ -32,7 +33,7 @@ Theatre::Theatre(std::string init_name, long new_uid)
 {
     stage_material = new Material(false, glm::vec3(0.5, 0.1, 0.4));
     stage_mesh = new Mesh(stage_material);
-    stage_mesh->setName("Stage Mesh for Theatre (" + name + ")");
+    stage_mesh->name = "Stage Mesh for Theatre (" + name + ")";
 }
 
 std::vector<long> Theatre::dumpActorIDs()
@@ -188,7 +189,7 @@ std::string getSettingName(graphx::gSetting setting)
             return(std::any_cast<Actor *>(setting.second)->name);
 
         if(setting.second.type() == typeid(Device*))
-            return(std::any_cast<Device *>(setting.second)->getName());
+            return(std::any_cast<Device *>(setting.second)->name);
 
         return "Unknown Theatre Reference setting";
     case RAW_DATA:
@@ -214,7 +215,7 @@ std::string getSettingName(graphx::gSetting setting)
             return(std::any_cast<Actor *>(setting.second)->name);
 
         if(setting.second.type() == typeid(Device*))
-            return(std::any_cast<Device *>(setting.second)->getName());
+            return(std::any_cast<Device *>(setting.second)->name);
 
         return "Unknown Theatre Reference setting (Sandwich Bun)";
     case EXTERNAL_REFERENCE:
@@ -341,7 +342,7 @@ Device* Theatre::getDevice(long device_uid)
 Device* Theatre::getDevice(std::string device_name)
 {
     for(auto &pair : devices)
-        if(!pair.second->getName().compare(device_name))
+        if(!pair.second->name.compare(device_name))
             return pair.second;
 
     PRINTERR("Hey! Someone asked for a Device named " << device_name << ", but none were found! The \"getDevice\" function will now return a nullptr; if the engine crashed or something wrong is happening, this may be why!")
@@ -381,7 +382,7 @@ Environment* Theatre::getEnvironment()
             }
         }
 
-        return new Environment();
+        return new Environment("Safety Environment"); // TEMPORARY: AVOIDS CRASHING
     }
 
     if(devices.contains(environment_uid))

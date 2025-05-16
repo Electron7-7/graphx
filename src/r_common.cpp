@@ -104,23 +104,15 @@ template<> void GLShader::setUniform<glm::mat4>(const std::string &name, glm::ma
 //
 // Device
 //
-Device::Device()
+Device::Device(const std::string& my_name)
+: name(my_name)/*, parent_theatre(nullptr)*/, settings(empty_settings), device_uid(-1)
 {}
 
-void Device::setName(std::string new_name)
-{
-	name = new_name;
-}
+Device::Device(Theatre* my_parent_theatre, const int my_uid, const graphx::gSettings& my_settings)
+: name("Untitled Device")/*, parent_theatre(my_parent_theatre)*/, settings(my_settings), device_uid(my_uid)
+{}
 
-void Device::setName(char *new_name)
-{
-	name = new_name;
-}
-
-const std::string Device::getName() const
-{
-	return name;
-}
+Device::~Device() = default;
 
 void Device::loadSettings(graphx::gSettings new_settings)
 {
@@ -142,25 +134,29 @@ void Device::prepForDestruction()
 	ready_to_destroy = true;
 }
 
-void Device::setUID(long manual_uid)
+graphx::gSettings Device::getSettings() const
 {
-	if(manual_uid != -1)
-		UID = manual_uid;
+	return settings;
 }
 
-long Device::getUID()
+void Device::setSettings(const graphx::gSettings& new_settings)
 {
-	return UID;
+	settings = new_settings;
+}
+
+void Device::setUID(int new_uid)
+{
+	device_uid = new_uid;
+}
+
+int Device::getUID() const
+{
+	return device_uid;
 }
 
 //
 // Collider
 //
-Collider::Collider()
-{
-	name = "Untitled Collider";
-}
-
 Collider::~Collider()
 {
 	J_RemoveAndDestroyBody(body_id);
@@ -226,11 +222,11 @@ void Collider::prepForDestruction()
 //
 // Environment
 //
-Environment::Environment(float init_ambient_light_amount, glm::vec3 init_ambient_light_color)
-: ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount)
-{
-	name = "Untitled Environment";
-}
+// Environment::Environment(float init_ambient_light_amount, glm::vec3 init_ambient_light_color)
+// : ambient_light_color(init_ambient_light_color), ambient_light_amount(init_ambient_light_amount)
+// {
+// 	name = "Untitled Environment";
+// }
 
 void Environment::loadSettings(graphx::gSettings new_settings)
 {
@@ -248,12 +244,19 @@ void Environment::loadSettings(graphx::gSettings new_settings)
 //
 // Texture
 //
-Texture::Texture()
-{
-	name = "Untitled Texture";
-}
+Texture::Texture(const std::string& init_name)
+: Device(init_name)
+{}
 
-Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
+Texture::Texture(std::vector<unsigned char*> init_texture_data, std::vector<unsigned int> init_texture_size)
+: Device("Untitled Texture"), texture_data(init_texture_data), texture_size(init_texture_size)
+{}
+
+Texture::Texture(unsigned char* init_texture_data, unsigned int init_texture_size)
+: Texture(std::vector<unsigned char*>{init_texture_data}, std::vector<unsigned int>{init_texture_size})
+{}
+
+/*Texture::Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size)
 {
 	name = "Untitled Texture";
 	texture_data = init_texture_data;
@@ -297,7 +300,7 @@ Texture::Texture(std::string init_texture_data, unsigned int init_texture_size)
 	name = "Untitled Texture";
 	texture_size = {init_texture_size};
 	texture_data = {reinterpret_cast<unsigned char *>(const_cast<char *>(init_texture_data.c_str()))};
-}
+}*/
 
 void Texture::loadSettings(graphx::gSettings new_settings)
 {
@@ -307,21 +310,35 @@ void Texture::loadSettings(graphx::gSettings new_settings)
 //
 // Material
 //
-Material::Material()
+Material::Material(const bool use_missing)
+: Device("Missing Material"), specular_strength(0.0f)
 {
-	name = "Untitled Material";
+	if(use_missing)
+	{
+		mat_fullbright = true;
+		diffuse_texture_name = MISSING_TEXTURE;
+	}
 }
 
+// Todo: Use the bottom two instead of the rest of the constructors
+// Material::Material(glm::vec3 init_color, bool is_fullbright)
+// : Device("Untitled Material"), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+// {}
+
+// Material::Material(std::string init_name, std::string init_diffuse_texture_name, const bool is_fullbright, glm::vec3 init_color, std::string init_specular_texture_name, float init_specular_strength, int init_specular_sharpness)
+// : Device(init_name), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+// {}
+
 Material::Material(bool is_fullbright, glm::vec3 init_color)
-: color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+: Device("Untitled Material"), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
 Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: Device("Untitled Material"), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+: Device("Untitled Material"), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
 void Material::loadSettings(graphx::gSettings new_settings)
@@ -539,22 +556,17 @@ size_t MeshData::indices_size()
 //
 // Mesh
 //
-Mesh::Mesh()
-{
-	name = "Untitled Mesh";
-}
+Mesh::Mesh(const std::string& my_mesh_data_name, const int my_material_uid)
+: Device("Untitled Model")/*, material_uid(my_material_uid)*/, mesh_data_name(my_mesh_data_name)
+{}
 
 Mesh::Mesh(Material *new_material, std::string init_mesh_data_name)
-{
-	name = "Untitled Mesh";
-	material = new_material;
-}
+: Device("Untitled Mesh"), material(new_material), mesh_data_name(init_mesh_data_name)
+{}
 
 Mesh::Mesh(std::string init_mesh_data_name)
-{
-	name = "Untitled Mesh";
-	mesh_data_name = init_mesh_data_name;
-}
+: Device("Untitled Mesh"), mesh_data_name(init_mesh_data_name)
+{}
 
 void Mesh::prepForDestruction()
 {
@@ -578,13 +590,6 @@ void Mesh::loadSettings(graphx::gSettings new_settings)
 //
 // Sprite
 //
-Sprite::Sprite(std::string init_name)
-: Mesh(init_name)
-{
-	mesh_data_name = GRAPHX_QUAD;
-	name = init_name;
-}
-
 void Sprite::loadSettings(graphx::gSettings new_settings)
 {
 	Mesh::loadSettings(new_settings);

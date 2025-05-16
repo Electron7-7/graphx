@@ -3,13 +3,16 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "sanity_printouts.hpp"
 #include "graphx_namespace.hpp"
-#include "g_common_fwd.hpp"
-#include "r_common_fwd.hpp"
 #include "t_common.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <algorithm>
 #include <Jolt/Jolt.h>
+
+#ifdef COMPILER_FORWARD_DECLARATIONS // Forward declarations
+class Actor;
+struct Device;
+#endif
 
 #define DEFAULT_VALUE_SETTING 99
 

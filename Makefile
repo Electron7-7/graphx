@@ -21,7 +21,7 @@ WINCLUDES = -I src/include -I src/windows_dependencies/include
 WLIBS = -L src/windows_dependencies/lib/jolt-mingw-w64 -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
 
 JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
-GRAPHXFLAGS = -D GRAPHX_COMPILING
+GRAPHXFLAGS = -D COMPILER_FORWARD_DECLARATIONS
 
 LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
 WINDOWS = GraphX_Windows_x86_64.exe
@@ -55,15 +55,16 @@ EMBED_OBJS =          \
 	$(O)/theatres.opp \
 	$(O)/models.opp
 
-GRAPHX_OBJS =              		 \
-	$(O)/g_math.opp        		 \
-	$(O)/g_jolt.opp        		 \
-	$(O)/r_common.opp      		 \
-	$(O)/g_actors.opp      		 \
-	$(O)/g_imgui.opp       		 \
-	$(O)/r_renderer.opp    		 \
-	$(O)/t_interpreter.opp 		 \
-	$(O)/g_theatres.opp
+GRAPHX_OBJS =              \
+	$(O)/g_math.opp        \
+	$(O)/g_jolt.opp        \
+	$(O)/g_actor.opp       \
+	$(O)/g_actors.opp      \
+	$(O)/g_imgui.opp       \
+	$(O)/t_interpreter.opp \
+	$(O)/g_theatre.opp     \
+	$(O)/r_common.opp      \
+	$(O)/r_renderer.opp
 
 OBJS =             	\
 	$(EXT_OBJS)    	\
@@ -92,6 +93,7 @@ MODELS_C = $(SRC)/models.cpp
 MODELS_H = $(SRC)/include/models.hpp
 MDLS = $(wildcard $(M)/*.obj)
 MTLS = $(wildcard $(M)/*.mtl)
+
 
 PHONY = obj_testing all clean dirty_clean clean_resources embed_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models compile_commands debug release linux windows test build
 
@@ -136,7 +138,7 @@ rebuild_models:
 	-make -s $(MODELS_C)
 
 compile_commands:
-	$(eval GRAPHXFLAGS = -D GRAPHX_DEBUG)
+	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
 
 test: eval_test
 	$(info GraphX Will Test-Run After Compiling)
@@ -149,12 +151,11 @@ debug: rebuild_shaders rebuild_theatres
 	$(info Version: Debug)
 	$(eval LINUX := GraphXDebug)
 	$(eval WINDOWS := GraphXDebug.exe)
-	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING -D GRAPHX_DEBUG)
+	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
 	-rm -f build/*.tmp
 
 release: clean_resources embed_resources
 	$(info Version: Release)
-	$(eval GRAPHXFLAGS = -D GRAPHX_COMPILING)
 	-rm -f build/*.tmp
 
 linux: NAME = $(LINUX)

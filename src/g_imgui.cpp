@@ -1,6 +1,6 @@
 #include "g_imgui.hpp"
-// #include "r_common.hpp"
-#include "g_common.hpp"
+#include "g_actor.hpp"
+#include "g_theatre.hpp"
 #include "graphx_namespace.hpp"
 #include "imgui_stdlib.h"
 #include <models.hpp>

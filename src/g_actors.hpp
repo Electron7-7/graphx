@@ -1,20 +1,16 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
-#include "g_common.hpp"
+#include "g_devices.hpp"
 #include "r_common.hpp"
+#include "g_actor.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Character/Character.h>
 
-#define ACTOR_ACTOR 		0
-#define ACTOR_LIGHT 		1
-#define ACTOR_PHYSICS		2
-#define ACTOR_PLAYER		3
-
-#define LIGHT_POINT			0
-#define LIGHT_DIRECTIONAL	1
-#define LIGHT_SPOT			2
+#ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files
+class LightFlashlight; // Forward Declaration
+#endif
 
 class Label : public Actor
 {
@@ -22,7 +18,6 @@ public:
 	Actor *parent = nullptr;
 	float label_alpha = 0.0f;
 
-	// Label(std::string init_name = "UNTITLED_LABEL", Actor *init_parent = nullptr);
 	using Actor::Actor;
 
 	RenderCommands getRenderCommands() override;
@@ -37,11 +32,10 @@ protected:
 class PhysicsActor: public Actor
 {
 public:
-	Collider *collider = new Collider();
+	Collider *collider = new Collider("PhysicsActor Collider");
 
 	float mass = 1.0f; // in kg
 
-	// PhysicsActor(std::string init_name = "Untitled Physics Actor", Mesh *init_mesh = new Mesh(), glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_euler_degrees = glm::vec3(0.0f), glm::vec3 init_scale = glm::vec3(1.0f));
 	using Actor::Actor;
 
 	void setGlobalPosition(glm::vec3 new_value) override final;
@@ -71,7 +65,6 @@ protected:
 class RigidBodyActor : public PhysicsActor
 {
 public:
-	// RigidBodyActor();
 	using PhysicsActor::PhysicsActor;
 
 	void tick(int current_tick) override;
@@ -85,7 +78,6 @@ public:
 class StaticBodyActor : public PhysicsActor
 {
 public:
-	// StaticBodyActor();
 	using PhysicsActor::PhysicsActor;
 
 	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
@@ -100,7 +92,6 @@ public:
 	glm::vec3 euler_rotation = glm::radians(glm::vec3(0.0f, -90.0f, 0.0f));
 	glm::vec3 euler_rotation_local = glm::vec3(0.0f);
 
-	// Camera();
 	using Actor::Actor;
 
 	void tick(int current_tick) override;
@@ -129,7 +120,6 @@ public:
 
 	JPH::Ref<JPH::CharacterSettings> player_settings;
 
-	// GraphXPlayer(std::string new_name = "Untitled GraphXPlayer", glm::vec3 init_position = glm::vec3(0.0f), glm::vec3 init_rotation_euler = glm::vec3(0.0f));
 	using Actor::Actor;
 
 	glm::mat4 getViewMatrix();
@@ -168,7 +158,6 @@ public:
 	// Other
 	// Texture *texture_projection = nullptr;
 
-	// Light(std::string init_name = "UNTITLED_LIGHT");
 	using Actor::Actor;
 
 	RenderCommands getRenderCommands() override;
@@ -183,7 +172,6 @@ class LightDirectional : public Light
 public:
 	glm::vec3 directional_direction = glm::vec3(0.0f, -0.7f, 0.2f); // Funny name
 
-	// LightDirectional(std::string init_name = "UNTITLED_DIRECTIONAL_LIGHT");
 	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
@@ -197,7 +185,6 @@ public:
 	float spot_angle = 17.5f;
 	float spot_angle_fade = 5.0f;
 
-	// LightSpot(std::string init_name = "UNTITLED_SPOT_LIGHT");
 	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
@@ -212,7 +199,6 @@ public:
 	glm::vec3 rotation_offset = glm::vec3(0.0f);
 	bool start_enabled = true;
 
-	// LightFlashlight(std::string init_name = "UNTITLED_FLASHLIGHT");
 	using LightSpot::LightSpot;
 
 	void setLight(bool is_on);
@@ -240,7 +226,6 @@ public:
 	// Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
 	Actor pivot_point = Actor("pivot point");
 
-	// LightTesterMover(std::string init_name = "UNTITLED_LIGHT_TESTER_MOVER");
 	using Light::Light;
 
 	void tick(int current_tick) override;
@@ -264,7 +249,6 @@ public:
 
 	float movement_speed = 1.0f;
 
-	// Ramiel();
 	using Actor::Actor;
 
 	void tick(int current_tick) override;

@@ -1,12 +1,15 @@
 #ifndef GRAPHXNAMESPACE
 #define GRAPHXNAMESPACE
-#include "g_common_fwd.hpp"
-// #include "r_common_fwd.hpp"
 #include <glm/glm.hpp>
-// #include <array>
 #include <any>
 #include <unordered_map>
 #include <string>
+
+#ifdef COMPILER_FORWARD_DECLARATIONS // Forward Declarations
+struct Theatre;
+class GraphXPlayer;
+struct Environment;
+#endif
 
 #define GRAPHXTHEATRE_EXTENSION std::string(".gt")
 

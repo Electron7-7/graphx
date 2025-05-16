@@ -1,6 +1,6 @@
 #include "r_common.hpp"
-#include "g_common.hpp"
 #include "g_actors.hpp"
+#include "g_theatre.hpp"
 #include "sanity.hpp"
 #include "t_common.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -11,8 +11,6 @@
 #include <tiny_obj_loader.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include <cmath>
 #include <filesystem> // Yes, the devil hath been invoked...
 
@@ -71,7 +69,7 @@ GLFWwindow *W_CreateWindow(int width, int height, const char *title, bool make_c
 	return new_window;
 }
 
-void W_SwapAndClear(GLFWwindow *w_window, glm::vec4 w_clear_color)
+void W_SwapAndClear(GLFWwindow* w_window, glm::vec4 w_clear_color)
 {
 	glfwSwapBuffers(w_window);
 	glClearColor(w_clear_color[0], w_clear_color[1], w_clear_color[2], w_clear_color[3]);
@@ -109,7 +107,7 @@ std::string T_LoadImageFile(std::string file_path)
 	int image_channels;
 	stbi_info(file_path_checked.c_str(), &image_x, &image_y, &image_channels);
 
-	Texture new_texture(file_string_data.str(), 1600*1600);
+	Texture new_texture(reinterpret_cast<unsigned char*>(const_cast<char*>(file_string_data.str().c_str())), 1600*1600); // Terrible fucking casting
 
 	texture_storage[texture_name] = new_texture;
 
