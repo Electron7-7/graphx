@@ -4,6 +4,8 @@
 #include <gmath.hpp>
 #include <models.hpp>
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 #include <GLFW/glfw3.h>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
@@ -64,10 +66,6 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 //
 // PhysicsActor
 //
-// PhysicsActor::PhysicsActor(std::string init_name, Mesh *init_mesh, glm::vec3 init_position, glm::vec3 init_euler_degrees, glm::vec3 init_scale)
-// : Actor(init_name, init_mesh, init_position, init_euler_degrees, init_scale)
-// {
-// }
 
 void PhysicsActor::setGlobalPosition(glm::vec3 new_value)
 {
@@ -141,10 +139,6 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 //
 // RigidBodyActor
 //
-// RigidBodyActor::RigidBodyActor()
-// : PhysicsActor()
-// {
-// }
 
 void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -192,10 +186,6 @@ void RigidBodyActor::takeABow()
 //
 // StaticBodyActor
 //
-// StaticBodyActor::StaticBodyActor()
-// : PhysicsActor()
-// {
-// }
 
 void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -230,9 +220,6 @@ void StaticBodyActor::takeABow()
 //
 // Camera
 //
-// Camera::Camera()
-// {
-// }
 
 void Camera::tick(int current_tick)
 {}
@@ -256,18 +243,16 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 
 	getSetting(position_local, settings["LocalPosition"]);
 	getSetting(euler_rotation_local, settings["LocalRotationDegrees"]);
+
+	euler_rotation = glm::radians(glm::vec3(0.0f));
+	quaternion = glm::quat(euler_rotation);
+	updateVectors();
+	PRINTDEBUG("Camera Rotation: " << glm::to_string(getRotation<glm::vec3>()));
 }
 
 //
 // GraphXPlayer
 //
-// GraphXPlayer::GraphXPlayer(std::string new_name, glm::vec3 init_position, glm::vec3 init_rotation_euler)
-// : Actor(new_name, &player_mesh, init_position, init_rotation_euler, glm::vec3(1.0f, 2.0f, 1.0f))
-// {
-// 	player_camera.euler_rotation = glm::radians(init_rotation_euler);
-// 	player_camera.setGlobalRotation(init_position);
-// 	visible = false;
-// }
 
 void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -282,6 +267,8 @@ void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
 	getSetting(field_of_view, settings["FOV"]);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
+
+	player_camera.youGotACallBack(); // The camera never gets tick() or youGotACallback() called, since it's not a child of the Theatre
 }
 
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
@@ -412,12 +399,6 @@ void GraphXPlayer::takeABow()
 //
 // Light
 //
-// Light::Light(std::string init_name)
-// : Actor(init_name)
-// {
-// 	debug_visible = true;
-// 	scale = glm::vec3(0.25f);
-// }
 
 void Light::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -466,11 +447,6 @@ RenderCommands Light::getRenderCommands()
 //
 // LightDirectional
 //
-// LightDirectional::LightDirectional(std::string init_name)
-// : Light(init_name)
-// {
-// 	debug_visible = false;
-// }
 
 void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -498,12 +474,6 @@ RenderCommands LightDirectional::getRenderCommands()
 //
 // LightSpot
 //
-// LightSpot::LightSpot(std::string init_name)
-// : Light(init_name)
-// {
-// 	debug_visible = true;
-// 	scale = glm::vec3(0.25f);
-// }
 
 void LightSpot::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -529,15 +499,6 @@ RenderCommands LightSpot::getRenderCommands()
 //
 // LightFlashlight
 //
-// LightFlashlight::LightFlashlight(std::string init_name)
-// : LightSpot(init_name)
-// {
-// 	debug_visible = false;
-// 	light_ambient_strength = 0.0f;
-// 	light_range = 120.f;
-// 	light_attenuation = 0.5f;
-// 	light_energy = 2.0f;
-// }
 
 void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -603,11 +564,6 @@ void LightFlashlight::setLightColor(bool color_toggle)
 //
 // LightTesterMover
 //
-// LightTesterMover::LightTesterMover(std::string init_name)
-// : Light(init_name)
-// {
-// 	debug_visible = true;
-// }
 
 void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 {
@@ -652,9 +608,6 @@ void LightTesterMover::takeABow()
 //
 // Ramiel
 //
-// Ramiel::Ramiel()
-// : Actor("Ramiel")
-// {}
 
 void Ramiel::youGotACallBack(graphx::gSettings new_settings)
 {

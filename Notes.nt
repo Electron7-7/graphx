@@ -2750,3 +2750,6 @@ I'm also going to remove the forward-declaration files and use my new method.
 It works!! Time to commit!
 
 I now have separated g_actor, g_actors, g_device, g_devices, and g_theatre and it works!
+
+[05/19/25]
+Alright, lets try this again with a clear head. I'm going to start by fixing the default rotation of the Camera, and then I'll move on to tweaking either Actor, Device, or Theatre to match their overhaul. Okay, fixed the camera temporarily; I think I want to start the overhaul with Device, since it's the simplest and (hopefully) easiest.
