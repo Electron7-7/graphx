@@ -258,6 +258,4 @@ public:
 extern glm::vec3 vector3_up;
 extern glm::vec3 vector3_front;
 extern glm::vec3 vector3_right;
-
-template<typename T> Actor *createNewActor() { return new T; }
 #endif

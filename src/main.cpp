@@ -7,6 +7,7 @@
 #include "g_theatre.hpp"
 #include "g_jolt.hpp"
 #include "g_imgui.hpp"
+#include "r_rendering.hpp"
 #include "sanity_printouts.hpp"
 #include "t_common.hpp"
 #include "imgui.h"

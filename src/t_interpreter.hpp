@@ -5,10 +5,11 @@
 // DELETE THESE WHEN I CHANGE gSettings TO BE A STRUCT
 #include <any>
 #include <unordered_map>
-#ifdef COMPILER_FORWARD_DECLARATIONS
-// struct gSettings;
 typedef std::pair<int, std::any> gSetting;
 typedef std::unordered_map<std::string, gSetting> gSettings;
+// DELETE THESE WHEN I CHANGE gSettings TO BE A STRUCT
+#ifdef COMPILER_FORWARD_DECLARATIONS
+// struct gSettings;
 #endif
 
 class GraphXTheatreInterpreter
@@ -28,12 +29,19 @@ public:
     std::string getCategoryString(int Category);
     std::string getTheatreStructure(const std::vector<StringSettings>& AllSettings);
 
-    void loadTheatre(const long TheatreID, Theatre& OutputTheatre);
-    void interpretRawData(gSettings& Settings, const std::string& Name, const std::string& RawData);
-    void interpretCppReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
-    void interpretExternalReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
-    void interpretTheatreReference(gSettings& Settings, const std::string& Name, const std::string& ReferencedName, Theatre& CurrentTheatre, std::vector<StringSettings>& AllSettings);
-    void interpretSandwich(gSettings& Settings, std::vector<StringSettings>& AllSettings, const std::string& SandwichName, int& FirstIterator, int& SecondIterator, const unsigned long& NumberOfSettings, Theatre& CurrentTheatre);
+    void    interpretCppReference(gSettings &current_object_settings, std::string variable_name, std::string cpp_reference);
+    void    interpretRawData(gSettings &current_object_settings, std::string variable_name, std::string raw_data);
+    void    interpretExternalReference(gSettings &current_object_settings, std::string variable_name, std::string external_reference);
+    void    interpretTheatreReference(gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, std::vector<StringSettings>& theatre_settings);
+    void    interpretSandwich(gSettings &current_object_settings, std::vector<StringSettings>& theatre_settings, std::string current_object_name, int &i, int &it, unsigned long settings_size, Theatre &new_theatre);
+    Theatre loadTheatre(long theatre_uid);
+    // REPLACE THE ABOVE FUNCTIONS WITH THESE WHEN gSettings IS OVERHAULED
+    // void loadTheatre(const long TheatreID, Theatre& OutputTheatre);
+    // void interpretRawData(gSettings& Settings, const std::string& Name, const std::string& RawData);
+    // void interpretCppReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
+    // void interpretExternalReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
+    // void interpretTheatreReference(gSettings& Settings, const std::string& Name, const std::string& ReferencedName, Theatre& CurrentTheatre, std::vector<StringSettings>& AllSettings);
+    // void interpretSandwich(gSettings& Settings, std::vector<StringSettings>& AllSettings, const std::string& SandwichName, int& FirstIterator, int& SecondIterator, const unsigned long& NumberOfSettings, Theatre& CurrentTheatre);
 private:
     // This is just me making the error printout easier to find and add to
     std::string what_are_the_valid_extensions =              \
@@ -41,4 +49,9 @@ private:
         "(3D Model)\n\t"      + three_dee_model_extensions + \
         "(Image)\n\t"         + image_extensions;
 };
+
+namespace graphx
+{
+    extern GraphXTheatreInterpreter Interpreter;
+}
 #endif

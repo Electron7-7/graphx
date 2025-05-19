@@ -63,8 +63,6 @@ private:
 
 typedef std::vector<StringSetting> StringSettings;
 
-extern std::string valid_extensions; // Todo: this will be replaced by GraphXInterpreter::validExtensions()
-
 void I_LoadNewMainTheatre(long TheatreUID);
 void I_LoadChildTheatre(long TheatreUID, std::shared_ptr<Theatre> ParentTheatre);
 void I_EmbedExternalTheatre(const std::string& GraphXTheatreFilePath);

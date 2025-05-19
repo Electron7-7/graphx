@@ -1,7 +1,7 @@
 #include "graphx_interpreter_lookups.hpp"
 #include "g_theatre.hpp"
 #include "g_actors.hpp"
-#include "r_common.hpp"
+#include "r_rendering.hpp"
 #include "t_settings.hpp"
 #include <set>
 

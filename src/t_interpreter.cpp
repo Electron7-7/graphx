@@ -1,17 +1,16 @@
-#include "t_common.hpp"
-#include "sanity.hpp"
+#include "t_interpreter.hpp"
 #include "graphx_interpreter_lookups.hpp"
-#include "g_jolt.hpp"
-#include "g_actor.hpp"
+#include "sanity_executable_locator.hpp"
+#include "sanity_printouts.hpp"
+#include "r_rendering.hpp"
 #include "g_theatre.hpp"
-#include "r_common.hpp"
-#include <images.h>
-#include <models.hpp>
 #include <theatres.hpp>
 #include <set>
-#include <filesystem> // Yes, the devil hath been invoked... I'm sorry
-#include <fstream>
-#include <sstream>
+#include <fstream> // Yes, the devil hath been invoked... I'm sorry
+
+// Todo: Move this into graphx_namespace.cpp when that gets made
+// GraphX
+GraphXTheatreInterpreter graphx::Interpreter = GraphXTheatreInterpreter();
 
 bool loading_new_main_theatre = true; // Definitely wanna replace this with something a little more sophisticated.
 std::string empty_settings_identifier = "FUCKYOU";
@@ -34,7 +33,15 @@ void StringSetting::changeSetting(const std::string& new_value, const int new_ca
 	category = (new_category != LEAVE_UNCHANGED) ? new_category : category;
 }
 
-std::vector<StringSettings> theatreParser(std::string theatre_data)
+//-------------------------
+// GraphXTheatreInterpreter
+//-------------------------
+std::string GraphXTheatreInterpreter::validExtensions() const
+{
+	return three_dee_model_extensions + graphx_theatre_extensions + image_extensions;
+}
+
+std::vector<StringSettings> GraphXTheatreInterpreter::theatreParser(std::string theatre_data)
 {
 	std::set<char> whitespace =
 	{
@@ -236,7 +243,7 @@ std::vector<StringSettings> theatreParser(std::string theatre_data)
 	return all_settings;
 }
 
-std::string getVariableTypeName(int variable_type)
+std::string GraphXTheatreInterpreter::getCategoryString(int variable_type)
 {
 	std::string type_return;
 
@@ -259,7 +266,7 @@ std::string getVariableTypeName(int variable_type)
 		break;
 	default:
 		if(variable_type > StringSetting::SANDWICH)
-			type_return = getVariableTypeName(variable_type - StringSetting::SANDWICH);
+			type_return = getCategoryString(variable_type - StringSetting::SANDWICH);
 		else
 			type_return = "UNKNOWN";
 		break;
@@ -268,7 +275,7 @@ std::string getVariableTypeName(int variable_type)
 	return type_return + " (" + std::to_string(variable_type) + ")";
 }
 
-std::string getTheatreStructure(const std::vector<StringSettings>& all_settings)
+std::string GraphXTheatreInterpreter::getTheatreStructure(const std::vector<StringSettings>& all_settings)
 {
 	std::string structure_out = "Theatre Structure\n\nTheatre \"" + all_settings.at(0).at(0).value + "\"\n";
 
@@ -276,13 +283,13 @@ std::string getTheatreStructure(const std::vector<StringSettings>& all_settings)
 	{
 		structure_out += "\n\t" + all_settings.at(i).at(0).name + " (Assumed UID: " + std::to_string(i) + ") \"" + " \"" + all_settings.at(i).at(0).value + "\"\n";
 		for(int it = 1 ; it < all_settings.at(i).size() ; it++)
-			structure_out += "\t\t" + all_settings.at(i).at(it).name + " = " + all_settings.at(i).at(it).value + " (type: " + getVariableTypeName(all_settings.at(i).at(it).category) + ")\n";
+			structure_out += "\t\t" + all_settings.at(i).at(it).name + " = " + all_settings.at(i).at(it).value + " (type: " + getCategoryString(all_settings.at(i).at(it).category) + ")\n";
 	}
 
 	return structure_out;
 }
 
-void interpretCppReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string cpp_reference)
+void GraphXTheatreInterpreter::interpretCppReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string cpp_reference)
 {
 	if(!cpp_definitions.contains(cpp_reference))
 	{
@@ -293,7 +300,7 @@ void interpretCppReference(graphx::gSettings &current_object_settings, std::stri
 	current_object_settings[variable_name] = graphx::gSetting(StringSetting::CPP_REFERENCE, cpp_definitions.at(cpp_reference));
 }
 
-void interpretRawData(graphx::gSettings &current_object_settings, std::string variable_name, std::string raw_data)
+void GraphXTheatreInterpreter::interpretRawData(graphx::gSettings &current_object_settings, std::string variable_name, std::string raw_data)
 {
 	std::set<char> forgiveness =
 	{
@@ -351,30 +358,11 @@ void interpretRawData(graphx::gSettings &current_object_settings, std::string va
 	current_object_settings[variable_name] = graphx::gSetting(StringSetting::RAW_DATA, gRawData{raw_data});
 }
 
-// This is how I keep track of supported file types/extensions without having to write them out more than once.
-// I define specific file types as strings that contain all the supported file extensions and I
-// add all these strings to "valid_extensions", which is what "loadExternalFile" uses to check if a
-// setting is referencing a supported file type.
-std::string three_dee_model_extensions = "obj";
-std::string graphx_theatre_extensions = "gt";
-std::string image_extensions = "png jpg jpeg bmp webp";
-
-std::string valid_extensions =   \
-	three_dee_model_extensions + \
-	graphx_theatre_extensions  + \
-	image_extensions;
-
-// This is just me making the error printout easier to find and add to
-std::string what_are_the_valid_extensions =              \
-	"(GraphXTheatre)\n\t" + graphx_theatre_extensions  + \
-	"(3D Model)\n\t"      + three_dee_model_extensions + \
-	"(Image)\n\t"         + image_extensions;
-
-void interpretExternalReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string external_reference)
+void GraphXTheatreInterpreter::interpretExternalReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string external_reference)
 {
 	std::string file_extension = external_reference.substr(external_reference.find_last_of(".") + 1);
 
-	if(valid_extensions.find(file_extension) == std::string::npos)
+	if(graphx::Interpreter.validExtensions().find(file_extension) == std::string::npos)
 	{
 		PRINTERR("Tried to interpret an External Reference setting for a file type that is not supported! Supported files are:\n" << what_are_the_valid_extensions)
 		return;
@@ -398,7 +386,7 @@ void interpretExternalReference(graphx::gSettings &current_object_settings, std:
 	}
 }
 
-void interpretTheatreReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, std::vector<StringSettings>& theatre_settings)
+void GraphXTheatreInterpreter::interpretTheatreReference(graphx::gSettings &current_object_settings, std::string variable_name, std::string theatre_reference, Theatre &new_theatre, std::vector<StringSettings>& theatre_settings)
 {
 	std::string class_name = variable_name;
 	if(variable_name.find(':') != std::string::npos)
@@ -456,7 +444,7 @@ void interpretTheatreReference(graphx::gSettings &current_object_settings, std::
 		current_object_settings[variable_name] = graphx::gSetting(StringSetting::THEATRE_REFERENCE, new_theatre.getDevice(theatre_reference));
 }
 
-void interpretSandwich(graphx::gSettings &current_object_settings, std::vector<StringSettings>& theatre_settings, std::string current_object_name, int &i, int &it, unsigned long settings_size, Theatre &new_theatre)
+void GraphXTheatreInterpreter::interpretSandwich(graphx::gSettings &current_object_settings, std::vector<StringSettings>& theatre_settings, std::string current_object_name, int &i, int &it, unsigned long settings_size, Theatre &new_theatre)
 {
 	graphx::gSettings sandwich_settings;
 	StringSetting sandwich_bun_setting = theatre_settings[i][it];
@@ -514,7 +502,7 @@ void interpretSandwich(graphx::gSettings &current_object_settings, std::vector<S
 }
 
 // loadTheatre should not be called directly, which is why it's not in the header file
-Theatre loadTheatre(long theatre_uid)
+Theatre GraphXTheatreInterpreter::loadTheatre(long theatre_uid)
 {
 	if(!embedded_theatres.count(theatre_uid))
 	{
@@ -592,7 +580,7 @@ void I_LoadNewMainTheatre(long theatre_uid)
 	time_to_store_buffers = false;
 
 	graphx::current::theatre.dropCurtains();
-	graphx::current::theatre = loadTheatre(theatre_uid);
+	graphx::current::theatre = Interpreter.loadTheatre(theatre_uid);
 	graphx::current::theatre.raiseCurtains();
 	jolt_physics_system.OptimizeBroadPhase();
 

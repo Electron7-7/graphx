@@ -2759,3 +2759,5 @@ Ugh, I just remembered... gSettings and the interpreter... Fine, I guess I'll do
 Actually, lets start even smaller by changing t_common.hpp.
 
 Okay, it works! I've changed the StringSettings to a struct and also changed the function names. Now, time to start working on the interpreter, I think. Also, a note: there are huge fucking memory leaks, but that's to be expected as I fixed that in the broken overhaul.
+
+Okay, I implemented the interpreter and also split up r_rendering.hpp and it works!
