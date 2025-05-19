@@ -14,6 +14,8 @@ class Actor;
 struct Device;
 #endif
 
+typedef std::vector<std::string> gRawData;
+
 #define DEFAULT_VALUE_SETTING 99
 
 #define GRAB_SETTING_ERR_DEVICE_POINTER     -4
@@ -48,9 +50,9 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 		return 0;
 	}
 
-	if(setting_type == RAW_DATA)
+	if(setting_type == StringSetting::RAW_DATA)
 	{
-		graphx::interpreter::gRawData raw_data = std::any_cast<graphx::interpreter::gRawData>(set_value);
+		gRawData raw_data = std::any_cast<gRawData>(set_value);
 		std::string raw_data_lower = raw_data[0];
 		std::transform(raw_data_lower.begin(), raw_data_lower.end(), raw_data_lower.begin(), [](unsigned char c)
 		{
@@ -134,7 +136,7 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 		}
 	}
 
-	else if(setting_type == THEATRE_REFERENCE)
+	else if(setting_type == StringSetting::THEATRE_REFERENCE)
 	{
 		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
 		{
@@ -161,7 +163,7 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 		}
 	}
 
-	else if(setting_type == SANDWICH)
+	else if(setting_type == StringSetting::SANDWICH)
 	{
 		if constexpr(std::is_base_of_v<Device, std::remove_pointer_t<T>>)
 		{
@@ -179,7 +181,7 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 		return GRAB_SETTING_ERR_SANDWICH_BUN;
 	}
 
-	else if(setting_type == CPP_REFERENCE)
+	else if(setting_type == StringSetting::CPP_REFERENCE)
 	{
 		if(set_value.type() != typeid(variable))
 		{
@@ -194,7 +196,7 @@ template<typename T> int getSetting(T& variable, graphx::gSetting& setting)
 		}
 	}
 
-	else if(setting_type == EXTERNAL_REFERENCE)
+	else if(setting_type == StringSetting::EXTERNAL_REFERENCE)
 	{
 		if(set_value.type() != typeid(variable))
 		{

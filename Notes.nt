@@ -2753,3 +2753,9 @@ I now have separated g_actor, g_actors, g_device, g_devices, and g_theatre and i
 
 [05/19/25]
 Alright, lets try this again with a clear head. I'm going to start by fixing the default rotation of the Camera, and then I'll move on to tweaking either Actor, Device, or Theatre to match their overhaul. Okay, fixed the camera temporarily; I think I want to start the overhaul with Device, since it's the simplest and (hopefully) easiest.
+
+Ugh, I just remembered... gSettings and the interpreter... Fine, I guess I'll do that next. Let's start small by first making the interpreter its own class.
+
+Actually, lets start even smaller by changing t_common.hpp.
+
+Okay, it works! I've changed the StringSettings to a struct and also changed the function names. Now, time to start working on the interpreter, I think. Also, a note: there are huge fucking memory leaks, but that's to be expected as I fixed that in the broken overhaul.

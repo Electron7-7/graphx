@@ -44,8 +44,7 @@ struct Theatre
     int directional_lights_count = 0;
     bool dropping_curtains = false;
 
-    // This abomination is what a "gStringSettings" typedef actually is...
-    std::vector<std::vector<std::pair<std::string, std::pair<int, std::string>>>> graphx_theatre_settings;
+    std::vector<StringSettings> graphx_theatre_settings;
     std::string theatre_file_data_printout = "";
 
     Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);

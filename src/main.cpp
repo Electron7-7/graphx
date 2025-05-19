@@ -194,10 +194,10 @@ void gameTick(GLFWwindow *main_window)
 	//--------------------
 	// GraphXTheatre Setup
 	//--------------------
-	checkForAndLoadExternalTheatres();
+	I_CheckForAndLoadExternalTheatres();
 
 	// Hard-coded first Theatre loading, for now. Eventually, Theatre loading won't rely on this function, or the arrow key callbacks
-	loadMainTheatre(0);
+	I_LoadNewMainTheatre(0);
 
 	//---------------
 	// Tickrate Setup
@@ -364,10 +364,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 				++it;
 				if(it == embedded_theatres.end())
 				{
-					loadMainTheatre(0);
+					I_LoadNewMainTheatre(0);
 					return;
 				}
-				loadMainTheatre(it->first);
+				I_LoadNewMainTheatre(it->first);
 				return;
 			}
 		}
@@ -377,7 +377,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		if(loading_new_main_theatre)
 			return;
-		checkForAndLoadExternalTheatres();
+		I_CheckForAndLoadExternalTheatres();
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
 		{
 			if(it->first == graphx::current::theatre.getUID())
@@ -386,12 +386,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 				{
 					auto end_it = embedded_theatres.end();
 					--end_it;
-					loadMainTheatre(end_it->first);
+					I_LoadNewMainTheatre(end_it->first);
 					return;
 				}
 
 				--it;
-				loadMainTheatre(it->first);
+				I_LoadNewMainTheatre(it->first);
 				return;
 			}
 		}

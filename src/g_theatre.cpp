@@ -184,7 +184,7 @@ std::string getSettingName(graphx::gSetting setting)
 {
     switch(setting.first)
     {
-    case THEATRE_REFERENCE:
+    case StringSetting::THEATRE_REFERENCE:
         if(setting.second.type() == typeid(Actor*))
             return(std::any_cast<Actor *>(setting.second)->name);
 
@@ -192,11 +192,11 @@ std::string getSettingName(graphx::gSetting setting)
             return(std::any_cast<Device *>(setting.second)->name);
 
         return "Unknown Theatre Reference setting";
-    case RAW_DATA:
-        if(setting.second.type() == typeid(graphx::interpreter::gRawData))
+    case StringSetting::RAW_DATA:
+        if(setting.second.type() == typeid(gRawData))
         {
             std::string buffer = "";
-            graphx::interpreter::gRawData raw_data = std::any_cast<graphx::interpreter::gRawData>(setting.second);
+            gRawData raw_data = std::any_cast<gRawData>(setting.second);
             for(int i = 0 ; i < raw_data.size() ; i++)
             {
                 buffer += raw_data[i];
@@ -208,9 +208,9 @@ std::string getSettingName(graphx::gSetting setting)
         }
 
         return "Unknown Raw Data setting";
-    case CPP_REFERENCE:
+    case StringSetting::CPP_REFERENCE:
         return "C++ Reference setting";
-    case SANDWICH:
+    case StringSetting::SANDWICH:
         if(setting.second.type() == typeid(Actor*))
             return(std::any_cast<Actor *>(setting.second)->name);
 
@@ -218,7 +218,7 @@ std::string getSettingName(graphx::gSetting setting)
             return(std::any_cast<Device *>(setting.second)->name);
 
         return "Unknown Theatre Reference setting (Sandwich Bun)";
-    case EXTERNAL_REFERENCE:
+    case StringSetting::EXTERNAL_REFERENCE:
         return "External Reference setting";
     default:
         return "Setting type unknown/invalid!";

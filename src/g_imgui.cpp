@@ -181,7 +181,7 @@ void GraphXConsole::liveTheatreEditor()
 
 void GraphXConsole::exportTheatreFile()
 {
-	graphx::interpreter::gStringSettings init_settings = graphx::current::theatre.graphx_theatre_settings;
+	std::vector<StringSettings> init_settings = graphx::current::theatre.graphx_theatre_settings;
 	IMGUI::Begin("Export Theatre", &quaternary_active);
 
 	IMGUI::End();

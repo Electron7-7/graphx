@@ -580,7 +580,7 @@ void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
 	pivot_point.mesh->setUID(4815 + getUID());
 	graphx::gSettings pivot_settings
 	{
-		{"Name", graphx::gSetting(RAW_DATA, graphx::interpreter::gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")})},
+		{"Name", graphx::gSetting(StringSetting::RAW_DATA, gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")})},
 		// {"MeshData", settings["MeshData"]},
 	};
 	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + getUID(), pivot_settings);
