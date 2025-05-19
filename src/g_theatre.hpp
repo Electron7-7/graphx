@@ -1,11 +1,10 @@
 #ifndef GRAPHX_THEATRE
-// #include "sanity_printouts.hpp"
+#include "t_common.hpp"
 #include "g_device.hpp"
 #include "g_actor.hpp"
 #include <glfw_fwd.hpp>
 #include <vector>
 #include <memory>
-// #include <random>
 #include <map>
 #include <set>
 #define GRAPHX_THEATRE
@@ -55,17 +54,17 @@ struct Theatre
     std::set<std::string> getMeshDataNames();
     std::set<std::string> getTextureNames();
     void probeActorsForRenderCommands();
-    void loadStageSettings(graphx::gSettings stage_settings);
+    void loadStageSettings(gSettings stage_settings);
     void raiseCurtains();
     void dropCurtains();
     long getUID();
     void setUID(long new_uid);
     void delegateKeyInput(GLFWwindow* window, int key, int scancode, int action, int mods);
     void delegateMouseInput(GLFWwindow* window, double x_position_in, double y_position_in);
-    void actorEnter(Actor* new_actor, long uid, graphx::gSettings new_settings = empty_settings);
+    void actorEnter(Actor* new_actor, long uid, gSettings new_settings = gSettings());
 
-    void createActor(const std::string& actor_type, long uid, graphx::gSettings new_settings = empty_settings);
-    void createDevice(const std::string& device_type, long uid, graphx::gSettings new_settings  = empty_settings);
+    void createActor(const std::string& actor_type, long uid, gSettings new_settings = gSettings());
+    void createDevice(const std::string& device_type, long uid, gSettings new_settings  = gSettings());
 
     Actor* getActor(long uid);
     Actor* getActor(std::string actor_name);

@@ -22,7 +22,7 @@ public:
 
 	RenderCommands getRenderCommands() override;
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 
 protected:
 	Sprite label_mesh = Sprite();
@@ -42,7 +42,7 @@ public:
 	void setGlobalRotation(glm::vec3 new_value) override final;
 
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
@@ -68,7 +68,7 @@ public:
 	using PhysicsActor::PhysicsActor;
 
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
@@ -80,7 +80,7 @@ class StaticBodyActor : public PhysicsActor
 public:
 	using PhysicsActor::PhysicsActor;
 
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 };
@@ -95,7 +95,7 @@ public:
 	using Actor::Actor;
 
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 	void doRotation(glm::vec2 mouse_input);
 
 protected:
@@ -130,7 +130,7 @@ public:
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
@@ -161,7 +161,7 @@ public:
 	using Actor::Actor;
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 
 protected:
 	bool debug_visible = false;
@@ -175,7 +175,7 @@ public:
 	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 };
 
 class LightSpot : public Light
@@ -188,7 +188,7 @@ public:
 	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 };
 
 class LightFlashlight: public LightSpot
@@ -207,7 +207,7 @@ public:
 	void setLightColor(bool color_toggle);
 
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 
 private:
 	glm::vec3 _color = light_color;
@@ -229,7 +229,7 @@ public:
 	using Light::Light;
 
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 };
@@ -252,7 +252,7 @@ public:
 	using Actor::Actor;
 
 	void tick(int current_tick) override;
-	void youGotACallBack(graphx::gSettings new_settings = empty_settings) override;
+	void youGotACallBack() override;
 };
 
 extern glm::vec3 vector3_up;

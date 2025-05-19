@@ -20,20 +20,20 @@ Collider::~Collider()
     J_RemoveAndDestroyBody(body_id);
 }
 
-void Collider::loadSettings(graphx::gSettings new_settings)
+void Collider::loadSettings()
 {
-    Device::loadSettings(new_settings);
+    gSettings::configureBaseVariables(this);
 
-    getSetting(motion_type, settings["MotionType"]);
-    getSetting(object_layer, settings["ObjectLayer"]);
-    getSetting(activation, settings["Activation"]);
-    getSetting(shape, settings["Shape"]);
-    getSetting(forever_alone, settings["ForeverAlone"]);
-    getSetting(position, settings["Position"]);
-    getSetting(euler_angles, settings["Rotation"]);
-    getSetting(local_position, settings["LocalPosition"]);
-    getSetting(local_euler_angles, settings["LocalRotation"]);
-    getSetting(scale, settings["Scale"]);
+    settings.getVariable("MotionType", motion_type);
+    settings.getVariable("ObjectLayer", object_layer);
+    settings.getVariable("Activation", activation);
+    settings.getVariable("Shape", shape);
+    settings.getBoolean("ForeverAlone", forever_alone);
+    settings.getNumber("Position", position);
+    settings.getNumber("Rotation", euler_angles);
+    settings.getNumber("LocalPosition", local_position);
+    settings.getNumber("LocalRotation", local_euler_angles);
+    settings.getNumber("Scale", scale);
 }
 
 JPH::BodyCreationSettings* Collider::getBodySettings()
@@ -81,15 +81,15 @@ void Collider::prepForDestruction()
 // Environment
 //
 
-void Environment::loadSettings(graphx::gSettings new_settings)
+void Environment::loadSettings()
 {
-    Device::loadSettings(new_settings);
+    gSettings::configureBaseVariables(this);
 
     bool ambient_light_enabled = (ambient_light_amount > 0.0f);
 
-    getSetting(ambient_light_amount, settings["AmbientLightAmount"]);
-    getSetting(ambient_light_color, settings["AmbientLightColor"]);
-    getSetting(ambient_light_enabled, settings["AmbientLightEnabled"]);
+    settings.getNumber("AmbientLightAmount", ambient_light_amount);
+    settings.getNumber("AmbientLightColor", ambient_light_color);
+    settings.getBoolean("AmbientLightEnabled", ambient_light_enabled);
 
     ambient_light_amount *= ambient_light_enabled;
 }
@@ -109,9 +109,9 @@ Texture::Texture(unsigned char* init_texture_data, unsigned int init_texture_siz
 : Texture(std::vector<unsigned char*>{init_texture_data}, std::vector<unsigned int>{init_texture_size})
 {}
 
-void Texture::loadSettings(graphx::gSettings new_settings)
+void Texture::loadSettings()
 {
-    Device::loadSettings(new_settings);
+    gSettings::configureBaseVariables(this);
 }
 
 //
@@ -148,17 +148,17 @@ Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned 
 : Device("Untitled Material"), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
-void Material::loadSettings(graphx::gSettings new_settings)
+void Material::loadSettings()
 {
-    Device::loadSettings(new_settings);
+    gSettings::configureBaseVariables(this);
 
-    getSetting(diffuse_texture_name, settings["DiffuseTexture"]);
-    getSetting(specular_texture_name, settings["SpecularTexture"]);
-    getSetting(color, settings["Color"]);
-    getSetting(color_alpha, settings["Alpha"]);
-    getSetting(specular_sharpness, settings["SpecularSharpness"]);
-    getSetting(specular_strength, settings["SpecularStrength"]);
-    getSetting(mat_fullbright, settings["mat_fullbright"]);
+    settings.getResource("DiffuseTexture", diffuse_texture_name);
+    settings.getResource("SpecularTexture", specular_texture_name);
+    settings.getNumber("Color", color);
+    settings.getNumber("Alpha", color_alpha);
+    settings.getNumber("SpecularSharpness", specular_sharpness);
+    settings.getNumber("SpecularStrength", specular_strength);
+    settings.getBoolean("mat_fullbright", mat_fullbright);
 
     if(mat_fullbright && diffuse_texture_name == MISSING_TEXTURE)
         diffuse_texture_name = NO_TEXTURE;
@@ -193,19 +193,21 @@ void Mesh::prepForDestruction()
     delete material;
 }
 
-void Mesh::loadSettings(graphx::gSettings new_settings)
+void Mesh::loadSettings()
 {
-    Device::loadSettings(new_settings);
+    gSettings::configureBaseVariables(this);
 
-    getSetting(material, settings["Material"]);
-    getSetting(mesh_data_name, settings["MeshData"]);
+    settings.getDevice("Material", material);
+    settings.getString("MeshData", mesh_data_name);
 }
 
 //
 // Sprite
 //
-void Sprite::loadSettings(graphx::gSettings new_settings)
+void Sprite::loadSettings()
 {
-    Mesh::loadSettings(new_settings);
+    gSettings::configureBaseVariables(this);
+    // Todo: expand configureBaseVariables to include other types (like Mesh)
+    settings.getDevice("Material", material);
     mesh_data_name = GRAPHX_QUAD; // Override
 }

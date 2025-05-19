@@ -6,6 +6,8 @@
 #include <glfw_fwd.hpp>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtc/quaternion.hpp>
 #include <map>
 
 #define GLSHADER_TYPE_VERTEX   0

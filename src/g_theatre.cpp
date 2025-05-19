@@ -158,12 +158,12 @@ void Theatre::dropCurtains()
     objects.clear();
 }
 
-void Theatre::loadStageSettings(graphx::gSettings stage_settings)
+void Theatre::loadStageSettings(gSettings stage_settings)
 {
     glm::vec3 stage_euler_degrees = glm::vec3(0.0f);
-    getSetting(stage_position, stage_settings["Position"]);
-    getSetting(stage_scale, stage_settings["Scale"]);
-    getSetting(stage_euler_degrees, stage_settings["Rotation"]);
+    stage_settings.getNumber("Position", stage_position);
+    stage_settings.getNumber("Scale", stage_scale);
+    stage_settings.getNumber("Rotation", stage_euler_degrees);
     stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
 }
 
@@ -180,51 +180,6 @@ void Theatre::delegateMouseInput(GLFWwindow *window, double x_position_in, doubl
         actor->processMouse(window, x_position_in, y_position_in);
 }
 
-std::string getSettingName(graphx::gSetting setting)
-{
-    switch(setting.first)
-    {
-    case StringSetting::THEATRE_REFERENCE:
-        if(setting.second.type() == typeid(Actor*))
-            return(std::any_cast<Actor *>(setting.second)->name);
-
-        if(setting.second.type() == typeid(Device*))
-            return(std::any_cast<Device *>(setting.second)->name);
-
-        return "Unknown Theatre Reference setting";
-    case StringSetting::RAW_DATA:
-        if(setting.second.type() == typeid(gRawData))
-        {
-            std::string buffer = "";
-            gRawData raw_data = std::any_cast<gRawData>(setting.second);
-            for(int i = 0 ; i < raw_data.size() ; i++)
-            {
-                buffer += raw_data[i];
-                if(i != raw_data.size() - 1)
-                    buffer += ", ";
-            }
-
-            return buffer;
-        }
-
-        return "Unknown Raw Data setting";
-    case StringSetting::CPP_REFERENCE:
-        return "C++ Reference setting";
-    case StringSetting::SANDWICH:
-        if(setting.second.type() == typeid(Actor*))
-            return(std::any_cast<Actor *>(setting.second)->name);
-
-        if(setting.second.type() == typeid(Device*))
-            return(std::any_cast<Device *>(setting.second)->name);
-
-        return "Unknown Theatre Reference setting (Sandwich Bun)";
-    case StringSetting::EXTERNAL_REFERENCE:
-        return "External Reference setting";
-    default:
-        return "Setting type unknown/invalid!";
-    }
-}
-
 long Theatre::getUID()
 {
     return UID;
@@ -237,7 +192,7 @@ void Theatre::setUID(long new_uid)
     UID = new_uid;
 }
 
-void Theatre::createActor(const std::string& actor_type, long uid, graphx::gSettings new_settings)
+void Theatre::createActor(const std::string& actor_type, long uid, gSettings new_settings)
 {
     if(objects.contains(uid))
     {
@@ -250,7 +205,7 @@ void Theatre::createActor(const std::string& actor_type, long uid, graphx::gSett
 
     objects[uid] = valid_actors.at(actor_type)(this, uid, new_settings); // VERY BAD, WILL BE REPLACED WITH SMART POINTERS WHEN FULLY IMPLEMENTED
     objects.at(uid)->setUID(uid);
-    objects.at(uid)->youGotACallBack(new_settings);
+    objects.at(uid)->youGotACallBack();
 
     if(time_to_render)
         objects.at(uid)->callToStage(this);
@@ -258,7 +213,7 @@ void Theatre::createActor(const std::string& actor_type, long uid, graphx::gSett
     time_to_store_buffers = time_to_render;
 }
 
-void Theatre::createDevice(const std::string& device_type, long uid, graphx::gSettings new_settings)
+void Theatre::createDevice(const std::string& device_type, long uid, gSettings new_settings)
 {
     if(devices.contains(uid))
     {
@@ -271,11 +226,11 @@ void Theatre::createDevice(const std::string& device_type, long uid, graphx::gSe
 
     devices[uid] = valid_devices.at(device_type)(this, uid, new_settings); // VERY BAD, WILL BE REPLACED WITH SMART POINTERS WHEN FULLY IMPLEMENTED
     devices.at(uid)->setUID(uid);
-    devices.at(uid)->loadSettings(new_settings);
+    devices.at(uid)->loadSettings();
 }
 
 // TEMPORARY: USED BY THE ROTATING LIGHT ACTOR FOR ITS PIVOT POINT VISUALIZER ACTOR
-void Theatre::actorEnter(Actor* new_actor, long uid, graphx::gSettings new_settings)
+void Theatre::actorEnter(Actor* new_actor, long uid, gSettings new_settings)
 {
     if(objects.contains(uid))
     {
@@ -290,7 +245,7 @@ void Theatre::actorEnter(Actor* new_actor, long uid, graphx::gSettings new_setti
     if(dynamic_cast<GraphXPlayer*>(new_actor))
         player_uid = uid;
 
-    new_actor->youGotACallBack(new_settings);
+    new_actor->youGotACallBack();
 
     // Writing this has made me realize just how nasty my usage of pointers is.
     // I want to rectify this by using UIDs instead; basically, instead of

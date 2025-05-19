@@ -14,22 +14,22 @@ struct Device
     Device(const std::string& Name);
 
     // The constructor that the Interpreter uses when creating Devices
-    Device(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = empty_settings);
+    Device(Theatre* ParentTheatre, const int UID, const gSettings& Settings = gSettings());
 
     virtual ~Device();
 
     int getUID() const;
     void setUID(int NewUID);
-    graphx::gSettings getSettings() const;
-    void setSettings(const graphx::gSettings&);
+    gSettings getSettings() const;
+    void setSettings(const gSettings&);
 
     virtual void initialize();
-    virtual void loadSettings(graphx::gSettings new_settings = empty_settings);
+    virtual void loadSettings();
     virtual void prepForDestruction();
 
 protected:
     Theatre* parent_theatre = nullptr;
-    graphx::gSettings settings = empty_settings;
+    gSettings settings = gSettings();
     bool ready_to_destroy = false;
 
 private:

@@ -37,9 +37,9 @@ void Label::tick(int current_tick)
 	}
 }
 
-void Label::youGotACallBack(graphx::gSettings new_settings)
+void Label::youGotACallBack()
 {
-	Actor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 	/**
 	 * `getSetting` Tip:
 	 *   When "overloading" `getSetting` settings, I like to make sure that the most verbose/explicit option always
@@ -48,16 +48,16 @@ void Label::youGotACallBack(graphx::gSettings new_settings)
 	 *   versions of the same setting be used, the one that wins is the one that looks more intentional, hopefully
 	 *   avoiding confusion.
 	*/
-	getSetting(label_alpha, settings["Transparency"]);
-	getSetting(label_alpha, settings["Alpha"]);
-	getSetting(text_render_command.font_name, settings["Font"]);
-	getSetting(text_render_command.font_name, settings["FontName"]);
-	getSetting(text_render_command.color, settings["Color"]);
-	getSetting(text_render_command.color, settings["TextColor"]);
-	getSetting(text_render_command.text, settings["Message"]);
-	getSetting(text_render_command.text, settings["Text"]);
-	getSetting(text_render_command.text, settings["Label"]);
-	getSetting(text_render_command.scale, settings["TextScale"]);
+	settings.getNumber("Transparency", label_alpha);
+	settings.getNumber("Alpha", label_alpha);
+	settings.getString("Font", text_render_command.font_name);
+	settings.getString("FontName", text_render_command.font_name);
+	settings.getNumber("Color", text_render_command.color);
+	settings.getNumber("TextColor", text_render_command.color);
+	settings.getString("Message", text_render_command.text);
+	settings.getString("Text", text_render_command.text);
+	settings.getString("Label", text_render_command.text);
+	settings.getNumber("TextScale", text_render_command.scale);
 
 	text_render_command.position_x = 0.0f;
 	text_render_command.position_y = 0.0f;
@@ -86,12 +86,12 @@ bool PhysicsActor::isPhysicsActor()
 	return true;
 }
 
-void PhysicsActor::youGotACallBack(graphx::gSettings new_settings)
+void PhysicsActor::youGotACallBack()
 {
-	Actor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(mass, settings["Mass"]);
-	getSetting(collider, settings["Collider"]);
+	settings.getNumber("Mass", mass);
+	settings.getDevice("Collider", collider);
 
 	collider->loadSettings();
 
@@ -140,9 +140,9 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 // RigidBodyActor
 //
 
-void RigidBodyActor::youGotACallBack(graphx::gSettings new_settings)
+void RigidBodyActor::youGotACallBack()
 {
-	PhysicsActor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 }
 
 void RigidBodyActor::callToStage(Theatre *parent_theatre)
@@ -187,9 +187,9 @@ void RigidBodyActor::takeABow()
 // StaticBodyActor
 //
 
-void StaticBodyActor::youGotACallBack(graphx::gSettings new_settings)
+void StaticBodyActor::youGotACallBack()
 {
-	PhysicsActor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 }
 
 void StaticBodyActor::callToStage(Theatre *parent_theatre)
@@ -237,12 +237,12 @@ void Camera::doRotation(glm::vec2 mouse_input)
 	updateVectors();
 }
 
-void Camera::youGotACallBack(graphx::gSettings new_settings)
+void Camera::youGotACallBack()
 {
-	Actor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(position_local, settings["LocalPosition"]);
-	getSetting(euler_rotation_local, settings["LocalRotationDegrees"]);
+	settings.getNumber("LocalPosition", position_local);
+	settings.getNumber("LocalRotationDegrees", euler_rotation_local);
 
 	euler_rotation = glm::radians(glm::vec3(0.0f));
 	quaternion = glm::quat(euler_rotation);
@@ -254,17 +254,17 @@ void Camera::youGotACallBack(graphx::gSettings new_settings)
 // GraphXPlayer
 //
 
-void GraphXPlayer::youGotACallBack(graphx::gSettings new_settings)
+void GraphXPlayer::youGotACallBack()
 {
-	Actor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(do_gravity, settings["DoGravity"]);
-	getSetting(mouse_sensitivity, settings["MouseSensitivity"]);
-	getSetting(movement_speed, settings["MovementSpeed"]);
-	getSetting(lerp_speed, settings["MovementAcceleration"]);
-	getSetting(friction, settings["Friction"]);
-	getSetting(mass, settings["Mass"]);
-	getSetting(field_of_view, settings["FOV"]);
+	settings.getBoolean("DoGravity", do_gravity);
+	settings.getNumber("MouseSensitivity", mouse_sensitivity);
+	settings.getNumber("MovementSpeed", movement_speed);
+	settings.getNumber("MovementAcceleration", lerp_speed);
+	settings.getNumber("Friction", friction);
+	settings.getNumber("Mass", mass);
+	settings.getNumber("FOV", field_of_view);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
 
@@ -400,17 +400,17 @@ void GraphXPlayer::takeABow()
 // Light
 //
 
-void Light::youGotACallBack(graphx::gSettings new_settings)
+void Light::youGotACallBack()
 {
-	Actor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(light_color, settings["Color"]);
-	getSetting(light_energy, settings["Energy"]);
-	getSetting(light_ambient_strength, settings["AmbientStrength"]);
-	getSetting(light_specular_strength, settings["SpecularStrength"]);
-	getSetting(light_attenuation, settings["FadeIntensity"]);
-	getSetting(light_attenuation, settings["Attenuation"]);
-	getSetting(light_range, settings["Range"]);
+	settings.getNumber("Color", light_color);
+	settings.getNumber("Energy", light_energy);
+	settings.getNumber("AmbientStrength", light_ambient_strength);
+	settings.getNumber("SpecularStrength", light_specular_strength);
+	settings.getNumber("FadeIntensity", light_attenuation);
+	settings.getNumber("Attenuation", light_attenuation);
+	settings.getNumber("Range", light_range);
 
 	// Just to be safe...
 	if(mesh != nullptr)
@@ -448,11 +448,19 @@ RenderCommands Light::getRenderCommands()
 // LightDirectional
 //
 
-void LightDirectional::youGotACallBack(graphx::gSettings new_settings)
+void LightDirectional::youGotACallBack()
 {
-	Light::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(directional_direction, settings["Direction"]);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getNumber("Color", light_color);
+	settings.getNumber("Energy", light_energy);
+	settings.getNumber("AmbientStrength", light_ambient_strength);
+	settings.getNumber("SpecularStrength", light_specular_strength);
+	settings.getNumber("FadeIntensity", light_attenuation);
+	settings.getNumber("Attenuation", light_attenuation);
+	settings.getNumber("Range", light_range);
+	settings.getNumber("Direction", directional_direction);
 
 	// LightDirectional doesn't really need a debug mesh, since it's physical orientation doesn't matter
 	if(mesh != nullptr)
@@ -475,13 +483,21 @@ RenderCommands LightDirectional::getRenderCommands()
 // LightSpot
 //
 
-void LightSpot::youGotACallBack(graphx::gSettings new_settings)
+void LightSpot::youGotACallBack()
 {
-	Light::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(spot_direction, settings["Direction"]);
-	getSetting(spot_angle, settings["Angle"]);
-	getSetting(spot_angle_fade, settings["AngleFadeIntensity"]);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getNumber("Color", light_color);
+	settings.getNumber("Energy", light_energy);
+	settings.getNumber("AmbientStrength", light_ambient_strength);
+	settings.getNumber("SpecularStrength", light_specular_strength);
+	settings.getNumber("FadeIntensity", light_attenuation);
+	settings.getNumber("Attenuation", light_attenuation);
+	settings.getNumber("Range", light_range);
+	settings.getNumber("Direction", spot_direction);
+	settings.getNumber("Angle", spot_angle);
+	settings.getNumber("AngleFadeIntensity", spot_angle_fade);
 }
 
 RenderCommands LightSpot::getRenderCommands()
@@ -500,14 +516,22 @@ RenderCommands LightSpot::getRenderCommands()
 // LightFlashlight
 //
 
-void LightFlashlight::youGotACallBack(graphx::gSettings new_settings)
+void LightFlashlight::youGotACallBack()
 {
-	Light::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(start_enabled, settings["StartOn"]);
-	getSetting(start_enabled, settings["StartEnabled"]);
-	getSetting(position_offset, settings["PositionOffset"]);
-	getSetting(rotation_offset, settings["RotationOffset"]);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getNumber("Color", light_color);
+	settings.getNumber("Energy", light_energy);
+	settings.getNumber("AmbientStrength", light_ambient_strength);
+	settings.getNumber("SpecularStrength", light_specular_strength);
+	settings.getNumber("FadeIntensity", light_attenuation);
+	settings.getNumber("Attenuation", light_attenuation);
+	settings.getNumber("Range", light_range);
+	settings.getBoolean("StartOn", start_enabled);
+	settings.getBoolean("StartEnabled", start_enabled);
+	settings.getNumber("PositionOffset", position_offset);
+	settings.getNumber("RotationOffset", rotation_offset);
 
 	_color = light_color;
 	setLight(start_enabled);
@@ -565,24 +589,29 @@ void LightFlashlight::setLightColor(bool color_toggle)
 // LightTesterMover
 //
 
-void LightTesterMover::youGotACallBack(graphx::gSettings new_settings)
+void LightTesterMover::youGotACallBack()
 {
-	Light::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(pivot_position, settings["PivotPosition"]);
-	getSetting(pivot_radius, settings["PivotRadius"]);
-	getSetting(pivot_speed, settings["PivotSpeed"]);
+	// Todo: expand configureBaseVariables to include other types (like Light)
+	settings.getNumber("Color", light_color);
+	settings.getNumber("Energy", light_energy);
+	settings.getNumber("AmbientStrength", light_ambient_strength);
+	settings.getNumber("SpecularStrength", light_specular_strength);
+	settings.getNumber("FadeIntensity", light_attenuation);
+	settings.getNumber("Attenuation", light_attenuation);
+	settings.getNumber("Range", light_range);
+	settings.getNumber("PivotPosition", pivot_position);
+	settings.getNumber("PivotRadius", pivot_radius);
+	settings.getNumber("PivotSpeed", pivot_speed);
 
 	pivot_point.setGlobalPosition(pivot_position);
 	pivot_point.mesh = &temporary_pivot_mesh;
 	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
 	pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
 	pivot_point.mesh->setUID(4815 + getUID());
-	graphx::gSettings pivot_settings
-	{
-		{"Name", graphx::gSetting(StringSetting::RAW_DATA, gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")})},
-		// {"MeshData", settings["MeshData"]},
-	};
+	gSettings pivot_settings;
+	pivot_settings.raw_data["Name"] = gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")};
 	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + getUID(), pivot_settings);
 }
 
@@ -609,15 +638,15 @@ void LightTesterMover::takeABow()
 // Ramiel
 //
 
-void Ramiel::youGotACallBack(graphx::gSettings new_settings)
+void Ramiel::youGotACallBack()
 {
-	Actor::youGotACallBack(new_settings);
+	gSettings::configureBaseVariables(this);
 
-	getSetting(movement_type, settings["MovementType"]);
-	getSetting(pivot_position, settings["PivotPosition"]);
-	getSetting(pivot_radius, settings["PivotRadius"]);
-	getSetting(pivot_speed, settings["PivotSpeed"]);
-	getSetting(movement_speed, settings["MovementSpeed"]);
+	settings.getNumber("MovementType", movement_type);
+	settings.getNumber("PivotPosition", pivot_position);
+	settings.getNumber("PivotRadius", pivot_radius);
+	settings.getNumber("PivotSpeed", pivot_speed);
+	settings.getNumber("MovementSpeed", movement_speed);
 }
 
 void Ramiel::tick(int current_tick)

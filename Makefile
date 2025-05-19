@@ -1,8 +1,7 @@
 CXX = clang++
 CC = clang
 
-# CXXFLAGS = -g -Wall -fsanitize=address -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
-CXXFLAGS = -g -Wall -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
+CXXFLAGS = -g -Wall -fsanitize=address -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
 CCFLAGS = -g -Wall
 
 INCLUDES = -I src/include
@@ -65,6 +64,7 @@ GRAPHX_OBJS =              \
 	$(O)/g_actors.opp      \
 	$(O)/g_imgui.opp       \
 	$(O)/t_interpreter.opp \
+	$(O)/t_settings.opp    \
 	$(O)/g_theatre.opp     \
 	$(O)/r_common.opp      \
 	$(O)/r_rendering.opp

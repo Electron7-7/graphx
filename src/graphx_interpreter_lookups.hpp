@@ -1,8 +1,8 @@
 // NEW CODE
 #ifndef GRAPHX_INTERPRETER_LOOKUPS
 #include "g_actors.hpp"
-// #include "g_devices.hpp"
-#include "r_common.hpp" // WILL BE REPLACED WITH g_devices.hpp
+#include "g_devices.hpp"
+#include "t_settings.hpp"
 #include <any>
 #define GRAPHX_INTERPRETER_LOOKUPS
 /*
@@ -12,14 +12,6 @@
     C++ variable to be referencable in a GraphXTheatre file, this is where you make it happen!
 */
 
-using namespace graphx; // Since gSettings is still `graphx::gSettings` for now
-
-// BIG NOTE:
-// The Actor/Device constructors were changed quite a bit, so before I go in and overhaul them, I'll just change the creator functions for now
-// to try and get a working build running. Step by step.
-
-// template<typename T> std::shared_ptr<Actor>  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
-// template<typename T> std::shared_ptr<Device> createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return std::make_shared<T>(parent_theatre, new_uid, new_settings); }
 template<typename T> Actor*  createNewActor  (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return new T(parent_theatre, new_uid, new_settings); }
 template<typename T> Device* createNewDevice (Theatre* parent_theatre, const int new_uid, const gSettings& new_settings) { return new T(parent_theatre, new_uid, new_settings); }
 

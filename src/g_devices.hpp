@@ -30,7 +30,7 @@ struct Collider : public Device
     const JPH::BodyID &getBodyID();
     JPH::BodyCreationSettings *getBodySettings();
 
-    void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+    void loadSettings() override;
     void initialize() override;
     void prepForDestruction() override;
 
@@ -47,7 +47,7 @@ struct Environment final : public Device // Will be extended in the future
     using Device::Device;
     // Environment(float = 0.05f, glm::vec3 = glm::vec3(1.0f));
 
-    void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+    void loadSettings() override;
 };
 
 struct Texture final : public Device
@@ -62,14 +62,8 @@ public:
     Texture(const std::string& = "Untitled Texture"); // Todo: I only need to have this here because of the map of textures...
     Texture(unsigned char*, unsigned int);
     Texture(std::vector<unsigned char*>, std::vector<unsigned int>);
-    // Texture(std::vector<unsigned char *> init_texture_data, std::vector<unsigned int> init_texture_size);
-    // Texture(std::vector<const char *> init_texture_data, std::vector<unsigned int> init_texture_size);
-    // Texture(std::vector<std::string > init_texture_data, std::vector<unsigned int> init_texture_size);
-    // Texture(unsigned char * init_texture_data, unsigned int init_texture_size);
-    // Texture(const char * init_texture_data, unsigned int init_texture_size);
-    // Texture(std::string  init_texture_data, unsigned int init_texture_size);
 
-    void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+    void loadSettings() override;
 };
 
 struct Material final : public Device
@@ -93,7 +87,7 @@ struct Material final : public Device
     Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
     Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
-    void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+    void loadSettings() override;
 };
 
 struct Mesh : public Device
@@ -111,7 +105,7 @@ struct Mesh : public Device
     Mesh(Material *new_material, std::string init_mesh_data_name = ERROR_MODEL);
     Mesh(std::string init_mesh_data_name);
 
-    void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+    void loadSettings() override;
     void prepForDestruction() override;
 };
 
@@ -121,6 +115,6 @@ struct Sprite : public Mesh
     // Sprite(std::string init_name = "UNTITLED_SPRITE");
     using Mesh::Mesh;
 
-    void loadSettings(graphx::gSettings new_settings = empty_settings) override;
+    void loadSettings() override;
 };
 #endif

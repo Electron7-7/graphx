@@ -82,9 +82,5 @@ namespace graphx
 		inline bool  lighting_switch_specular = true;
 		inline bool  lighting_switch_ambient = true;
 	};
-
-	/// The `int` in `graphx::gSetting` identifies the type; type identifiers can be found in `t_common.hpp`.
-	typedef std::pair<int, std::any> gSetting;
-	typedef std::unordered_map<std::string, gSetting> gSettings;
 }
 #endif

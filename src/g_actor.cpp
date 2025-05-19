@@ -15,7 +15,7 @@ glm::vec3 vector3_right = glm::vec3(1.0f, 0.0f, 0.0f);
 // Actor
 //
 Actor::Actor(const std::string& my_name)
-: name(my_name), parent_theatre(nullptr), settings(empty_settings), actor_uid(-1)
+: name(my_name), parent_theatre(nullptr), settings(gSettings()), actor_uid(-1)
 {}
 
 Actor::Actor(Theatre* my_parent_theatre, const int my_uid, const gSettings& my_settings)
@@ -34,12 +34,12 @@ long Actor::getUID() const
     return actor_uid;
 }
 
-graphx::gSettings Actor::getSettings() const
+gSettings Actor::getSettings() const
 {
     return settings;
 }
 
-void Actor::setSettings(const graphx::gSettings& new_settings)
+void Actor::setSettings(const gSettings& new_settings)
 {
     settings = new_settings;
 }
@@ -207,28 +207,9 @@ bool Actor::isPhysicsActor()
     return false;
 }
 
-void Actor::youGotACallBack(graphx::gSettings new_settings)
+void Actor::youGotACallBack()
 {
-    if(settings.contains(empty_settings_identifier))
-        settings = new_settings;
-
-    if(new_settings.contains(empty_settings_identifier))
-        new_settings = settings;
-
-    glm::vec3 local_euler_degrees = glm::vec3(0.0f);
-    glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(quaternion));
-
-    getSetting(name, settings["Name"]);
-    getSetting(mesh, settings["Mesh"]);
-    getSetting(position_global, settings["Position"]);
-    getSetting(position_local, settings["LocalPosition"]);
-    getSetting(global_euler_degrees, settings["Rotation"]);
-    getSetting(local_euler_degrees, settings["LocalRotation"]);
-    getSetting(scale, settings["Scale"]);
-    getSetting(visible, settings["Visible"]);
-
-    local_quaternion = glm::quat(glm::radians(local_euler_degrees));
-    quaternion = glm::quat(glm::radians(global_euler_degrees));
+    gSettings::configureBaseVariables(this);
 
     updateVectors();
 }

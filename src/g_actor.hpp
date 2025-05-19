@@ -34,15 +34,14 @@ public:
 
     // Actor(std::string = "Untitled Actor", Mesh* = nullptr, glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(1.0f));
     Actor(const std::string& Name);
-    Actor(Theatre* ParentTheatre, const int UID, const graphx::gSettings& Settings = empty_settings); // Note: ParentTheatre is unused for now
+    Actor(Theatre* ParentTheatre, const int UID, const gSettings& Settings = gSettings()); // Note: ParentTheatre is unused for now
 
     virtual ~Actor();
 
     long getUID() const;
     void setUID(const int NewUID);
-    // Note: gSettings are still the old gSettings
-    graphx::gSettings getSettings() const;
-    void setSettings(const graphx::gSettings& NewSettings);
+    gSettings getSettings() const;
+    void setSettings(const gSettings& NewSettings);
     void updateStates(std::mutex&);
 
     void highlightMe();
@@ -68,7 +67,7 @@ public:
 
     virtual RenderCommands getRenderCommands();
     virtual bool isPhysicsActor();
-    virtual void youGotACallBack(graphx::gSettings = empty_settings); // Loads settings
+    virtual void youGotACallBack(); // Loads settings
     virtual void callToStage(Theatre*);
     virtual void takeABow();
     virtual void processMouse(GLFWwindow*, double, double);
@@ -77,8 +76,9 @@ public:
     virtual void tick(int);
 
 protected:
+    friend gSettings;
     Theatre* parent_theatre;
-    graphx::gSettings settings = empty_settings;
+    gSettings settings = gSettings();
 
     std::vector<RenderState> current_state_buffer =  { RenderState(), RenderState() };
     std::vector<RenderState> previous_state_buffer = { RenderState(), RenderState() };

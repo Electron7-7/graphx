@@ -2761,3 +2761,9 @@ Actually, lets start even smaller by changing t_common.hpp.
 Okay, it works! I've changed the StringSettings to a struct and also changed the function names. Now, time to start working on the interpreter, I think. Also, a note: there are huge fucking memory leaks, but that's to be expected as I fixed that in the broken overhaul.
 
 Okay, I implemented the interpreter and also split up r_rendering.hpp and it works!
+
+All right, time to move on to... oh god... t_settings. This is where I assume most of the problems with the overhaul came from; thankfully most of the work is going to just be copying and pasting, but still... oh boy.
+
+Okay, I think I've done all the copying and changing... now time to test.
+
+Got an out of range error on a map. Since this isn't currently runnable, I won't commit it, but I'll keep it here since it may not be a difficult fix.
