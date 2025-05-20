@@ -247,7 +247,6 @@ void Camera::youGotACallBack()
 	euler_rotation = glm::radians(glm::vec3(0.0f));
 	quaternion = glm::quat(euler_rotation);
 	updateVectors();
-	PRINTDEBUG("Camera Rotation: " << glm::to_string(getRotation<glm::vec3>()));
 }
 
 //

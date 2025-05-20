@@ -32,6 +32,11 @@ public:
     glm::vec3 orientation_right;
     glm::vec3 world_orientation_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+    glm::vec3 position_global = glm::vec3(0.0f);
+    glm::vec3 position_local = glm::vec3(0.0f);
+    glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
     // Actor(std::string = "Untitled Actor", Mesh* = nullptr, glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(0.0f), glm::vec3 = glm::vec3(1.0f));
     Actor(const std::string& Name);
     Actor(Theatre* ParentTheatre, const int UID, const gSettings& Settings = gSettings()); // Note: ParentTheatre is unused for now
@@ -76,7 +81,6 @@ public:
     virtual void tick(int);
 
 protected:
-    friend gSettings;
     Theatre* parent_theatre;
     gSettings settings = gSettings();
 
@@ -84,10 +88,6 @@ protected:
     std::vector<RenderState> previous_state_buffer = { RenderState(), RenderState() };
     int state_index = 0;
 
-    glm::vec3 position_global = glm::vec3(0.0f);
-    glm::vec3 position_local = glm::vec3(0.0f);
-    glm::quat quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-    glm::quat local_quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec4 debug_highlight_color = glm::vec4(0.0f);
 
     virtual void updateVectors();

@@ -45,7 +45,6 @@ struct Environment final : public Device // Will be extended in the future
     float ambient_light_amount = 0.05f;
 
     using Device::Device;
-    // Environment(float = 0.05f, glm::vec3 = glm::vec3(1.0f));
 
     void loadSettings() override;
 };
@@ -92,7 +91,7 @@ struct Material final : public Device
 
 struct Mesh : public Device
 {
-    Material *material = new Material();
+    Material* material = new Material(); // TODO: This is a memory leak
 
     unsigned int VBO = 0;
     unsigned int IBO = 0;
@@ -112,7 +111,6 @@ struct Mesh : public Device
 // Differentiating 3D meshes and 2D sprites, even though they're extremely similar (for sanity reasons)
 struct Sprite : public Mesh
 {
-    // Sprite(std::string init_name = "UNTITLED_SPRITE");
     using Mesh::Mesh;
 
     void loadSettings() override;

@@ -198,7 +198,7 @@ void Mesh::loadSettings()
     gSettings::configureBaseVariables(this);
 
     settings.getDevice("Material", material);
-    settings.getString("MeshData", mesh_data_name);
+    settings.getResource("MeshData", mesh_data_name);
 }
 
 //

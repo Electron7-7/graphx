@@ -61,7 +61,7 @@ public:
     {
         if(!device_reference.contains(setting)) return;
         if constexpr(std::is_base_of_v<Device, P>)
-            variable = dynamic_cast<P*>(actor_reference.at(setting));
+            variable = dynamic_cast<P*>(device_reference.at(setting));
     }
     void getVariable(const std::string& Setting, std::string& Variable) const;
 

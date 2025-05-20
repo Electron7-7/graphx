@@ -15,7 +15,7 @@ class LightFlashlight; // Forward Declaration
 class Label : public Actor
 {
 public:
-	Actor *parent = nullptr;
+	Actor* parent = nullptr;
 	float label_alpha = 0.0f;
 
 	using Actor::Actor;
@@ -32,7 +32,7 @@ protected:
 class PhysicsActor: public Actor
 {
 public:
-	Collider *collider = new Collider("PhysicsActor Collider");
+	Collider* collider = new Collider("PhysicsActor Collider");
 
 	float mass = 1.0f; // in kg
 

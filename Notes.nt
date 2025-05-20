@@ -2766,4 +2766,29 @@ All right, time to move on to... oh god... t_settings. This is where I assume mo
 
 Okay, I think I've done all the copying and changing... now time to test.
 
-Got an out of range error on a map. Since this isn't currently runnable, I won't commit it, but I'll keep it here since it may not be a difficult fix.
+Got an out of range error on a map. Since this isn't currently runnable, I won't push it, but I'll commit it since it may not be a difficult fix.
+
+[05/20/25]
+Today, I'm going to check out the range error. It seems to be thrown when "LabelMesh" tries to get its `Material` setting.
+
+Aw, man, it was because I had copied the code for getting an Actor reference into the code for getting a Device reference and missed changing one of the fucking variable names. Man... I hate when that shit happens.
+
+Well, it builds and runs, but all the Actor/Device references are fucked. Also, trying to use the flashlight crashes the engine bc iirc the temp code for getting the player's flashlight can return nullptr lmfao. Maybe the problem isn't that the pointers are bad, but that they're being assigned to the actual derived pointer correctly this time, instead of the base Actor like they used to (which caused problems but also the code was unintentionally built around that). Let's see...
+
+I tried changing the variable argument in the "getDevice/getActor" functions from a pointer reference to just a pointer, and the game still ran but now there were no Materials or Meshes at all. I'm pretty sure it might have something to do with the dynamic casting, so I'll check that.
+
+Ah, I see the problem: dynamic casting is for downcasting, and static casting (as far as I know) is for upcasting. Woops.
+
+Hmm, well, they get loaded but they're back to being their default state (i.e: missing textures and error models). I think this might be due to the shit way I tried to do polymorphism.
+
+WAIT WAIT WAIT! I'm not upcasting, I AM downcasting!
+
+Oh, that's strange, it looks like the Label's Mesh's settings don't have any Device references, even though it should. Let's look at where Theatre references get processed, because I'm sure that's the culprit.
+
+Oh, holy shit, the function doesn't even get fucking called!
+
+Ohhhh, I think the problem is because I'm getting raw pointers for Theatre references and if I do that then references have to be made after the object they reference... WHICH IS HOW THE THEATRE IS STRUCTURED, WHAT?!
+
+WHAT THE FUCK?! It was because I used settings.getString for MeshData instead of settings.getResource... fucking hell. It works, though! Yippee, I guess.
+
+Yeah, it runs fine. Great. Commit it, I guess.
