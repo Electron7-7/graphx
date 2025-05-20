@@ -2820,3 +2820,5 @@ Hmm... it still breaks...
 Yeah, Jolt is spitting out the error: `JoltPhysics/Jolt/Physics/Body/BodyManager.cpp:476: (mNumBodies >= (uint)inNumber)`
 
 I think I'm gonna take a break or call it here; got pretty far, though, and it's almost working! Definitely just my misunderstanding of Jolt... again.
+
+I'm probably gonna make the decision to just require all Theatres to have a player because trying to have a default player ready seems to be out of my grasp and I just want to get a fucking release out the door and move on to the other engine I really wanna try and make.
