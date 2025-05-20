@@ -99,7 +99,7 @@ int main()
 	//------------
 	GraphXConsole graphx_debug_console;
 
-	graphx_debug_console.active = (glfwGetInputMode(main_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL);
+	graphx_debug_console.active = (glfwGetInputMode(main_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -222,8 +222,10 @@ void gameTick(GLFWwindow *main_window)
 			current_tick_since_start++;
 
 			std::vector<Actor*> troupe = getCurrentTheatre()->getTroupe(); // Todo: change the troupe to be a pointer/reference to the objects map?
-			for(Actor *actor : troupe)
+			for(Actor* actor : troupe)
 			{
+				if(loading_new_main_theatre)
+					continue;
 				if(!ImGui::GetIO().WantCaptureKeyboard)
 					actor->processInput(main_window);
 				actor->tick(current_tick_since_start);
@@ -403,8 +405,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		PRINTNOTE("Resetting PhysicsActors to initial transformation!")
 		std::vector<Actor*> troupe = getCurrentTheatre()->getTroupe();
 		for(Actor* actor : troupe)
+		{
+			if(loading_new_main_theatre)
+				continue;
 			if(actor->isPhysicsActor())
 				static_cast<PhysicsActor *>(actor)->reset_to_initial_orientation_for_testing();
+		}
 	}
 
 	if(key == GLFW_KEY_TAB && action == GLFW_PRESS && (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED))

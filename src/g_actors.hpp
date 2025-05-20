@@ -223,11 +223,11 @@ public:
 
 	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
 	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
-	// Actor pivot_point = Actor("pivot point", &temporary_pivot_mesh, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(0.2f));
 	Actor pivot_point = Actor("pivot point");
 
 	using Light::Light;
 
+	RenderCommands getRenderCommands() override;
 	void tick(int current_tick) override;
 	void youGotACallBack() override;
 	void callToStage(Theatre *parent_theatre) override;

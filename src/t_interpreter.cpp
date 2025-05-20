@@ -485,19 +485,20 @@ void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_setti
 		it++;
 	}
 
-	// TODO: SANDWICHES CAUSE MEMORY LEAKS!!
+	int temp_uid = i+1080; // TODO: MAKE A RANDOM UID GENERATOR!!
+
 	if(gClasses::isActor(sandwich_bun_setting.name))
 	{
-		Actor* sandwich_bun = valid_actors.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings);
-		sandwich_bun->youGotACallBack();
-		current_object_settings.actor_reference[sandwich_bun_setting.name] = sandwich_bun;
+		// Actor* sandwich_bun = valid_actors.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings);
+		new_theatre.createActor(sandwich_bun_setting.name, temp_uid, sandwich_settings);
+		current_object_settings.actor_reference[sandwich_bun_setting.name] = new_theatre.getActor(temp_uid);
 	}
 
 	else if(gClasses::isDevice(sandwich_bun_setting.name))
 	{
-		Device* sandwich_bun = valid_devices.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings);
-		sandwich_bun->loadSettings();
-		current_object_settings.device_reference[sandwich_bun_setting.name] = sandwich_bun;
+		// Device* sandwich_bun = valid_devices.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings);
+		new_theatre.createDevice(sandwich_bun_setting.name, temp_uid, sandwich_settings);
+		current_object_settings.device_reference[sandwich_bun_setting.name] = new_theatre.getDevice(temp_uid);
 	}
 
 	it--;

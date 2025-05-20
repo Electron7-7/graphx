@@ -48,7 +48,7 @@ struct Theatre
 
     Theatre(std::string init_name = "Untitled Theatre", long new_uid = -1);
 
-    std::vector<long> dumpActorIDs();
+    std::vector<int> dumpActorIDs();
     std::vector<Actor*> getTroupe();
 
     std::set<std::string> getMeshDataNames();
@@ -75,13 +75,13 @@ struct Theatre
     Environment* getEnvironment();
 
 private:
-    std::map<long, Actor*> objects = {};
-    std::map<long, Device*> devices = {};
-    std::map<int, std::shared_ptr<Actor>> actor_map = {};   // NEW CODE
-    std::map<int, std::shared_ptr<Device>> device_map = {}; // NEW CODE
-    long UID = -1;
-    long environment_uid = -1;
-    long player_uid = -1;
+    std::vector<Actor*> actor_vector = {};
+    std::vector<Device*> device_vector = {};
+    std::map<int, std::shared_ptr<Actor>> objects = {};
+    std::map<int, std::shared_ptr<Device>> devices = {};
+    int UID = -1;
+    int environment_uid = -1;
+    int player_uid = -1;
 };
 
 Theatre *getCurrentTheatre(bool print_note = true);

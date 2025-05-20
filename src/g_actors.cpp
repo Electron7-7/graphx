@@ -611,7 +611,14 @@ void LightTesterMover::youGotACallBack()
 	pivot_point.mesh->setUID(4815 + getUID());
 	gSettings pivot_settings;
 	pivot_settings.raw_data["Name"] = gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")};
-	getCurrentTheatre()->actorEnter(&pivot_point, 1623 + getUID(), pivot_settings);
+	pivot_point.youGotACallBack();
+	// getCurrentTheatre()->actorEnter(&pivot_point, 1623 + getUID(), pivot_settings);
+}
+
+RenderCommands LightTesterMover::getRenderCommands()
+{
+	// Todo: also add the pivot point to the render commands!
+	return Light::getRenderCommands();
 }
 
 void LightTesterMover::tick(int current_tick)

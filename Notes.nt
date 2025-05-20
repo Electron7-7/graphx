@@ -2792,3 +2792,31 @@ Ohhhh, I think the problem is because I'm getting raw pointers for Theatre refer
 WHAT THE FUCK?! It was because I used settings.getString for MeshData instead of settings.getResource... fucking hell. It works, though! Yippee, I guess.
 
 Yeah, it runs fine. Great. Commit it, I guess.
+
+All right, I think it's time to figure out pointer storage and parallel storage for Theatre. I think I may have forgotten to keep the changes I made to it before, because it's back to how it was originally, but that's fine because it'll be nicer and easier to convert it now that some of the other systems are converted (which might be why the change was reverted, now that I think about it).
+
+Okay, I've replaced the maps with maps of shared pointers, and implemented a very basic parallel vector of raw pointers... let's see how this goes.
+
+HOLY SHIT IT ALL FUCKING WORKED!! It crashed when I tried to load a new Theatre, BUT IT WORKED ON THE FIRST ONE!!!! HOLY SHIT!!
+
+The crash was a heap-use-after-free, which is probably due to the vector being iterated through while it was emptied. Hmm...
+
+I might wanna offload the actual code that ticks the Actors to the Theatre.
+
+Oh, wait, what? It's Actor::takeABow() when it calls on its Mesh after checking if it's not nullptr.
+
+Now it's the Actor destructor???
+
+OH MY FUCKING GOD I THINK ITS THE PIVOT POINT!!! BECAUSE IT GETS ADDED TO THE FUCKING THEATRE BUT IT GETS DESTROYED BY ITS PARENT ACTOR FIRST!! BUT I CAN FIX THIS BY NOT ADDING IT AND OVERRIDING THE GET RENDER COMMANDS FUNCTION!!! YES YES YES YES YES!!!
+
+IT WORKED!!!
+
+Still crashes after a certain load, from Jolt this time... hmm...
+
+I think the problem is that when no player is in a scene, the default player is not in the Theatre, so it doesn't get deleted and in a Theatre where no player exists, this gets called 120 times a fucking second LMFAO!
+
+Hmm... it still breaks...
+
+Yeah, Jolt is spitting out the error: `JoltPhysics/Jolt/Physics/Body/BodyManager.cpp:476: (mNumBodies >= (uint)inNumber)`
+
+I think I'm gonna take a break or call it here; got pretty far, though, and it's almost working! Definitely just my misunderstanding of Jolt... again.

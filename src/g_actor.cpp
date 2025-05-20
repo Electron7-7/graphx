@@ -255,6 +255,6 @@ void Actor::callToStage(Theatre *parent_theatre)
 
 void Actor::takeABow()
 {
-    if(mesh != nullptr)
-        mesh->prepForDestruction();
+    // if(mesh != nullptr)
+        // mesh->prepForDestruction();
 }

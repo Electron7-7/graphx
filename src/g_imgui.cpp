@@ -173,6 +173,8 @@ void GraphXConsole::liveTheatreEditor()
 	IMGUI::Begin("Live Theatre Editor", &tertiary_active);
 	for(int i = 0 ; i < troupe.size() ; i++) // AYO I THINK THAT THE TROUPE IS GETTING BLOATED AS FUCK MY GUY
 	{
+		if(loading_new_main_theatre)
+			continue;
 		if(i != 0) IMGUI::NewLine();
 		showActorEditor(troupe.at(i), i);
 	}
