@@ -1,10 +1,64 @@
 #include "t_settings.hpp"
 #include "g_actor.hpp"
 #include "g_device.hpp"
+#include "g_theatre.hpp"
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <algorithm>
+
+//---------------
+// ActorReference
+//---------------
+ActorReference::ActorReference(const int my_uid, Theatre* my_parent_theatre)
+: uid(my_uid), name(""), parent_theatre(my_parent_theatre)
+{}
+
+ActorReference::ActorReference(const std::string& my_name, Theatre* my_parent_theatre)
+: uid(-1), name(my_name), parent_theatre(my_parent_theatre)
+{}
+
+bool ActorReference::isValid() const
+{ return (uid != -1 || !name.empty()); }
+
+Actor* ActorReference::getPointer() const
+{
+    if(uid != -1)
+        return parent_theatre->getActor(uid);
+
+    if(!name.empty())
+        return parent_theatre->getActor(name);
+
+    PRINTERR("in ActorReference::getPointer() - both uid and name are invalid!! Returning nullptr!!")
+    return nullptr;
+}
+
+//----------------
+// DeviceReference
+//----------------
+DeviceReference::DeviceReference(const int my_uid, Theatre* my_parent_theatre)
+: uid(my_uid), name(""), parent_theatre(my_parent_theatre)
+{}
+
+DeviceReference::DeviceReference(const std::string& my_name, Theatre* my_parent_theatre)
+: uid(-1), name(my_name), parent_theatre(my_parent_theatre)
+{}
+
+bool DeviceReference::isValid() const
+{ return (uid != -1 || !name.empty()); }
+
+Device* DeviceReference::getPointer() const
+{
+    if(uid != -1)
+        return parent_theatre->getDevice(uid);
+
+    if(!name.empty())
+        return parent_theatre->getDevice(name);
+
+    PRINTERR("in DeviceReference::getPointer() - both uid and name are invalid!! Returning nullptr!!")
+    return nullptr;
+}
+
 
 template<typename V>
 void gSettings::getNumber(const std::string& setting, V& variable) const

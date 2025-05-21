@@ -2845,3 +2845,7 @@ if(body_id.IsInvalid() || jolt_physics_system.GetBodyInterface().IsActive(body_i
 FUCKING GRAAAAAAAGHH!!!!!
 
 On the plus side: it works! :D
+
+Before moving on to anything else, I want to change how Theatre references are stored in gSettings. If I store the UID (and a pointer to the parent Theatre), instead of the raw pointer, I can have references to objects regardless of position in the file without reading through it more than once! I'd just have to change how the gSettings function gets the pointer, which would be easy!
+
+Okie, I implemented this new storage system and it works so far! I also found a bug where either there are leftover colliders from previous scenes not being cleaned up, or there are missing meshes for some RigidBodyActors. Either way, it doesn't crash and it's probably the Collider thing because it's the same Collider in the same spot every time and only after swapping from the first scene (and I also get Jolt errors when exiting the program).

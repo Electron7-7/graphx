@@ -406,7 +406,7 @@ void GraphXTheatreInterpreter::interpretTheatreReference(gSettings& current_obje
 			{
 				if(setting.name.compare(variable_name))
 					continue;
-				referenced_setting.value = setting.value;
+				referenced_setting = setting;
 				break;
 			}
 		}
@@ -433,10 +433,10 @@ void GraphXTheatreInterpreter::interpretTheatreReference(gSettings& current_obje
 
 	// If the abomination above didn't fire off, this is a typical pointer-style reference
 	if(gClasses::isActor(class_name))
-		current_object_settings.actor_reference[variable_name] = new_theatre.getActor(theatre_reference);
+		current_object_settings.actor_reference[variable_name] = ActorReference(theatre_reference, &new_theatre);
 
 	else if(gClasses::isDevice(class_name))
-		current_object_settings.device_reference[variable_name] = new_theatre.getDevice(theatre_reference);
+		current_object_settings.device_reference[variable_name] = DeviceReference(theatre_reference, &new_theatre);
 }
 
 void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_settings, std::vector<StringSettings>& theatre_settings, const std::string& current_object_name, int& i, int& it, const unsigned long& settings_size, Theatre& new_theatre)
@@ -485,14 +485,14 @@ void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_setti
 	{
 		// Actor* sandwich_bun = valid_actors.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings);
 		new_theatre.createActor(sandwich_bun_setting.name, temp_uid, sandwich_settings);
-		current_object_settings.actor_reference[sandwich_bun_setting.name] = new_theatre.getActor(temp_uid);
+		current_object_settings.actor_reference[sandwich_bun_setting.name] = ActorReference(temp_uid, &new_theatre);
 	}
 
 	else if(gClasses::isDevice(sandwich_bun_setting.name))
 	{
 		// Device* sandwich_bun = valid_devices.at(sandwich_bun_setting.name)(&new_theatre, -1, sandwich_settings);
 		new_theatre.createDevice(sandwich_bun_setting.name, temp_uid, sandwich_settings);
-		current_object_settings.device_reference[sandwich_bun_setting.name] = new_theatre.getDevice(temp_uid);
+		current_object_settings.device_reference[sandwich_bun_setting.name] = DeviceReference(temp_uid, &new_theatre);
 	}
 
 	it--;
