@@ -23,7 +23,8 @@ public:
     std::string getCategoryString(int Category);
     std::string getTheatreStructure(const std::vector<StringSettings>& AllSettings);
 
-    void loadTheatre(const long TheatreID, Theatre& OutputTheatre);
+    bool loadTheatre(const int TheatreID, Theatre& OutputTheatre);
+    void loadMainTheatre(const int TheatreID);
     void interpretRawData(gSettings& Settings, const std::string& Name, const std::string& RawData);
     void interpretCppReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
     void interpretExternalReference(gSettings& Settings, const std::string& Name, const std::string& Reference);
@@ -36,9 +37,4 @@ private:
         "(3D Model)\n\t"      + three_dee_model_extensions + \
         "(Image)\n\t"         + image_extensions;
 };
-
-namespace graphx
-{
-    extern GraphXTheatreInterpreter Interpreter;
-}
 #endif

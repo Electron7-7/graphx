@@ -7,15 +7,9 @@
 #include "g_theatre.hpp"
 #include <theatres.hpp>
 #include <set>
-#include <fstream> // Yes, the devil hath been invoked... I'm sorry
-
-// Todo: Move this into graphx_namespace.cpp when that gets made
-// GraphX
-GraphXTheatreInterpreter graphx::Interpreter = GraphXTheatreInterpreter();
+#include <fstream>
 
 bool loading_new_main_theatre = true; // Definitely wanna replace this with something a little more sophisticated.
-// std::string empty_settings_identifier = "FUCKYOU";
-// gSettings empty_settings = {{empty_settings_identifier, graphx::gSetting(-1, {})}};
 
 //--------------
 // StringSetting
@@ -504,21 +498,21 @@ void GraphXTheatreInterpreter::interpretSandwich(gSettings& current_object_setti
 	it--;
 }
 
-// loadTheatre should not be called directly, which is why it's not in the header file
-void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_theatre)
+bool GraphXTheatreInterpreter::loadTheatre(const int theatre_uid, Theatre& new_theatre)
 {
 	if(!embedded_theatres.count(theatre_uid))
 	{
 		PRINTERR("Tried to load a Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " but no Theatre with that UID exists!")
-		return;
+		return false;
 	}
 
 	std::vector<StringSettings> theatre_settings = theatreParser(embedded_theatres.at(theatre_uid));
 
+	new_theatre.dropCurtains();
 	new_theatre = Theatre(theatre_settings.at(0).at(0).value, theatre_uid);
+	// Debug stuff
 	new_theatre.graphx_theatre_settings = theatre_settings;
 	new_theatre.theatre_file_data_printout = getTheatreStructure(new_theatre.graphx_theatre_settings);
-
 	PRINTDEBUG("Loading Theatre \"" << new_theatre.name << "\"")
 
 	for(int i = 1 ; i < theatre_settings.size() ; i++)
@@ -556,50 +550,46 @@ void GraphXTheatreInterpreter::loadTheatre(const long theatre_uid, Theatre& new_
 			continue;
 		}
 
-		if(!theatre_settings[i][0].name.compare("Stage"))
-		{
-			new_theatre.stage.youGotACallBack();
-			new_theatre.stage_mesh->loadSettings();
-			new_theatre.loadStageSettings(current_object_settings);
-			PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.name << "\" given custom settings")
-			continue;
-		}
+		// if(!theatre_settings[i][0].name.compare("Stage"))
+		// {
+		// 	new_theatre.stage.youGotACallBack();
+		// 	new_theatre.stage_mesh->loadSettings();
+		// 	new_theatre.loadStageSettings(current_object_settings);
+		// 	PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.name << "\" given custom settings")
+		// 	continue;
+		// }
 
 		new_theatre.createDevice(theatre_settings[i][0].name, i, current_object_settings);
 	}
+
+	new_theatre.raiseCurtains();
+	return true;
+}
+
+void GraphXTheatreInterpreter::loadMainTheatre(const int theatre_uid)
+{
+	unsigned int flipped_theatre_buffer_index = 1 - graphx::TheatreHandler.theatre_buffer_index;
+	if(loadTheatre(theatre_uid, graphx::TheatreHandler.theatre_buffer.at(flipped_theatre_buffer_index)))
+		graphx::TheatreHandler.theatre_buffer_index = flipped_theatre_buffer_index;
 }
 
 void I_LoadNewMainTheatre(long theatre_uid)
 {
-	if(graphx::current::theatre.getUID() == theatre_uid)
+	if(graphx::TheatreHandler.getCurrentTheatre()->getUID() == theatre_uid)
 	{
 		PRINTERR("A Theatre with UID " << std::quoted(std::to_string(theatre_uid)) << " cannot be loaded because it's already the current Theatre (or the current Theatre has the same UID)!")
 		return;
 	}
 
 	loading_new_main_theatre = true;
-	time_to_render = false;
 	time_to_store_buffers = false;
+	time_to_render = false;
 
-	graphx::current::theatre.dropCurtains();
-	graphx::Interpreter.loadTheatre(theatre_uid, graphx::current::theatre);
-	graphx::current::theatre.raiseCurtains();
+	graphx::Interpreter.loadMainTheatre(theatre_uid);
 	jolt_physics_system.OptimizeBroadPhase();
 
 	time_to_store_buffers = true;
 	loading_new_main_theatre = false;
-}
-
-void I_LoadChildTheatre(long theatre_uid, Theatre *parent_theatre)
-{
-	if(parent_theatre == nullptr || parent_theatre->getUID() == -1)
-	{
-		PRINTERR("Tried loading a child Theatre for an invalid parent Theatre (either nullptr or with a UID of -1)!")
-		return;
-	}
-
-	PRINTNOTE("loadChildTheatre called but this function is currently empty")
-	// NEEDS TO BE FILLED OUT
 }
 
 bool checkForExternalTheatres()

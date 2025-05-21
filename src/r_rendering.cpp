@@ -642,7 +642,7 @@ void R_GL_BufferMeshes()
 
 glm::mat4 R_GL_GetProjectionMatrix()
 {
-	return glm::perspective(glm::radians(graphx::current::theatre.getPlayer()->field_of_view), graphx::rendering::main_window_width / graphx::rendering::main_window_height, graphx::rendering::camera_near, graphx::rendering::camera_far);
+	return glm::perspective(glm::radians(graphx::TheatreHandler.getCurrentTheatre()->getPlayer()->field_of_view), graphx::rendering::main_window_width / graphx::rendering::main_window_height, graphx::rendering::camera_near, graphx::rendering::camera_far);
 }
 
 std::vector<RenderCmd> render_commands_buffer;
@@ -1100,8 +1100,8 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		shaders[graphx::rendering::current_shader].setUniform("current_material.alpha", rendercmd_iterator->mesh_material.color_alpha);
 		shaders[graphx::rendering::current_shader].setUniform("current_material.specular_sharpness", rendercmd_iterator->mesh_material.specular_sharpness);
 		shaders[graphx::rendering::current_shader].setUniform("current_material.specular_strength", rendercmd_iterator->mesh_material.specular_strength);
-		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_contribution", graphx::current::theatre.getEnvironment()->ambient_light_amount);
-		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_color", graphx::current::theatre.getEnvironment()->ambient_light_color);
+		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_contribution", graphx::TheatreHandler.getCurrentTheatre()->getEnvironment()->ambient_light_amount);
+		shaders[graphx::rendering::current_shader].setUniform("current_environment.ambient_light_color", graphx::TheatreHandler.getCurrentTheatre()->getEnvironment()->ambient_light_color);
 
 		shaders[graphx::rendering::current_shader].setUniform("debug_highlight", rendercmd_iterator->debug_highlight_color);
 

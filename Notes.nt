@@ -2822,3 +2822,26 @@ Yeah, Jolt is spitting out the error: `JoltPhysics/Jolt/Physics/Body/BodyManager
 I think I'm gonna take a break or call it here; got pretty far, though, and it's almost working! Definitely just my misunderstanding of Jolt... again.
 
 I'm probably gonna make the decision to just require all Theatres to have a player because trying to have a default player ready seems to be out of my grasp and I just want to get a fucking release out the door and move on to the other engine I really wanna try and make.
+
+[05/21/25]
+Before I start, I actually think that I should write some code that checks if the Theatre that's trying to be loaded is valid and if it is, load it but if it isn't skip over it instead of crashing. Also, I just had an idea to have two "current_theatre" variables so I can effectively buffer the next Theatre and not have to worry about accessing pointers that are deleted or any other nasty business. I'm going to implement Theatre buffering for switching Theatres.
+
+I'm also going to implement the namespace source file.
+
+Hmmm... yeah I think I'm gonna make graphx::current::theatre into a function bc this buffer shit kinda annoying to keep track of and I wanna consolidate it.
+
+Ugh, yeah, it really should be a struct... fine.
+
+Okay, I made a struct for handling the main Theatre buffer and integrated it into the interpreter; now I just have to replace all the fucking uses of `graphx::current::theatre` with `graphx::TheatreHandler.getCurrentTheatre()` LMFAO (or maybe just have the TheatreHandler/Interpreter set `graphx::current::theatre` to the current Theatre!).
+
+Okay, it's working, but the Jolt error is still here! While I can avoid it by just having a player character in the Theatre at all times, I would really like to figure out what this problem is. I'll spend some time trying to find it and if I can't, I'll just change how the safety player works so it's added to the Theatre directly (or something like that).
+
+GREAT!! FUCKING GREAT!! IT'S FIXED AND ALL I HAD TO DO WAS ADD THIS LINE TO J_RemoveAndDestroyBody:
+:::C++
+if(body_id.IsInvalid() || jolt_physics_system.GetBodyInterface().IsActive(body_id))
+    return;
+:::
+
+FUCKING GRAAAAAAAGHH!!!!!
+
+On the plus side: it works! :D

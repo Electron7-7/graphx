@@ -33,6 +33,8 @@ PhysicsSystem jolt_physics_system;
 
 void J_RemoveAndDestroyBody(BodyID body_id)
 {
+	if(body_id.IsInvalid() || jolt_physics_system.GetBodyInterface().IsActive(body_id))
+		return;
 	jolt_physics_system.GetBodyInterface().RemoveBody(body_id);
 	jolt_physics_system.GetBodyInterface().DestroyBody(body_id);
 }

@@ -34,7 +34,6 @@ private:
 typedef std::vector<StringSetting> StringSettings;
 
 void I_LoadNewMainTheatre(long TheatreUID);
-void I_LoadChildTheatre(long TheatreUID, std::shared_ptr<Theatre> ParentTheatre);
 void I_EmbedExternalTheatre(const std::string& GraphXTheatreFilePath);
 bool I_CheckForAndLoadExternalTheatres();
 #endif

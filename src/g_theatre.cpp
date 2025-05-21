@@ -15,14 +15,12 @@ Actor* Theatre::getFlashlight() const
 }
 // TEMPORARY
 
-
-Theatre graphx::current::theatre;
-
+// REDUNDANT!!!! (but helps keep code pretty, I guess)
 Theatre* getCurrentTheatre(bool print_note)
 {
-    if(graphx::current::theatre.getUID() == -1 && print_note)
-        PRINTDEBUG("getCurrentTheatre() called, but graphx::current::theatre.getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
-    return &graphx::current::theatre;
+    if(graphx::TheatreHandler.getCurrentTheatre()->getUID() == -1 && print_note)
+        PRINTDEBUG("getCurrentTheatre() called, but graphx::TheatreHandler.getCurrentTheatre()->getUID() returned -1! This may be a problem, but the engine shouldn't crash... theoretically")
+    return graphx::TheatreHandler.getCurrentTheatre();
 }
 
 //
@@ -31,9 +29,9 @@ Theatre* getCurrentTheatre(bool print_note)
 Theatre::Theatre(std::string init_name, long new_uid)
 : name(init_name), UID(new_uid)
 {
-    stage_material = new Material(false, glm::vec3(0.5, 0.1, 0.4));
-    stage_mesh = new Mesh(stage_material);
-    stage_mesh->name = "Stage Mesh for Theatre (" + name + ")";
+    // stage_material = new Material(false, glm::vec3(0.5, 0.1, 0.4));
+    // stage_mesh = new Mesh(stage_material);
+    // stage_mesh->name = "Stage Mesh for Theatre (" + name + ")";
 }
 
 std::vector<int> Theatre::dumpActorIDs()
@@ -155,14 +153,14 @@ void Theatre::dropCurtains()
     actor_vector.clear();
 }
 
-void Theatre::loadStageSettings(gSettings stage_settings)
-{
-    glm::vec3 stage_euler_degrees = glm::vec3(0.0f);
-    stage_settings.getNumber("Position", stage_position);
-    stage_settings.getNumber("Scale", stage_scale);
-    stage_settings.getNumber("Rotation", stage_euler_degrees);
-    stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
-}
+// void Theatre::loadStageSettings(gSettings stage_settings)
+// {
+//     glm::vec3 stage_euler_degrees = glm::vec3(0.0f);
+//     stage_settings.getNumber("Position", stage_position);
+//     stage_settings.getNumber("Scale", stage_scale);
+//     stage_settings.getNumber("Rotation", stage_euler_degrees);
+//     stage_quaternion = glm::quat(glm::radians(stage_euler_degrees));
+// }
 
 void Theatre::delegateKeyInput(GLFWwindow *window, int key, int scancode, int action, int mods)
 {

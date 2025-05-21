@@ -362,7 +362,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			return;
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
 		{
-			if(it->first == graphx::current::theatre.getUID())
+			if(it->first == graphx::TheatreHandler.getCurrentTheatre()->getUID())
 			{
 				++it;
 				if(it == embedded_theatres.end())
@@ -383,7 +383,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		I_CheckForAndLoadExternalTheatres();
 		for(auto it = embedded_theatres.begin() ; it != embedded_theatres.end() ; it++)
 		{
-			if(it->first == graphx::current::theatre.getUID())
+			if(it->first == graphx::TheatreHandler.getCurrentTheatre()->getUID())
 			{
 				if(it == embedded_theatres.begin())
 				{

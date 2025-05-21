@@ -51,7 +51,7 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	IMGUI::SetNextWindowSize(ImVec2(484, 434), ImGuiCond_Once);
 #endif
 	IMGUI::Begin(name.c_str(), &active, ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus);
-	IMGUI::Text("%s", std::string("Currently Loaded Theatre: " + graphx::current::theatre.name).c_str());
+	IMGUI::Text("%s", std::string("Currently Loaded Theatre: " + graphx::TheatreHandler.getCurrentTheatre()->name).c_str());
 	IMGUI::Separator();
 	if(IMGUI::Button("Toggle GraphXTheatre Printout"))
 		secondary_active = !secondary_active;
@@ -70,11 +70,11 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 	if(IMGUI::Button("Get Actor!##1"))
 	{
 		actor_selection_made = true;
-		actor_selection_valid = !(actor_name_selection.empty() || graphx::current::theatre.getActor(actor_name_selection) == nullptr);
+		actor_selection_valid = !(actor_name_selection.empty() || graphx::TheatreHandler.getCurrentTheatre()->getActor(actor_name_selection) == nullptr);
 		if(!actor_selection_valid)
 			error_string = "Invalid Actor Name!";
 		else
-			single_actor = graphx::current::theatre.getActor(actor_name_selection);
+			single_actor = graphx::TheatreHandler.getCurrentTheatre()->getActor(actor_name_selection);
 	}
 	IMGUI::Text("Select Actor by UID:");
 	IMGUI::PushItemWidth(100.0f);
@@ -95,8 +95,8 @@ void GraphXConsole::updateFrame(GLFWwindow *window)
 			actor_selection_valid = false;
 		}
 
-		if(actor_selection_valid && graphx::current::theatre.getActor(std::stod(actor_uid_selection)) != nullptr)
-			single_actor = graphx::current::theatre.getActor(std::stod(actor_uid_selection));
+		if(actor_selection_valid && graphx::TheatreHandler.getCurrentTheatre()->getActor(std::stod(actor_uid_selection)) != nullptr)
+			single_actor = graphx::TheatreHandler.getCurrentTheatre()->getActor(std::stod(actor_uid_selection));
 		else
 		{
 			actor_selection_valid = false;
@@ -169,7 +169,7 @@ void GraphXConsole::showActorEditor(Actor* actor, int index)
 
 void GraphXConsole::liveTheatreEditor()
 {
-	std::vector<Actor*> troupe = graphx::current::theatre.getTroupe();
+	std::vector<Actor*> troupe = graphx::TheatreHandler.getCurrentTheatre()->getTroupe();
 	IMGUI::Begin("Live Theatre Editor", &tertiary_active);
 	for(int i = 0 ; i < troupe.size() ; i++) // AYO I THINK THAT THE TROUPE IS GETTING BLOATED AS FUCK MY GUY
 	{
@@ -183,7 +183,7 @@ void GraphXConsole::liveTheatreEditor()
 
 void GraphXConsole::exportTheatreFile()
 {
-	std::vector<StringSettings> init_settings = graphx::current::theatre.graphx_theatre_settings;
+	std::vector<StringSettings> init_settings = graphx::TheatreHandler.getCurrentTheatre()->graphx_theatre_settings;
 	IMGUI::Begin("Export Theatre", &quaternary_active);
 
 	IMGUI::End();
@@ -191,9 +191,9 @@ void GraphXConsole::exportTheatreFile()
 
 void GraphXConsole::displayTheatrePrintout()
 {
-	if(!graphx::current::theatre.name.compare("Untitled Theatre"))
+	if(!graphx::TheatreHandler.getCurrentTheatre()->name.compare("Untitled Theatre"))
 		return;
-	std::string this_name = graphx::current::theatre.name + " - Parsed GraphXTheatre Settings";
+	std::string this_name = graphx::TheatreHandler.getCurrentTheatre()->name + " - Parsed GraphXTheatre Settings";
 #ifndef GRAPHX_DEBUG
 	IMGUI::SetNextWindowSize(ImVec2(635, 520), ImGuiCond_Once);
 	IMGUI::SetNextWindowPos(ImVec2(600, 175), ImGuiCond_Once);
@@ -202,7 +202,7 @@ void GraphXConsole::displayTheatrePrintout()
 	if(active)
 		window_flags = ImGuiWindowFlags_None;
 	IMGUI::Begin(this_name.c_str(), &secondary_active, window_flags);
-	IMGUI::Text("%s", graphx::current::theatre.theatre_file_data_printout.c_str());
+	IMGUI::Text("%s", graphx::TheatreHandler.getCurrentTheatre()->theatre_file_data_printout.c_str());
 	IMGUI::End();
 }
 

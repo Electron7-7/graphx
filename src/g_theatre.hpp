@@ -30,9 +30,9 @@ struct Theatre
     Actor* getFlashlight() const;
     // TEMPORARY
 
-    Mesh* stage_mesh = nullptr;
-    Material* stage_material = nullptr;
-    Actor stage = Actor("stage");
+    // Mesh* stage_mesh = nullptr;
+    // Material* stage_material = nullptr;
+    // Actor stage = Actor("stage");
     glm::vec3 stage_scale = glm::vec3(0.0f);
     glm::vec3 stage_position = glm::vec3(0.0f);
     glm::quat stage_quaternion = glm::quat();
@@ -54,7 +54,7 @@ struct Theatre
     std::set<std::string> getMeshDataNames();
     std::set<std::string> getTextureNames();
     void probeActorsForRenderCommands();
-    void loadStageSettings(gSettings stage_settings);
+    // void loadStageSettings(gSettings stage_settings);
     void raiseCurtains();
     void dropCurtains();
     long getUID();
