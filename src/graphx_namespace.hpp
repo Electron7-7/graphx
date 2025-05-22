@@ -18,6 +18,7 @@ namespace graphx
 	{
 	public:
 		Theatre* getCurrentTheatre() const;
+		void swapBuffer();
 
 	private:
 		friend GraphXTheatreInterpreter;

@@ -2849,3 +2849,12 @@ On the plus side: it works! :D
 Before moving on to anything else, I want to change how Theatre references are stored in gSettings. If I store the UID (and a pointer to the parent Theatre), instead of the raw pointer, I can have references to objects regardless of position in the file without reading through it more than once! I'd just have to change how the gSettings function gets the pointer, which would be easy!
 
 Okie, I implemented this new storage system and it works so far! I also found a bug where either there are leftover colliders from previous scenes not being cleaned up, or there are missing meshes for some RigidBodyActors. Either way, it doesn't crash and it's probably the Collider thing because it's the same Collider in the same spot every time and only after swapping from the first scene (and I also get Jolt errors when exiting the program).
+
+[05/22/25]
+I kind of want to work on the new engine, because a lot of the ways I'd want to improve GraphX invlove redoing almost everything. I think I'll just push onward to the next release and then maybe start work on the new engine. Speaking of which, I think that up next should probably be the revamping of Actor with its new functions and such.
+
+Ooh, but first I wanna fix that weird Collider bug.
+
+Ok, so I think it was because of the buffer, ironically; basically, I never destroyed the buffered Theatre, and while that's fine for my code (because only Actors in the current Theatre are ticked), the Jolt objects are still being processed, hence the issues. I solved this by adding a `swapBuffer` function to the Theatre handler which swaps the buffer index and then deletes the old Theatre.
+
+Yeah, now the only crash seems to be from AddressSanitizer when I exit the program (and it's most likely due to the memory leaks LMFAO).

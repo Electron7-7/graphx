@@ -568,9 +568,8 @@ bool GraphXTheatreInterpreter::loadTheatre(const int theatre_uid, Theatre& new_t
 
 void GraphXTheatreInterpreter::loadMainTheatre(const int theatre_uid)
 {
-	unsigned int flipped_theatre_buffer_index = 1 - graphx::TheatreHandler.theatre_buffer_index;
-	if(loadTheatre(theatre_uid, graphx::TheatreHandler.theatre_buffer.at(flipped_theatre_buffer_index)))
-		graphx::TheatreHandler.theatre_buffer_index = flipped_theatre_buffer_index;
+	if(loadTheatre(theatre_uid, graphx::TheatreHandler.theatre_buffer.at(1 - graphx::TheatreHandler.theatre_buffer_index)))
+		graphx::TheatreHandler.swapBuffer();
 }
 
 void I_LoadNewMainTheatre(long theatre_uid)

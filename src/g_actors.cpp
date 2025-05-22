@@ -252,7 +252,6 @@ void Camera::youGotACallBack()
 //
 // GraphXPlayer
 //
-
 void GraphXPlayer::youGotACallBack()
 {
 	gSettings::configureBaseVariables(this);
@@ -391,8 +390,9 @@ glm::vec3 GraphXPlayer::getViewPosition()
 
 void GraphXPlayer::takeABow()
 {
+	PRINTDEBUG("GraphXPlayer::takeABow")
 	Actor::takeABow();
-	jolt_physics_system.GetBodyInterface().RemoveBody(jph_character->GetBodyID());
+	jph_character->RemoveFromPhysicsSystem();
 }
 
 //

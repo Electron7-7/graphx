@@ -11,9 +11,17 @@ Theatre* graphx::CurrentTheatreHandler::getCurrentTheatre() const
 unsigned int graphx::CurrentTheatreHandler::theatre_buffer_index = 0;
 std::array<Theatre, 2> graphx::CurrentTheatreHandler::theatre_buffer =
 {
-    Theatre("Main Theatre Buffer: Theatre 1"),
-    Theatre("Main Theatre Buffer: Theatre 2")
+    Theatre("Main Theatre Buffer Index: 0"),
+    Theatre("Main Theatre Buffer Index: 1")
 };
+
+void graphx::CurrentTheatreHandler::swapBuffer()
+{
+    theatre_buffer_index = 1 - theatre_buffer_index;
+    unsigned int old_index = 1 - theatre_buffer_index;
+    theatre_buffer.at(old_index).dropCurtains();
+    theatre_buffer.at(old_index) = Theatre("Main Theatre Buffer Index: " + std::to_string(old_index));
+}
 
 // GraphX
 GraphXTheatreInterpreter graphx::Interpreter = GraphXTheatreInterpreter();
