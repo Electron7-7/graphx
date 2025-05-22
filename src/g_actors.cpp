@@ -16,10 +16,12 @@
 RenderCommands Label::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
+
+	render_commands.render_command.mesh_data_name = GRAPHX_QUAD;
 	render_commands.render_command.mesh_material.color_alpha = label_alpha;
 	text_render_command.render_state = &current_state_buffer[state_index];
-	text_render_command.position_x = position_global.x;
-	text_render_command.position_y = position_global.y;
+	text_render_command.position_x = (getGlobalPosition() + getLocalPosition()).x;
+	text_render_command.position_y = (getGlobalPosition() + getLocalPosition()).y;
 	render_commands.text_render_command = text_render_command;
 	return render_commands;
 }
@@ -28,16 +30,19 @@ void Label::tick(int current_tick)
 {
 	if(parent != nullptr)
 	{
-		setGlobalPosition(parent->getPosition<glm::vec3>());
-		setGlobalRotation(parent->getRotation<glm::vec3>());
+		setGlobalPosition(parent->getGlobalPosition());
+		setGlobalQuaternion(parent->getGlobalQuaternion());
 	}
 	else
 	{
-		position_global.x += 0.0f;
+		// Todo: find better ways of accessing specific parts of position/rotation/scale
+		glm::vec3 global_position = getGlobalPosition();
+		global_position.x += 0.01f;
+		setGlobalPosition(global_position);
 	}
 }
 
-void Label::youGotACallBack()
+void Label::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 	/**
@@ -66,27 +71,28 @@ void Label::youGotACallBack()
 //
 // PhysicsActor
 //
-
-void PhysicsActor::setGlobalPosition(glm::vec3 new_value)
+void PhysicsActor::overrideColliderPosition(glm::vec3 new_value)
 {
 	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
 	body_interface.SetPosition(collider->getBodyID(), gmath::convertMath<JPH::Vec3>(new_value), JPH::EActivation::Activate);
 }
 
-void PhysicsActor::setGlobalRotation(glm::vec3 new_value)
+void PhysicsActor::overrideColliderRotation(glm::vec3 new_value, bool as_degrees)
 {
+	if(as_degrees)
+		new_value = glm::radians(new_value);
 	glm::quat new_quaternion(new_value);
 	JPH::Quat new_new_quaternion = gmath::convertMath<JPH::Quat>(new_quaternion);
 	JPH::BodyInterface &body_interface = jolt_physics_system.GetBodyInterface();
 	body_interface.SetRotation(collider->getBodyID(), new_new_quaternion, JPH::EActivation::Activate);
 }
 
-bool PhysicsActor::isPhysicsActor()
+bool PhysicsActor::isPhysicsActor() const
 {
 	return true;
 }
 
-void PhysicsActor::youGotACallBack()
+void PhysicsActor::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -104,8 +110,8 @@ void PhysicsActor::callToStage(Theatre* parent_theatre)
 
 	collider->createBody();
 
-	reset_position = getPosition<JPH::Vec3>();
-	reset_quaternion = getRotation<JPH::Quat>();
+	reset_position = gmath::convertMath<JPH::Vec3>(getGlobalPosition() + getLocalPosition());
+	reset_quaternion = gmath::convertMath<JPH::Quat>(getGlobalQuaternion() * getLocalQuaternion());
 }
 
 void PhysicsActor::takeABow()
@@ -124,9 +130,8 @@ void PhysicsActor::tick(int current_tick)
 	JPH::Vec3 body_position = body_interface.GetCenterOfMassPosition(collider->getBodyID());
 	JPH::Quat body_quaternion = body_interface.GetRotation(collider->getBodyID());
 
-	position_global = gmath::convertMath<glm::vec3>(body_position);
-	quaternion = gmath::convertMath<glm::quat>(body_quaternion);
-	updateVectors();
+	setGlobalPosition(gmath::convertMath<glm::vec3>(body_position));
+	setGlobalQuaternion(gmath::convertMath<glm::quat>(body_quaternion));
 }
 
 void PhysicsActor::reset_to_initial_orientation_for_testing()
@@ -140,7 +145,7 @@ void PhysicsActor::reset_to_initial_orientation_for_testing()
 // RigidBodyActor
 //
 
-void RigidBodyActor::youGotACallBack()
+void RigidBodyActor::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 }
@@ -156,11 +161,11 @@ void RigidBodyActor::callToStage(Theatre *parent_theatre)
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Dynamic;
 	collider->object_layer = Layers::MOVING;
-	collider->scale = scale;
-	collider->position = position_global;
-	collider->local_position = position_local;
-	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
-	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
+	collider->scale = getGlobalScale() + getLocalScale();
+	collider->position = getGlobalPosition();
+	collider->local_position = getLocalPosition();
+	collider->euler_angles = getGlobalEulerAngles(true);
+	collider->local_euler_angles = getLocalEulerAngles(true);
 	collider->createBody();
 }
 
@@ -187,7 +192,7 @@ void RigidBodyActor::takeABow()
 // StaticBodyActor
 //
 
-void StaticBodyActor::youGotACallBack()
+void StaticBodyActor::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 }
@@ -202,11 +207,11 @@ void StaticBodyActor::callToStage(Theatre *parent_theatre)
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Static;
 	collider->object_layer = Layers::NON_MOVING;
-	collider->scale = scale;
-	collider->position = position_global;
-	collider->local_position = position_local;
-	collider->euler_angles = glm::degrees(glm::eulerAngles(quaternion));
-	collider->local_euler_angles = glm::degrees(glm::eulerAngles(local_quaternion));
+	collider->scale = getGlobalScale() + getLocalScale();
+	collider->position = getGlobalPosition();
+	collider->local_position = getLocalPosition();
+	collider->euler_angles = getGlobalEulerAngles(true);
+	collider->local_euler_angles = getLocalEulerAngles(true);
 	collider->createBody();
 }
 
@@ -233,11 +238,10 @@ void Camera::doRotation(glm::vec2 mouse_input)
 	if(std::abs(glm::degrees(euler_rotation[0])) > view_pitch_clamp)
 		euler_rotation[0] = glm::radians(view_pitch_clamp * ((glm::degrees(euler_rotation[0]) > 0) - (glm::degrees(euler_rotation[0]) < 0)));
 
-	quaternion = glm::quat(euler_rotation);
-	updateVectors();
+	setGlobalQuaternion(glm::quat(euler_rotation));
 }
 
-void Camera::youGotACallBack()
+void Camera::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -245,14 +249,13 @@ void Camera::youGotACallBack()
 	settings.getNumber("LocalRotationDegrees", euler_rotation_local);
 
 	euler_rotation = glm::radians(glm::vec3(0.0f));
-	quaternion = glm::quat(euler_rotation);
-	updateVectors();
+	setGlobalQuaternion(glm::quat(euler_rotation));
 }
 
 //
 // GraphXPlayer
 //
-void GraphXPlayer::youGotACallBack()
+void GraphXPlayer::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -265,8 +268,9 @@ void GraphXPlayer::youGotACallBack()
 	settings.getNumber("FOV", field_of_view);
 
 	lerp_speed *= (double)1.0 / 120; // Hardcoded until I move TICKLENGTH and TICKRATE out of main.cpp
+	visible = false;
 
-	player_camera.youGotACallBack(); // The camera never gets tick() or youGotACallback() called, since it's not a child of the Theatre
+	player_camera.loadSettings(); // The camera never gets tick() or loadSettings() called, since it's not a child of the Theatre
 }
 
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
@@ -278,12 +282,13 @@ void GraphXPlayer::callToStage(Theatre *parent_theatre)
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
 	player_settings->mLayer = Layers::MOVING;
-	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CylinderShape(scale[1], scale[0])).Create().Get();
+	player_settings->mShape = JPH::RotatedTranslatedShapeSettings(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), new JPH::CylinderShape(getGlobalScale()[1], getGlobalScale()[0])).Create().Get();
 	player_settings->mFriction = friction;
 	player_settings->mMass = mass;
 	player_settings->mGravityFactor *= do_gravity;
-	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), scale[0]);
-	jph_character = new JPH::Character(player_settings, getPosition<JPH::Vec3>(), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
+	player_settings->mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), getGlobalScale()[0]);
+	// Todo: get rid of this if it's a memory leak
+	jph_character = new JPH::Character(player_settings, gmath::convertMath<JPH::Vec3>(getGlobalPosition() + getLocalPosition()), JPH::Quat::sIdentity(), 0, &jolt_physics_system);
 	jph_character->AddToPhysicsSystem(JPH::EActivation::Activate);
 }
 
@@ -296,7 +301,7 @@ void GraphXPlayer::processMouse(GLFWwindow *window, double x_position_in, double
 	doMouseMovement(mouse_offset);
 }
 
-void GraphXPlayer::processInput(GLFWwindow *window)
+void GraphXPlayer::checkForInput(GLFWwindow* window)
 {
 	int input_vector[2] =
 	{
@@ -309,8 +314,8 @@ void GraphXPlayer::processInput(GLFWwindow *window)
 
 void GraphXPlayer::tick(int current_tick)
 {
-	position_global = gmath::convertMath<glm::vec3>(jph_character->GetPosition());
-	player_camera.setGlobalPosition(position_global);
+	setGlobalPosition(gmath::convertMath<glm::vec3>(jph_character->GetPosition()));
+	player_camera.setGlobalPosition(getGlobalPosition());
 }
 
 void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -340,8 +345,8 @@ void GraphXPlayer::doMovement(int direction[2])
 		return;
 	JPH::Vec3 current_velocity = jph_character->GetLinearVelocity();
 	JPH::Vec3 wish_velocity = JPH::Vec3(0.0f, 0.0f, 0.0f);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(orientation_grounded_front) * static_cast<float>(direction[0] * movement_speed);
-	wish_velocity += gmath::convertMath<JPH::Vec3>(orientation_right) * static_cast<float>(direction[1] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(glm::vec3(getOrientationFront()[0], 0.0f, getOrientationFront()[2])) * static_cast<float>(direction[0] * movement_speed);
+	wish_velocity += gmath::convertMath<JPH::Vec3>(getOrientationRight()) * static_cast<float>(direction[1] * movement_speed);
 
 	if(direction[0] == last_direction[0] && direction[1] == last_direction[1])
 	{
@@ -370,23 +375,14 @@ void GraphXPlayer::doMouseMovement(glm::vec2 mouse_offset)
 {
 	player_camera.doRotation(mouse_offset * mouse_sensitivity);
 	glm::vec3 horizontal_rotation = glm::vec3(0.0f, player_camera.euler_rotation[1], 0.0f);
-	quaternion = glm::quat(horizontal_rotation);
-	updateVectors();
+	setGlobalQuaternion(glm::quat(horizontal_rotation));
 }
 
 glm::mat4 GraphXPlayer::getViewMatrix()
-{
-	glm::vec3 camera_pos = player_camera.getPosition<glm::vec3>();
-	glm::vec3 camera_orientation_front = player_camera.orientation_front;
-	glm::vec3 camera_orientation_up = player_camera.orientation_up;
-
-	return glm::lookAt(camera_pos, camera_pos + camera_orientation_front, camera_orientation_up);
-}
+{ return glm::lookAt(player_camera.getAbsolutePosition(), player_camera.getAbsolutePosition() + player_camera.getOrientationFront(), player_camera.getOrientationUp()); }
 
 glm::vec3 GraphXPlayer::getViewPosition()
-{
-	return player_camera.getPosition<glm::vec3>();
-}
+{ return player_camera.getAbsolutePosition(); }
 
 void GraphXPlayer::takeABow()
 {
@@ -399,7 +395,7 @@ void GraphXPlayer::takeABow()
 // Light
 //
 
-void Light::youGotACallBack()
+void Light::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -411,13 +407,8 @@ void Light::youGotACallBack()
 	settings.getNumber("Attenuation", light_attenuation);
 	settings.getNumber("Range", light_range);
 
-	// Just to be safe...
-	if(mesh != nullptr)
-	{
-		mesh->prepForDestruction();
-		mesh = nullptr;
-		delete mesh;
-	}
+	// mesh->prepForDestruction();
+	mesh = &graphx::debug::light_debug_mesh;
 }
 
 RenderCommands Light::getRenderCommands()
@@ -429,7 +420,7 @@ RenderCommands Light::getRenderCommands()
 	render_commands.light_render_command.light_data.ambient_strength = light_ambient_strength;
 	render_commands.light_render_command.light_data.specular_strength = light_specular_strength;
 	render_commands.light_render_command.light_data.color = light_color;
-	render_commands.light_render_command.light_data.position = getPosition<glm::vec3>();
+	render_commands.light_render_command.light_data.position = getAbsolutePosition();
 	render_commands.light_render_command.light_data.attenuation = light_attenuation;
 	render_commands.light_render_command.light_data.range = light_range;
 
@@ -437,7 +428,7 @@ RenderCommands Light::getRenderCommands()
 	{
 		render_commands.render_command.is_light_debug_mesh = true;
 		render_commands.render_command.mesh_data_name = GRAPHX_CUBE;
-		render_commands.render_command.mesh_material = Material(LIGHT_DEBUGGING, NO_TEXTURE, 8, 0.0f, light_color * light_energy);
+		render_commands.render_command.mesh_material = Material("Light Debug Material", LIGHT_DEBUGGING, true);
 	}
 
 	return(render_commands);
@@ -447,7 +438,7 @@ RenderCommands Light::getRenderCommands()
 // LightDirectional
 //
 
-void LightDirectional::youGotACallBack()
+void LightDirectional::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -462,10 +453,10 @@ void LightDirectional::youGotACallBack()
 	settings.getNumber("Direction", directional_direction);
 
 	// LightDirectional doesn't really need a debug mesh, since it's physical orientation doesn't matter
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
-	mesh = nullptr;
-	delete mesh;
+	// if(mesh != nullptr)
+	// 	mesh->prepForDestruction();
+	// mesh = nullptr;
+	// delete mesh;
 }
 
 RenderCommands LightDirectional::getRenderCommands()
@@ -482,7 +473,7 @@ RenderCommands LightDirectional::getRenderCommands()
 // LightSpot
 //
 
-void LightSpot::youGotACallBack()
+void LightSpot::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -515,7 +506,7 @@ RenderCommands LightSpot::getRenderCommands()
 // LightFlashlight
 //
 
-void LightFlashlight::youGotACallBack()
+void LightFlashlight::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -535,10 +526,14 @@ void LightFlashlight::youGotACallBack()
 	_color = light_color;
 	setLight(start_enabled);
 
-	if(mesh != nullptr)
-		mesh->prepForDestruction();
-	mesh = nullptr;
-	delete mesh;
+	// if(mesh != nullptr)
+		// mesh->prepForDestruction();
+	// mesh = nullptr;
+	// delete mesh;
+
+	// Todo: find out which one is unnecessary
+	Actor::visible = false;
+	visible = false;
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -547,9 +542,9 @@ void LightFlashlight::tick(int current_tick)
 	if(getCurrentTheatre()->getPlayer() == nullptr)
 		return;
 
-	setGlobalPosition(getCurrentTheatre()->getPlayer()->player_camera.getPosition<glm::vec3>() + position_offset);
-	setGlobalRotation(getCurrentTheatre()->getPlayer()->player_camera.getRotation<glm::quat>() * glm::quat(glm::radians(rotation_offset)));
-	spot_direction = quaternion * vector3_front;
+	setGlobalPosition(getCurrentTheatre()->getPlayer()->player_camera.getAbsolutePosition() + position_offset);
+	setGlobalQuaternion(getCurrentTheatre()->getPlayer()->player_camera.getAbsoluteQuaternion() * glm::quat(glm::radians(rotation_offset)));
+	spot_direction = getAbsoluteQuaternion() * graphx::orientation::front;
 }
 
 void LightFlashlight::toggleLight(glm::vec3 toggle_color)
@@ -588,7 +583,7 @@ void LightFlashlight::setLightColor(bool color_toggle)
 // LightTesterMover
 //
 
-void LightTesterMover::youGotACallBack()
+void LightTesterMover::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -611,8 +606,7 @@ void LightTesterMover::youGotACallBack()
 	pivot_point.mesh->setUID(4815 + getUID());
 	gSettings pivot_settings;
 	pivot_settings.raw_data["Name"] = gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")};
-	pivot_point.youGotACallBack();
-	// getCurrentTheatre()->actorEnter(&pivot_point, 1623 + getUID(), pivot_settings);
+	pivot_point.loadSettings();
 }
 
 RenderCommands LightTesterMover::getRenderCommands()
@@ -625,9 +619,13 @@ void LightTesterMover::tick(int current_tick)
 {
 	pivot_point.setGlobalPosition(pivot_position);
 
-	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
-	position_global[1] = pivot_position[1];
-	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+	glm::vec3 new_global_position = getGlobalPosition();
+
+	new_global_position[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
+	new_global_position[1] = pivot_position[1];
+	new_global_position[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+
+	setGlobalPosition(new_global_position);
 
 	pivot_theta += pivot_speed;
 	if(pivot_theta >= 360.0f)
@@ -644,7 +642,7 @@ void LightTesterMover::takeABow()
 // Ramiel
 //
 
-void Ramiel::youGotACallBack()
+void Ramiel::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
 
@@ -657,15 +655,19 @@ void Ramiel::youGotACallBack()
 
 void Ramiel::tick(int current_tick)
 {
+	glm::vec3 new_global_position = getGlobalPosition();
+
 	if(movement_type == RAMIEL_APPROACH)
 	{
-		position_global += movement_speed * orientation_front;
+		setGlobalPosition(new_global_position += movement_speed * getOrientationFront());
 		return;
 	}
 
-	position_global[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
-	position_global[1] = pivot_position[1];
-	position_global[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+	new_global_position[0] = pivot_position[0] + pivot_radius * glm::cos(glm::radians(pivot_theta));
+	new_global_position[1] = pivot_position[1];
+	new_global_position[2] = pivot_position[2] + pivot_radius * glm::sin(glm::radians(pivot_theta));
+
+	setGlobalPosition(new_global_position);
 
 	pivot_theta += pivot_speed;
 	if(pivot_theta >= 360.0f)

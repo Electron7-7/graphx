@@ -157,60 +157,33 @@ void gSettings::getResource(const std::string& setting, std::string& variable) c
     }
 }
 
-// void gSettings::getActor(const std::string& setting, Actor*& variable) const
-// {
-//     if(!actor_reference.contains(setting)) return;
-//     variable = actor_reference.at(setting);
-// }
-
-// void gSettings::getDevice(const std::string& setting, Device*& variable) const
-// {
-//     if(!device_reference.contains(setting)) return;
-//     variable = device_reference.at(setting);
-// }
-
 void gSettings::configureBaseVariables(Actor* actor)
 {
     const gSettings& settings = actor->getSettings();
-    // glm::vec3 position_global = actor->getGlobalPosition();
-    // glm::vec3 position_local = actor->getLocalPosition();
-    // glm::vec3 global_euler_degrees = actor->getGlobalEulerAngles(true);
-    // glm::vec3 local_euler_degrees = actor->getLocalEulerAngles(true);
-    // glm::vec3 scale_global = actor->getGlobalScale();
-    // glm::vec3 scale_local = actor->getLocalScale();
+    glm::vec3 position_global = actor->getGlobalPosition();
+    glm::vec3 position_local = actor->getLocalPosition();
+    glm::vec3 global_euler_degrees = actor->getGlobalEulerAngles(true);
+    glm::vec3 local_euler_degrees = actor->getLocalEulerAngles(true);
+    glm::vec3 scale_global = actor->getGlobalScale();
+    glm::vec3 scale_local = actor->getLocalScale();
 
-    // settings.getString("Name", actor->name);
-    // settings.getBoolean("Visible", actor->visible);
-    // settings.getDevice("Model", actor->model_uid);
-    // settings.getDevice("Collider", actor->collider_uid);
-    // settings.getNumber("Position", position_global);
-    // settings.getNumber("LocalPosition", position_local);
-    // settings.getNumber("Rotation", global_euler_degrees);
-    // settings.getNumber("LocalRotation", local_euler_degrees);
-    // settings.getNumber("Scale", scale_global);
-    // settings.getNumber("LocalScale", scale_local);
-
-    // actor->setGlobalPosition(position_global);
-    // actor->setLocalPosition(position_local);
-    // actor->setGlobalEulerAngles(global_euler_degrees, true);
-    // actor->setLocalEulerAngles(local_euler_degrees, true);
-    // actor->setGlobalScale(scale_global);
-    // actor->setLocalScale(scale_local);
-
-
-    // TODO: DELETE ALL OF THIS ONCE I DON'T NEED IT AND CAN USE THE ABOVE STUFF
-    glm::vec3 local_euler_degrees = glm::vec3(0.0f);
-    glm::vec3 global_euler_degrees = glm::degrees(glm::eulerAngles(actor->quaternion));
     settings.getString("Name", actor->name);
+    settings.getBoolean("Visible", actor->visible);
     settings.getDevice("Mesh", actor->mesh);
-    settings.getNumber("Position", actor->position_global);
-    settings.getNumber("LocalPosition", actor->position_local);
+    // settings.getDevice("Collider", actor->collider_uid);
+    settings.getNumber("Position", position_global);
+    settings.getNumber("LocalPosition", position_local);
     settings.getNumber("Rotation", global_euler_degrees);
     settings.getNumber("LocalRotation", local_euler_degrees);
-    settings.getNumber("Scale", actor->scale);
-    settings.getBoolean("Visible", actor->visible);
-    actor->local_quaternion = glm::quat(glm::radians(local_euler_degrees));
-    actor->quaternion = glm::quat(glm::radians(global_euler_degrees));
+    settings.getNumber("Scale", scale_global);
+    settings.getNumber("LocalScale", scale_local);
+
+    actor->setGlobalPosition(position_global);
+    actor->setLocalPosition(position_local);
+    actor->setGlobalEulerAngles(global_euler_degrees, true);
+    actor->setLocalEulerAngles(local_euler_degrees, true);
+    actor->setGlobalScale(scale_global);
+    actor->setLocalScale(scale_local);
 }
 
 void gSettings::configureBaseVariables(Device* device)

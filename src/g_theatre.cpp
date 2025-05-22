@@ -200,7 +200,7 @@ void Theatre::createActor(const std::string& actor_type, long uid, gSettings new
 
     objects[uid] = valid_actors.at(actor_type)(this, uid, new_settings); // VERY BAD, WILL BE REPLACED WITH SMART POINTERS WHEN FULLY IMPLEMENTED
     objects.at(uid)->setUID(uid);
-    objects.at(uid)->youGotACallBack();
+    objects.at(uid)->loadSettings();
     actor_vector.insert(actor_vector.end(), objects.at(uid).get());
 
     if(time_to_render)
@@ -244,7 +244,7 @@ void Theatre::actorEnter(Actor* new_actor, long uid, gSettings new_settings)
     if(dynamic_cast<GraphXPlayer*>(new_actor))
         player_uid = uid;
 
-    new_actor->youGotACallBack();
+    new_actor->loadSettings();
 
     // Writing this has made me realize just how nasty my usage of pointers is.
     // I want to rectify this by using UIDs instead; basically, instead of

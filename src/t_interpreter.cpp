@@ -552,7 +552,7 @@ bool GraphXTheatreInterpreter::loadTheatre(const int theatre_uid, Theatre& new_t
 
 		// if(!theatre_settings[i][0].name.compare("Stage"))
 		// {
-		// 	new_theatre.stage.youGotACallBack();
+		// 	new_theatre.stage.loadSettings();
 		// 	new_theatre.stage_mesh->loadSettings();
 		// 	new_theatre.loadStageSettings(current_object_settings);
 		// 	PRINTDEBUG("Theatre Stage \"" << new_theatre.stage.name << "\" given custom settings")

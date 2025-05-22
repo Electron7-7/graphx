@@ -1,5 +1,6 @@
 #include "g_imgui.hpp"
 #include "g_actor.hpp"
+#include "g_actors.hpp"
 #include "g_theatre.hpp"
 #include "graphx_namespace.hpp"
 #include "imgui_stdlib.h"
@@ -147,24 +148,34 @@ void GraphXConsole::showActorEditor(Actor* actor, int index)
 	//  Reset Actor
 	//
 	if(IMGUI::Button(indexMe("Reset Actor", index).c_str()))
-		actor->youGotACallBack();
+		actor->loadSettings();
 	//
 	//  Actor rotation, position, and scale manipulation
 	//
-	std::vector<float> position_vectors = actor->getPosition<std::vector<float>>();
-	std::vector<float> rotation_vectors = actor->getRotationDegrees<std::vector<float>>();
-	std::vector<float> scale_vectors = {actor->scale.x, actor->scale.y, actor->scale.z};
+	std::vector<float> position_vectors = { actor->getGlobalPosition()[0], actor->getGlobalPosition()[1], actor->getGlobalPosition()[2] };
+	std::vector<float> rotation_vectors = { actor->getGlobalEulerAngles(true)[0], actor->getGlobalEulerAngles(true)[1], actor->getGlobalEulerAngles(true)[2] };
+	std::vector<float> scale_vectors = { actor->getGlobalScale().x, actor->getGlobalScale().y, actor->getGlobalScale().z };
 	if(IMGUI::DragFloat3(indexMe("Position", index).c_str(), position_vectors.data(), -0.1f, -100.0f, 100.0f))
-		actor->setGlobalPosition(glm::vec3(position_vectors[0], position_vectors[1], position_vectors[2]));
+	{
+		if(actor->isPhysicsActor())
+			dynamic_cast<PhysicsActor*>(actor)->overrideColliderPosition(glm::vec3(position_vectors[0], position_vectors[1], position_vectors[2]));
+		else
+			actor->setGlobalPosition(glm::vec3(position_vectors[0], position_vectors[1], position_vectors[2]));
+	}
 	if(IMGUI::DragFloat3(indexMe("Rotation", index).c_str(), rotation_vectors.data(), -0.1f, -100.0f, 100.0f))
-		actor->setGlobalRotation(glm::radians(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2])));
+	{
+		if(actor->isPhysicsActor())
+			dynamic_cast<PhysicsActor*>(actor)->overrideColliderRotation(glm::radians(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2])), false);
+		else
+			actor->setGlobalEulerAngles(glm::radians(glm::vec3(rotation_vectors[0], rotation_vectors[1], rotation_vectors[2])));
+	}
 	if(IMGUI::DragFloat3(indexMe("Scale", index).c_str(), scale_vectors.data(), -0.1f, -100.0f, 100.0f))
-		actor->scale = glm::vec3(scale_vectors[0], scale_vectors[1], scale_vectors[2]);
+		actor->setGlobalScale(glm::vec3(scale_vectors[0], scale_vectors[1], scale_vectors[2]));
 	IMGUI::EndGroup();
 	if(IMGUI::IsItemHovered())
-		actor->highlightMe();
+		actor->debug_highlight_enabled = true;
 	else
-		actor->unHighlightMe();
+		actor->debug_highlight_enabled = false;
 }
 
 void GraphXConsole::liveTheatreEditor()

@@ -227,7 +227,7 @@ void gameTick(GLFWwindow *main_window)
 				if(loading_new_main_theatre)
 					continue;
 				if(!ImGui::GetIO().WantCaptureKeyboard)
-					actor->processInput(main_window);
+					actor->checkForInput(main_window);
 				actor->tick(current_tick_since_start);
 				actor->updateStates(actor_state_mutex);
 			}

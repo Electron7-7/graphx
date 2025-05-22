@@ -130,26 +130,25 @@ Material::Material(const bool use_missing)
     }
 }
 
-// Todo: Use the bottom two instead of the rest of the constructors
-// Material::Material(glm::vec3 init_color, bool is_fullbright)
-// : Device("Untitled Material"), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
-// {}
-
-// Material::Material(std::string init_name, std::string init_diffuse_texture_name, const bool is_fullbright, glm::vec3 init_color, std::string init_specular_texture_name, float init_specular_strength, int init_specular_sharpness)
-// : Device(init_name), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
-// {}
-
-Material::Material(bool is_fullbright, glm::vec3 init_color)
+Material::Material(glm::vec3 init_color, bool is_fullbright)
 : Device("Untitled Material"), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
 {}
 
-Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
-: Device("Untitled Material"), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+Material::Material(std::string init_name, std::string init_diffuse_texture_name, const bool is_fullbright, glm::vec3 init_color, std::string init_specular_texture_name, float init_specular_strength, int init_specular_sharpness)
+: Device(init_name), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
 {}
 
-Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
-: Device("Untitled Material"), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
-{}
+// Material::Material(bool is_fullbright, glm::vec3 init_color)
+// : Device("Untitled Material"), color(init_color), specular_strength(0.0f), mat_fullbright(is_fullbright)
+// {}
+
+// Material::Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name, int init_specular_sharpness, float init_specular_strength, glm::vec3 init_color)
+// : Device("Untitled Material"), diffuse_texture_name(init_diffuse_texture_name), specular_texture_name(init_specular_texture_name), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+// {}
+
+// Material::Material(glm::vec3 init_color, float init_specular_strength, unsigned int init_specular_sharpness)
+// : Device("Untitled Material"), color(init_color), specular_sharpness(init_specular_sharpness), specular_strength(init_specular_strength)
+// {}
 
 void Material::loadSettings()
 {
@@ -173,12 +172,8 @@ void Material::loadSettings()
 //
 // Mesh
 //
-Mesh::Mesh(const std::string& my_mesh_data_name, const int my_material_uid)
-: Device("Untitled Model")/*, material_uid(my_material_uid)*/, mesh_data_name(my_mesh_data_name)
-{}
-
-Mesh::Mesh(Material *new_material, std::string init_mesh_data_name)
-: Device("Untitled Mesh"), material(new_material), mesh_data_name(init_mesh_data_name)
+Mesh::Mesh(const std::string& my_mesh_data_name, Material* my_material)
+: Device("Untitled Model"), material(my_material), mesh_data_name(my_mesh_data_name)
 {}
 
 Mesh::Mesh(std::string init_mesh_data_name)

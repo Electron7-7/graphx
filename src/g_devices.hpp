@@ -78,20 +78,18 @@ struct Material final : public Device
     bool use_texture = true;
 
     using Device::Device;
-    Material(const bool USE_MISSING_INSTEAD_OF_EMPTY = false);
-    // Material(glm::vec3 Color, bool Fullbright = false);
-    // Material(std::string MaterialName, std::string DiffuseTextureName, const bool Fullbright, glm::vec3 Color = glm::vec3(1.0f), std::string SpecularTextureName = NO_TEXTURE, float SpecularStrength = 0.0f, int SpecularSharpness = 16);
-    // REPLACE THE BOTTOM THREE WITH THE TOP TWO
-    Material(bool is_fullbright, glm::vec3 init_color = glm::vec3(1.0f));
-    Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
-    Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
+    Material(const bool USE_MISSING_INSTEAD_OF_EMPTY = true);
+    Material(glm::vec3 Color, bool Fullbright = false);
+    Material(std::string MaterialName, std::string DiffuseTextureName, const bool Fullbright, glm::vec3 Color = glm::vec3(1.0f), std::string SpecularTextureName = NO_TEXTURE, float SpecularStrength = 0.0f, int SpecularSharpness = 16);
+    // Material(std::string init_diffuse_texture_name, std::string init_specular_texture_name = NO_TEXTURE, int init_specular_sharpness = 16, float init_specular_strength = 0.0f, glm::vec3 init_color = glm::vec3(1.0f));
+    // Material(glm::vec3 init_color, float init_specular_strength = 0.5f, unsigned int init_specular_sharpness = 32);
 
     void loadSettings() override;
 };
 
 struct Mesh : public Device
 {
-    Material* material = new Material(); // TODO: This is a memory leak
+    Material* material = &graphx::error::missing_material;
 
     unsigned int VBO = 0;
     unsigned int IBO = 0;
@@ -100,8 +98,7 @@ struct Mesh : public Device
     std::string mesh_data_name = ERROR_MODEL;
 
     using Device::Device;
-    Mesh(const std::string& MeshDataName = ERROR_MODEL, const int MaterialUID = -1);
-    Mesh(Material *new_material, std::string init_mesh_data_name = ERROR_MODEL);
+    Mesh(const std::string& MeshDataName = ERROR_MODEL, Material* NewMaterial = &graphx::error::missing_material);
     Mesh(std::string init_mesh_data_name);
 
     void loadSettings() override;

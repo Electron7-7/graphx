@@ -1,10 +1,14 @@
 #ifndef GRAPHXNAMESPACE
 #define GRAPHXNAMESPACE
-#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
 #include <array>
 
 #ifdef COMPILER_FORWARD_DECLARATIONS // Forward Declarations
 struct Theatre;
+class Actor;
+struct Device;
+struct Mesh;
+struct Material;
 class GraphXPlayer;
 struct Environment;
 class GraphXTheatreInterpreter;
@@ -34,19 +38,16 @@ namespace graphx
 	{
 		extern bool actor_debug_menu_open;
 		extern float actor_debug_menu_text_scale;
+		extern Mesh light_debug_mesh;
 	}
 
 	namespace error
 	{
-		namespace rendercmd
-		{
-			constexpr int MISSING_VBO_NAME           = 1 << 0; // 1
-			constexpr int MISSING_MESH_DATA_SIZE     = 1 << 1; // 2
-			constexpr int MISSING_MESH_DATA_OFFSET   = 1 << 2; // 4
-			constexpr int MISSING_BOTH_RENDER_STATES = 1 << 3; // 8
-
-		};
-	};
+		extern Mesh missing_mesh;
+		extern Material missing_material;
+		extern Device missing_device;
+		extern Actor missing_actor;
+	}
 
 	namespace identifiers
 	{
@@ -56,8 +57,15 @@ namespace graphx
 			constexpr int LINE     =  0;
 			constexpr int TRIANGLE =  1;
 			constexpr int TEXT     = -1; //< Text not supported yet!
-		};
-	};
+		}
+	}
+
+	namespace orientation
+	{
+		extern glm::vec3 up;
+		extern glm::vec3 front;
+		extern glm::vec3 right;
+	}
 
 	namespace rendering
 	{
@@ -91,6 +99,6 @@ namespace graphx
 		inline bool  lighting_switch_diffuse = true;
 		inline bool  lighting_switch_specular = true;
 		inline bool  lighting_switch_ambient = true;
-	};
+	}
 }
 #endif

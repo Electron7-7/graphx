@@ -2858,3 +2858,11 @@ Ooh, but first I wanna fix that weird Collider bug.
 Ok, so I think it was because of the buffer, ironically; basically, I never destroyed the buffered Theatre, and while that's fine for my code (because only Actors in the current Theatre are ticked), the Jolt objects are still being processed, hence the issues. I solved this by adding a `swapBuffer` function to the Theatre handler which swaps the buffer index and then deletes the old Theatre.
 
 Yeah, now the only crash seems to be from AddressSanitizer when I exit the program (and it's most likely due to the memory leaks LMFAO).
+
+Okay, now on to the Actor overhaul! I think I'll start with the transform and orientation related functions.
+
+Big fucking note: default values for Devices like Mesh in the namespace so I avoid using nullptr and new.
+
+Okay, I did that plus I also fixed up some of the Devices' constructors and created some default "error" Devices for Mesh and Material and made Actor use those as defaults instead of nullptr.
+
+It works!! Note: trying to use the flashlight still crashes the game, lmfao.

@@ -22,10 +22,9 @@ public:
 
 	RenderCommands getRenderCommands() override;
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 
 protected:
-	Sprite label_mesh = Sprite();
 	TextRenderCmd text_render_command;
 };
 
@@ -38,15 +37,15 @@ public:
 
 	using Actor::Actor;
 
-	void setGlobalPosition(glm::vec3 new_value) override final;
-	void setGlobalRotation(glm::vec3 new_value) override final;
+	void overrideColliderPosition(glm::vec3 Position);
+	void overrideColliderRotation(glm::vec3 EulerRotation, bool AsDegrees);
 
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
-	virtual bool isPhysicsActor() override final;
+	virtual bool isPhysicsActor() const override final;
 	virtual void reset_to_initial_orientation_for_testing();
 
 protected:
@@ -68,7 +67,7 @@ public:
 	using PhysicsActor::PhysicsActor;
 
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
@@ -80,7 +79,7 @@ class StaticBodyActor : public PhysicsActor
 public:
 	using PhysicsActor::PhysicsActor;
 
-	void youGotACallBack() override;
+	void loadSettings() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 };
@@ -95,7 +94,7 @@ public:
 	using Actor::Actor;
 
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 	void doRotation(glm::vec2 mouse_input);
 
 protected:
@@ -124,13 +123,13 @@ public:
 
 	glm::mat4 getViewMatrix();
 	glm::vec3 getViewPosition();
-	void processMouse(GLFWwindow *window, double x_position_in, double y_position_in) override;
-	void processInput(GLFWwindow *window) override;
-	void processKey(GLFWwindow *window, int key, int scancode, int action, int mods) override;
+	void processMouse(GLFWwindow* window, double x_position_in, double y_position_in) override;
+	void checkForInput(GLFWwindow* window) override;
+	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) override;
 	void doMouseMovement(glm::vec2 mouse_offset);
 	void doMovement(int direction[2]);
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 
@@ -161,7 +160,7 @@ public:
 	using Actor::Actor;
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 
 protected:
 	bool debug_visible = false;
@@ -175,7 +174,7 @@ public:
 	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 };
 
 class LightSpot : public Light
@@ -188,7 +187,7 @@ public:
 	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 };
 
 class LightFlashlight: public LightSpot
@@ -207,7 +206,7 @@ public:
 	void setLightColor(bool color_toggle);
 
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 
 private:
 	glm::vec3 _color = light_color;
@@ -221,15 +220,15 @@ public:
 	float pivot_speed = 1.0f;
 	float pivot_theta = 0.0f;
 
-	Material temporary_pivot_material = Material(true, glm::vec3(1.0f, 0.0f, 0.0f));
-	Mesh temporary_pivot_mesh = Mesh(&temporary_pivot_material);
+	Material temporary_pivot_material = Material(glm::vec3(1.0f, 0.0f, 0.0f), true);
+	Mesh temporary_pivot_mesh = Mesh(GRAPHX_CUBE, &temporary_pivot_material);
 	Actor pivot_point = Actor("pivot point");
 
 	using Light::Light;
 
 	RenderCommands getRenderCommands() override;
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 	void callToStage(Theatre *parent_theatre) override;
 	void takeABow() override;
 };
@@ -252,10 +251,6 @@ public:
 	using Actor::Actor;
 
 	void tick(int current_tick) override;
-	void youGotACallBack() override;
+	void loadSettings() override;
 };
-
-extern glm::vec3 vector3_up;
-extern glm::vec3 vector3_front;
-extern glm::vec3 vector3_right;
 #endif
