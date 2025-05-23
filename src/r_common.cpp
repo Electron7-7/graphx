@@ -36,14 +36,6 @@ bool LightRenderCmd::isValid() const
 }
 
 //
-// RenderCmd
-//
-bool RenderCmd::isValid() const
-{
-	return ((current_render_state != nullptr || previous_render_state != nullptr) && !mesh_data_name.empty());
-}
-
-//
 // TextRenderCmd
 //
 TextRenderCmd::TextRenderCmd(std::string init_text, float init_position_x, float init_position_y, float init_scale, glm::vec3 init_color)

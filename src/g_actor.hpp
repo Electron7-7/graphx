@@ -20,7 +20,7 @@ public:
     bool visible = true;
     bool debug_highlight_enabled = false;
 
-    Mesh* mesh = &graphx::error::missing_mesh; // replace with std::vector<Mesh *> meshes later(?)
+    Mesh* mesh = &graphx::missing::mesh; // replace with std::vector<Mesh *> meshes later(?)
 
     Actor(const std::string& Name);
     Actor(Theatre* ParentTheatre, const int UID, const gSettings& Settings = gSettings()); // Note: ParentTheatre is unused for now

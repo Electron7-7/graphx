@@ -37,10 +37,12 @@ Material light_debug_material = Material("Light Debug Material", LIGHT_DEBUGGING
 Mesh graphx::debug::light_debug_mesh = Mesh(GRAPHX_CUBE, &light_debug_material);
 
 // Error
-Material graphx::error::missing_material = Material(true);
-Mesh graphx::error::missing_mesh = Mesh(ERROR_MODEL, &graphx::error::missing_material);
-Device graphx::error::missing_device = Device("Missing Device");
-Actor graphx::error::missing_actor = Actor("Missing Actor");
+Material graphx::missing::material = Material(true);
+Mesh graphx::missing::mesh = Mesh(ERROR_MODEL, &graphx::missing::material);
+Device graphx::missing::device = Device("Missing Device");
+Actor graphx::missing::actor = Actor("Missing Actor");
+LightFlashlight graphx::missing::temporary_backup_flashlight = LightFlashlight("Temporary Backup Flashlight"); // TEMPORARY
+
 
 // Orientation
 glm::vec3 graphx::orientation::up(0.0f, 1.0f, 0.0f);

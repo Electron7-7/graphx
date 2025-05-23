@@ -45,9 +45,9 @@ void Actor::updateStates(std::mutex &state_mutex)
     previous_state_buffer[state_index] = current_state_buffer[state_index];
 
     // Update current state
-    current_state_buffer[state_index].render_position   =   getGlobalPosition() + getLocalPosition();
-    current_state_buffer[state_index].render_quaternion =   getGlobalQuaternion() * getLocalQuaternion();
-    current_state_buffer[state_index].render_scale      =   getGlobalScale() + getLocalScale();
+    current_state_buffer[state_index].render_position   =   getAbsolutePosition();
+    current_state_buffer[state_index].render_quaternion =   getAbsoluteQuaternion();
+    current_state_buffer[state_index].render_scale      =   getAbsoluteScale();
 
     // Flip state buffer
     state_index = 1 - state_index;
@@ -65,7 +65,7 @@ glm::vec3 Actor::getAbsoluteEulerAngles(const bool use_degrees) const
 { return (getGlobalEulerAngles(use_degrees) + getLocalEulerAngles(use_degrees)); }
 
 glm::vec3 Actor::getAbsoluteScale() const
-{ return (getGlobalScale() + getLocalScale()); }
+{ return (getGlobalScale() * getLocalScale()); }
 
 
 // Get Orientation Up/Front/Right
@@ -170,8 +170,8 @@ RenderCommands Actor::getRenderCommands()
     render_commands.render_command.mesh_data_name = mesh->mesh_data_name;
     render_commands.render_command.mesh_material = *mesh->material;
 
-    render_commands.render_command.current_render_state = &current_state_buffer.at(state_index);
-    render_commands.render_command.previous_render_state = &previous_state_buffer.at(state_index);
+    render_commands.render_command.current_render_state = current_state_buffer.at(state_index);
+    render_commands.render_command.previous_render_state = previous_state_buffer.at(state_index);
 
     // Debug shit!
     if(graphx::debug::actor_debug_menu_open)
@@ -217,36 +217,6 @@ void Actor::takeABow()
 
 std::string Actor::getTypeName() const
 { return "Actor"; }
-
-/*void Actor::selfOverrideColliderTransform(const bool ignore_scale)
-{
-    if(!givesAFuckAboutPhysics()) return;
-
-    std::shared_ptr<Collider> collider = parent_theatre->getDevice<Collider>(collider_uid);
-
-    JPH::BodyInterface& body_interface = jolt_physics_system.GetBodyInterface();
-    JPH::Vec3 position = gmath::convertMath<JPH::Vec3>(getGlobalPosition() * getLocalPosition());
-    JPH::Quat quaternion = gmath::convertMath<JPH::Quat>(getGlobalQuaternion() * getLocalQuaternion());
-    body_interface.SetPositionAndRotation(collider->getBodyID(), position, quaternion, JPH::EActivation::Activate);
-
-    if(ignore_scale) return; // The default, because changing a collider's scale is costly-ish
-    // A note about collider scale: it's not a simple scale value, as much as it's a complex shape; a scale value would affect the shape like a cube, which may work sometimes and may be strange other times
-    JPH::Vec3 scale = gmath::convertMath<JPH::Vec3>(getGlobalScale() * getLocalScale());
-    body_interface.GetShape(collider->getBodyID())->ScaleShape(scale); // I think this is correct...
-}
-
-void Actor::colliderOverrideSelfTransform(const bool ignore_scale)
-{
-    if(!givesAFuckAboutPhysics()) return;
-
-    std::shared_ptr<Collider> collider = parent_theatre->getDevice<Collider>(collider_uid);
-
-    JPH::BodyInterface& body_interface = jolt_physics_system.GetBodyInterface();
-    setGlobalPosition(gmath::convertMath<glm::vec3>(body_interface.GetPosition(collider->getBodyID())));
-    setGlobalQuaternion(gmath::convertMath<glm::quat>(body_interface.GetRotation(collider->getBodyID())));
-    if(ignore_scale) return;
-    // I don't know a nice way of getting the scale from the collider and I don't wanna find it right now
-}*/
 
 bool Actor::canBeRendered() const
 { return (visible && mesh != nullptr); }

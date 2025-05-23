@@ -6,10 +6,11 @@
 #ifdef COMPILER_FORWARD_DECLARATIONS // Forward Declarations
 struct Theatre;
 class Actor;
+class GraphXPlayer;
+class LightFlashlight;
 struct Device;
 struct Mesh;
 struct Material;
-class GraphXPlayer;
 struct Environment;
 class GraphXTheatreInterpreter;
 #endif
@@ -41,12 +42,13 @@ namespace graphx
 		extern Mesh light_debug_mesh;
 	}
 
-	namespace error
+	namespace missing
 	{
-		extern Mesh missing_mesh;
-		extern Material missing_material;
-		extern Device missing_device;
-		extern Actor missing_actor;
+		extern Device device;
+		extern Mesh mesh;
+		extern Material material;
+		extern Actor actor;
+		extern LightFlashlight temporary_backup_flashlight;
 	}
 
 	namespace identifiers

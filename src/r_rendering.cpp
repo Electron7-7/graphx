@@ -733,8 +733,9 @@ void R_BufferRenderCommands(RenderCommands render_commands)
 
 void R_BufferRenderCmd(RenderCmd render_command)
 {
-	if(render_command.isValid())
-		render_commands_buffer.insert(render_commands_buffer.end(), render_command);
+	if(render_command.mesh_data_name.empty())
+		render_command.mesh_data_name = ERROR_MODEL;
+	render_commands_buffer.insert(render_commands_buffer.end(), render_command);
 }
 
 void R_BufferRenderCmd(LightRenderCmd light_render_command)
@@ -1031,7 +1032,7 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 
 	for(auto rendercmd_iterator = render_commands_buffer.begin() ; rendercmd_iterator != render_commands_buffer.end() ;)
 	{
-		if(!enable_default_shader || !rendercmd_iterator->isValid())
+		if(!enable_default_shader)
 		{
 			rendercmd_iterator = render_commands_buffer.erase(rendercmd_iterator);
 			continue;
@@ -1064,22 +1065,22 @@ void R_GL_Render(std::mutex &state_mutex, float interpolation_time)
 		std::lock_guard guard(state_mutex);
 
 		// Todo: maybe change RenderState pointers to just copy the de-referenced RenderState pointers? (bc I don't like that R_GL_Render is accessing an Actor pointer)
-		RenderState *current_state		=	rendercmd_iterator->current_render_state;
-		RenderState *previous_state		=	rendercmd_iterator->previous_render_state;
+		RenderState &current_state		=	rendercmd_iterator->current_render_state;
+		RenderState &previous_state		=	rendercmd_iterator->previous_render_state;
 
-		glm::vec3 interpolated_position	=	current_state->render_position;
-		glm::vec3 interpolated_scale	=	current_state->render_scale;
-		glm::quat interpolated_quat		=	current_state->render_quaternion;
+		glm::vec3 interpolated_position	=	current_state.render_position;
+		glm::vec3 interpolated_scale	=	current_state.render_scale;
+		glm::quat interpolated_quat		=	current_state.render_quaternion;
 
 		if(graphx::rendering::do_interpolation) // Eventually, I want to change interpolation to be more like GZDoom, and this will be how I test that
 		{
 			for(unsigned int i = 0 ; i < 3 ; i++)
-				interpolated_position[i] = std::lerp(previous_state->render_position[i], current_state->render_position[i], interpolation_time);
+				interpolated_position[i] = std::lerp(previous_state.render_position[i], current_state.render_position[i], interpolation_time);
 
-			interpolated_quat = glm::slerp(previous_state->render_quaternion, current_state->render_quaternion, interpolation_time);
+			interpolated_quat = glm::slerp(previous_state.render_quaternion, current_state.render_quaternion, interpolation_time);
 
 			for(unsigned int i = 0 ; i < 3 ; i++)
-				interpolated_scale[i] = std::lerp(previous_state->render_scale[i], current_state->render_scale[i], interpolation_time);
+				interpolated_scale[i] = std::lerp(previous_state.render_scale[i], current_state.render_scale[i], interpolation_time);
 		}
 
 		model_matrix = glm::translate(model_matrix, interpolated_position);

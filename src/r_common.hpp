@@ -1,6 +1,7 @@
 #ifndef GRAPHX_RENDERING_COMMON
 #define GRAPHX_RENDERING_COMMON
 #include "g_devices.hpp"
+#include "graphx_namespace.hpp"
 #include <images.h>
 #include <models.hpp>
 #include <glfw_fwd.hpp>
@@ -70,30 +71,27 @@ struct LightData
 	// Texture *projection_texture; // For later...
 };
 
+struct RenderCmd
+{
+public:
+	std::string mesh_data_name = ERROR_MODEL;
+	Material mesh_material = graphx::missing::material;
+	RenderState current_render_state = RenderState();
+	RenderState previous_render_state = RenderState();
+	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
+	bool is_light_debug_mesh = false;
+};
+
 struct LightRenderCmd
 {
 public:
 	LightData light_data;
-	// const graphx::gClass* light_type = &graphx::gClass::INVALID_TYPE;
 	unsigned int light_type = EMPTY;
 
 	static const unsigned int EMPTY             = 0;
     static const unsigned int POINT_LIGHT       = 1;
     static const unsigned int SPOT_LIGHT        = 2;
     static const unsigned int DIRECTIONAL_LIGHT = 3;
-
-	bool isValid() const;
-};
-
-struct RenderCmd
-{
-public:
-	glm::vec4 debug_highlight_color = glm::vec4(0.0f);
-	bool is_light_debug_mesh = false;
-	std::string mesh_data_name = ERROR_MODEL;
-	RenderState *current_render_state = nullptr;
-	RenderState *previous_render_state = nullptr;
-	Material mesh_material; // Todo: make this a reference
 
 	bool isValid() const;
 };

@@ -170,7 +170,6 @@ void gSettings::configureBaseVariables(Actor* actor)
     settings.getString("Name", actor->name);
     settings.getBoolean("Visible", actor->visible);
     settings.getDevice("Mesh", actor->mesh);
-    // settings.getDevice("Collider", actor->collider_uid);
     settings.getNumber("Position", position_global);
     settings.getNumber("LocalPosition", position_local);
     settings.getNumber("Rotation", global_euler_degrees);

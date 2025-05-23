@@ -13,6 +13,7 @@
 class Actor;
 struct Device;
 class GraphXTheatreInterpreter;
+class LightFlashlight; // Temporary
 #endif
 
 extern bool loading_new_main_theatre;
@@ -27,7 +28,7 @@ extern bool loading_new_main_theatre;
 struct Theatre
 {
     // TEMPORARY
-    Actor* getFlashlight() const;
+    LightFlashlight* getFlashlight() const;
     // TEMPORARY
 
     // Mesh* stage_mesh = nullptr;

@@ -6,12 +6,12 @@
 #include <set>
 
 // TEMPORARY
-Actor* Theatre::getFlashlight() const
+LightFlashlight* Theatre::getFlashlight() const
 {
     for(Actor* actor : actor_vector)
-        if(actor->name.find("flashlight") != std::string::npos)
-            return actor;
-    return nullptr;
+        if(actor->name.find("flashlight") != std::string::npos || !actor->getTypeName().compare("LightFlashlight") || dynamic_cast<LightFlashlight*>(actor))
+            return dynamic_cast<LightFlashlight*>(actor);
+    return &graphx::missing::temporary_backup_flashlight;
 }
 // TEMPORARY
 

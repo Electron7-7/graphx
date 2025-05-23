@@ -105,9 +105,8 @@ protected:
 class GraphXPlayer: public Actor //public CharacterController(?)
 {
 public:
-	Mesh player_mesh = Mesh();
 	Camera player_camera = Camera("Camera");
-	LightFlashlight *player_flashlight = nullptr;
+	LightFlashlight* player_flashlight = nullptr;
 
 	bool do_gravity = true; // Debugging, mostly
 	float mouse_sensitivity = 0.05f;
@@ -163,7 +162,11 @@ public:
 	void loadSettings() override;
 
 protected:
+#ifdef GRAPHX_DEBUG
+	bool debug_visible = true;
+#else
 	bool debug_visible = false;
+#endif
 };
 
 class LightDirectional : public Light

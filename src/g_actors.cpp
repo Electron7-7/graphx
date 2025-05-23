@@ -250,6 +250,8 @@ void Camera::loadSettings()
 
 	euler_rotation = glm::radians(glm::vec3(0.0f));
 	setGlobalQuaternion(glm::quat(euler_rotation));
+
+	setLocalPosition(glm::vec3(0.0f, 3.0f, 1.0f)); // Temporary hardcoded offset
 }
 
 //
@@ -276,8 +278,6 @@ void GraphXPlayer::loadSettings()
 void GraphXPlayer::callToStage(Theatre *parent_theatre)
 {
 	Actor::callToStage(parent_theatre);
-
-	player_flashlight = static_cast<LightFlashlight *>(getCurrentTheatre()->getFlashlight()); // TEMPORARY
 
 	player_settings = new JPH::CharacterSettings;
 	player_settings->mMaxSlopeAngle = JPH::DegreesToRadians(45.0f);
@@ -318,10 +318,11 @@ void GraphXPlayer::tick(int current_tick)
 	player_camera.setGlobalPosition(getGlobalPosition());
 }
 
-void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int action, int mods)
+void GraphXPlayer::processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	if(key == GLFW_KEY_F && action == GLFW_PRESS)
+	if((key == GLFW_KEY_F && action == GLFW_PRESS))
 	{
+		player_flashlight = getCurrentTheatre()->getFlashlight(); // TEMPORARY
 		player_flashlight->toggleLight();
 		if(player_flashlight->light_color == glm::vec3(0.0f))
 			PRINTNOTE("Flashlight Off")
@@ -329,8 +330,9 @@ void GraphXPlayer::processKey(GLFWwindow *window, int key, int scancode, int act
 			PRINTNOTE("Flashlight On")
 	}
 
-	if(key == GLFW_KEY_Q && action == GLFW_PRESS && player_flashlight != nullptr)
+	if(key == GLFW_KEY_Q && action == GLFW_PRESS)
 	{
+		player_flashlight = getCurrentTheatre()->getFlashlight(); // TEMPORARY
 		player_flashlight->setLightColor(flashlight_debug_toggle_color_god_damn_this_variable_name_is_long);
 		if(player_flashlight->light_color == flashlight_debug_toggle_color_god_damn_this_variable_name_is_long)
 			PRINTNOTE("Flashlight Red")
@@ -394,7 +396,6 @@ void GraphXPlayer::takeABow()
 //
 // Light
 //
-
 void Light::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
@@ -414,6 +415,9 @@ void Light::loadSettings()
 RenderCommands Light::getRenderCommands()
 {
 	RenderCommands render_commands = Actor::getRenderCommands();
+
+	render_commands.render_command.current_render_state.render_scale = glm::vec3(0.35f);
+	render_commands.render_command.previous_render_state.render_scale = glm::vec3(0.35f);
 
 	render_commands.light_render_command.light_type = LightRenderCmd::POINT_LIGHT;
 	render_commands.light_render_command.light_data.energy = light_energy;
@@ -437,7 +441,6 @@ RenderCommands Light::getRenderCommands()
 //
 // LightDirectional
 //
-
 void LightDirectional::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
@@ -452,11 +455,8 @@ void LightDirectional::loadSettings()
 	settings.getNumber("Range", light_range);
 	settings.getNumber("Direction", directional_direction);
 
-	// LightDirectional doesn't really need a debug mesh, since it's physical orientation doesn't matter
-	// if(mesh != nullptr)
-	// 	mesh->prepForDestruction();
-	// mesh = nullptr;
-	// delete mesh;
+	mesh = &graphx::debug::light_debug_mesh;
+	debug_visible = false;
 }
 
 RenderCommands LightDirectional::getRenderCommands()
@@ -472,7 +472,6 @@ RenderCommands LightDirectional::getRenderCommands()
 //
 // LightSpot
 //
-
 void LightSpot::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
@@ -488,6 +487,8 @@ void LightSpot::loadSettings()
 	settings.getNumber("Direction", spot_direction);
 	settings.getNumber("Angle", spot_angle);
 	settings.getNumber("AngleFadeIntensity", spot_angle_fade);
+
+	mesh = &graphx::debug::light_debug_mesh;
 }
 
 RenderCommands LightSpot::getRenderCommands()
@@ -505,7 +506,6 @@ RenderCommands LightSpot::getRenderCommands()
 //
 // LightFlashlight
 //
-
 void LightFlashlight::loadSettings()
 {
 	gSettings::configureBaseVariables(this);
@@ -526,14 +526,8 @@ void LightFlashlight::loadSettings()
 	_color = light_color;
 	setLight(start_enabled);
 
-	// if(mesh != nullptr)
-		// mesh->prepForDestruction();
-	// mesh = nullptr;
-	// delete mesh;
-
-	// Todo: find out which one is unnecessary
-	Actor::visible = false;
 	visible = false;
+	debug_visible = false;
 }
 
 void LightFlashlight::tick(int current_tick)
@@ -582,7 +576,6 @@ void LightFlashlight::setLightColor(bool color_toggle)
 //
 // LightTesterMover
 //
-
 void LightTesterMover::loadSettings()
 {
 	gSettings::configureBaseVariables(this);

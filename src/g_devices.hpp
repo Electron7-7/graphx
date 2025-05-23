@@ -89,7 +89,7 @@ struct Material final : public Device
 
 struct Mesh : public Device
 {
-    Material* material = &graphx::error::missing_material;
+    Material* material = &graphx::missing::material;
 
     unsigned int VBO = 0;
     unsigned int IBO = 0;
@@ -98,7 +98,7 @@ struct Mesh : public Device
     std::string mesh_data_name = ERROR_MODEL;
 
     using Device::Device;
-    Mesh(const std::string& MeshDataName = ERROR_MODEL, Material* NewMaterial = &graphx::error::missing_material);
+    Mesh(const std::string& MeshDataName = ERROR_MODEL, Material* NewMaterial = &graphx::missing::material);
     Mesh(std::string init_mesh_data_name);
 
     void loadSettings() override;

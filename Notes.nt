@@ -2866,3 +2866,9 @@ Big fucking note: default values for Devices like Mesh in the namespace so I avo
 Okay, I did that plus I also fixed up some of the Devices' constructors and created some default "error" Devices for Mesh and Material and made Actor use those as defaults instead of nullptr.
 
 It works!! Note: trying to use the flashlight still crashes the game, lmfao.
+
+I kinda wanna fix that, actually.
+
+I fixed it! I wanna now re-implement the new way of doing the light debug mesh.
+
+Okay, for next time: I wanna remove the different physics Actors and integrate collisions into Actor. This'll make everything much easier and nicer as the current physics Actors are all fucked up with how they interact with Colliders.
