@@ -2879,3 +2879,10 @@ Eating some Subway before I start working. I think that I might start tweaking t
 Wow. I spent most of my time looking through the Source leaks, reading chat logs, and digging into the source code. It's really something beautiful (and a spaghetti monster at the same time). I don't understand a lot of it, but I can see the basic shapes and outlines. I've definitely got some good ideas for my next engine. I think I want to work on the Actor Collider overhaul; or, maybe, work on a child system.
 
 Or, maybe I want to work on the next engine...
+
+[05/26/25]
+Hmm, just noticed that the collider sizes aren't properly matching the mesh sizes for the rigid body actors.
+
+Fixed it; I was adding the scale properties instead of multiplying them in their "callToStage" functions.
+
+Okay, it's working now and I even got rid of the memory leak with Colliders in those Actors; address sanitizer reports a lot of leaks when the app closes, but that's fine for now (I'll be fixing that stuff later).

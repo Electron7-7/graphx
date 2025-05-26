@@ -9,6 +9,7 @@ class Actor;
 class GraphXPlayer;
 class LightFlashlight;
 struct Device;
+struct Collider;
 struct Mesh;
 struct Material;
 struct Environment;
@@ -45,6 +46,7 @@ namespace graphx
 	namespace missing
 	{
 		extern Device device;
+		extern Collider collider;
 		extern Mesh mesh;
 		extern Material material;
 		extern Actor actor;

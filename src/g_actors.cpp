@@ -157,11 +157,10 @@ void RigidBodyActor::callToStage(Theatre *parent_theatre)
 	if(collider == nullptr)
 		return;
 	collider->prepForDestruction();
-	collider = new Collider("RigidBodyActor Collider");
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Dynamic;
 	collider->object_layer = Layers::MOVING;
-	collider->scale = getGlobalScale() + getLocalScale();
+	collider->scale = getAbsoluteScale();
 	collider->position = getGlobalPosition();
 	collider->local_position = getLocalPosition();
 	collider->euler_angles = getGlobalEulerAngles(true);
@@ -197,17 +196,17 @@ void StaticBodyActor::loadSettings()
 	gSettings::configureBaseVariables(this);
 }
 
-void StaticBodyActor::callToStage(Theatre *parent_theatre)
+void StaticBodyActor::callToStage(Theatre* parent_theatre)
 {
 	PhysicsActor::callToStage(parent_theatre);
+
 	if(collider == nullptr)
 		return;
 	collider->prepForDestruction();
-	collider = new Collider("StaticBodyActor Collider");
 	collider->activation = JPH::EActivation::Activate;
 	collider->motion_type = JPH::EMotionType::Static;
 	collider->object_layer = Layers::NON_MOVING;
-	collider->scale = getGlobalScale() + getLocalScale();
+	collider->scale = getAbsoluteScale();
 	collider->position = getGlobalPosition();
 	collider->local_position = getLocalPosition();
 	collider->euler_angles = getGlobalEulerAngles(true);
@@ -388,7 +387,6 @@ glm::vec3 GraphXPlayer::getViewPosition()
 
 void GraphXPlayer::takeABow()
 {
-	PRINTDEBUG("GraphXPlayer::takeABow")
 	Actor::takeABow();
 	jph_character->RemoveFromPhysicsSystem();
 }

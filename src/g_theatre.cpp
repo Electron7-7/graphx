@@ -144,13 +144,13 @@ void Theatre::dropCurtains()
 {
     dropping_curtains = true;
 
-    for(auto &pair : devices)
-        pair.second->prepForDestruction();
-    device_vector.clear();
-
-    for(auto &pair : objects)
+    for(auto& pair : objects)
         pair.second->takeABow();
     actor_vector.clear();
+
+    for(auto& pair : devices)
+        pair.second->prepForDestruction();
+    device_vector.clear();
 }
 
 // void Theatre::loadStageSettings(gSettings stage_settings)

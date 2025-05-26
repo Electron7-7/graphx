@@ -1,6 +1,7 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
 #include "g_devices.hpp"
+#include "graphx_namespace.hpp"
 #include "r_common.hpp"
 #include "g_actor.hpp"
 #include <Jolt/Jolt.h>
@@ -31,7 +32,8 @@ protected:
 class PhysicsActor: public Actor
 {
 public:
-	Collider* collider = new Collider("PhysicsActor Collider");
+	std::unique_ptr<Collider> unique_collider = std::make_unique<Collider>("Empty Collider");
+	Collider* collider = unique_collider.get();
 
 	float mass = 1.0f; // in kg
 

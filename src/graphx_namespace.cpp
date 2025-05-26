@@ -37,9 +37,10 @@ Material light_debug_material = Material("Light Debug Material", LIGHT_DEBUGGING
 Mesh graphx::debug::light_debug_mesh = Mesh(GRAPHX_CUBE, &light_debug_material);
 
 // Error
-Material graphx::missing::material = Material(true);
-Mesh graphx::missing::mesh = Mesh(ERROR_MODEL, &graphx::missing::material);
 Device graphx::missing::device = Device("Missing Device");
+Collider graphx::missing::collider = Collider("Missing Collider");
+Mesh graphx::missing::mesh = Mesh(ERROR_MODEL, &graphx::missing::material);
+Material graphx::missing::material = Material(true);
 Actor graphx::missing::actor = Actor("Missing Actor");
 LightFlashlight graphx::missing::temporary_backup_flashlight = LightFlashlight("Temporary Backup Flashlight"); // TEMPORARY
 
