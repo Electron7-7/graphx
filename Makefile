@@ -1,130 +1,169 @@
-CXX = clang++
-CC = clang
+CXX := @ clang++
+CC  := @ clang
 
-CXXFLAGS = -g -Wall -fsanitize=address -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
-CCFLAGS = -g -Wall
+# LSAN_OPTIONS=verbosity=1:log_threads=1 # Use this environment variable for more verbosity with address sanitizer
+CXXFLAGS := -g -Wall -fsanitize=address -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
+CCFLAGS  := -g -Wall
 
-INCLUDES = -I src/include
-LIBS = -l glfw -L src/lib/ -l Jolt -l freetype
+INCLUDE   = -I src/ -I src/engine -I src/common -I src/system/common/linux
+LIBRARIES = -L src/lib/public/linux -l glfw -l Jolt -l freetype
 
-ifeq ($(OS),Windows_NT) 
-	WCXX = clang++
-	WCC = clang
+ifeq ($(OS),Windows_NT)
+	WCXX := clang++
+	WCC  := clang
 else
-	WCXX = x86_64-w64-mingw32-g++
-	WCC = x86_64-w64-mingw32-gcc
+	WCXX := x86_64-w64-mingw32-g++
+	WCC  := x86_64-w64-mingw32-gcc
 endif
 
-WCXXFLAGS = -g -Wall -std=c++20 -static -mwindows -frtti -ffat-lto-objects $(JOLTFLAGS) $(GRAPHXFLAGS)
-WCCFLAGS = -g -Wall -static -mwindows
-WINCLUDES = -I src/include -I src/windows_dependencies/include
-WLIBS = -L src/windows_dependencies/lib/jolt-mingw-w64 -l Jolt -L src/windows_dependencies/lib/lib-mingw-w64 -l glfw3 -l gdi32
+WINCLUDE   := -I src/ -I src/engine -I src/common/ -I src/system/windows/common
+WINLIBRARIES := -L src/lib/public/windows -l jolt-mingw-w64/Jolt -l lib-mingw-w64/glfw3 -l gdi32
 
-JOLTFLAGS = -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
-GRAPHXFLAGS = -D COMPILER_FORWARD_DECLARATIONS
+JOLTFLAGS   := -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
+GRAPHXFLAGS := -D COMPILER_FORWARD_DECLARATIONS
 
-LINUX = GraphX_$(shell uname -s)_$(shell uname -r)_$(shell uname -m)
-WINDOWS = GraphX_Windows_x86_64.exe
-NAME = ""
-
-FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
-TESTRUN_LINUX = exit 0 &&
-TESTRUN_WINDOWS = exit 0 &&
+# FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
+# TESTRUN_LINUX = exit 0 &&
+# TESTRUN_WINDOWS = exit 0 &&
 # TEST_LINUX = ~/bin/mangohudtest $(FPS_LIMIT) # "mangohudtest" is a custom script I wrote for test-running GraphX with MangoHUD + Gamemode. This is why I disable it on Windows
-TEST_LINUX = 
-TEST_WINDOWS = # nothing here, yet
+# TEST_LINUX = 
+# TEST_WINDOWS = # nothing here, yet
 
-SRC := src
+OUT := build
+OUT_ARCH = linux
+OUT_VERSION = release
+OUT_FULL = $(OUT)/$(OUT_ARCH)/$(OUT_VERSION)
 
-O = build
+LINUX   := _$(shell uname -s)_$(subst .,_,$(shell uname -r)).$(shell uname -m)
+WINDOWS := _Windows_10_x86_64.exe
 
-EXT_OBJS =                      \
-	$(O)/glad.o                 \
-	$(O)/imgui.opp              \
-	$(O)/imgui_draw.opp         \
-	$(O)/imgui_impl_glfw.opp    \
-	$(O)/imgui_impl_opengl3.opp \
-	$(O)/imgui_stdlib.opp       \
-	$(O)/imgui_tables.opp       \
-	$(O)/imgui_widgets.opp      \
-	$(O)/imgui_demo.opp
+APP_NAME = GraphX
+APP_ARCH = $(LINUX)
+APP = $(OUT_FULL)/$(APP_NAME)$(APP_ARCH)
 
-EMBED_OBJS =          \
-	$(O)/images.o     \
-	$(O)/shaders.opp  \
-	$(O)/theatres.opp \
-	$(O)/models.opp
+SRC_DIRS :=                   \
+	src/math                  \
+	src/engine                \
+	src/system                \
+	src/engine/interpreter    \
+	src/engine/rendering      \
+	src/engine/embedded       \
+	src/engine/physics        \
+	src/engine/theatre        \
+	src/engine/ui             \
+	src/engine/things         \
+	src/engine/things/actors  \
+	src/engine/things/devices
 
-GRAPHX_OBJS =                 \
-	$(O)/g_math.opp           \
-	$(O)/g_jolt.opp           \
-	$(O)/g_device.opp         \
-	$(O)/g_actor.opp          \
-	$(O)/g_devices.opp        \
-	$(O)/g_actors.opp         \
-	$(O)/g_imgui.opp          \
-	$(O)/t_interpreter.opp    \
-	$(O)/t_settings.opp       \
-	$(O)/g_theatre.opp        \
-	$(O)/graphx_namespace.opp \
-	$(O)/r_common.opp         \
-	$(O)/r_rendering.opp
+# Object files compiled from "DIRTY_SRC_DIRS" will not be cleaned during a dirty clean
+DIRTY_SRC_DIRS :=        \
+	src/common/glad      \
+	src/common/DearImGui
 
-OBJS =             	\
-	$(EXT_OBJS)    	\
-	$(EMBED_OBJS)  	\
-	$(GRAPHX_OBJS)
+RESOURCE_DIR := src/resources
+RESOURCE_EMBED_DIR := src/engine/embedded
 
-WOBJS = $(subst .o,.wo,$(OBJS))
+CXX_SRCS := $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.cpp))
+CC_SRCS  := $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.c))
+CXX_OBJS  = $(addprefix $(OUT_FULL)/,$(notdir $(CXX_SRCS):.cpp=.obj))
+CC_OBJS   = $(addprefix $(OUT_FULL)/,$(notdir $(CC_SRCS):.c=.o))
 
-I = $(SRC)/images
-IMAGES_C = $(SRC)/images.c
-IMAGES_H = $(SRC)/include/images.h
-IMGS = $(wildcard $(I)/*)
+DIRTY_CXX_SRCS := $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.cpp))
+DIRTY_CC_SRCS  := $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.c))
+DIRTY_CXX_OBJS  = $(addprefix $(OUT_FULL)/,$(notdir $(DIRTY_CXX_SRCS):.cpp=.obj))
+DIRTY_CC_OBJS   = $(addprefix $(OUT_FULL)/,$(notdir $(DIRTY_CC_SRCS):.c=.o))
 
-S = $(SRC)/shaders
-SHADERS_C = $(SRC)/shaders.cpp
-SHADERS_H = $(SRC)/include/shaders.hpp
-SHDRS = $(wildcard $(S)/*.glsl)
+SRCS := $(CXX_SRCS)$(DIRTY_CXX_SRCS)$(CC_SRCS)$(DIRTY_CC_SRCS)
+OBJS  = $(CXX_OBJS)$(DIRTY_CXX_OBJS)$(CC_OBJS)$(DIRTY_CC_OBJS)
 
-T = $(SRC)/theatres
-THEATRES_C = $(SRC)/theatres.cpp
-THEATRES_H = $(SRC)/include/theatres.hpp
-THTRS = $(wildcard $(T)/*.gt)
+VPATH := $(SRC_DIRS) $(DIRTY_SRC_DIRS)
 
-M = $(SRC)/models
-MODELS_C = $(SRC)/models.cpp
-MODELS_H = $(SRC)/include/models.hpp
-MDLS = $(wildcard $(M)/*.obj)
-MTLS = $(wildcard $(M)/*.mtl)
+IMAGES_C = $(RESOURCE_EMBED_DIR)/images.c
+IMAGES_H = $(RESOURCE_EMBED_DIR)/images.h
+IMAGES = $(wildcard $(RESOURCE_DIR)/images/*)
+
+SHADERS_C = $(RESOURCE_EMBED_DIR)/shaders.cpp
+SHADERS_H = $(RESOURCE_EMBED_DIR)/shaders.hpp
+SHADERS = $(wildcard $(RESOURCE_DIR)/shaders/*.glsl)
+
+THEATRES_C = $(RESOURCE_EMBED_DIR)/theatres.cpp
+THEATRES_H = $(RESOURCE_EMBED_DIR)/theatres.hpp
+THEATRES = $(wildcard $(RESOURCE_DIR)/theatres/*.gt)
+
+MODELS_C = $(RESOURCE_EMBED_DIR)/models.cpp
+MODELS_H = $(RESOURCE_EMBED_DIR)/models.hpp
+MODELS = $(wildcard $(RESOURCE_DIR)/models/*.obj)
+MTL_FILES = $(wildcard $(RESOURCE_DIR)/models/*.mtl)
 
 
-PHONY = obj_testing all clean dirty_clean clean_resources embed_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models compile_commands debug release linux windows test build
+# Colors for colored output
+RESET = \\033[0m
+RED   = \\033[31m
+GREEN = \\033[32m
+BLUE  = \\033[34m
 
-all: release linux windows
+.PHONY: all clean dirty_clean clean_resources embed_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models compile_commands debug release linux windows test build
 
-embed_resources:
-	-make -s $(IMAGES_C) $(SHADERS_C) $(THEATRES_C) $(MODELS_C)
+# This removes the color variables; I use it in Sublime Text build systems, since ST's console output doesn't support colored text by default
+sublime: ;@:
+	$(eval RESET="")
+	$(eval RED="")
+	$(eval GREEN="")
+	$(eval BLUE="")
 
-clean_resources:
-	-rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H) $(MODELS_H) $(MODELS_C)
+linux: ;@:
+	$(eval APP_ARCH = $(LINUX))
+	$(eval OUT_ARCH = linux)
+
+windows: ;@:
+	$(eval APP_ARCH = $(WINDOWS))
+	$(eval OUT_ARCH = windows)
+	$(eval INCLUDE = $(WINCLUDE))
+	$(eval LIBRARIES = $(WINLIBRARIES))
+
+eval_debug: ;@:
+	$(eval CXXFLAGS += -D GRAPHX_DEBUG)
+	$(eval OUT_VERSION = debug)
+
+eval_release: ;@:
+	# Just in case debug was run before release
+	$(eval CXXFLAGS = $(patsubst $%-D GRAPHX_DEBUG,$%,$(CXXFLAGS)))
+	$(eval OUT_VERSION = release)
+
+debug: eval_debug $(APP)
+release: eval_release $(APP)
+
+$(APP): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDE) $^ -o $@ $(LIBRARIES)
+
+$(OUT_FULL)/%.obj: %.cpp | build
+	@ echo -e "Compiling: $(GREEN)$<$(RESET)"
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
+
+$(OUT_FULL)/%.o: %.c | build
+	@ echo -e "Compiling: $(GREEN)$<$(RESET)"
+	$(CC) $(CCFLAGS) $(INCLUDE) -c $< -o $@
+
+build:
+	@ -mkdir -p $(OUT_FULL)
+
+clean: rebuild_resources
+	@ -rm -rf $(OUT)
 
 dirty_clean:
-	-rm -f $(O)/*.tmp
-	-rm -f $(O)/main.*
-	-rm -f $(GRAPHX_OBJS)
-	-rm -f $(WOBJS)
+	@ -rm -f $(CXX_OBJS) $(CC_OBJS)
 
-clean: clean_resources embed_resources
-	-rm -f $(OBJS)
-	-rm -f $(WOBJS)
-	-rm -f $(O)/main.*
-	-rm -f $(O)/*.tmp
-	-rm -f $(O)/$(LINUX)
-	-rm -f $(O)/$(WINDOWS)
-	-rm -f $(O)/GraphXDebug
-	-rm -f $(O)/GraphXDebug.exe
+clean_tmp_files:
+	@ -rm -f $(OUT)/*.tmp
+	@ -rm -f $(OUT_FULL)/*.tmp
 
+clean_resources:
+	@ -rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H) $(MODELS_H) $(MODELS_C)
+
+rebuild_resources: clean_resources
+	-make -s $(IMAGES_C) $(SHADERS_C) $(THEATRES_C) $(MODELS_C)
+
+# If rebuilding all resources takes too long, use one of these
 rebuild_images:
 	-rm -f $(IMAGES_C) $(IMAGES_H)
 	-make -s $(IMAGES_C)
@@ -141,38 +180,7 @@ rebuild_models:
 	-rm -f $(MODELS_C) $(MODELS_H)
 	-make -s $(MODELS_C)
 
-compile_commands:
-	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
-
-test: eval_test
-	$(info GraphX Will Test-Run After Compiling)
-
-eval_test:
-	$(eval TESTRUN_LINUX = $(TEST_LINUX))
-	$(eval TESTRUN_WINDOWS = $(TEST_WINDOWS))
-
-debug: rebuild_shaders rebuild_theatres
-	$(info Version: Debug)
-	$(eval LINUX := GraphXDebug)
-	$(eval WINDOWS := GraphXDebug.exe)
-	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
-	-rm -f build/*.tmp
-
-release: clean_resources embed_resources
-	$(info Version: Release)
-	-rm -f build/*.tmp
-
-linux: NAME = $(LINUX)
-linux: $(OBJS) $(O)/main.opp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(O)/main.opp -o $(O)/$(NAME) $(LIBS)
-	$(TESTRUN_LINUX) $(O)/$(NAME)
-
-windows: NAME = $(WINDOWS)
-windows: GRAPHXFLAGS += -D GRAPHX_WINDOWS
-windows: $(WOBJS) $(O)/main.wopp
-	$(WCXX) $(WCXXFLAGS) $(LDFLAGS) $(WOBJS) $(O)/main.wopp -o $(O)/$(NAME) $(WLIBS)
-	$(TESTRUN_WINDOWS) $(O)/$(NAME)
-
+# Embedding resources
 $(IMAGES_C): $(IMAGES_H)
 	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
 
@@ -210,18 +218,3 @@ $(MODELS_C): $(MODELS_H)
 	$(shell printf "#include <string>\n" > $(MODELS_C))
 	$(foreach model,$(MDLS),$(shell printf "std::string $(subst .,_,$(model:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(model) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))
 	$(foreach material,$(MTLS),$(shell printf "std::string $(subst .,_,$(material:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(material) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))
-
-$(O)/%.opp: $(SRC)/%.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
-
-$(O)/%.o: $(SRC)/%.c
-	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
-
-$(O)/%.wopp: $(SRC)/%.cpp
-	$(WCXX) $(WCXXFLAGS) $(WINCLUDES) -c $< -o $@
-
-$(O)/%.wo: $(SRC)/%.c
-	$(WCC) $(WCCFLAGS) $(WINCLUDES) -c $< -o $@
-
-$(O)/%.gch: $(SRC)/%.hpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@

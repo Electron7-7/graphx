@@ -1,0 +1,119 @@
+@FallingCubesWithLightsTheatre
+GraphXPlayer (main_player)
+{
+	Position             (0.0, 3.0, 6.0)
+	MovementSpeed        (10.0)
+	MovementAcceleration (2.0)
+}
+
+LightFlashlight (Player_Flashlight)
+{}
+
+Material (Shiny)
+{
+	DiffuseTexture    [DOOM_TEXTURE_DIFF]
+	SpecularTexture   [DOOM_TEXTURE_SPEC]
+	SpecularSharpness (64)
+	SpecularStrength  (0.8)
+}
+
+Mesh (Cube)
+{
+	MeshData [GRAPHX_CUBE]
+}
+
+StaticBodyActor (Floor)
+{
+	Mesh:Material <Cube>:<Shiny>
+	Scale        (50.0, 1.0, 50.0)
+	Position     (0.0, -1.0, 0.0)
+}
+
+Collider (CubeCollider)
+{
+	MotionType  [Dynamic]
+	ObjectLayer [Moving]
+	Activation  [Activate]
+	Shape       [BoxShape]
+}
+
+RigidBodyActor (Falling_Cube_1)
+{
+	Mesh:Material <Cube>:<Shiny>
+	Collider     <CubeCollider>
+	Scale        (1.0, 1.0, 1.0)
+	Position     (-2.0, 9.0, -6.0)
+}
+
+RigidBodyActor (Falling_Cube_2)
+{
+	Mesh:Material <Cube>:<Shiny>
+	Collider     <CubeCollider>
+	Scale        (0.5, 0.5, 0.5)
+	Position     (-3.0, 11.0, -5.0)
+}
+
+RigidBodyActor (Falling_Cube_3)
+{
+	Mesh:Material <Cube>:<Shiny>
+	Collider     <CubeCollider>
+	Scale        (1.5, 1.5, 1.5)
+	Position     (-4.0, 13.0, -4.0)
+}
+
+RigidBodyActor (Falling_Cube_4)
+{
+	Mesh:Material <Cube>:<Shiny>
+	Collider     <CubeCollider>
+	Scale        (2.0, 2.0, 2.0)
+	Position     (-5.0, 15.0, -3.0)
+}
+
+RigidBodyActor (Falling_Cube_5)
+{
+	Mesh:Material <Cube>:<Shiny>
+	Collider     <CubeCollider>
+	Scale        (0.3, 0.3, 0.3)
+	Position     (-6.0, 17.0, -2.0)
+}
+
+Light (Red_Point)
+{
+	Color        (1.0, 0.0, 0.0)
+	Position     (5.0, 10.0, 0.0)
+	Strength     (1.0)
+}
+
+Light (Green_Point)
+{
+	Color        (0.0, 1.0, 0.0)
+	Position     (0.0, 10.0, 5.0)
+	Strength     (1.0)
+}
+
+Light (Blue_Point)
+{
+	Color        (0.0, 0.0, 1.0)
+	Position     (-5.0, 10.0, 0.0)
+	Strength     (1.0)
+}
+
+Light (Yellow_Point)
+{
+	Color        (1.0, 1.0, 0.0)
+	Position     (0.0, 15.0, -5.0)
+	Strength     (1.0)
+}
+
+Environment (environment)
+{
+	AmbientLightColor (0.0, 0.0, 0.0)
+	AmbientLightAmount (0.0)
+}
+
+LightDirectional (Sun)
+{
+	Direction (-0.2, -1.0, -0.3)
+	Energy    (0.1)
+	Color     (0.1, 0.1, 0.1)
+}
