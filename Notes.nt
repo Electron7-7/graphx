@@ -2899,3 +2899,14 @@ Okay, after working on the Nostalgia engine for a while, I think I have an idea 
     5. Write better commits
 
 Let's start with the project structure and the Makefile.
+
+[06/04/25]
+I am mentally exhausted, but I finally fucking did it. The Makefile will now automatically build the program in one of four locations based on specified build rule(s):
+  - `make release` or `make linux release` will output to: `build/linux/release`
+  - `make debug` or `make linux debug` will output to: `build/linux/debug`
+  - `make windows release` will output to: `build/windows/release`
+  - `make windows debug` will output to: `build/windows/debug`
+
+It was fucking painful.
+
+Oh, yeah, and I also changed the file names to remove the suffixes.
