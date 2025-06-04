@@ -11,11 +11,11 @@ INCLUDE   = -I src/system/common/linux $(INCLUDE_COMMON)
 LIBRARIES = -L src/lib/public/linux -l glfw -l Jolt -l freetype
 
 ifeq ($(OS),Windows_NT)
-	WCXX := clang++
-	WCC  := clang
+	WCXX := @ clang++
+	WCC  := @ clang
 else
-	WCXX := x86_64-w64-mingw32-g++
-	WCC  := x86_64-w64-mingw32-gcc
+	WCXX := @ x86_64-w64-mingw32-g++
+	WCC  := @ x86_64-w64-mingw32-gcc
 endif
 
 WINCLUDE   := -I src/system/windows/common $(INCLUDE_COMMON)
@@ -31,11 +31,31 @@ GRAPHXFLAGS = -D COMPILER_FORWARD_DECLARATIONS
 # TEST_LINUX = 
 # TEST_WINDOWS = # nothing here, yet
 
-OUT ?= build/
+BUILD_LINUX   := linux
+BUILD_WINDOWS := windows
+BUILD_RELEASE := release
+BUILD_DEBUG   := debug
 
-LINUX   := _$(shell uname -s)_$(subst .,_,$(shell uname -r)).$(shell uname -m)
-WINDOWS := _Windows_10_x86_64.exe
-APP ?= $(OUT)/GraphX$(LINUX)
+BUILD_ROOT := build
+BUILD_ARCH ?= $(BUILD_LINUX)
+BUILD_VERSION ?= $(BUILD_RELEASE)
+
+OUT ?= $(BUILD_ROOT)/$(BUILD_ARCH)/$(BUILD_VERSION)
+
+LINUX_RELEASE_OUT   := $(BUILD_ROOT)/$(BUILD_LINUX)/$(BUILD_RELEASE)
+LINUX_DEBUG_OUT     := $(BUILD_ROOT)/$(BUILD_LINUX)/$(BUILD_DEBUG)
+WINDOWS_RELEASE_OUT := $(BUILD_ROOT)/$(BUILD_WINDOWS)/$(BUILD_RELEASE)
+WINDOWS_DEBUG_OUT   := $(BUILD_ROOT)/$(BUILD_WINDOWS)/$(BUILD_DEBUG)
+
+NAME_RELEASE := GraphX
+NAME_DEBUG   := DEBUG__GraphX
+
+APP_LINUX   := _$(shell uname -s)_$(subst .,_,$(shell uname -r)).$(shell uname -m)
+APP_WINDOWS := _Windows_10_x86_64.exe
+
+APP_ARCH ?= $(APP_LINUX)
+APP_NAME ?= $(NAME_RELEASE)
+APP ?= $(APP_NAME)$(APP_ARCH)
 
 SRC_DIRS =                    \
 	src/math                  \
@@ -59,18 +79,18 @@ DIRTY_SRC_DIRS =         \
 RESOURCE_DIR := src/resources
 RESOURCE_EMBED_DIR := src/engine/embedded
 
-CXX_SRCS = $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.cpp))
-CC_SRCS  = $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.c))
-CXX_OBJS = $(addprefix $(OUT)/,$(subst .cpp,.obj,$(notdir $(CXX_SRCS))))
-CC_OBJS  = $(addprefix $(OUT)/,$(subst .c,.o,$(notdir $(CC_SRCS))))
+CXX_SRCS := $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.cpp))
+CC_SRCS  := $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.c))
+CXX_OBJS ?= $(addprefix $(OUT)/,$(subst .cpp,.obj,$(CXX_SRCS:src/%=%)))
+CC_OBJS  ?= $(addprefix $(OUT)/,$(subst .c,.o,$(CC_SRCS:src/%=%)))
 
-DIRTY_CXX_SRCS = $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.cpp))
-DIRTY_CC_SRCS  = $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.c))
-DIRTY_CXX_OBJS = $(addprefix $(OUT)/,$(subst .cpp,.obj,$(notdir $(DIRTY_CXX_SRCS))))
-DIRTY_CC_OBJS  = $(addprefix $(OUT)/,$(subst .c,.o,$(notdir $(DIRTY_CC_SRCS))))
+DIRTY_CXX_SRCS := $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.cpp))
+DIRTY_CC_SRCS  := $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.c))
+DIRTY_CXX_OBJS ?= $(addprefix $(OUT)/,$(subst .cpp,.obj,$(DIRTY_CXX_SRCS:src/%=%)))
+DIRTY_CC_OBJS  ?= $(addprefix $(OUT)/,$(subst .c,.o,$(DIRTY_CC_SRCS:src/%=%)))
 
 SRCS = $(CXX_SRCS) $(DIRTY_CXX_SRCS) $(CC_SRCS) $(DIRTY_CC_SRCS)
-OBJS = $(CXX_OBJS) $(DIRTY_CXX_OBJS) $(CC_OBJS) $(DIRTY_CC_OBJS)
+OBJS ?= $(CXX_OBJS) $(DIRTY_CXX_OBJS) $(CC_OBJS) $(DIRTY_CC_OBJS)
 
 VPATH := $(SRC_DIRS) $(DIRTY_SRC_DIRS)
 
@@ -101,10 +121,7 @@ RED   = \\033[31m
 GREEN = \\033[32m
 BLUE  = \\033[34m
 
-.PHONY: all sublime build debug release linux windows clean dirty_clean clean_tmp_files clean_resources rebuild_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models
-
-all: $(APP)
-	@ echo -e "Finished compiling: $(BLUE)$(APP)$(RESET)"
+.PHONY: sublime debug release linux windows build clean dirty_clean clean_tmp_files clean_resources rebuild_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models
 
 # This removes the color variables; I use it in Sublime Text build systems, since ST's console output doesn't support colored text by default
 sublime: ;@:
@@ -113,56 +130,93 @@ sublime: ;@:
 	$(eval GREEN="")
 	$(eval BLUE="")
 
-eval_windows:
+linux: ;@:
+	$(eval APP_ARCH = $(APP_LINUX))
+	$(eval BUILD_ARCH = $(BUILD_LINUX))
+
+windows: ;@:
 	$(eval INCLUDE = $(WINCLUDE))
 	$(eval LIBRARIES = $(WINLIBRARIES))
 	$(eval GRAPHXFLAGS += -static -mwindows)
+	$(eval CXX = WCXX)
+	$(eval CC = WCC)
+	$(eval APP_ARCH = $(APP_WINDOWS))
+	$(eval BUILD_ARCH = $(BUILD_WINDOWS))
 
-windows: eval_windows
-# 	$(eval OUT = build/windows/release)
-	$(eval APP = GraphX$(WINDOWS))
+debug: GRAPHXFLAGS+=-D GRAPHX_DEBUG
+debug: APP_NAME = $(NAME_DEBUG)
+debug: BUILD_VERSION = $(BUILD_DEBUG)
+debug:
+	@ $(MAKE) -s OUT="$(OUT)" make_objs
+	@ $(MAKE) -s APP="$(APP)" OUT="$(OUT)" $(OUT)/$(APP)
+	@ echo -e "Finished building: $(BLUE)$(OUT)/$(APP)$(RESET)"
 
-windows_debug: eval_windows
-# 	$(eval OUT = build/windows/debug)
-	$(eval APP = GraphXDebug$(WINDOWS))
+release: APP_NAME = $(NAME_RELEASE)
+release: BUILD_VERSION = $(BUILD_RELEASE)
+release:
+	@ $(MAKE) -s OUT="$(OUT)" make_objs
+	@ $(MAKE) -s APP="$(APP)" OUT="$(OUT)" $(OUT)/$(APP)
+	@ echo -e "Finished building: $(BLUE)$(APP)$(RESET)"
 
-eval_debug:
-# 	$(eval OUT = build/linux/debug)
-	$(eval APP = GraphXDebug$(LINUX))
-	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
+make_objs: build
+	@ $(MAKE) -s OUT="$(OUT)" $(OBJS)
 
-debug: eval_debug $(APP)
-	@ echo -e "Finished compiling: $(BLUE)$(APP)$(RESET)"
+define LINK_APP
+	@ echo -e "Linking: $(GREEN)$@$(RESET)"
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDE) $(OBJS) -o $@ $(LIBRARIES)
+endef
 
-eval_release:
-	$(eval GRAPHXFLAGS = $(patsubst $%-D GRAPHX_DEBUG,$%,$(CXXFLAGS)))
-# 	$(eval OUT = build/linux/release)
-
-release: eval_release $(APP)
-	@ echo -e "Finished compiling: $(BLUE)$(APP)$(RESET)"
-
-$(APP): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDE) $^ -o $@ $(LIBRARIES)
-
-$(OUT)/%.obj: %.cpp | build
-	@ echo -e "Compiling: $(GREEN)$<$(RESET)"
+define COMPILE_CXX
+	@ echo -e "Compiling: $(BLUE)$<$(RESET) -> $(GREEN)$@$(RESET)"
+	@ -mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
+endef
 
-$(OUT)/%.o: %.c | build
-	@ echo -e "Compiling: $(GREEN)$<$(RESET)"
+define COMPILE_CC
+	@ echo -e "Compiling: $(BLUE)$<$(RESET) -> $(GREEN)$@$(RESET)"
+	@ -mkdir -p $(dir $@)
 	$(CC) $(CCFLAGS) $(INCLUDE) -c $< -o $@
+endef
+
+$(LINUX_RELEASE_OUT)/$(APP):;    $(LINK_APP)
+$(LINUX_DEBUG_OUT)/$(APP):;      $(LINK_APP)
+$(WINDOWS_RELEASE_OUT)/$(APP):;  $(LINK_APP)
+$(WINDOWS_DEBUG_OUT)/$(APP):;    $(LINK_APP)
+
+$(LINUX_RELEASE_OUT)/%.obj:   src/%.cpp | build ; $(COMPILE_CXX)
+$(LINUX_DEBUG_OUT)/%.obj:     src/%.cpp | build ; $(COMPILE_CXX)
+$(WINDOWS_RELEASE_OUT)/%.obj: src/%.cpp | build ; $(COMPILE_CXX)
+$(WINDOWS_DEBUG_OUT)/%.obj:   src/%.cpp | build ; $(COMPILE_CXX)
+
+$(LINUX_RELEASE_OUT)/%.o:     src/%.c   | build ; $(COMPILE_CC)
+$(LINUX_DEBUG_OUT)/%.o:       src/%.c   | build ; $(COMPILE_CC)
+$(WINDOWS_RELEASE_OUT)/%.o:   src/%.c   | build ; $(COMPILE_CC)
+$(WINDOWS_DEBUG_OUT)/%.o:     src/%.c   | build ; $(COMPILE_CC)
 
 build:
 	@ -mkdir -p $(OUT)
 
 clean: rebuild_resources
-	@ -rm -rf $(OUT)
+	@ -rm -rf build/
 
 dirty_clean:
-	@ -rm -f $(CXX_OBJS) $(CC_OBJS)
+	@ -rm -rf 								   \
+	$(LINUX_RELEASE_OUT)/$(SRC_DIRS:src/%=%)   \
+	$(LINUX_DEBUG_OUT)/$(SRC_DIRS:src/%=%)     \
+	$(WINDOWS_RELEASE_OUT)/$(SRC_DIRS:src/%=%) \
+	$(WINDOWS_DEBUG_OUT)/$(SRC_DIRS:src/%=%)
 
+# FIXME: this is terrible
 clean_tmp_files:
-	@ -rm -f $(OUT)/*.tmp
+	@ -rm -rf 								               \
+	$(LINUX_RELEASE_OUT)/$(SRC_DIRS:src/%=%)/*.tmp         \
+	$(LINUX_RELEASE_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp   \
+	$(LINUX_DEBUG_OUT)/$(SRC_DIRS:src/%=%)/*.tmp           \
+	$(LINUX_DEBUG_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp	   \
+	$(WINDOWS_RELEASE_OUT)/$(SRC_DIRS:src/%=%)/*.tmp       \
+	$(WINDOWS_RELEASE_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp \
+	$(WINDOWS_DEBUG_OUT)/$(SRC_DIRS:src/%=%)/*.tmp         \
+	$(WINDOWS_DEBUG_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp
 
 clean_resources:
 	@ -rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H) $(MODELS_H) $(MODELS_C)
