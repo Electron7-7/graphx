@@ -1,9 +1,9 @@
-#include <gmath.hpp>
+#include "gmath.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <Jolt/Jolt.h>
-#include "Jolt/Core/Color.h"
+#include <Jolt/Core/Color.h>
 
 gmath::uintvec3::uintvec3(unsigned int new_x, unsigned int new_y, unsigned int new_z)
 : data(new_x, new_y, new_z)

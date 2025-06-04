@@ -1,8 +1,8 @@
 #ifndef GRAPHX_PYRAMID
 #include <vector>
-#include <gmath.hpp>
+#include "math/gmath.hpp"
 #include <glm/glm.hpp>
-#include <string>
+#include <string> // IWYU pragma: keep
 #define GRAPHX_PYRAMID std::string("GRAPHX_PYRAMID")
 const std::vector<glm::vec3> PYRAMID_COLORS =
 {

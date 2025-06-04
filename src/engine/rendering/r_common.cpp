@@ -1,6 +1,6 @@
 #include "r_common.hpp"
 #include "r_rendering.hpp"
-#include <gmath.hpp>
+#include "math/gmath.hpp"
 #include <glm/gtx/component_wise.hpp>
 
 //

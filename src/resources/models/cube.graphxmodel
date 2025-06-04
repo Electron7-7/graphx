@@ -1,8 +1,8 @@
 #ifndef GRAPHX_CUBE
 #include <vector>
 #include <glm/glm.hpp>
-#include <gmath.hpp>
-#include <string>
+#include "math/gmath.hpp"
+#include <string> // IWYU pragma: keep
 #define GRAPHX_CUBE std::string("GRAPHX_CUBE")
 const std::vector<glm::vec3> CUBE_COLORS =
 {

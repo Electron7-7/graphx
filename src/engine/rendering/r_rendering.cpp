@@ -1,10 +1,12 @@
 #include "r_common.hpp"
 #include "r_rendering.hpp"
-#include "g_actors.hpp"
-#include "g_theatre.hpp"
-#include "sanity.hpp"
-#include "t_common.hpp"
-#include "t_interpreter.hpp" // TODO: remove once the Interpreter declaration is in graphx_namespace.hpp
+#include "engine/interpreter/t_interpreter.hpp" // TODO: remove once the Interpreter declaration is in graphx_namespace.hpp
+#include "engine/things/actors/g_actors.hpp"
+#include "engine/interpreter/t_common.hpp"
+#include "engine/theatre/g_theatre.hpp"
+#include "sanity/sanity.hpp"
+#include "models.hpp"
+#include "images.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #define TINYOBJLOADER_DONOT_INCLUDE_MAPBOX_EARCUT
@@ -29,23 +31,23 @@ std::map<std::string, MeshData> mesh_data_storage =
 	{GRAPHX_CUBE,    MeshData(graphx::rendering::VAO_DEFAULT, CUBE_POSITIONS,    CUBE_NORMALS,    CUBE_UVS,    CUBE_COLORS,    CUBE_INDICES)},
 	{GRAPHX_QUAD,    MeshData(graphx::rendering::VAO_DEFAULT, QUAD_POSITIONS,    QUAD_NORMALS,    QUAD_UVS,    QUAD_COLORS,    QUAD_INDICES)},
 	{GRAPHX_PYRAMID, MeshData(graphx::rendering::VAO_DEFAULT, PYRAMID_POSITIONS, PYRAMID_NORMALS, PYRAMID_UVS, PYRAMID_COLORS, PYRAMID_INDICES)},
-	{ERROR_MODEL,    M_LoadOBJ(ERROR_obj)},
-	{suzanne_MODEL,  M_LoadOBJ(suzanne_obj)},
-	{ramiel_MODEL,   M_LoadOBJ(ramiel_obj)},
-	{purely_for_testing_MODEL, M_LoadOBJ(purely_for_testing_obj)},
+	{ERROR_MODEL,    M_LoadOBJ("ERROR_obj")},
+	{suzanne_MODEL,  M_LoadOBJ("suzanne_obj")},
+	{ramiel_MODEL,   M_LoadOBJ("ramiel_obj")},
+	{purely_for_testing_MODEL, M_LoadOBJ("purely_for_testing_obj")},
 };
 
 std::map<std::string, Texture> texture_storage =
 {
-	{COMP04_5, Texture(COMP04_5_png, COMP04_5_png_len)},
+	{COMP04_5,          Texture(COMP04_5_png, COMP04_5_png_len)},
 	{COMP04_5_SPECULAR, Texture(COMP04_5_SPECULAR_jpg, COMP04_5_SPECULAR_jpg_len)},
-	{FLAT_SPEC, Texture(FLAT_SPEC_jpg, FLAT_SPEC_jpg_len)},
-	{LIGHT_DEBUGGING, Texture(LIGHT_DEBUGGING_jpg, LIGHT_DEBUGGING_jpg_len)},
-	{MISSING_TEXTURE, Texture(MISSING_TEXTURE_jpg, MISSING_TEXTURE_jpg_len)},
-	{debug_checkers, Texture(debug_checkers_png, debug_checkers_png_len)},
-	{NO_TEXTURE, Texture(NO_TEXTURE_jpg, NO_TEXTURE_jpg_len)},
+	{FLAT_SPEC,         Texture(FLAT_SPEC_jpg, FLAT_SPEC_jpg_len)},
+	{LIGHT_DEBUGGING,   Texture(LIGHT_DEBUGGING_jpg, LIGHT_DEBUGGING_jpg_len)},
+	{MISSING_TEXTURE,   Texture(MISSING_TEXTURE_jpg, MISSING_TEXTURE_jpg_len)},
+	{debug_checkers,    Texture(debug_checkers_png, debug_checkers_png_len)},
+	{NO_TEXTURE,        Texture(NO_TEXTURE_jpg, NO_TEXTURE_jpg_len)},
 	{SOURCE_LIGHT_GREY, Texture(SOURCE_LIGHT_GREY_png, SOURCE_LIGHT_GREY_png_len)},
-	{SOURCE_ORANGE, Texture(SOURCE_ORANGE_png, SOURCE_ORANGE_png_len)},
+	{SOURCE_ORANGE,     Texture(SOURCE_ORANGE_png, SOURCE_ORANGE_png_len)},
 };
 
 //
@@ -415,7 +417,7 @@ std::string M_LoadModelFile(std::string file_path, std::string file_extension)
 		return ERROR_MODEL;
 	}
 
-	// Last minute realization that I had to move this out of the header file "sanity.hpp"
+	// Last minute realization that I had to move this out of the header file "sanity/sanity.hpp"
 	std::string binary_path = BINARY_PATH;
 
 	// If the file path is relative, it should be relative to the program's location.

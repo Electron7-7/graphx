@@ -1,9 +1,9 @@
 #ifndef GRAPHX_MODELS
 #define GRAPHX_MODELS
 #include <string>
-#include "../models/cube.graphxmodel"
-#include "../models/pyramid.graphxmodel"
-#include "../models/quad.graphxmodel"
+#include "../src/resources/models/cube.graphxmodel"
+#include "../src/resources/models/pyramid.graphxmodel"
+#include "../src/resources/models/quad.graphxmodel"
 
 #define ERROR_MODEL std::string("ERROR_obj")
 extern std::string ERROR_obj;

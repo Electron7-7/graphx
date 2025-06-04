@@ -1,5 +1,5 @@
 #pragma once
-
+#include "sanity/sanity_nowarn.hpp" // NOTE: because for some reason, clang reports the variable "iterations" as being unused, even tho it's used immediately afterwards...
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -259,7 +259,7 @@ void Earcut<N>::earcutLinked(Node* ear, int pass) {
     Node* stop = ear;
     Node* prev;
     Node* next;
-#include "../sanity_nowarn.hpp"
+
 NOWARN(-Wunused-but-set-variable,
     int iterations = 0;
 )

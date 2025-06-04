@@ -1,5 +1,5 @@
 #ifndef GRAPHX_DEVICE
-#include "t_settings.hpp"
+#include "engine/things/settings.hpp"
 #define GRAPHX_DEVICE
 
 #ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files

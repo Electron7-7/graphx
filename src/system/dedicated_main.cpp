@@ -1,19 +1,20 @@
 // Hello, production branch!
 // :3
 
-#include "sanity.hpp"
-#include "graphx_namespace.hpp"
-#include "g_actors.hpp"
-#include "g_theatre.hpp"
-#include "g_jolt.hpp"
-#include "g_imgui.hpp"
-#include "r_rendering.hpp"
-#include "sanity_printouts.hpp"
-#include "t_common.hpp"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include <theatres.hpp>
+#include "opengl_includes.hpp"
+// #include "sanity/sanity.hpp"
+#include "engine/common.hpp"
+#include "engine/things/actors/g_actors.hpp"
+#include "engine/theatre/g_theatre.hpp"
+#include "engine/ui/g_imgui.hpp"
+#include "engine/rendering/r_rendering.hpp"
+// #include "sanity/sanity_printouts.hpp"
+// #include "interpreter/t_common.hpp"
+#include "DearImGui/imgui.h"
+#include "DearImGui/imgui_impl_glfw.h"
+#include "DearImGui/imgui_impl_opengl3.h"
+#include "theatres.hpp"
+#include "engine/physics/g_jolt.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -47,7 +48,7 @@ void gameTick(GLFWwindow *window);
 #define TICKLENGTH (1.0f / TICKRATE)
 
 // The Jolt Physics boilerplate code was really annoying to scroll through, so I isolated it
-#include "jolt_boilerplate.hpp"
+#include "engine/physics/jolt_boilerplate.hpp"
 
 int main()
 {

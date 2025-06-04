@@ -1,8 +1,8 @@
 #ifndef GRAPHX_QUAD
-#include <gmath.hpp>
+#include "math/gmath.hpp"
 #include <glm/glm.hpp>
 #include <vector>
-#include <string>
+#include <string> // IWYU pragma: keep
 #define GRAPHX_QUAD std::string("GRAPHX_QUAD")
 const std::vector<glm::vec3> QUAD_COLORS =
 {

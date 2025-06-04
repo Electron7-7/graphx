@@ -1,8 +1,8 @@
-#include "g_theatre.hpp"
-#include "g_actor.hpp"
-#include "g_actors.hpp"
-#include <gmath.hpp>
-#include <models.hpp>
+#include "engine/theatre/g_theatre.hpp"
+#include "engine/things/actors/g_actor.hpp"
+#include "engine/things/actors/g_actors.hpp"
+#include "math/gmath.hpp"
+#include "models.hpp"
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
@@ -595,8 +595,8 @@ void LightTesterMover::loadSettings()
 	pivot_point.mesh->name = "Pivot Mesh for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")";
 	pivot_point.mesh->mesh_data_name = GRAPHX_CUBE;
 	pivot_point.mesh->setUID(4815 + getUID());
-	gSettings pivot_settings;
-	pivot_settings.raw_data["Name"] = gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")};
+	gSettings pivosettings;
+	pivosettings.raw_data["Name"] = gRawData{std::string("Pivot point Actor for " + name + " LightTesterMover (UID: " + std::to_string(getUID()) + ")")};
 	pivot_point.loadSettings();
 }
 

@@ -1,14 +1,14 @@
 #include "g_devices.hpp"
-#include "graphx_namespace.hpp"
-#include "t_settings.hpp"
-#include "g_theatre.hpp"
-#include "g_jolt.hpp"
+#include "engine/common.hpp"
+#include "engine/things/settings.hpp"
+#include "engine/theatre/g_theatre.hpp"
+#include "engine/physics/g_jolt.hpp"
 // Note: these includes are for when I move the J_CreateAShape function into here and merge it with Collider
 #include "Jolt/Physics/Collision/Shape/BoxShape.h"
 #include "Jolt/Physics/Collision/Shape/CapsuleShape.h"
 #include "Jolt/Physics/Collision/Shape/CylinderShape.h"
 #include "Jolt/Physics/Collision/Shape/SphereShape.h"
-#include <gmath.hpp>
+#include "math/gmath.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/component_wise.hpp>
 

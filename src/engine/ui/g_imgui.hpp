@@ -4,8 +4,8 @@
 #define IM_VEC4_CLASS_EXTRA \
 	constexpr ImVec4(const glm::vec4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {} \
 	operator glm::vec4() const { return glm::vec4(x,y,z,w); }
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
+#include "DearImGui/imgui.h"
+#include "DearImGui/imgui_impl_glfw.h"
 #include <string>
 
 #ifdef COMPILER_FORWARD_DECLARATIONS // This is to keep forward declarations from causing issues when including header files

@@ -1,8 +1,8 @@
-#include "graphx_interpreter_lookups.hpp"
 #include "g_theatre.hpp"
-#include "g_actors.hpp"
-#include "r_rendering.hpp"
-#include "t_settings.hpp"
+#include "engine/interpreter/graphx_interpreter_lookups.hpp"
+#include "engine/things/actors/g_actors.hpp"
+#include "engine/rendering/r_rendering.hpp"
+#include "engine/things/settings.hpp"
 #include <set>
 
 // TEMPORARY

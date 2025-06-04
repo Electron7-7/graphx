@@ -1,9 +1,10 @@
 #ifndef GRAPHX_ACTOR
 #define GRAPHX_ACTOR
-#include "graphx_namespace.hpp"
-#include "r_common.hpp"
-#include "g_devices.hpp"
-#include "t_settings.hpp"
+#include "engine/common.hpp"
+#include "engine/rendering/r_common.hpp"
+#include "engine/things/devices/g_devices.hpp"
+#include "engine/things/settings.hpp"
+#include "glfw_fwd.hpp"
 #include <glm/glm.hpp>
 #include <mutex>
 #include <array>

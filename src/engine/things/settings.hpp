@@ -1,6 +1,6 @@
 #ifndef GRAPHX_SETTINGS
-#include "sanity_printouts.hpp"
-#include "graphx_namespace.hpp"
+#include "sanity/sanity_printouts.hpp"
+#include "engine/common.hpp"
 #include <string>
 #include <map>
 #include <any>

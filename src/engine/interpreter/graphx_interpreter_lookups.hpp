@@ -1,8 +1,8 @@
 // NEW CODE
 #ifndef GRAPHX_INTERPRETER_LOOKUPS
-#include "g_actors.hpp"
-#include "g_devices.hpp"
-#include "t_settings.hpp"
+#include "engine/things/actors/g_actors.hpp"
+#include "engine/things/devices/g_devices.hpp"
+#include "engine/things/settings.hpp"
 #include <any>
 #define GRAPHX_INTERPRETER_LOOKUPS
 /*

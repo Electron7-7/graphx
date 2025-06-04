@@ -1,8 +1,8 @@
-#include "graphx_namespace.hpp"
-#include "t_interpreter.hpp"
-#include "g_theatre.hpp"
-#include "g_devices.hpp"
-#include "g_actors.hpp"
+#include "common.hpp"
+#include "engine/interpreter/t_interpreter.hpp"
+#include "engine/theatre/g_theatre.hpp"
+#include "engine/things/devices/g_devices.hpp"
+#include "engine/things/actors/g_actors.hpp"
 #include <glm/glm.hpp>
 
 //---------------

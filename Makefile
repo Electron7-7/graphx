@@ -2,10 +2,12 @@ CXX := @ clang++
 CC  := @ clang
 
 # LSAN_OPTIONS=verbosity=1:log_threads=1 # Use this environment variable for more verbosity with address sanitizer
-CXXFLAGS := -g -Wall -fsanitize=address -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
-CCFLAGS  := -g -Wall
+CXXFLAGS = -g -Wall -fsanitize=address -frtti -std=c++20 $(JOLTFLAGS) $(GRAPHXFLAGS)
+CCFLAGS  := -g -Wall -fsanitize=address -frtti
 
-INCLUDE   = -I src/ -I src/engine -I src/common -I src/system/common/linux
+INCLUDE_COMMON := -I src/ -I src/common -I src/engine/embedded
+
+INCLUDE   = -I src/system/common/linux $(INCLUDE_COMMON)
 LIBRARIES = -L src/lib/public/linux -l glfw -l Jolt -l freetype
 
 ifeq ($(OS),Windows_NT)
@@ -16,11 +18,11 @@ else
 	WCC  := x86_64-w64-mingw32-gcc
 endif
 
-WINCLUDE   := -I src/ -I src/engine -I src/common/ -I src/system/windows/common
+WINCLUDE   := -I src/system/windows/common $(INCLUDE_COMMON)
 WINLIBRARIES := -L src/lib/public/windows -l jolt-mingw-w64/Jolt -l lib-mingw-w64/glfw3 -l gdi32
 
 JOLTFLAGS   := -D JPH_PROFILE_ENABLED -D JPH_OBJECT_STREAM -D JPH_DEBUG_RENDERER
-GRAPHXFLAGS := -D COMPILER_FORWARD_DECLARATIONS
+GRAPHXFLAGS = -D COMPILER_FORWARD_DECLARATIONS
 
 # FPS_LIMIT = 60 # FPS limit for mangohud (FPS_LIMIT <= 0 results in an uncapped framerate)
 # TESTRUN_LINUX = exit 0 &&
@@ -29,19 +31,13 @@ GRAPHXFLAGS := -D COMPILER_FORWARD_DECLARATIONS
 # TEST_LINUX = 
 # TEST_WINDOWS = # nothing here, yet
 
-OUT := build
-OUT_ARCH = linux
-OUT_VERSION = release
-OUT_FULL = $(OUT)/$(OUT_ARCH)/$(OUT_VERSION)
+OUT ?= build/
 
 LINUX   := _$(shell uname -s)_$(subst .,_,$(shell uname -r)).$(shell uname -m)
 WINDOWS := _Windows_10_x86_64.exe
+APP ?= $(OUT)/GraphX$(LINUX)
 
-APP_NAME = GraphX
-APP_ARCH = $(LINUX)
-APP = $(OUT_FULL)/$(APP_NAME)$(APP_ARCH)
-
-SRC_DIRS :=                   \
+SRC_DIRS =                    \
 	src/math                  \
 	src/engine                \
 	src/system                \
@@ -56,45 +52,48 @@ SRC_DIRS :=                   \
 	src/engine/things/devices
 
 # Object files compiled from "DIRTY_SRC_DIRS" will not be cleaned during a dirty clean
-DIRTY_SRC_DIRS :=        \
+DIRTY_SRC_DIRS =         \
 	src/common/glad      \
 	src/common/DearImGui
 
 RESOURCE_DIR := src/resources
 RESOURCE_EMBED_DIR := src/engine/embedded
 
-CXX_SRCS := $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.cpp))
-CC_SRCS  := $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.c))
-CXX_OBJS  = $(addprefix $(OUT_FULL)/,$(notdir $(CXX_SRCS):.cpp=.obj))
-CC_OBJS   = $(addprefix $(OUT_FULL)/,$(notdir $(CC_SRCS):.c=.o))
+CXX_SRCS = $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.cpp))
+CC_SRCS  = $(foreach directory,$(SRC_DIRS),$(wildcard $(directory)/*.c))
+CXX_OBJS = $(addprefix $(OUT)/,$(subst .cpp,.obj,$(notdir $(CXX_SRCS))))
+CC_OBJS  = $(addprefix $(OUT)/,$(subst .c,.o,$(notdir $(CC_SRCS))))
 
-DIRTY_CXX_SRCS := $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.cpp))
-DIRTY_CC_SRCS  := $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.c))
-DIRTY_CXX_OBJS  = $(addprefix $(OUT_FULL)/,$(notdir $(DIRTY_CXX_SRCS):.cpp=.obj))
-DIRTY_CC_OBJS   = $(addprefix $(OUT_FULL)/,$(notdir $(DIRTY_CC_SRCS):.c=.o))
+DIRTY_CXX_SRCS = $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.cpp))
+DIRTY_CC_SRCS  = $(foreach directory,$(DIRTY_SRC_DIRS),$(wildcard $(directory)/*.c))
+DIRTY_CXX_OBJS = $(addprefix $(OUT)/,$(subst .cpp,.obj,$(notdir $(DIRTY_CXX_SRCS))))
+DIRTY_CC_OBJS  = $(addprefix $(OUT)/,$(subst .c,.o,$(notdir $(DIRTY_CC_SRCS))))
 
-SRCS := $(CXX_SRCS)$(DIRTY_CXX_SRCS)$(CC_SRCS)$(DIRTY_CC_SRCS)
-OBJS  = $(CXX_OBJS)$(DIRTY_CXX_OBJS)$(CC_OBJS)$(DIRTY_CC_OBJS)
+SRCS = $(CXX_SRCS) $(DIRTY_CXX_SRCS) $(CC_SRCS) $(DIRTY_CC_SRCS)
+OBJS = $(CXX_OBJS) $(DIRTY_CXX_OBJS) $(CC_OBJS) $(DIRTY_CC_OBJS)
 
 VPATH := $(SRC_DIRS) $(DIRTY_SRC_DIRS)
 
 IMAGES_C = $(RESOURCE_EMBED_DIR)/images.c
 IMAGES_H = $(RESOURCE_EMBED_DIR)/images.h
 IMAGES = $(wildcard $(RESOURCE_DIR)/images/*)
+I = $(RESOURCE_DIR)/images
 
 SHADERS_C = $(RESOURCE_EMBED_DIR)/shaders.cpp
 SHADERS_H = $(RESOURCE_EMBED_DIR)/shaders.hpp
 SHADERS = $(wildcard $(RESOURCE_DIR)/shaders/*.glsl)
+S = $(RESOURCE_DIR)/shaders
 
 THEATRES_C = $(RESOURCE_EMBED_DIR)/theatres.cpp
 THEATRES_H = $(RESOURCE_EMBED_DIR)/theatres.hpp
 THEATRES = $(wildcard $(RESOURCE_DIR)/theatres/*.gt)
+T = $(RESOURCE_DIR)/theatres
 
 MODELS_C = $(RESOURCE_EMBED_DIR)/models.cpp
 MODELS_H = $(RESOURCE_EMBED_DIR)/models.hpp
 MODELS = $(wildcard $(RESOURCE_DIR)/models/*.obj)
 MTL_FILES = $(wildcard $(RESOURCE_DIR)/models/*.mtl)
-
+M = $(RESOURCE_DIR)/models
 
 # Colors for colored output
 RESET = \\033[0m
@@ -102,7 +101,10 @@ RED   = \\033[31m
 GREEN = \\033[32m
 BLUE  = \\033[34m
 
-.PHONY: all clean dirty_clean clean_resources embed_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models compile_commands debug release linux windows test build
+.PHONY: all sublime build debug release linux windows clean dirty_clean clean_tmp_files clean_resources rebuild_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models
+
+all: $(APP)
+	@ echo -e "Finished compiling: $(BLUE)$(APP)$(RESET)"
 
 # This removes the color variables; I use it in Sublime Text build systems, since ST's console output doesn't support colored text by default
 sublime: ;@:
@@ -111,41 +113,47 @@ sublime: ;@:
 	$(eval GREEN="")
 	$(eval BLUE="")
 
-linux: ;@:
-	$(eval APP_ARCH = $(LINUX))
-	$(eval OUT_ARCH = linux)
-
-windows: ;@:
-	$(eval APP_ARCH = $(WINDOWS))
-	$(eval OUT_ARCH = windows)
+eval_windows:
 	$(eval INCLUDE = $(WINCLUDE))
 	$(eval LIBRARIES = $(WINLIBRARIES))
+	$(eval GRAPHXFLAGS += -static -mwindows)
 
-eval_debug: ;@:
-	$(eval CXXFLAGS += -D GRAPHX_DEBUG)
-	$(eval OUT_VERSION = debug)
+windows: eval_windows
+# 	$(eval OUT = build/windows/release)
+	$(eval APP = GraphX$(WINDOWS))
 
-eval_release: ;@:
-	# Just in case debug was run before release
-	$(eval CXXFLAGS = $(patsubst $%-D GRAPHX_DEBUG,$%,$(CXXFLAGS)))
-	$(eval OUT_VERSION = release)
+windows_debug: eval_windows
+# 	$(eval OUT = build/windows/debug)
+	$(eval APP = GraphXDebug$(WINDOWS))
+
+eval_debug:
+# 	$(eval OUT = build/linux/debug)
+	$(eval APP = GraphXDebug$(LINUX))
+	$(eval GRAPHXFLAGS += -D GRAPHX_DEBUG)
 
 debug: eval_debug $(APP)
+	@ echo -e "Finished compiling: $(BLUE)$(APP)$(RESET)"
+
+eval_release:
+	$(eval GRAPHXFLAGS = $(patsubst $%-D GRAPHX_DEBUG,$%,$(CXXFLAGS)))
+# 	$(eval OUT = build/linux/release)
+
 release: eval_release $(APP)
+	@ echo -e "Finished compiling: $(BLUE)$(APP)$(RESET)"
 
 $(APP): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDE) $^ -o $@ $(LIBRARIES)
 
-$(OUT_FULL)/%.obj: %.cpp | build
+$(OUT)/%.obj: %.cpp | build
 	@ echo -e "Compiling: $(GREEN)$<$(RESET)"
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
-$(OUT_FULL)/%.o: %.c | build
+$(OUT)/%.o: %.c | build
 	@ echo -e "Compiling: $(GREEN)$<$(RESET)"
 	$(CC) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
 build:
-	@ -mkdir -p $(OUT_FULL)
+	@ -mkdir -p $(OUT)
 
 clean: rebuild_resources
 	@ -rm -rf $(OUT)
@@ -155,7 +163,6 @@ dirty_clean:
 
 clean_tmp_files:
 	@ -rm -f $(OUT)/*.tmp
-	@ -rm -f $(OUT_FULL)/*.tmp
 
 clean_resources:
 	@ -rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H) $(MODELS_H) $(MODELS_C)
@@ -182,11 +189,11 @@ rebuild_models:
 
 # Embedding resources
 $(IMAGES_C): $(IMAGES_H)
-	$(foreach file,$(IMGS),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
+	$(foreach file,$(IMAGES),$(shell xxd -b -n $(file:$(I)/%=%) -i $(file) >> $(IMAGES_C)))
 
 $(IMAGES_H):
 	$(shell printf "#ifndef GRAPHX_EMBEDDED_IMAGES\n#define GRAPHX_EMBEDDED_IMAGES\n#include <string>\n" > $(IMAGES_H))
-	$(foreach filename,$(IMGS), $(shell printf "\n#define $(subst .,_,$(basename $(filename:$(I)/%=%))) std::string(\"$(subst .,_,$(filename:$(I)/%=%))\")\nextern unsigned char $(subst .,_,$(filename:$(I)/%=%))[];\nextern unsigned int $(subst .,_,$(filename:$(I)/%=%))_len;\n" >> $(IMAGES_H)))
+	$(foreach filename,$(IMAGES), $(shell printf "\n#define $(subst .,_,$(basename $(filename:$(I)/%=%))) std::string(\"$(subst .,_,$(filename:$(I)/%=%))\")\nextern unsigned char $(subst .,_,$(filename:$(I)/%=%))[];\nextern unsigned int $(subst .,_,$(filename:$(I)/%=%))_len;\n" >> $(IMAGES_H)))
 	$(shell printf "#endif" >> $(IMAGES_H))
 
 $(SHADERS_C): $(SHADERS_H)
@@ -203,18 +210,18 @@ $(THEATRES_H):
 
 $(THEATRES_C): $(THEATRES_H)
 	$(shell printf "#include <string>\n#include <map>\nstd::map<int, std::string> embedded_theatres =\n{" > $(THEATRES_C))
-	$(foreach theatre,$(THTRS),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
+	$(foreach theatre,$(THEATRES),$(shell printf ",{$(shell printf $(theatre) | grep -P --only-matching '(.+\/)+\K[0-9]+'), std::string{R\"~(" >> $(THEATRES_C) && cat $(theatre) >> $(THEATRES_C) && printf ")~\"}}" >> $(THEATRES_C)))
 	$(shell sed 's/^{,{/{{/' -i $(THEATRES_C))
 	$(shell printf "\n};" >> $(THEATRES_C))
 
 $(MODELS_H):
 	$(shell printf "#ifndef GRAPHX_MODELS\n#define GRAPHX_MODELS\n#include <string>\n" > $(MODELS_H))
 	$(foreach graphxmodel,$(wildcard $(M)/*.graphxmodel),$(shell printf "#include \"../$(M:$(SRC)/%=%)/$(graphxmodel:$(M)/%=%)\"\n" >> $(MODELS_H)))
-	$(foreach model,$(MDLS),$(shell printf "\n#define $(basename $(model:$(M)/%=%))_MODEL std::string(\"$(subst .,_,$(model:$(M)/%=%))\")\nextern std::string $(subst .,_,$(model:$(M)/%=%));\n" >> $(MODELS_H)))
-	$(foreach material,$(MTLS),$(shell printf "extern std::string $(subst .,_,$(material:$(M)/%=%));\n" >> $(MODELS_H)))
+	$(foreach model,$(MODELS),$(shell printf "\n#define $(basename $(model:$(M)/%=%))_MODEL std::string(\"$(subst .,_,$(model:$(M)/%=%))\")\nextern std::string $(subst .,_,$(model:$(M)/%=%));\n" >> $(MODELS_H)))
+	$(foreach material,$(MTL_FILES),$(shell printf "extern std::string $(subst .,_,$(material:$(M)/%=%));\n" >> $(MODELS_H)))
 	$(shell printf "#endif" >> $(MODELS_H))
 
 $(MODELS_C): $(MODELS_H)
 	$(shell printf "#include <string>\n" > $(MODELS_C))
-	$(foreach model,$(MDLS),$(shell printf "std::string $(subst .,_,$(model:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(model) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))
-	$(foreach material,$(MTLS),$(shell printf "std::string $(subst .,_,$(material:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(material) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))
+	$(foreach model,$(MODELS),$(shell printf "std::string $(subst .,_,$(model:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(model) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))
+	$(foreach material,$(MTL_FILES),$(shell printf "std::string $(subst .,_,$(material:$(M)/%=%)) = R\"~(\n" >> $(MODELS_C) && cat $(material) >> $(MODELS_C) && printf "\n)~\";\n" >> $(MODELS_C)))

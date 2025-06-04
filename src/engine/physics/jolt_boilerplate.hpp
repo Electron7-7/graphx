@@ -1,5 +1,7 @@
 #ifndef GRAPHX_JOLT_BOILERPLATE
 #define GRAPHX_JOLT_BOILERPLATE
+#include "g_jolt.hpp"
+#include "sanity/sanity_printouts.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -8,7 +10,6 @@
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <iostream>
 #include <cstdarg>
-#include "g_jolt.hpp"
 
 extern bool do_jolt_assert;
 

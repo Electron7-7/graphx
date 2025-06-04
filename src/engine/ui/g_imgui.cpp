@@ -1,10 +1,9 @@
 #include "g_imgui.hpp"
-#include "g_actor.hpp"
-#include "g_actors.hpp"
-#include "g_theatre.hpp"
-#include "graphx_namespace.hpp"
-#include "imgui_stdlib.h"
-#include <models.hpp>
+#include "engine/things/actors/g_actor.hpp"
+#include "engine/things/actors/g_actors.hpp"
+#include "engine/theatre/g_theatre.hpp"
+#include "engine/common.hpp"
+#include "DearImGui/imgui_stdlib.h"
 
 namespace IMGUI = ImGui;
 
@@ -194,7 +193,7 @@ void GraphXConsole::liveTheatreEditor()
 
 void GraphXConsole::exportTheatreFile()
 {
-	std::vector<StringSettings> init_settings = graphx::TheatreHandler.getCurrentTheatre()->graphx_theatre_settings;
+	std::vector<StringSettings> inisettings = graphx::TheatreHandler.getCurrentTheatre()->graphx_theatre_settings;
 	IMGUI::Begin("Export Theatre", &quaternary_active);
 
 	IMGUI::End();

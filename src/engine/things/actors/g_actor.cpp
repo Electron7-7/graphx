@@ -1,9 +1,9 @@
-#include "g_actor.hpp"
-#include "g_device.hpp"
-#include "g_theatre.hpp"
-#include "r_common.hpp"
-#include "g_devices.hpp"
-#include <gmath.hpp>
+#include "engine/things/actors/g_actor.hpp"
+#include "engine/things/devices/g_device.hpp"
+#include "engine/theatre/g_theatre.hpp"
+#include "engine/rendering/r_common.hpp"
+#include "engine/things/devices/g_devices.hpp"
+// #include "math/gmath.hpp"
 
 using namespace graphx;
 

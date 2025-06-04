@@ -1,8 +1,8 @@
 #ifndef GRAPHX_THEATRE
-#include "t_common.hpp"
-#include "g_device.hpp"
-#include "g_actor.hpp"
-#include <glfw_fwd.hpp>
+#include "engine/interpreter/t_common.hpp"
+#include "engine/things/devices/g_device.hpp"
+#include "engine/things/actors/g_actor.hpp"
+#include "glfw_fwd.hpp"
 #include <vector>
 #include <memory>
 #include <map>

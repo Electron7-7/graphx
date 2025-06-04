@@ -1,8 +1,8 @@
 #ifndef GRAPHX_DEVICES
-#include "g_jolt.hpp"
 #include "g_device.hpp"
-#include <images.h>
-#include <models.hpp>
+#include "engine/physics/g_jolt.hpp"
+#include "images.h"
+#include "models.hpp"
 #define GRAPHX_DEVICES
 
 struct Collider : public Device

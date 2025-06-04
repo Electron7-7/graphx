@@ -1,9 +1,7 @@
 #ifndef GRAPHX_RENDERING
 #include "r_common.hpp"
-#include "graphx_namespace.hpp"
-#include <images.h>
-#include <models.hpp>
-#include <glfw_fwd.hpp>
+#include "engine/common.hpp"
+#include "glfw_fwd.hpp"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <string>
