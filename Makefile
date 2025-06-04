@@ -121,7 +121,7 @@ RED   = \\033[31m
 GREEN = \\033[32m
 BLUE  = \\033[34m
 
-.PHONY: sublime debug release linux windows build clean dirty_clean clean_tmp_files clean_resources rebuild_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models
+.PHONY: sublime debug release linux windows build clean dirty_clean clean_resources rebuild_resources rebuild_images rebuild_shaders rebuild_theatres rebuild_models
 
 # This removes the color variables; I use it in Sublime Text build systems, since ST's console output doesn't support colored text by default
 sublime: ;@:
@@ -161,37 +161,19 @@ release:
 make_objs: build
 	@ $(MAKE) -s OUT="$(OUT)" $(OBJS)
 
-define LINK_APP
+$(OUT)/$(APP):
 	@ echo -e "Linking: $(GREEN)$@$(RESET)"
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDE) $(OBJS) -o $@ $(LIBRARIES)
-endef
 
-define COMPILE_CXX
+$(OUT)/%.obj: src/%.cpp | build
 	@ echo -e "Compiling: $(BLUE)$<$(RESET) -> $(GREEN)$@$(RESET)"
 	@ -mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
-endef
 
-define COMPILE_CC
+$(OUT)/%.o: src/%.c | build
 	@ echo -e "Compiling: $(BLUE)$<$(RESET) -> $(GREEN)$@$(RESET)"
 	@ -mkdir -p $(dir $@)
 	$(CC) $(CCFLAGS) $(INCLUDE) -c $< -o $@
-endef
-
-$(LINUX_RELEASE_OUT)/$(APP):;    $(LINK_APP)
-$(LINUX_DEBUG_OUT)/$(APP):;      $(LINK_APP)
-$(WINDOWS_RELEASE_OUT)/$(APP):;  $(LINK_APP)
-$(WINDOWS_DEBUG_OUT)/$(APP):;    $(LINK_APP)
-
-$(LINUX_RELEASE_OUT)/%.obj:   src/%.cpp | build ; $(COMPILE_CXX)
-$(LINUX_DEBUG_OUT)/%.obj:     src/%.cpp | build ; $(COMPILE_CXX)
-$(WINDOWS_RELEASE_OUT)/%.obj: src/%.cpp | build ; $(COMPILE_CXX)
-$(WINDOWS_DEBUG_OUT)/%.obj:   src/%.cpp | build ; $(COMPILE_CXX)
-
-$(LINUX_RELEASE_OUT)/%.o:     src/%.c   | build ; $(COMPILE_CC)
-$(LINUX_DEBUG_OUT)/%.o:       src/%.c   | build ; $(COMPILE_CC)
-$(WINDOWS_RELEASE_OUT)/%.o:   src/%.c   | build ; $(COMPILE_CC)
-$(WINDOWS_DEBUG_OUT)/%.o:     src/%.c   | build ; $(COMPILE_CC)
 
 build:
 	@ -mkdir -p $(OUT)
@@ -199,24 +181,13 @@ build:
 clean: rebuild_resources
 	@ -rm -rf build/
 
+# dirty_clean has to account for all four build locations, since it won't know which ones exist without some annoying-ass shell shit that I'd have to make sure would run on windows as well as linux and I just don't have the patience for any more GNU make shenanigans
 dirty_clean:
 	@ -rm -rf 								   \
 	$(LINUX_RELEASE_OUT)/$(SRC_DIRS:src/%=%)   \
 	$(LINUX_DEBUG_OUT)/$(SRC_DIRS:src/%=%)     \
 	$(WINDOWS_RELEASE_OUT)/$(SRC_DIRS:src/%=%) \
 	$(WINDOWS_DEBUG_OUT)/$(SRC_DIRS:src/%=%)
-
-# FIXME: this is terrible
-clean_tmp_files:
-	@ -rm -rf 								               \
-	$(LINUX_RELEASE_OUT)/$(SRC_DIRS:src/%=%)/*.tmp         \
-	$(LINUX_RELEASE_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp   \
-	$(LINUX_DEBUG_OUT)/$(SRC_DIRS:src/%=%)/*.tmp           \
-	$(LINUX_DEBUG_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp	   \
-	$(WINDOWS_RELEASE_OUT)/$(SRC_DIRS:src/%=%)/*.tmp       \
-	$(WINDOWS_RELEASE_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp \
-	$(WINDOWS_DEBUG_OUT)/$(SRC_DIRS:src/%=%)/*.tmp         \
-	$(WINDOWS_DEBUG_OUT)/$(DIRTY_SRC_DIRS:src/%=%)/*.tmp
 
 clean_resources:
 	@ -rm -f $(IMAGES_C) $(IMAGES_H) $(SHADERS_C) $(SHADERS_H) $(THEATRES_C) $(THEATRES_H) $(MODELS_H) $(MODELS_C)
