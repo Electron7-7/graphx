@@ -1,4 +1,4 @@
-#include "g_jolt.hpp"
+#include "jolt_common.hpp"
 #include "math/gmath.hpp"
 #include <glm/glm.hpp>
 #include <Jolt/RegisterTypes.h>

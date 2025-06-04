@@ -1,6 +1,6 @@
 #ifndef GRAPHX_DEVICES
-#include "g_device.hpp"
-#include "engine/physics/g_jolt.hpp"
+#include "device.hpp"
+#include "engine/physics/jolt_common.hpp"
 #include "images.h"
 #include "models.hpp"
 #define GRAPHX_DEVICES

@@ -1,5 +1,5 @@
 #ifndef GRAPHX_RENDERING
-#include "r_common.hpp"
+#include "common.hpp"
 #include "engine/common.hpp"
 #include "glfw_fwd.hpp"
 #include <ft2build.h>

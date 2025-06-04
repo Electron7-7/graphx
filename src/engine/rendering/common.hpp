@@ -1,6 +1,6 @@
 #ifndef GRAPHX_RENDERING_COMMON
 #define GRAPHX_RENDERING_COMMON
-#include "engine/things/devices/g_devices.hpp"
+#include "engine/things/devices/devices.hpp"
 #include "engine/common.hpp"
 #include "models.hpp"
 #include <ft2build.h>
@@ -121,7 +121,7 @@ struct RenderCommands
 	TextRenderCmd text_render_command;
 };
 
-// This is used by Actors and Devices to buffer their debug label; I'll probably phase out using this function directly, but for now it's gotta go in here as well as in `engine/rendering/r_rendering.hpp`
+// This is used by Actors and Devices to buffer their debug label; I'll probably phase out using this function directly, but for now it's gotta go in here as well as in `engine/rendering/rendering.hpp`
 void R_BufferRenderCmd(TextRenderCmd text_render_command);
 // std::string M_LoadModelFile(std::string file_path, std::string file_extension);
 #endif

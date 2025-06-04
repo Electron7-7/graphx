@@ -1,8 +1,8 @@
-#include "engine/things/actors/g_actor.hpp"
-#include "engine/things/devices/g_device.hpp"
-#include "engine/theatre/g_theatre.hpp"
-#include "engine/rendering/r_common.hpp"
-#include "engine/things/devices/g_devices.hpp"
+#include "engine/things/actors/actor.hpp"
+#include "engine/things/devices/device.hpp"
+#include "engine/theatre/theatre.hpp"
+#include "engine/rendering/common.hpp"
+#include "engine/things/devices/devices.hpp"
 // #include "math/gmath.hpp"
 
 using namespace graphx;

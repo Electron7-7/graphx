@@ -1,5 +1,5 @@
 #ifndef GRAPHX_THEATRE_INTERPRETER
-#include "t_common.hpp"
+#include "common.hpp"
 #define GRAPHX_THEATRE_INTERPRETER
 
 #ifdef COMPILER_FORWARD_DECLARATIONS

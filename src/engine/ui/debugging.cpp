@@ -1,7 +1,7 @@
-#include "g_imgui.hpp"
-#include "engine/things/actors/g_actor.hpp"
-#include "engine/things/actors/g_actors.hpp"
-#include "engine/theatre/g_theatre.hpp"
+#include "debugging.hpp"
+#include "engine/things/actors/actor.hpp"
+#include "engine/things/actors/actors.hpp"
+#include "engine/theatre/theatre.hpp"
 #include "engine/common.hpp"
 #include "DearImGui/imgui_stdlib.h"
 

@@ -1,8 +1,8 @@
 #include "common.hpp"
-#include "engine/interpreter/t_interpreter.hpp"
-#include "engine/theatre/g_theatre.hpp"
-#include "engine/things/devices/g_devices.hpp"
-#include "engine/things/actors/g_actors.hpp"
+#include "engine/interpreter/interpreter.hpp"
+#include "engine/theatre/theatre.hpp"
+#include "engine/things/devices/devices.hpp"
+#include "engine/things/actors/actors.hpp"
 #include <glm/glm.hpp>
 
 //---------------

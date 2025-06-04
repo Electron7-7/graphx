@@ -1,6 +1,6 @@
 #ifndef GRAPHX_JOLT_BOILERPLATE
 #define GRAPHX_JOLT_BOILERPLATE
-#include "g_jolt.hpp"
+#include "jolt_common.hpp"
 #include "sanity/sanity_printouts.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>

@@ -1,9 +1,9 @@
-#include "r_common.hpp"
-#include "r_rendering.hpp"
-#include "engine/interpreter/t_interpreter.hpp" // TODO: remove once the Interpreter declaration is in graphx_namespace.hpp
-#include "engine/things/actors/g_actors.hpp"
-#include "engine/interpreter/t_common.hpp"
-#include "engine/theatre/g_theatre.hpp"
+#include "common.hpp"
+#include "rendering.hpp"
+#include "engine/interpreter/interpreter.hpp" // TODO: remove once the Interpreter declaration is in graphx_namespace.hpp
+#include "engine/things/actors/actors.hpp"
+#include "engine/interpreter/common.hpp"
+#include "engine/theatre/theatre.hpp"
 #include "sanity/sanity.hpp"
 #include "models.hpp"
 #include "images.h"

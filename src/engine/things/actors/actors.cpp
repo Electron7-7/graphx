@@ -1,6 +1,6 @@
-#include "engine/theatre/g_theatre.hpp"
-#include "engine/things/actors/g_actor.hpp"
-#include "engine/things/actors/g_actors.hpp"
+#include "engine/theatre/theatre.hpp"
+#include "engine/things/actors/actor.hpp"
+#include "engine/things/actors/actors.hpp"
 #include "math/gmath.hpp"
 #include "models.hpp"
 #include <glm/glm.hpp>

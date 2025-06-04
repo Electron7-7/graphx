@@ -1,7 +1,7 @@
 #include "settings.hpp"
-#include "actors/g_actor.hpp"
-#include "devices/g_device.hpp"
-#include "engine/theatre/g_theatre.hpp"
+#include "actors/actor.hpp"
+#include "devices/device.hpp"
+#include "engine/theatre/theatre.hpp"
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>

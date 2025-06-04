@@ -1,8 +1,8 @@
 #ifndef GRAPHX_ACTOR
 #define GRAPHX_ACTOR
 #include "engine/common.hpp"
-#include "engine/rendering/r_common.hpp"
-#include "engine/things/devices/g_devices.hpp"
+#include "engine/rendering/common.hpp"
+#include "engine/things/devices/devices.hpp"
 #include "engine/things/settings.hpp"
 #include "glfw_fwd.hpp"
 #include <glm/glm.hpp>

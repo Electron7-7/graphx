@@ -1,9 +1,9 @@
 #ifndef GRAPHX_ACTORS
 #define GRAPHX_ACTORS
-#include "engine/things/devices/g_devices.hpp"
+#include "engine/things/devices/devices.hpp"
 #include "engine/common.hpp"
-#include "engine/rendering/r_common.hpp"
-#include "engine/things/actors/g_actor.hpp"
+#include "engine/rendering/common.hpp"
+#include "engine/things/actors/actor.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/Body/Body.h>

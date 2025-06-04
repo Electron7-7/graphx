@@ -1,7 +1,7 @@
-#include "g_theatre.hpp"
+#include "theatre.hpp"
 #include "engine/interpreter/graphx_interpreter_lookups.hpp"
-#include "engine/things/actors/g_actors.hpp"
-#include "engine/rendering/r_rendering.hpp"
+#include "engine/things/actors/actors.hpp"
+#include "engine/rendering/rendering.hpp"
 #include "engine/things/settings.hpp"
 #include <set>
 

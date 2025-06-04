@@ -4,17 +4,17 @@
 #include "opengl_includes.hpp"
 // #include "sanity/sanity.hpp"
 #include "engine/common.hpp"
-#include "engine/things/actors/g_actors.hpp"
-#include "engine/theatre/g_theatre.hpp"
-#include "engine/ui/g_imgui.hpp"
-#include "engine/rendering/r_rendering.hpp"
+#include "engine/things/actors/actors.hpp"
+#include "engine/theatre/theatre.hpp"
+#include "engine/ui/debugging.hpp"
+#include "engine/rendering/rendering.hpp"
 // #include "sanity/sanity_printouts.hpp"
-// #include "interpreter/t_common.hpp"
+// #include "interpreter/common.hpp"
 #include "DearImGui/imgui.h"
 #include "DearImGui/imgui_impl_glfw.h"
 #include "DearImGui/imgui_impl_opengl3.h"
 #include "theatres.hpp"
-#include "engine/physics/g_jolt.hpp"
+#include "engine/physics/jolt_common.hpp"
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Physics/PhysicsSystem.h>

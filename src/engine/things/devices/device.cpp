@@ -1,4 +1,4 @@
-#include "g_device.hpp"
+#include "device.hpp"
 
 //
 // Device

@@ -1,8 +1,8 @@
-#include "g_devices.hpp"
+#include "devices.hpp"
 #include "engine/common.hpp"
 #include "engine/things/settings.hpp"
-#include "engine/theatre/g_theatre.hpp"
-#include "engine/physics/g_jolt.hpp"
+#include "engine/theatre/theatre.hpp"
+#include "engine/physics/jolt_common.hpp"
 // Note: these includes are for when I move the J_CreateAShape function into here and merge it with Collider
 #include "Jolt/Physics/Collision/Shape/BoxShape.h"
 #include "Jolt/Physics/Collision/Shape/CapsuleShape.h"
