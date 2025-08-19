@@ -13,6 +13,9 @@
 <img src="https://github.com/user-attachments/assets/7b795eb4-574c-4760-87ba-497b336df9db" width="400"/>
 <img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
 
+## A Note From Future Me
+This repository, and README, aren't even a year old, but I've learned so much about programming and C++ in that time that they are **_wildly_** out of date and not representitive of my current skill level, mental sanity, and intelligence. That being said, it *is* the most detailed repository I have, currently, and a near perfect preservation of my journey from script-kiddie to intermediate programmer.
+
 ## An Okay Game Engine
 
 When I started this journey, I had very little programming experience; a few basic Python programs (like, command-line output basic), some shell scripting, a bit of web-design, and some fun ventures in [Blitz3D](https://github.com/blitz-research/blitz3d) (which I highly recommend to anyone interested in the programming side of gamedev). Needless to say, I was in no position _whatsoever_ to think to myself, "hmm, you know what? I want to learn C++ _and_ OpenGL/Graphics Programming at the same exact time! Surely, nothing will go wrong". I am here to tell you I am lucky that I have autism and an autistic intrigue and passion for programming, because if I didn't, this project would have permanently died before a week's time.
