@@ -14,7 +14,7 @@
 <img src="https://github.com/user-attachments/assets/6afd76e4-0f0e-48d6-862b-973da095fa21" width="400"/>
 
 ## A Note From Future Me
-This repository, and README, aren't even a year old, but I've learned so much about programming and C++ in that time that they are **_wildly_** out of date and not representitive of my current skill level, mental sanity, and intelligence. That being said, it *is* the most detailed repository I have, currently, and a near perfect preservation of my journey from script-kiddie to intermediate programmer.
+This repository, and README, aren't even a year old at the time of writing this, but I've learned so much about programming and C++ in that time that they are **_wildly_** out of date and not representitive of my current skill level, mental sanity, and intelligence. That being said, it *is* the most detailed repository I have, currently, and a near perfect preservation of my journey from script-kiddie to intermediate programmer.
 
 ## An Okay Game Engine
 
